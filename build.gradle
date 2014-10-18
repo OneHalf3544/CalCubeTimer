@@ -1,4 +1,11 @@
 apply plugin: 'java'
+apply plugin:'application'
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'net.gnehzr.cct.main.CALCubeTimer'
+    }
+}
 
 compileJava{
     options.encoding = "UTF-8"
@@ -18,4 +25,17 @@ dependencies {
     compile('javazoom:javazoom')
     compile('pircbot:pircbot')
     compile('plugin:plugin')
+}
+
+task createDocs {
+    def docs = file("$buildDir/documentation")
+    outputs.dir docs
+    doLast {
+        docs.mkdirs()
+        new File(docs, "readme.txt").write("Read me!")
+    }
+}
+
+applicationDistribution.from(createDocs) {
+    into "documentation"
 }
