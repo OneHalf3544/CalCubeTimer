@@ -1,0 +1,21 @@
+apply plugin: 'java'
+
+compileJava{
+    options.encoding = "UTF-8"
+}
+repositories {
+    mavenCentral()
+
+    flatDir {
+        dirs 'lib'
+    }
+}
+
+dependencies {
+    compile('substance:substance')
+    compile('smtp:smtp')
+    compile('mailapi:mailapi')
+    compile('javazoom:javazoom')
+    compile('pircbot:pircbot')
+    compile('plugin:plugin')
+}
