@@ -1,10 +1,20 @@
 apply plugin: 'java'
 apply plugin:'application'
 
+version = '1.0'
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
 jar {
     manifest {
         attributes 'Main-Class': 'net.gnehzr.cct.main.CALCubeTimer'
+        attributes 'SplashScreen-Image': ' net/gnehzr/cct/main/battle.jpg'
+        attributes 'Built-Date': 'xxxxx'
+        attributes 'Class-Path': '.'
     }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    //with jar
 }
 
 compileJava{
@@ -19,11 +29,11 @@ repositories {
 }
 
 dependencies {
+    compile('javax.mail:mailapi:1.4.3')
+    compile('com.sun.mail:smtp:1.5.2')
+    compile('pircbot:pircbot:1.5.0')
     compile('substance:substance')
-    compile('smtp:smtp')
-    compile('mailapi:mailapi')
-    compile('javazoom:javazoom')
-    compile('pircbot:pircbot')
+    compile('javazoom:jlayer:1.0.1')
     compile('plugin:plugin')
 }
 

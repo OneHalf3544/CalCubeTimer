@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
+<module external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="1.0" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/build/classes/main" />
     <output-test url="file://$MODULE_DIR$/build/classes/test" />
     <exclude-output />
@@ -14,12 +14,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="Gradle: smtp" level="project" />
     <orderEntry type="library" exported="" name="Gradle: substance" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: mailapi" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: javazoom" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: pircbot" level="project" />
     <orderEntry type="library" exported="" name="Gradle: plugin" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: mailapi-1.4.3" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: smtp-1.5.2" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: pircbot-1.5.0" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: jlayer-1.0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: activation-1.1" level="project" />
   </component>
 </module>
 
