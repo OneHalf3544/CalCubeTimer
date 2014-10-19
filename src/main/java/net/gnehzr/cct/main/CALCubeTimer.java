@@ -1,148 +1,25 @@
 package net.gnehzr.cct.main;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.DisplayMode;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.LayoutManager;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-
-import javax.swing.AbstractAction;
-import javax.swing.AbstractButton;
-import javax.swing.Action;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JRootPane;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSpinner;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.UIManager;
-import javax.swing.WindowConstants;
-import javax.swing.border.Border;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.TransformerConfigurationException;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
-import net.gnehzr.cct.configuration.ConfigurationDialog;
-import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.configuration.*;
 import net.gnehzr.cct.help.AboutScrollFrame;
-import net.gnehzr.cct.i18n.LocaleAndIcon;
-import net.gnehzr.cct.i18n.LocaleRenderer;
-import net.gnehzr.cct.i18n.ScramblePluginMessages;
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.i18n.XMLGuiMessages;
+import net.gnehzr.cct.i18n.*;
 import net.gnehzr.cct.keyboardTiming.KeyboardHandler;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.misc.customJTable.DraggableJTable;
-import net.gnehzr.cct.misc.customJTable.SessionListener;
-import net.gnehzr.cct.misc.customJTable.SessionsTable;
-import net.gnehzr.cct.misc.customJTable.SolveTimeEditor;
-import net.gnehzr.cct.misc.customJTable.SolveTimeRenderer;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicButton;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBoxMenuItem;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicDestroyable;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicLabel;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicMenu;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicMenuItem;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicSelectableLabel;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicStringSettable;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicTabbedPane;
-import net.gnehzr.cct.scrambles.Scramble;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScrambleList;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScrambleSecurityManager;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
-import net.gnehzr.cct.scrambles.TimeoutJob;
+import net.gnehzr.cct.misc.customJTable.*;
+import net.gnehzr.cct.misc.dynamicGUI.*;
+import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.scrambles.ScrambleList.ScrambleString;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDatabase;
-import net.gnehzr.cct.statistics.PuzzleStatistics;
-import net.gnehzr.cct.statistics.Session;
-import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.statistics.Statistics;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
-import net.gnehzr.cct.statistics.UndoRedoListener;
+import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SolveTime.SolveType;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 import net.gnehzr.cct.statistics.Statistics.CCTUndoableEdit;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
 import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
-
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.lafwidget.utils.LafConstants;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -154,6 +31,26 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import javax.sound.sampled.*;
+import javax.swing.*;
+import javax.swing.Timer;
+import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.TransformerConfigurationException;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.net.URI;
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 //import sun.awt.AppContext;
 
@@ -480,7 +377,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	private JMenu customGUIMenu;
 	private void initializeGUIComponents() {
 		//NOTE: all internationalizable text must go in the loadStringsFromDefaultLocale() method
-		tickTock = new Timer(0, null);
+		tickTock = createTickTockTimer();
 
 		currentTimeLabel = new DateTimeLabel();
 
@@ -585,8 +482,34 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		persistentComponents.put("sessionslist", sessionsScroller);
 		persistentComponents.put("clock", currentTimeLabel);
 	}
-	
-	private class GeneratorTextField extends JTextField implements FocusListener, ActionListener {
+
+    private Timer createTickTockTimer() {
+        try {
+            InputStream inputStream = getClass().getResourceAsStream(Configuration.getString(VariableKey.METRONOME_CLICK_FILE, false));
+            checkNotNull(inputStream);
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new BufferedInputStream(inputStream));
+            DataLine.Info info = new DataLine.Info(Clip.class, audioInputStream.getFormat());
+            Clip clip = (Clip) AudioSystem.getLine(info);
+            clip.open(audioInputStream);
+            Timer timer = new Timer(1000, new ActionListener() {
+                int i = 0;
+
+                public void actionPerformed(ActionEvent arg0) {
+                    System.out.println(i++);
+                    clip.stop();
+                    clip.setFramePosition(0);
+                    clip.start();
+                }
+            });
+            timer.setInitialDelay(0);
+            return timer;
+
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e1) {
+            throw new IllegalStateException(e1);
+        }
+    }
+
+    private class GeneratorTextField extends JTextField implements FocusListener, ActionListener {
 		public GeneratorTextField() {
 			addFocusListener(this);
 			addActionListener(this);

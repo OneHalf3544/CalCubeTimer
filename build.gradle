@@ -2,17 +2,20 @@ apply plugin: 'java'
 apply plugin:'application'
 
 version = '1.0'
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 jar {
     manifest {
-        attributes 'Main-Class': 'net.gnehzr.cct.main.CALCubeTimer'
-        attributes 'SplashScreen-Image': ' net/gnehzr/cct/main/battle.jpg'
-        attributes 'Built-Date': 'xxxxx'
-        attributes 'Class-Path': '.'
+        attributes(
+            'Class-Path': '.',
+            'Main-Class': 'net.gnehzr.cct.main.CALCubeTimer',
+            'SplashScreen-Image': ' net/gnehzr/cct/main/battle.jpg',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Build-Time-ISO-8601': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        )
     }
-    baseName = project.name + '-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     //with jar
 }
@@ -32,9 +35,10 @@ dependencies {
     compile('javax.mail:mailapi:1.4.3')
     compile('com.sun.mail:smtp:1.5.2')
     compile('pircbot:pircbot:1.5.0')
-    compile('substance:substance')
     compile('javazoom:jlayer:1.0.1')
+    compile('org.java.net.substance:substance:5.3')
     compile('plugin:plugin')
+    compile('com.google.guava:guava:18.0')
 }
 
 task createDocs {
