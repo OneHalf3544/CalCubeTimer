@@ -1,15 +1,15 @@
 package net.gnehzr.cct.statistics;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileLock;
-import java.text.ParseException;
-import java.util.HashMap;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CALCubeTimer;
+import org.apache.log4j.Logger;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.AttributesImpl;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -20,20 +20,16 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.AttributesImpl;
-import org.xml.sax.helpers.DefaultHandler;
+import java.io.*;
+import java.nio.channels.FileLock;
+import java.text.ParseException;
+import java.util.HashMap;
 
 public class Profile {
-	//TODO - this will leak memory as cct runs
+
+    private static final Logger LOG = Logger.getLogger(Profile.class);
+
+    //TODO - this will leak memory as cct runs
 	private static HashMap<String, Profile> profiles = new HashMap<String, Profile>();
 	public static Profile getProfileByName(String name) {
 		Profile p = profiles.get(name);
@@ -45,7 +41,9 @@ public class Profile {
 	}
 	
 	private String name;
-	private File directory, configuration, statistics;
+	private File directory;
+    private File configuration;
+    private File statistics;
 	
 	//constructors are private because we want only 1 instance of a profile
 	//pointing to a given database
@@ -298,8 +296,9 @@ public class Profile {
 	public boolean loadDatabase() {
 		if(this == Configuration.guestProfile) { //disable logging for guest
 			//TODO - there is definitely a bug here where guestSession == null when switching profiles
-			if(puzzleDB.getRowCount() > 0)
-				CALCubeTimer.statsModel.setSession(guestSession); //TODO - does this really need to be here?
+			if(puzzleDB.getRowCount() > 0) {
+                CALCubeTimer.statsModel.setSession(guestSession); //TODO - does this really need to be here?
+            }
 			return false;
 		}
 		FileLock fl = null;
@@ -319,34 +318,36 @@ public class Profile {
 
 				return true;
 			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOG.error("i/o error", e);
 		} catch(SAXParseException spe) {
-			System.err.println(spe.getSystemId() + ":" + spe.getLineNumber() + ": parse error: " + spe.getMessage());
+			LOG.error(spe.getSystemId() + ":" + spe.getLineNumber() + ": parse error: " + spe.getMessage());
 			
 			Exception x = spe;
 			if(spe.getException() != null)
 				x = spe.getException();
 			x.printStackTrace();
+
 		} catch(SAXException se) {
 			Exception x = se;
 			if(se.getException() != null)
 				x = se.getException();
-			x.printStackTrace();
+			LOG.error("exception", x);
+
 		} catch(ParserConfigurationException pce) {
-			pce.printStackTrace();
+			LOG.error("exception", pce);
+
 		} finally {
 			CALCubeTimer.setWaiting(false);
 		}
 
-		if(fl != null)
-			try {
-				fl.release();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		if(fl != null) {
+            try {
+                fl.release();
+            } catch (IOException e) {
+                LOG.error("exception", e);
+            }
+        }
 		return false;
 	}
 	

@@ -25,10 +25,6 @@ compileJava{
 }
 repositories {
     mavenCentral()
-
-    flatDir {
-        dirs 'lib'
-    }
 }
 
 dependencies {
@@ -37,8 +33,8 @@ dependencies {
     compile('pircbot:pircbot:1.5.0')
     compile('javazoom:jlayer:1.0.1')
     compile('org.java.net.substance:substance:5.3')
-    compile('plugin:plugin')
     compile('com.google.guava:guava:18.0')
+    compile('log4j:log4j:1.2.17')
 }
 
 task createDocs {
