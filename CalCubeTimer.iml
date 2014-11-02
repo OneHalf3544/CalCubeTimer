@@ -18,10 +18,10 @@
     <orderEntry type="library" exported="" name="Gradle: smtp-1.5.2" level="project" />
     <orderEntry type="library" exported="" name="Gradle: pircbot-1.5.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: jlayer-1.0.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: activation-1.1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: substance-5.3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: guava-18.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: log4j-1.2.17" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: activation-1.1" level="project" />
   </component>
 </module>
 
