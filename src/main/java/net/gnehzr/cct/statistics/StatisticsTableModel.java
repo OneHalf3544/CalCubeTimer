@@ -1,6 +1,14 @@
 package net.gnehzr.cct.statistics;
 
-import java.awt.Component;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.misc.customJTable.DraggableJTable;
+import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
+import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -9,22 +17,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.ListIterator;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JRadioButtonMenuItem;
-
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.misc.customJTable.DraggableJTable;
-import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
-
 public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
 	Statistics stats;
 	private Session sesh;
-	public void setSession(Session sesh) {
+
+	public void setSession(@NotNull Session sesh) {
 		this.sesh = sesh;
 		if(stats != null) {
 			stats.setUndoRedoListener(null);
@@ -37,6 +34,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		stats.setStatisticsUpdateListeners(statsListeners);
 		stats.notifyListeners(false);
 	}
+
 	public Session getCurrentSession() {
 		return sesh;
 	}
@@ -59,6 +57,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	public void removeStatisticsUpdateListener(StatisticsUpdateListener l) {
 		statsListeners.remove(l);
 	}
+
 	//this is needed to update the i18n text
 	public void fireStringUpdates() {
 		for(StatisticsUpdateListener sul : statsListeners)

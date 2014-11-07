@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE database SYSTEM "../database.dtd">
+<database>
+    <puzzle customization="3x3x3">
+        <session date="11-08-2014 01:11:53" loadonstartup="true">
+            <solve>15690.0<scramble>U2 R U F R D2 B' U' R D2 F D R2 B2 U' L2 D B2 L2 U' F2</scramble>
+            </solve>
+        </session>
+    </puzzle>
+</database>

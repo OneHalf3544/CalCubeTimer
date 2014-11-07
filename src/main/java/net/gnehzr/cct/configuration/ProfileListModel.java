@@ -4,6 +4,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.ProfileDao;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProfileListModel extends DraggableJTableModel {
+
+	private static final ProfileDao PROFILE_DAO = ProfileDao.INSTANCE;
 
     private enum EditAction { ADDED, RENAMED, REMOVED }
 
@@ -24,13 +27,13 @@ public class ProfileListModel extends DraggableJTableModel {
 		public void executeAction() {
 			switch(act) {
 			case ADDED:
-				profile.createProfileDirectory();
+				PROFILE_DAO.createProfileDirectory(profile);
 				break;
 			case RENAMED:
-				profile.commitRename();
+				PROFILE_DAO.commitRename(profile);
 				break;
 			case REMOVED:
-				profile.delete();
+				PROFILE_DAO.delete(profile);
 				break;
 			}
 		}

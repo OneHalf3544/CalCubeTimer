@@ -14,6 +14,7 @@ import javax.swing.border.LineBorder;
 import net.gnehzr.cct.configuration.ProfileListModel;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.ProfileDao;
 
 public class ProfileEditor extends DefaultCellEditor {
 	private Profile value;
@@ -28,7 +29,7 @@ public class ProfileEditor extends DefaultCellEditor {
 	private static final String INVALID_CHARACTERS = "\\/:*?<>|\"";
 	public boolean stopCellEditing() {
 		String s = (String) super.getCellEditorValue();
-		value = Profile.getProfileByName(s);
+		value = ProfileDao.getProfileByName(s);
 		if(!value.toString().equals(originalValue)) {
 			String error = null;
 			if(stringContainsCharacters(s, INVALID_CHARACTERS))

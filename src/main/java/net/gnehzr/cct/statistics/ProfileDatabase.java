@@ -17,7 +17,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,8 +26,9 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 
 	private static final Logger LOG = Logger.getLogger(ProfileDatabase.class);
 
-	private HashMap<String, PuzzleStatistics> database = new HashMap<String, PuzzleStatistics>();
+	private HashMap<String, PuzzleStatistics> database = new HashMap<>();
 	private Profile owner;
+
 	public ProfileDatabase(Profile owner) {
 		this.owner = owner;
 	}
@@ -37,11 +37,12 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 	}
 	
 	public Collection<PuzzleStatistics> getPuzzlesStatistics() {
-		return new ArrayList<PuzzleStatistics>(database.values());
+		return new ArrayList<>(database.values());
 	}
 	public Collection<String> getCustomizations() {
-		return new ArrayList<String>(database.keySet());
+		return new ArrayList<>(database.keySet());
 	}
+
 	public PuzzleStatistics getPuzzleStatistics(String customization) {
 		PuzzleStatistics t = database.get(customization);
 		if(t == null) {
@@ -110,7 +111,7 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 		updateSessionCache();
 		super.fireTableDataChanged();
 	}
-	private ArrayList<Session> sessionCache = new ArrayList<Session>();
+	private ArrayList<Session> sessionCache = new ArrayList<>();
 	private void updateSessionCache() {
 		sessionCache.clear();
 		for(PuzzleStatistics ps : getPuzzlesStatistics())
@@ -198,11 +199,7 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 		JPopupMenu jpopup = new JPopupMenu();
 
 		JMenuItem discard = new JMenuItem(StringAccessor.getString("ProfileDatabase.discard"));
-		discard.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				source.deleteSelectedRows(false);
-			}
-		});
+		discard.addActionListener(e1 -> source.deleteSelectedRows(false));
 		jpopup.add(discard);
 		
 		JMenu sendTo = new JMenu(StringAccessor.getString("ProfileDatabase.sendto"));
@@ -226,8 +223,8 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getActionCommand().startsWith(SEND_TO_PROFILE)) {
-			Profile to = Profile.getProfileByName(((JMenuItem)e.getSource()).getText());
-			to.loadDatabase();
+			Profile to = ProfileDao.getProfileByName(((JMenuItem) e.getSource()).getText());
+			ProfileDao.INSTANCE.loadDatabase(to);
 			
 			String[] rows = e.getActionCommand().substring(SEND_TO_PROFILE.length()).split(",");
 			Session[] seshs = new Session[rows.length];
@@ -242,14 +239,8 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 			}
 			fireSessionsDeleted();
 			try {
-				to.saveDatabase();
-			} catch (FileNotFoundException e1) {
-				LOG.info("unexpected exception", e1);
-			} catch (TransformerConfigurationException e1) {
-				LOG.info("unexpected exception", e1);
-			} catch (IOException e1) {
-				LOG.info("unexpected exception", e1);
-			} catch (SAXException e1) {
+				ProfileDao.INSTANCE.saveDatabase(to);
+			} catch (TransformerConfigurationException | SAXException | IOException e1) {
 				LOG.info("unexpected exception", e1);
 			}
 		}

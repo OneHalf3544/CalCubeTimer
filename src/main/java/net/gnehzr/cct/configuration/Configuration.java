@@ -5,6 +5,7 @@ import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.ProfileDao;
 import org.apache.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.fonts.FontPolicy;
@@ -14,6 +15,7 @@ import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -43,8 +45,8 @@ public final class Configuration {
 	private static final String guestName = "Guest";
 	public static final Profile guestProfile = createGuestProfile();
 	private static Profile createGuestProfile() {
-		Profile temp = Profile.getProfileByName(guestName);
-		temp.createProfileDirectory();
+		Profile temp = ProfileDao.getProfileByName(guestName);
+		ProfileDao.INSTANCE.createProfileDirectory(temp);
 		return temp;
 	}
 
@@ -242,14 +244,19 @@ public final class Configuration {
             return root;
         }
         try {
-            root = new File(Configuration.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			String rootDir = System.getProperty("rootDir");
+			if (rootDir != null) {
+				root = new File(URI.create(rootDir));
+			} else {
+				root = new File(Configuration.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			}
             if(root.isFile()) {
                 root = root.getParentFile();
             }
+        	return root;
         } catch (URISyntaxException e) {
             throw new IllegalStateException(e);
         }
-        return root;
 	}
 
 	//returns empty string if everything is fine, error message otherwise
@@ -311,12 +318,12 @@ public final class Configuration {
 		List<Profile> profs = new ArrayList<>();
 		profs.add(guestProfile);
 		for(String profDir : profDirs) {
-			profs.add(Profile.getProfileByName(profDir));
+			profs.add(ProfileDao.getProfileByName(profDir));
 		}
 		if(props != null && profileOrdering != null) {
 			String[] profiles = profileOrdering.split("\\|");
 			for(int ch = profiles.length - 1; ch >= 0; ch--) {
-				Profile temp = Profile.getProfileByName(profiles[ch]);
+				Profile temp = ProfileDao.getProfileByName(profiles[ch]);
 				if(profs.contains(temp)) {
 					profs.remove(temp);
 					profs.add(0, temp);

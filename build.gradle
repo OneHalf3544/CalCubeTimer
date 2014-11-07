@@ -36,6 +36,8 @@ dependencies {
     compile('com.google.guava:guava:18.0')
     compile('log4j:log4j:1.2.17')
     compile('org.jetbrains:annotations:13.0')
+    testCompile('org.testng:testng:6.8.8'
+    )
 }
 
 task createDocs {

@@ -14,6 +14,7 @@ import net.gnehzr.cct.scrambles.ScrambleViewComponent;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.ProfileDao;
 import net.gnehzr.cct.statistics.SolveTime.SolveType;
 import org.apache.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -769,12 +770,12 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			}
 			Profile p = (Profile) profiles.getSelectedItem();
 			try {
-				p.saveDatabase();
+				ProfileDao.INSTANCE.saveDatabase(p);
 			} catch(Exception e1) {
 				LOG.info("unexpected exception", e1);
 			}
 			Configuration.setSelectedProfile(p);
-			if(!p.loadDatabase()) {
+			if(!ProfileDao.INSTANCE.loadDatabase(p)) {
 				//the user will be notified of this in the profiles combobox
 			}
 			try {
@@ -898,21 +899,20 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		JScrollPane scroller = new JScrollPane(options, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroller.getHorizontalScrollBar().setUnitIncrement(10);
 		ArrayList<ScramblePlugin> scramblePlugins = ScramblePlugin.getScramblePlugins();
-		solvedPuzzles = new ArrayList<ScrambleViewComponent>();
+		solvedPuzzles = new ArrayList<>();
 
-		for(int ch = 0; ch < scramblePlugins.size(); ch++) {
-			ScramblePlugin plugin = scramblePlugins.get(ch);
-			if(!plugin.supportsScrambleImage())
+		for (ScramblePlugin plugin : scramblePlugins) {
+			if (!plugin.supportsScrambleImage())
 				continue;
 			final ScrambleViewComponent puzzle = new ScrambleViewComponent(true, true);
 			solvedPuzzles.add(puzzle);
-			
+
 			ScrambleVariation sv = new ScrambleVariation(plugin, "");
 			sv.setLength(0); //this will not change the length of the real ScrambleVariation instances
 			puzzle.setScramble(sv.generateScramble(), sv);
 			puzzle.setAlignmentY(Component.CENTER_ALIGNMENT);
 			puzzle.setAlignmentX(Component.RIGHT_ALIGNMENT);
-			
+
 			SyncGUIListener sl = new SyncGUIListener() {
 				public void syncGUIWithConfig(boolean defaults) {
 					puzzle.syncColorScheme(defaults);

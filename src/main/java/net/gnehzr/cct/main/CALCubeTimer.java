@@ -21,6 +21,7 @@ import net.gnehzr.cct.statistics.Statistics.CCTUndoableEdit;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
 import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.lafwidget.utils.LafConstants;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -650,7 +651,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 				statsModel.removeTableModelListener(this); //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
 
 				Configuration.setSelectedProfile(affected);
-				if(!affected.loadDatabase()) {
+				if (!ProfileDao.INSTANCE.loadDatabase(affected)) {
 					//the user will be notified of this in the profiles combobox
 				}
 				try {
@@ -1283,7 +1284,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			if(!startupProfileDir.exists() || !startupProfileDir.isDirectory()) {
 				LOG.info("Couldn't find directory " + startupProfileDir.getAbsolutePath());
 			} else {
-				Profile commandedProfile = new Profile(startupProfileDir);
+				Profile commandedProfile = ProfileDao.loadProfile(startupProfileDir);
 				Configuration.setCommandLineProfile(commandedProfile);
 				Configuration.setSelectedProfile(commandedProfile);
 			}
@@ -1413,14 +1414,8 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	void prepareForProfileSwitch() {
 		Profile p = Configuration.getSelectedProfile();
 		try {
-			p.saveDatabase();
-		} catch (FileNotFoundException e1) {
-			LOG.info("unexpected exception", e1);
-		} catch (TransformerConfigurationException e1) {
-			LOG.info("unexpected exception", e1);
-		} catch (SAXException e1) {
-			LOG.info("unexpected exception", e1);
-		} catch (IOException e1) {
+			ProfileDao.INSTANCE.saveDatabase(p);
+		} catch (TransformerConfigurationException | IOException | SAXException e1) {
 			LOG.info("unexpected exception", e1);
 		}
 		saveToConfiguration();
@@ -1471,8 +1466,9 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 
 	public void tableChanged(TableModelEvent e) {
 		final SolveTime latestTime = statsModel.getCurrentStatistics().get(-1);
-		if(latestTime != null)
+		if(latestTime != null) {
 			sendUserstate();
+		}
 		if(e != null && e.getType() == TableModelEvent.INSERT) {
 			ScrambleString curr = scramblesList.getCurrent();
 			latestTime.setScramble(curr.getScramble());
@@ -1720,6 +1716,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			timerAccidentlyReset(null); //when the keyboard timer is disabled, we reset the timer
 	}
 
+	@NotNull
 	Session createNewSession(Profile p, String customization) {
 		PuzzleStatistics ps = p.getPuzzleDatabase().getPuzzleStatistics(customization);
 		Session s = new Session(new Date());
