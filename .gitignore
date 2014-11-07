@@ -1,3 +1,7 @@
 .idea/
 /build/
 *.iml
+2phase.Slice_Flip_Prun
+2phase.Slice_Twist_Prun
+2phase.Slice_URtoDF_Parity_Prun
+2phase.Slice_URFtoDLF_Parity_Prun

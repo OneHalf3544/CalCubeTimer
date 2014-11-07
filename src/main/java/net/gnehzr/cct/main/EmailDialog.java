@@ -1,39 +1,27 @@
 package net.gnehzr.cct.main;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.misc.JTextAreaWithHistory;
+import net.gnehzr.cct.misc.SendMailUsingAuthentication;
+import org.apache.log4j.Logger;
+
+import javax.mail.MessagingException;
+import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.mail.MessagingException;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.misc.JTextAreaWithHistory;
-import net.gnehzr.cct.misc.SendMailUsingAuthentication;
-
 public class EmailDialog extends JDialog implements ActionListener, CaretListener {
+
+	private static final Logger LOG = Logger.getLogger(EmailDialog.class);
+
 	private JTextField toAddress;
 	JTextField subject = null;
 	JTextAreaWithHistory body = null;
@@ -133,10 +121,10 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 			try {
 //				System.out.print("Sending...");
 				smtpMailSender.postMail(receivers, subject.getText(), body.getText());
-//				System.out.println("done!");
+//				LOG.info("done!");
 			} catch (MessagingException e) {
 				error = e;
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 			return null;
 		}

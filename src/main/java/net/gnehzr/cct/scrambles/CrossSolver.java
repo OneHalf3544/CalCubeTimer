@@ -1,11 +1,16 @@
 package net.gnehzr.cct.scrambles;
 
+import org.apache.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 
 public class CrossSolver {
+
+	private static final Logger LOG = Logger.getLogger(CrossSolver.class);
+
 	public static enum Face {
 		FRONT('F'), UP('U'), RIGHT('R'), BACK('B'), LEFT('L'), DOWN('D');
 		private char f;
@@ -391,7 +396,7 @@ public class CrossSolver {
 		int eo_hash = cube.hash_eo();
 		int ep_hash = cube.hash_ep();
 		for(int maxDepth = 0; maxDepth < 10; maxDepth++) {
-//			System.out.println("Searching depth: " + maxDepth);
+//			LOG.info("Searching depth: " + maxDepth);
 			ArrayList<ArrayList<Pair<Face, Integer>>> sols = iddfs(eo_hash, ep_hash, eo_solved_hash, ep_solved_hash, trans_eo, trans_ep, prune_eo, prune_ep, null, maxDepth);
 			if(sols != null && !sols.isEmpty())
 				return sols;
@@ -452,7 +457,7 @@ public class CrossSolver {
 //		long start = System.nanoTime();
 		ArrayList<ArrayList<Pair<Face, Integer>>> sols = solveCross(c);
 //		double elapsed = (System.nanoTime() - start)/1e9;
-//		System.out.println("Seconds " + elapsed);
+//		LOG.info("Seconds " + elapsed);
 		ArrayList<String> solutions = new ArrayList<String>();
 		for(ArrayList<Pair<Face, Integer>> sol : sols)
 			solutions.add(toString(crossToSolveSide, rotateUpToCrossSide, sol).trim());
@@ -461,8 +466,8 @@ public class CrossSolver {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(solveCross('U', 'D', "B' F D U2 L2 R2 D B F' L' F2 L' R2 D' U' B' R' U2 F D L R D2 U L2"));
-//		System.out.println(solveCross('U', 'D', "B' F D U2"));
-//		System.out.println(solveCross('U', 'U', "B' F D U2"));
+		LOG.info(solveCross('U', 'D', "B' F D U2 L2 R2 D B F' L' F2 L' R2 D' U' B' R' U2 F D L R D2 U L2"));
+//		LOG.info(solveCross('U', 'D', "B' F D U2"));
+//		LOG.info(solveCross('U', 'U', "B' F D U2"));
 	}
 }

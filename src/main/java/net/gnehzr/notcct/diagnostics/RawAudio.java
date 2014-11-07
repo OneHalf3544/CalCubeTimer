@@ -1,15 +1,19 @@
 package net.gnehzr.notcct.diagnostics;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Date;
+import org.apache.log4j.Logger;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.TargetDataLine;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Date;
 
 public class RawAudio implements Runnable{
+
+	private static final Logger LOG = Logger.getLogger(RawAudio.class);
+
 	private final static int samplingRate = 44100;
 	private final static int bytesPerSample = 2;
 	private final static int frames = 64;
@@ -46,7 +50,7 @@ public class RawAudio implements Runnable{
 						try {
 							out.write(lastSample + "\t" + currentSample + "\r\n"); // + "\t" + min + "\t" + max + "\t" + (max - min));
 						} catch(IOException e) {
-							e.printStackTrace();
+							LOG.info("unexpected exception", e);
 						}
 					}
 					lastSample = currentSample;

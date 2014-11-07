@@ -20,6 +20,7 @@ import net.gnehzr.cct.statistics.Statistics.AverageType;
 import net.gnehzr.cct.statistics.Statistics.CCTUndoableEdit;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
 import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
+import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.lafwidget.utils.LafConstants;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -55,6 +56,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 //import sun.awt.AppContext;
 
 public class CALCubeTimer extends JFrame implements ActionListener, TableModelListener, ChangeListener, ConfigurationChangeListener, ItemListener, SessionListener, TimingListener {
+
+	private static final Logger LOG = Logger.getLogger(CALCubeTimer.class);
+
 	public static final String CCT_VERSION = CALCubeTimer.class.getPackage().getImplementationVersion();
 	public static final ImageIcon cubeIcon = new ImageIcon(CALCubeTimer.class.getResource("cube.png"));
 
@@ -495,7 +499,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
                 int i = 0;
 
                 public void actionPerformed(ActionEvent arg0) {
-                    System.out.println(i++);
+                    LOG.info(i++);
                     clip.stop();
                     clip.setFramePosition(0);
                     clip.start();
@@ -697,7 +701,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			for(String key : messages.keySet())
 				UIManager.put(key, messages.getString(key));
 		} catch(MissingResourceException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 
 		StringAccessor.clearResources();
@@ -792,10 +796,8 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			if(se.getException() != null)
 				x = se.getException();
 			x.printStackTrace();
-		} catch(ParserConfigurationException pce) {
-			pce.printStackTrace();
-		} catch(IOException ioe) {
-			ioe.printStackTrace();
+		} catch(ParserConfigurationException | IOException pce) {
+			LOG.info("unexpected exception", pce);
 		}
 
 		timesTable.loadFromConfiguration();
@@ -849,9 +851,9 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	//{{{ GUIParser
 	//we save these guys to help us save the tabbedPane selection and
 	//splitPane location later on
-	ArrayList<JTabbedPane> tabbedPanes = new ArrayList<JTabbedPane>();
-	ArrayList<JSplitPane> splitPanes = new ArrayList<JSplitPane>();
-	ArrayList<DynamicDestroyable> dynamicStringComponents = new ArrayList<DynamicDestroyable>();
+	ArrayList<JTabbedPane> tabbedPanes = new ArrayList<>();
+	ArrayList<JSplitPane> splitPanes = new ArrayList<>();
+	ArrayList<DynamicDestroyable> dynamicStringComponents = new ArrayList<>();
 	private class GUIParser extends DefaultHandler {
 		private int level = -2;
 		private int componentID = -1;
@@ -863,10 +865,10 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		public GUIParser(JFrame frame){
 			this.frame = frame;
 
-			componentTree = new ArrayList<JComponent>();
-			strs = new ArrayList<String>();
-			needText = new ArrayList<Boolean>();
-			elementNames = new ArrayList<String>();
+			componentTree = new ArrayList<>();
+			strs = new ArrayList<>();
+			needText = new ArrayList<>();
+			elementNames = new ArrayList<>();
 
 			tabbedPanes.clear();
 			splitPanes.clear();
@@ -1262,7 +1264,10 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 
 	static CALCubeTimer cct; //need this instance to be able to easily set the waiting cursor
 	private static ScrambleSecurityManager security;
+
 	public static void main(String[] args) {
+		LOG.info("start CalCubeTimer");
+
 		//apple broke something in java 6
 		try {
 			File.createTempFile("tmp", "ihateapple");
@@ -1276,7 +1281,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		} else if(args.length == 1) {
 			File startupProfileDir = new File(args[0]);
 			if(!startupProfileDir.exists() || !startupProfileDir.isDirectory()) {
-				System.out.println("Couldn't find directory " + startupProfileDir.getAbsolutePath());
+				LOG.info("Couldn't find directory " + startupProfileDir.getAbsolutePath());
 			} else {
 				Profile commandedProfile = new Profile(startupProfileDir);
 				Configuration.setCommandLineProfile(commandedProfile);
@@ -1286,22 +1291,21 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 
 		System.setSecurityManager(security = new ScrambleSecurityManager(TimeoutJob.PLUGIN_LOADER));
 
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				String errors = Configuration.getStartupErrors();
-				if(!errors.isEmpty()) {
-					Utils.showErrorDialog(null, errors, "Couldn't start CCT!");
-					System.exit(1);
-				}
-				try {
-					Configuration.loadConfiguration(Configuration.getSelectedProfile().getConfigurationFile());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		SwingUtilities.invokeLater(() -> {
+            String errors = Configuration.getStartupErrors();
+            if(!errors.isEmpty()) {
+                Utils.showErrorDialog(null, errors, "Couldn't start CCT!");
+                System.exit(1);
+            }
+            try {
+                Configuration.loadConfiguration(Configuration.getSelectedProfile().getConfigurationFile());
+            } catch (IOException e) {
+                LOG.info("unexpected exception", e);
+            }
 
-				JDialog.setDefaultLookAndFeelDecorated(true);
-				JFrame.setDefaultLookAndFeelDecorated(true);
-				setLookAndFeel();
+            JDialog.setDefaultLookAndFeelDecorated(true);
+            JFrame.setDefaultLookAndFeelDecorated(true);
+            setLookAndFeel();
 //				if(1==1) {
 //					JFrame f = new JFrame();
 //					f.add(new JButton("HIYA"));
@@ -1310,25 +1314,24 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 //					return;
 //				}
 
-				UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
-				UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
-				UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
-				UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
+            UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
+            UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
+            UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
+            UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
 
-				cct = new CALCubeTimer();
-				Configuration.addConfigurationChangeListener(cct);
-				cct.setTitle("CCT " + CCT_VERSION);
-				cct.setIconImage(cubeIcon.getImage());
-				cct.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-				cct.setSelectedProfile(Configuration.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
-				cct.setVisible(true);
-				Runtime.getRuntime().addShutdownHook(new Thread() {
-					public void run() {
-						cct.prepareForProfileSwitch();
-					}
-				});
-			}
-		});
+            cct = new CALCubeTimer();
+            Configuration.addConfigurationChangeListener(cct);
+            cct.setTitle("CCT " + CCT_VERSION);
+            cct.setIconImage(cubeIcon.getImage());
+            cct.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            cct.setSelectedProfile(Configuration.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
+            cct.setVisible(true);
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    cct.prepareForProfileSwitch();
+                }
+            });
+        });
 	}
 	//this happens in windows when alt+f4 is pressed
 	public void dispose() {
@@ -1426,7 +1429,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		try {
 			Configuration.saveConfigurationToFile(p.getConfigurationFile());
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 	}
 
@@ -1493,7 +1496,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 						try {
 							NumberSpeaker.getCurrentSpeaker().speak(latestTime);
 						} catch (Exception e) {
-							e.printStackTrace();
+							LOG.info("unexpected exception", e);
 						}
 					}
 				}).start();
@@ -1820,7 +1823,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 						try {
 							NumberSpeaker.getCurrentSpeaker().speak(false, FIRST_WARNING*100);
 						} catch (Exception e) {
-							e.printStackTrace();
+							LOG.info("unexpected exception", e);
 						}
 					}
 				}).start();
@@ -1830,7 +1833,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 						try {
 							NumberSpeaker.getCurrentSpeaker().speak(false, FINAL_WARNING*100);
 						} catch (Exception e) {
-							e.printStackTrace();
+							LOG.info("unexpected exception", e);
 						}
 					}
 				}).start();

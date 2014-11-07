@@ -1,40 +1,5 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyVetoException;
-import java.io.IOException;
-import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.TreeSet;
-
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -48,12 +13,31 @@ import net.gnehzr.cct.umts.IRCUtils;
 import net.gnehzr.cct.umts.KillablePircBot;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
 import net.gnehzr.cct.umts.ircclient.MessageFrame.CommandListener;
-
+import org.apache.log4j.Logger;
 import org.jibble.pircbot.ReplyConstants;
 import org.jibble.pircbot.User;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
+import java.io.IOException;
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.TreeSet;
+
 public class IRCClientGUI implements CommandListener, ActionListener, ConfigurationChangeListener, DocumentListener, IRCListener {
+
+	private static final Logger LOG = Logger.getLogger(IRCClientGUI.class);
+
 	public static final Boolean WATERMARK = false;
 	private static final String VERSION = IRCClientGUI.class.getPackage().getImplementationVersion();
 	private static final String FINGER_MSG = "This is the cct/irc client " + VERSION;
@@ -488,7 +472,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 
 	public void scramblesImported(final MessageFrame src, ScrambleVariation sv, ArrayList<Scramble> scrambles) {
 		if(cct == null) {
-			System.out.println(scrambles);
+			LOG.info(scrambles);
 			return;
 		}
 		cct.importScrambles(sv, scrambles);
@@ -818,7 +802,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 						bot.connect(urlAndPort[0]);
 					connecting = false;
 				} catch(final Exception e) {
-					e.printStackTrace();
+					LOG.info("unexpected exception", e);
 					if(bot.isConnected())
 						bot.disconnect();
 					else

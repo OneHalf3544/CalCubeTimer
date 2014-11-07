@@ -1,16 +1,18 @@
 package net.gnehzr.cct.scrambles;
 
-import java.io.File;
-import java.net.MalformedURLException;
-
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
+import org.apache.log4j.Logger;
+
+import javax.swing.*;
+import java.io.File;
+import java.net.MalformedURLException;
 
 public class ScrambleVariation {
+
+	private static final Logger LOG = Logger.getLogger(ScrambleVariation.class);
+
 	private String variation;
 	private int length = 0;
 	private ScramblePlugin scramblePlugin;
@@ -26,7 +28,7 @@ public class ScrambleVariation {
 			try {
 				image = new ImageIcon(new File(ScramblePlugin.scramblePluginsFolder, variation + ".png").toURI().toURL());
 			} catch (MalformedURLException e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 				image = new ImageIcon();
 			}
 		}

@@ -1,33 +1,36 @@
 package net.gnehzr.cct.configuration;
 
-import java.awt.Component;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.statistics.Profile;
 
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+
 public class ProfileListModel extends DraggableJTableModel {
-	private enum editAction { ADDED, RENAMED, REMOVED };
+
+    private enum EditAction { ADDED, RENAMED, REMOVED }
+
 	private static class ProfileEditAction {
-		private editAction act;
-		private Profile p1;
-		public ProfileEditAction(editAction act, Profile p1) {
+		private EditAction act;
+		private Profile profile;
+		public ProfileEditAction(EditAction act, Profile profile) {
 			this.act = act;
-			this.p1 = p1;
+			this.profile = profile;
 		}
 		public void executeAction() {
 			switch(act) {
 			case ADDED:
-				p1.createProfileDirectory();
+				profile.createProfileDirectory();
 				break;
 			case RENAMED:
-				p1.commitRename();
+				profile.commitRename();
 				break;
 			case REMOVED:
-				p1.delete();
+				profile.delete();
 				break;
 			}
 		}
@@ -41,21 +44,21 @@ public class ProfileListModel extends DraggableJTableModel {
 			p.discardRename();
 	}
 
-	private ArrayList<ProfileEditAction> actions;
-	private ArrayList<Profile> contents;
-	public void setContents(ArrayList<Profile> contents) {
+	private List<ProfileEditAction> actions;
+	private List<Profile> contents;
+	public void setContents(List<Profile> contents) {
 		this.contents = contents;
-		actions = new ArrayList<ProfileEditAction>();
+		actions = new ArrayList<>();
 		fireTableDataChanged();
 	}
-	public ArrayList<Profile> getContents() {
+	public List<Profile> getContents() {
 		return contents;
 	}
 
 	public void deleteRows(int[] indices) {
 		for(int i : indices) {
 			if(i >= 0 && i < contents.size())
-				actions.add(new ProfileEditAction(editAction.REMOVED, contents.get(i)));
+				actions.add(new ProfileEditAction(EditAction.REMOVED, contents.get(i)));
 		}
 		removeRows(indices);
 	}
@@ -80,10 +83,8 @@ public class ProfileListModel extends DraggableJTableModel {
 	}
 
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		if(contents.get(rowIndex).equals(Configuration.guestProfile) || !contents.get(rowIndex).isSaveable())
-			return false;
-		return true;
-	}
+        return !contents.get(rowIndex).equals(Configuration.guestProfile) && contents.get(rowIndex).isSaveable();
+    }
 
 	public boolean isRowDeletable(int rowIndex) {
 		return isCellEditable(rowIndex, 0);
@@ -104,11 +105,11 @@ public class ProfileListModel extends DraggableJTableModel {
 			return;
 		Profile newProfile = (Profile)value;
 		if(rowIndex == contents.size()) {
-			actions.add(new ProfileEditAction(editAction.ADDED, newProfile));
+			actions.add(new ProfileEditAction(EditAction.ADDED, newProfile));
 			contents.add(newProfile);
 		} else {
 			Profile oldProfile = contents.get(rowIndex);
-			actions.add(new ProfileEditAction(editAction.RENAMED, oldProfile));
+			actions.add(new ProfileEditAction(EditAction.RENAMED, oldProfile));
 			oldProfile.renameTo(newProfile.getName());
 		}
 		fireTableDataChanged();

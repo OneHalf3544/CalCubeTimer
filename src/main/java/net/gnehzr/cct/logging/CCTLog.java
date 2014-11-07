@@ -5,14 +5,15 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 public class CCTLog {
+
+	private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(CCTLog.class);
+
 	private CCTLog() {}
 	static {
 		try {
 			LogManager.getLogManager().readConfiguration(CCTLog.class.getResourceAsStream("logging.properties"));
-		} catch(SecurityException e) {
-			e.printStackTrace();
-		} catch(IOException e) {
-			e.printStackTrace();
+		} catch(SecurityException | IOException e) {
+			LOG.info("unexpected exception", e);
 		}
 	}
 	public static Logger getLogger(String loggerName) {

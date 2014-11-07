@@ -1,11 +1,15 @@
 package org.kociemba.twophase;
 
+import org.apache.log4j.Logger;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Representation of the cube on the coordinate level
 class CoordCube {
+
+    private static final Logger LOG = Logger.getLogger(CoordCube.class);
 
 	static final short N_TWIST = 2187;// 3^7 possible corner orientations
 	static final short N_FLIP = 2048;// 2^11 possible edge flips
@@ -17,13 +21,13 @@ class CoordCube {
 	static final short N_URtoUL = 1320; // 12!/(12-3)! permutation of UR,UF,UL edges
 	static final short N_UBtoDF = 1320; // 12!/(12-3)! permutation of UB,DR,DF edges
 	static final short N_URtoDF = 20160; // 8!/(8-6)! permutation of UR,UF,UL,UB,DR,DF edges in phase2
-	
+
 	static final int N_URFtoDLB = 40320;// 8! permutations of the corners
 	static final int N_URtoBR = 479001600;// 8! permutations of the corners
-	
+
 	static final short N_MOVE = 18;
 
-	// All coordinates are 0 for a solved cube except for UBtoDF, which is 114
+    // All coordinates are 0 for a solved cube except for UBtoDF, which is 114
 	short twist;
 	short flip;
 	short parity;
@@ -65,7 +69,7 @@ class CoordCube {
 		//apparently it's faster to simply regenerate the transition tables
 		return false;
 //		tableName = "2phase." + tableName;
-//		System.out.println("Attempting to load " + tableName);
+//		LOG.info("Attempting to load " + tableName);
 //		try {
 //			ObjectInputStream in = new ObjectInputStream(new FileInputStream(tableName));
 //			short[][] tabl = (short[][]) in.readObject();
@@ -77,7 +81,7 @@ class CoordCube {
 //			in.close();
 //			return true;
 //		} catch (Exception e) {
-//			e.printStackTrace();
+//			LOG.info("unexpected exception", e);
 //			return false;
 //		}
 	}
@@ -89,31 +93,30 @@ class CoordCube {
 //			out.writeObject(table);
 //			out.close();
 //		} catch(Exception e) {
-//			e.printStackTrace();
+//			LOG.info("unexpected exception", e);
 //		}
 	}
 	
 	private static boolean loadTable(String tableName, byte[] table) {
 		tableName = "2phase." + tableName;
-		System.out.println("Attempting to load " + tableName);
+		LOG.info("Attempting to load " + tableName);
 		try {
 			FileInputStream in = new FileInputStream(tableName);
 			in.read(table);
 			in.close();
 			return true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error(e);
 			return false;
 		}
 	}
 	private static void writeTable(String tableName, byte[] table) {
 		tableName = "2phase." + tableName;
-		try {
-			FileOutputStream out = new FileOutputStream(tableName);
+		try(FileOutputStream out = new FileOutputStream(tableName)) {
 			out.write(table);
-			out.close();
+
 		} catch(Exception e) {
-			e.printStackTrace();
+			LOG.error("error", e);
 		}
 	}
 	

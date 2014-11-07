@@ -1,5 +1,14 @@
 package net.gnehzr.cct.umts.cctbot;
 
+import net.gnehzr.cct.logging.CCTLog;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.umts.IRCListener;
+import net.gnehzr.cct.umts.KillablePircBot;
+import org.jibble.pircbot.IrcException;
+import org.jibble.pircbot.NickAlreadyInUseException;
+import org.jibble.pircbot.User;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,19 +18,10 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.gnehzr.cct.logging.CCTLog;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScrambleSecurityManager;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
-import net.gnehzr.cct.scrambles.TimeoutJob;
-import net.gnehzr.cct.umts.IRCListener;
-import net.gnehzr.cct.umts.KillablePircBot;
-
-import org.jibble.pircbot.IrcException;
-import org.jibble.pircbot.NickAlreadyInUseException;
-import org.jibble.pircbot.User;
-
 public class CCTBot implements IRCListener {
+
+	private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(CCTBot.class);
+
 	private int MAX_SCRAMBLES = 12;
 	private String PREFIX = "!";
 	private HashMap<String, Integer> scrambleMaxMap = new HashMap<String, Integer>();
@@ -103,7 +103,7 @@ public class CCTBot implements IRCListener {
 				for(String c : oldChannels)
 					newBot.joinChannel(c);
 			} catch(Exception e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 				logger.log(Level.INFO, "Couldn't connect to " + bot.getServer(), e);
 				// Couldn't reconnect!
 				// Pause for a short while...?
@@ -112,7 +112,7 @@ public class CCTBot implements IRCListener {
 				} catch(InterruptedException e1) {}
 			}
 		}
-		System.out.println("Done reconnecting!");
+		LOG.info("Done reconnecting!");
 	}
 	
 	public void onConnect() {
@@ -156,7 +156,7 @@ public class CCTBot implements IRCListener {
 	}
 
 	private static void printUsage() {
-		System.out.println("USAGE: CCTBot (-c COMMCHANNEL) (-m SCRAMBLEMAX_DEFAULT) (-p PREFIX) -u irc://servername.tld(:port)#channel");
+		LOG.info("USAGE: CCTBot (-c COMMCHANNEL) (-m SCRAMBLEMAX_DEFAULT) (-p PREFIX) -u irc://servername.tld(:port)#channel");
 	}
 	
 	private static HashMap<String, String> parseArguments(String[] args) throws Exception {
@@ -248,11 +248,11 @@ public class CCTBot implements IRCListener {
 			cctbot.bot.joinChannel("#" + u.getFragment());
 			cctbot.readEvalPrint();
 		} catch(NickAlreadyInUseException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		} catch(IOException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		} catch(IrcException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 	}
 	
@@ -328,13 +328,13 @@ public class CCTBot implements IRCListener {
 			if(command.equalsIgnoreCase(CMD_HELP)) {
 				if(arg != null) {
 					String usage = commands.get(arg);
-					System.out.println(usage == null ? "Command " + arg + " not found." : "USAGE: " + usage);
+					LOG.info(usage == null ? "Command " + arg + " not found." : "USAGE: " + usage);
 				}
 				if(arg == null) {
 					StringBuilder cmds = new StringBuilder();
 					for(String c : commands.keySet())
 						cmds.append(", ").append(c);
-					System.out.println("Available commands:\n\t" + cmds.substring(2));
+					LOG.info("Available commands:\n\t" + cmds.substring(2));
 				}
 				continue;
 			} else if(command.equalsIgnoreCase(CMD_RELOAD)) {
@@ -449,7 +449,7 @@ public class CCTBot implements IRCListener {
 			}
 			
 			String usage = commands.get(command);
-			System.out.println(usage == null ? "Unrecognized command: " + command + ". Try help." : "USAGE: " + usage);
+			LOG.info(usage == null ? "Unrecognized command: " + command + ". Try help." : "USAGE: " + usage);
 		}
 	}
 

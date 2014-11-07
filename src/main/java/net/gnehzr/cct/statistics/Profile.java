@@ -1,7 +1,6 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimer;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
@@ -44,7 +43,7 @@ public class Profile {
 	private File directory;
     private File configuration;
     private File statistics;
-	
+
 	//constructors are private because we want only 1 instance of a profile
 	//pointing to a given database
 	private Profile(String name) {
@@ -103,7 +102,7 @@ public class Profile {
 			try {
 				dbFile.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			} finally {
 				dbFile = null;
 			}
@@ -120,9 +119,9 @@ public class Profile {
 				t = new RandomAccessFile(statistics, "rw");
 				t.getChannel().tryLock();
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			} finally {
 				dbFile = t;
 			}
@@ -137,7 +136,7 @@ public class Profile {
 			try {
 				dbFile.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			} finally {
 				dbFile = null;
 			}
@@ -160,10 +159,15 @@ public class Profile {
 		return this.name.equalsIgnoreCase(o.toString());
 	}
 	//this is the only indication to the user of whether we successfully loaded the database file
+	@Override
 	public String toString() {
-		return (newName != null ? newName : name) + (dbFile == null && this == Configuration.getSelectedProfile() ? StringAccessor.getString("Profile.loggingdisabled") : "");
+		return (newName != null ? newName : name);// + (isLoginDisabled() ? StringAccessor.getString("Profile.loggingdisabled") : "");
 	}
-	
+
+	private boolean isLoginDisabled() {
+		return dbFile == null && this == Configuration.getSelectedProfile();
+	}
+
 	private class DatabaseLoader extends DefaultHandler {
 		public DatabaseLoader() {}
 		
@@ -236,8 +240,7 @@ public class Profile {
 					solve.parseTime(seshCommentOrSolveTime);
 					session.getStatistics().add(solve);
 				} catch (Exception e) {
-					e.printStackTrace();
-					throw new SAXException("Unable to parse time: " + seshCommentOrSolveTime + " " + e.toString());
+					throw new SAXException("Unable to parse time: " + seshCommentOrSolveTime + " " + e.toString(), e);
 				}
 			} else if(name.equalsIgnoreCase("comment")) {
 				if(level == 3) {
@@ -354,13 +357,16 @@ public class Profile {
 	private Session guestSession = null; //need this so we can load the guest's last session, since it doesn't have a file
 	
 	public void saveDatabase() throws IOException, FileNotFoundException, TransformerConfigurationException, SAXException {
+        LOG.info("save database");
 		puzzleDB.removeEmptySessions();
 		if(this == Configuration.guestProfile) {
 			guestSession = CALCubeTimer.statsModel.getCurrentSession();
 		}
-		if(dbFile == null)
-			return;
-		try {
+		if(dbFile == null) {
+            LOG.warn("dbFile is null");
+            return;
+        }
+        try {
 			CALCubeTimer.setWaiting(true);
 			dbFile.setLength(0);
 			StreamResult streamResult = new StreamResult(new RandomOutputStream(dbFile));
@@ -443,7 +449,7 @@ public class Profile {
 		try {
 			dbFile.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		} finally {
 			dbFile = null;
 		}

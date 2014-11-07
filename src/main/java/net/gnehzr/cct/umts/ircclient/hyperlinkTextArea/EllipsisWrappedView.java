@@ -1,21 +1,15 @@
 package net.gnehzr.cct.umts.ircclient.hyperlinkTextArea;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import org.apache.log4j.Logger;
 
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.Element;
-import javax.swing.text.Highlighter;
-import javax.swing.text.Segment;
-import javax.swing.text.Utilities;
-import javax.swing.text.WrappedPlainView;
+import javax.swing.text.*;
 import javax.swing.text.Highlighter.Highlight;
+import java.awt.*;
 
 public class EllipsisWrappedView extends WrappedPlainView {
+
+	private static final Logger LOG = Logger.getLogger(EllipsisWrappedView.class);
+
 	private Highlighter highlighter;
 	public EllipsisWrappedView(Element e, boolean wrapWord, Highlighter highlighter) {
 		super(e, wrapWord);
@@ -33,7 +27,7 @@ public class EllipsisWrappedView extends WrappedPlainView {
 		try {
 			isHardBreak &= !getDocument().getText(p1-1, 1).equals("\n");
 		} catch(BadLocationException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 		if(isHardBreak) {
 			Color c = g.getColor();

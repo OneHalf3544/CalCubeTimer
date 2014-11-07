@@ -1,12 +1,14 @@
 package net.gnehzr.cct.umts.ircclient;
 
+import org.apache.log4j.Logger;
+
+import javax.swing.*;
 import java.beans.PropertyVetoException;
 
-import javax.swing.DesktopManager;
-import javax.swing.JComponent;
-import javax.swing.JInternalFrame;
-
 public class DesktopManagerWrapper implements DesktopManager {
+
+	private static final Logger LOG = Logger.getLogger(DesktopManagerWrapper.class);
+
 	private DesktopManager wrappedDM;
 
 	public DesktopManagerWrapper(DesktopManager wrappedDM) {
@@ -21,7 +23,7 @@ public class DesktopManagerWrapper implements DesktopManager {
 		try {
 			f.setIcon(false); // by now, the frame has had setIcon(true) called, we want to undo the effects of this
 		} catch(PropertyVetoException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 		f.setVisible(false);
 	}

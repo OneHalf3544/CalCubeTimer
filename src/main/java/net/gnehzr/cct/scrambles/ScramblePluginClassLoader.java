@@ -1,5 +1,7 @@
 package net.gnehzr.cct.scrambles;
 
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -8,6 +10,9 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 
 public class ScramblePluginClassLoader extends ClassLoader {
+
+	private static final Logger LOG = Logger.getLogger(ScramblePluginClassLoader.class);
+
 	private HashMap<String, Class<?>> classMap = new HashMap<String, Class<?>>();
 	protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 		if(!isAllowedClass(name))
@@ -51,7 +56,7 @@ public class ScramblePluginClassLoader extends ClassLoader {
 				try {
 					fi.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					LOG.info("unexpected exception", e);
 				}
 		}
 	}

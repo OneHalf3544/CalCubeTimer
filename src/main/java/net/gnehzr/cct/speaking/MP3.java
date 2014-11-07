@@ -19,14 +19,18 @@ package net.gnehzr.cct.speaking;
  *
  *************************************************************************/
 
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.Player;
+import org.apache.log4j.Logger;
+
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
-import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.player.Player;
-
 public class MP3 {
-    private Player player; 
+
+	private static final Logger LOG = Logger.getLogger(MP3.class);
+
+	private Player player;
 
     // constructor that takes the name of an MP3 file
     public MP3(InputStream fis) throws Exception {
@@ -63,7 +67,7 @@ public class MP3 {
 				MP3 mp3 = new MP3(ch + ".mp3");
 				mp3.play();
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
     }

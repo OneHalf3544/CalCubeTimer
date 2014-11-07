@@ -1,16 +1,14 @@
 package net.gnehzr.cct.stackmatInterpreter;
+import org.apache.log4j.Logger;
+
+import javax.sound.sampled.*;
+import javax.swing.*;
 import java.util.ArrayList;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.TargetDataLine;
-import javax.swing.SwingWorker;
-
 public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
+
+	private static final Logger LOG = Logger.getLogger(StackmatInterpreter.class);
+
 	private static final int BYTES_PER_SAMPLE = 2;
 	private static final int FRAMES = 64;
 
@@ -57,7 +55,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 					notify();
 				}
 			} catch(LineUnavailableException e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 				cleanup();
 			} catch(IllegalArgumentException e) {
 				//This is thrown when there is no configuration file
@@ -191,8 +189,8 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 								continue;
 							}
 
-//							System.out.println(state.isReset() + " " + state.isRunning() + " ");
-//							System.out.println(currentPeriod.size());
+//							LOG.info(state.isReset() + " " + state.isRunning() + " ");
+//							LOG.info(currentPeriod.size());
 							StackmatState newState = new StackmatState(state, currentPeriod);
 							if(state != null && state.isRunning() && newState.isReset()) { //this is indicative of an "accidental reset"
 								firePropertyChange("Accident Reset", state, newState);

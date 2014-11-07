@@ -1,4 +1,6 @@
 package net.gnehzr.notcct.diagnostics;
+import org.apache.log4j.Logger;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -7,13 +9,16 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 
 public class Audio{
+
+	private static final Logger LOG = Logger.getLogger(Audio.class);
+
 	public static void main(String[] args){
 		Mixer.Info[]    aInfos = AudioSystem.getMixerInfo();
-		System.out.println("Available Mixers: " + aInfos.length);
+		LOG.info("Available Mixers: " + aInfos.length);
 		for (int i = 0; i < aInfos.length; i++) {
 			Mixer mixer = AudioSystem.getMixer(aInfos[i]);
 			Line.Info lineInfo = new Line.Info(TargetDataLine.class);
-			System.out.println("Mixer " + i + ": " +
+			LOG.info("Mixer " + i + ": " +
 					aInfos[i].getName() + " desc: " + aInfos[i].getDescription()
 					+ " vend: " + aInfos[i].getVendor()
 					+ " ver: " + aInfos[i].getVersion());
@@ -26,7 +31,7 @@ public class Audio{
 							info[j]).getFormats();
 					for ( int n = 0;  n < forms.length;  ++n ) {
 						af = forms[n];
-						System.out.println("    " + af);
+						LOG.info("    " + af);
 					}
 
 				}

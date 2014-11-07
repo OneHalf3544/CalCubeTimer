@@ -51,23 +51,23 @@ public final class TimeoutJob {
 
 //	public static void main(String[] args) {
 //		try { //exception
-//			System.out.println(TimeoutJob.doWork(new Callable<String>() {
+//			LOG.info(TimeoutJob.doWork(new Callable<String>() {
 //				public String call() throws Exception {
 //					return ((String)null).intern();
 //				}
 //			}));
 //		} catch (Throwable e) {
-//			e.printStackTrace();
+//			LOG.info("unexpected exception", e);
 //		}
 //
 //		try { //timeout
-//			System.out.println(TimeoutJob.doWork(new Callable<String>() {
+//			LOG.info(TimeoutJob.doWork(new Callable<String>() {
 //				public String call() throws Exception {
 //					for(;;);
 //				}
 //			}));
 //		} catch (Throwable e) {
-//			e.printStackTrace();
+//			LOG.info("unexpected exception", e);
 //		}
 //		
 //		final PrintStream ps = System.out;
@@ -81,16 +81,16 @@ public final class TimeoutJob {
 //				stamp = (b == '\n');
 //			}
 //		}));
-//		System.out.println("awesome");
-//		System.out.println("Wowiiee!");
+//		LOG.info("awesome");
+//		LOG.info("Wowiiee!");
 //		try { //correct
-//			System.out.println(TimeoutJob.doWork(new Callable<String>() {
+//			LOG.info(TimeoutJob.doWork(new Callable<String>() {
 //				public String call() throws Exception {
 //					return "jeremy rocks!";
 //				}
 //			}));
 //		} catch (Throwable e) {
-//			e.printStackTrace();
+//			LOG.info("unexpected exception", e);
 //		}
 //	}
 }

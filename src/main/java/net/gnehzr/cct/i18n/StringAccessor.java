@@ -1,11 +1,16 @@
 package net.gnehzr.cct.i18n;
 
+import org.apache.log4j.Logger;
+
 import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 public class StringAccessor {
+
+	private static final Logger LOG = Logger.getLogger(StringAccessor.class);
+
 	private static final String CCT_STRINGS = "languages/cctStrings";
 	private static final ResourceBundle EMPTY_BUNDLE = new ResourceBundle() {
 		public Enumeration<String> getKeys() {
@@ -29,7 +34,7 @@ public class StringAccessor {
 				cctStrings = ResourceBundle.getBundle(CCT_STRINGS);
 			} catch(MissingResourceException e) {
 				cctStrings = EMPTY_BUNDLE;
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
 		return cctStrings.getString(key);
@@ -40,7 +45,7 @@ public class StringAccessor {
 				cctStrings = ResourceBundle.getBundle(CCT_STRINGS);
 			} catch(MissingResourceException e) {
 				cctStrings = EMPTY_BUNDLE;
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
 		if(cctStrings == null)

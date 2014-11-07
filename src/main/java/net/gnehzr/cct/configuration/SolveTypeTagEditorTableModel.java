@@ -1,25 +1,23 @@
 package net.gnehzr.cct.configuration;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-
-import javax.swing.Action;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JComponent;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
-
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import org.apache.log4j.Logger;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
+
+	private static final Logger LOG = Logger.getLogger(SolveTypeTagEditorTableModel.class);
+
 	private JTable parent;
 	public SolveTypeTagEditorTableModel(JTable parent) {
 		this.parent = parent;
@@ -37,10 +35,8 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			return name;
 		}
 		public boolean equals(Object o) {
-			if(o instanceof TypeAndName)
-				return name.toLowerCase().equals(((TypeAndName) o).name.toLowerCase());
-			return false;
-		}
+            return o instanceof TypeAndName && name.equalsIgnoreCase(((TypeAndName) o).name);
+        }
 		public int hashCode() {
 			return name.toLowerCase().hashCode();
 		}
@@ -48,8 +44,8 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 	private ArrayList<TypeAndName> tags;
 	private ArrayList<TypeAndName> deletedTags;
 	public void setTags(Collection<SolveType> tagTypes) {
-		tags = new ArrayList<TypeAndName>();
-		deletedTags = new ArrayList<TypeAndName>();
+		tags = new ArrayList<>();
+		deletedTags = new ArrayList<>();
 		for(SolveType t : tagTypes)
 			tags.add(new TypeAndName(t.toString(), t));
 		fireTableDataChanged();
@@ -62,7 +58,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 				try {
 					SolveType.createSolveType(tan.name);
 				} catch (Exception e) {
-					e.printStackTrace();
+					LOG.info("unexpected exception", e);
 					continue;
 				}
 			} else
@@ -71,8 +67,9 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 		}
 		Configuration.setStringArray(VariableKey.SOLVE_TAGS, tagNames);
 		for(TypeAndName tan : deletedTags) {
-			if(tan.type != null) //no need to attempt to remove something that never got truly created
-				SolveType.remove(tan.type);
+			if(tan.type != null) { //no need to attempt to remove something that never got truly created
+                SolveType.remove(tan.type);
+            }
 		}
 	}
 	

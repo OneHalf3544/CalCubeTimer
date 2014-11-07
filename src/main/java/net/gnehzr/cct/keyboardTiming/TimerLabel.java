@@ -1,35 +1,5 @@
 package net.gnehzr.cct.keyboardTiming;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Hashtable;
-
-import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.Timer;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.JColorComponent;
@@ -39,8 +9,27 @@ import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.main.ScrambleArea;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import org.apache.log4j.Logger;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 public class TimerLabel extends JColorComponent implements ComponentListener, ConfigurationChangeListener, FocusListener, KeyListener, MouseListener {
+
+	private static final Logger LOG = Logger.getLogger(TimerLabel.class);
+
 	private KeyboardHandler keyHandler;
 	private ScrambleArea scrambleArea;
 	public TimerLabel(ScrambleArea scrambleArea) {
@@ -132,7 +121,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			red = ImageIO.read(CALCubeTimer.class.getResourceAsStream("red-button.png")); 
 			green = ImageIO.read(CALCubeTimer.class.getResourceAsStream("green-button.png")); 
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 	}
 	public void paintComponent(Graphics g) {

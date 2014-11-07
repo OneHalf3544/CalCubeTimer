@@ -1,7 +1,12 @@
 package net.gnehzr.notcct.diagnostics;
+import org.apache.log4j.Logger;
+
 import javax.sound.sampled.*;
 
 public class RawAudioOld implements Runnable{
+
+	private static final Logger LOG = Logger.getLogger(RawAudioOld.class);
+
 	private final static int samplingRate = 44100;
 	private final static int quality = 2;
 
@@ -41,7 +46,7 @@ public class RawAudioOld implements Runnable{
 					for(int j = 0; j < frames; j++){
 						currentSample = buffer[quality*j];
 						for(int i = 1; i < quality; i++) currentSample += buffer[quality*j+i] << (8 * i);
-						System.out.println(currentSample);
+						LOG.info(currentSample);
 					}
 					line.write(buffer, 0, buffer.length);
 				}
@@ -57,10 +62,10 @@ public class RawAudioOld implements Runnable{
 //                // the framesize.  So figure out how many bytes we'll write.
 ////                int bytestowrite = (numbytes/framesize)*framesize;
 //
-//                System.out.println(buffer[0]);
+//                LOG.info(buffer[0]);
 //                currentSample = buffer[0];
 //				for(int i = 1; i < quality; i++) currentSample += buffer[i] << (8 * i);
-//				System.out.println(currentSample);
+//				LOG.info(currentSample);
 //                // Now write the bytes. The line will buffer them and play
 //                // them. This call will block until all bytes are written.
 //                line.write(buffer, 0, buffer.length);
@@ -75,7 +80,7 @@ public class RawAudioOld implements Runnable{
             // Now block until all buffered sound finishes playing.
 //            line.drain( );
         } catch (LineUnavailableException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
         finally { // Always relinquish the resources we use
             if (line != null) line.close( );
@@ -92,7 +97,7 @@ public class RawAudioOld implements Runnable{
 //			if(ain.read(buffer, 0, buffer.length) > 0){
 //				currentSample = buffer[0];
 //				for(int i = 1; i < quality; i++) currentSample += buffer[i] << (8 * i);
-//				System.out.println(currentSample);
+//				LOG.info(currentSample);
 //				out.write(buffer, 0, buffer.length);
 //			}
 //		}

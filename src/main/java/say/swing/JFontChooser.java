@@ -3,48 +3,12 @@
 ************************************************************/
 package say.swing;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import net.gnehzr.cct.configuration.JColorComponent;
+import net.gnehzr.cct.i18n.StringAccessor;
+import org.apache.log4j.Logger;
+import org.jvnet.substance.SubstanceLookAndFeel;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JColorChooser;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -54,11 +18,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
-
-import net.gnehzr.cct.configuration.JColorComponent;
-import net.gnehzr.cct.i18n.StringAccessor;
-
-import org.jvnet.substance.SubstanceLookAndFeel;
+import java.awt.*;
+import java.awt.event.*;
 
 /**
 * The <code>JFontChooser</code> class is a swing component 
@@ -71,12 +32,15 @@ import org.jvnet.substance.SubstanceLookAndFeel;
 *   if (result == JFontChooser.OK_OPTION)
 *   {
 *   	Font font = fontChooser.getSelectedFont(); 
-*   	System.out.println("Selected Font : " + font); 
+*   	LOG.info("Selected Font : " + font);
 *   }
 * <pre>
 **/
 
 public class JFontChooser extends JComponent implements MouseListener {
+
+	private static final Logger LOG = Logger.getLogger(JFontChooser.class);
+
 	/**
 	 * Return value from showDialog(Component parent).
 	 */
@@ -453,7 +417,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 				Document doc = event.getDocument();
 				newValue = doc.getText(0, doc.getLength());
 			} catch (BadLocationException e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 
 			if (newValue.length() > 0) {

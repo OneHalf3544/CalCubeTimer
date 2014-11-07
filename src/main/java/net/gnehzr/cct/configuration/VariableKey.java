@@ -1,19 +1,14 @@
 package net.gnehzr.cct.configuration;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontFormatException;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
-import java.io.IOException;
-
-import javax.swing.JTable;
-
+import com.google.common.base.Throwables;
 import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
 
 public class VariableKey<H> {
 	public static final VariableKey<Integer> SCRAMBLE_PLUGIN_TIMEOUT = new VariableKey<Integer>("Scramble_Plugins_timeout"); 
@@ -99,12 +94,10 @@ public class VariableKey<H> {
 			Font lcdFont = Font.createFont(Font.TRUETYPE_FONT,
 					CALCubeTimer.class.getResourceAsStream("Digiface Regular.ttf")); 
 			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(lcdFont);
-		} catch (FontFormatException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (FontFormatException | IOException e) {
+			throw Throwables.propagate(e);
 		}
-	}
+    }
 	public static final VariableKey<Font> TIMER_FONT = new VariableKey<Font>("Timer_font"); 
 	public static final VariableKey<Font> SCRAMBLE_FONT = new VariableKey<Font>("Scramble_font"); 
 

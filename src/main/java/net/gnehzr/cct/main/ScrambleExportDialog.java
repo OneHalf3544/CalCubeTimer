@@ -1,5 +1,16 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.misc.CCTFileChooser;
+import net.gnehzr.cct.misc.JSpinnerWithText;
+import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.scrambles.*;
+import org.apache.log4j.Logger;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -10,27 +21,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import javax.imageio.ImageIO;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.misc.CCTFileChooser;
-import net.gnehzr.cct.misc.JSpinnerWithText;
-import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.Scramble;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScrambleList;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
-
 public class ScrambleExportDialog extends JDialog implements ActionListener {
+
+	private static final Logger LOG = Logger.getLogger(ScrambleExportDialog.class);
+
 	private JTextField urlField;
 	private JButton browse;
 	private ScrambleChooserComboBox scrambleChooser;
@@ -188,7 +182,7 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 			out.close();
 			Utils.showConfirmDialog(this, StringAccessor.getString("ScrambleExportDialog.successmessage") + "\n" + outputFile.getPath());
 		} catch(Exception e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 			Utils.showErrorDialog(this, e);
 			return false;
 		}

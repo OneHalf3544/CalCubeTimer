@@ -1,10 +1,13 @@
 package scramblePlugins;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.Shape;
+import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.scrambles.CrossSolver;
+import net.gnehzr.cct.scrambles.Scramble;
+import org.apache.log4j.Logger;
+import org.kociemba.twophase.Search;
+import org.kociemba.twophase.Tools;
+
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,19 +16,15 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.CrossSolver;
-import net.gnehzr.cct.scrambles.Scramble;
-
-import org.kociemba.twophase.Search;
-import org.kociemba.twophase.Tools;
-
 //The public arrays are going to be accessed via reflection from the ScramblePlugin class
 //This way, other scramble plugins will not be able to modify the static arrays of other
 //scramble plugins.
 @SuppressWarnings("unused") 
 public class CubeScramble extends Scramble {
-	private static final String[][] FACE_NAMES_COLORS = 
+
+	private static final Logger LOG = Logger.getLogger(CubeScramble.class);
+
+	private static final String[][] FACE_NAMES_COLORS =
 	{ { "L",	  "D",		"B", 	  "R", 		"U", 	  "F" },
 	  { "ff8000", "ffff00", "0000ff", "ff0000", "ffffff", "00ff00" } };
 	private static final String PUZZLE_NAME = "Cube";
@@ -115,12 +114,12 @@ public class CubeScramble extends Scramble {
 	
 	public static void main(String[] args) {
 		long start = System.nanoTime();
-		System.out.println(Search.solution(Tools.randomCube(), 21, 10, false));
-		System.out.println((System.nanoTime() - start)/1e9);
+		LOG.info(Search.solution(Tools.randomCube(), 21, 10, false));
+		LOG.info((System.nanoTime() - start)/1e9);
 		
 		start = System.nanoTime();
-		System.out.println(Search.solution(Tools.randomCube(), 21, 10, false));
-		System.out.println((System.nanoTime() - start)/1e9);
+		LOG.info(Search.solution(Tools.randomCube(), 21, 10, false));
+		LOG.info((System.nanoTime() - start)/1e9);
 	}
 	
 	private String cacheInfo = null;
@@ -631,7 +630,7 @@ public class CubeScramble extends Scramble {
 				} while(multislice && slice >= 0);
 			}
 		} catch(Exception e){
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 			return false;
 		}
 

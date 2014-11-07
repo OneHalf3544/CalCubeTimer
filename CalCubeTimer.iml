@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="1.0" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="CalCubeTimer" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="1.0" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/build/classes/main" />
     <output-test url="file://$MODULE_DIR$/build/classes/test" />
@@ -14,14 +14,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="Gradle: mailapi-1.4.3" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: smtp-1.5.2" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: pircbot-1.5.0" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: jlayer-1.0.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: substance-5.3" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: guava-18.0" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: log4j-1.2.17" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: activation-1.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: javax.mail:mailapi:1.4.3" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: com.sun.mail:smtp:1.5.2" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: pircbot:pircbot:1.5.0" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: javazoom:jlayer:1.0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.java.net.substance:substance:5.3" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: com.google.guava:guava:18.0" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: javax.activation:activation:1.1" level="project" />
   </component>
 </module>
-

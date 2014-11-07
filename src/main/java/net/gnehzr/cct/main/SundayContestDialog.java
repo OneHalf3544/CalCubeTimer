@@ -1,34 +1,5 @@
 package net.gnehzr.cct.main;
 
-import java.awt.Container;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -37,13 +8,28 @@ import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.Statistics;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
-
+import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.swing.*;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+
 public class SundayContestDialog extends JDialog implements ActionListener {
+
+	private static final Logger LOG = Logger.getLogger(SundayContestDialog.class);
+
 	private JTextField nameField, countryField, emailField, averageField, timesField;
 	private JTextAreaWithHistory quoteArea;
 	private JCheckBox showEmailBox;
@@ -238,10 +224,8 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 			if(se.getException() != null)
 				x = se.getException();
 			x.printStackTrace();
-		} catch(ParserConfigurationException pce) {
-			pce.printStackTrace();
-		} catch(IOException ioe) {
-			ioe.printStackTrace();
+		} catch(ParserConfigurationException | IOException pce) {
+			LOG.info("unexpected exception", pce);
 		} finally {
 			rd.close();
 		}

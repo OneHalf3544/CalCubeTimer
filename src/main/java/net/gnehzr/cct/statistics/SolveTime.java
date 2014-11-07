@@ -1,16 +1,16 @@
 package net.gnehzr.cct.statistics;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.regex.Pattern;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.regex.Pattern;
 
 public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	public static final SolveTime BEST = new SolveTime(0, null) {
@@ -160,10 +160,18 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		}
 		time = toUSFormatting(time);
 		String[] temp = time.split(":");
-		if(temp.length > 3 || time.lastIndexOf(":") == time.length() - 1) throw new Exception(StringAccessor.getString("SolveTime.invalidcolons"));
-		else if(time.indexOf("") != time.lastIndexOf("")) throw new Exception(StringAccessor.getString("SolveTime.toomanydecimals"));
-		else if(time.indexOf("") >= 0 && time.indexOf(":") >= 0 && time.indexOf("") < time.lastIndexOf(":")) throw new Exception(StringAccessor.getString("SolveTime.invaliddecimal"));
-		else if(time.indexOf("-") >= 0) throw new Exception(StringAccessor.getString("SolveTime.nonpositive"));
+		if(temp.length > 3 || time.lastIndexOf(":") == time.length() - 1) {
+			throw new Exception(StringAccessor.getString("SolveTime.invalidcolons"));
+		}
+		if(time.indexOf(".") != time.lastIndexOf(".")) {
+			throw new Exception(StringAccessor.getString("SolveTime.toomanydecimals"));
+		}
+		if(time.contains(".") && time.contains(":") && time.indexOf(".") < time.lastIndexOf(":")) {
+			throw new Exception(StringAccessor.getString("SolveTime.invaliddecimal"));
+		}
+		if(time.contains("-")) {
+			throw new Exception(StringAccessor.getString("SolveTime.nonpositive"));
+		}
 
 		double seconds = 0;
 		for(int i = 0; i < temp.length; i++) {
@@ -178,8 +186,12 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 			seconds += d;
 		}
 		seconds -= (isType(SolveType.PLUS_TWO) ? 2 : 0);
-		if(seconds < 0) throw new Exception(StringAccessor.getString("SolveTime.nonpositive"));
-		else if(seconds > 21000000) throw new Exception(StringAccessor.getString("SolveTime.toolarge"));
+		if(seconds < 0) {
+			throw new Exception(StringAccessor.getString("SolveTime.nonpositive"));
+		}
+		if(seconds > 21000000) {
+			throw new Exception(StringAccessor.getString("SolveTime.toolarge"));
+		}
 		this.hundredths = (int)(100 * seconds + .5);
 	}
 	static String toUSFormatting(String time) {

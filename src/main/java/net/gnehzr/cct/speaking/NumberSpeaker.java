@@ -1,5 +1,12 @@
 package net.gnehzr.cct.speaking;
 
+import javazoom.jl.decoder.JavaLayerException;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.statistics.SolveTime;
+import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,13 +17,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import javazoom.jl.decoder.JavaLayerException;
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
-
 public class NumberSpeaker implements Comparable<NumberSpeaker> {
+
+	private static final Logger LOG = Logger.getLogger(NumberSpeaker.class);
+
 	public static enum TalkerType {
 		TIMER_OFF("timer_off"), TIMER_RUNNING("timer_running"), TIMER_RESET("timer_reset");
 		private String desc;
@@ -101,11 +105,11 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 			MP3 temp = getMP3FromName(type.toString());
 			temp.play();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		} catch (JavaLayerException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
     }
     
@@ -197,11 +201,11 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     public static void main(String[] args) {
     	NumberSpeaker carrie = getSpeaker("carrie");
 		for(int ch = 12000; ch < 13000; ch+=10) {
-			System.out.println("TIME: " + ch / 100.);
+			LOG.info("TIME: " + ch / 100.);
 			try {
 				carrie.speak(false, ch);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
     }

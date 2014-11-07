@@ -56,7 +56,7 @@ public class IRCUtils {
 //				int i = Integer.parseInt(m.group(1));
 //				m.appendReplacement(b, "" + (char) i);
 //			} catch(NumberFormatException e) {
-//				e.printStackTrace();
+//				LOG.info("unexpected exception", e);
 //			}
 //		}
 //		m.appendTail(b);

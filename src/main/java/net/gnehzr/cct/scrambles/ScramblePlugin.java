@@ -1,28 +1,27 @@
 package net.gnehzr.cct.scrambles;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Shape;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.concurrent.Callable;
-import java.util.regex.Pattern;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
+import org.apache.log4j.Logger;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.lang.reflect.*;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 public class ScramblePlugin {
+
+	private static final Logger LOG = Logger.getLogger(ScramblePlugin.class);
+
 	public static final ScrambleCustomization NULL_SCRAMBLE_CUSTOMIZATION = new ScrambleCustomization(new ScrambleVariation(new ScramblePlugin("X"), ""), null);
 	public static final String SCRAMBLE_PLUGIN_PACKAGE = "scramblePlugins.";
 	private static final String PLUGIN_EXTENSION = ".class";
@@ -34,7 +33,7 @@ public class ScramblePlugin {
 			if(root.isFile())
 				root = root.getParentFile();
 		} catch(URISyntaxException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 		return root;
 	}
@@ -52,7 +51,7 @@ public class ScramblePlugin {
 						scramblePlugins.add(new ScramblePlugin(plugin));
 					} catch(Exception ee) {
 						System.err.println("Failed to load: " + plugin);
-						ee.printStackTrace();
+						LOG.info("unexpected exception", ee);
 					}
 				}
 			}
@@ -303,10 +302,12 @@ public class ScramblePlugin {
 			//validating fields
 			Field f = getPrivateStaticField(pluginClass, "PUZZLE_NAME");
 			PUZZLE_NAME = (String) f.get(null);
-			if(PUZZLE_NAME == null)
-				throw new NullPointerException("PUZZLE_NAME may not be null!");
-			if(PUZZLE_NAME.indexOf(':') != -1)
-				throw new IllegalArgumentException("PUZZLE_NAME (" + PUZZLE_NAME + ") may not contain ':'!");
+			if(PUZZLE_NAME == null) {
+                throw new NullPointerException("PUZZLE_NAME may not be null!");
+            }
+			if(PUZZLE_NAME.indexOf(':') != -1) {
+                throw new IllegalArgumentException("PUZZLE_NAME (" + PUZZLE_NAME + ") may not contain ':'!");
+            }
 			
 			try {
 				f = getPrivateStaticField(pluginClass, "FACE_NAMES_COLORS");
@@ -406,16 +407,16 @@ public class ScramblePlugin {
 	}
 	
 	public static Field getPrivateStaticField(Class<?> c, String name) throws NoSuchFieldException {
-		Field field = null;
-		for(Field f : c.getDeclaredFields())
-			if(f.getName().equals(name)) {
-				field = f;
-				break;
-			}
-		if(field == null)
-			throw new NoSuchFieldException("Could not find field: " + name + "!");
-		if(Modifier.isAbstract(field.getModifiers()) || !Modifier.isStatic(field.getModifiers()) || !Modifier.isPrivate(field.getModifiers()))
-			throw new NullPointerException(name + " must be private, static, and not abstract!"); //we can't use NoSuchFieldException, because we don't want this to be caught
+        Field field = Arrays.asList(c.getDeclaredFields()).stream()
+                .filter(f -> f.getName().equals(name))
+                .findAny()
+                .orElseThrow(() -> new NoSuchFieldException("Could not find field: " + name + "!"));
+
+		if(Modifier.isAbstract(field.getModifiers())
+                || !Modifier.isStatic(field.getModifiers())
+                || !Modifier.isPrivate(field.getModifiers())) {
+            throw new NullPointerException(name + " must be private, static, and not abstract!"); //we can't use NoSuchFieldException, because we don't want this to be caught
+        }
 		field.setAccessible(true);
 		return field;
 	}
@@ -434,22 +435,22 @@ public class ScramblePlugin {
 	}
 
 	public Scramble newScramble(final String variation, final int length, final String generatorGroup, final String[] attributes) {
-		if(newScrambleConstructor != null) {
-			try {
-				return TimeoutJob.doWork(new Callable<Scramble>() {
-					public Scramble call() throws Exception {
-						return newScrambleConstructor.newInstance(variation, length, generatorGroup, attributes);
-					}
-				});
-			} catch (InvocationTargetException e) {
-				e.getCause().printStackTrace();
-			} catch (Throwable e) {
-				if(e.getCause() != null)
-					e.getCause().printStackTrace();
-				e.printStackTrace();
-			}
-		}
-		return new Scramble("");
+        if (newScrambleConstructor == null) {
+            return new Scramble("");
+        }
+        try {
+            return TimeoutJob.doWork(() -> newScrambleConstructor.newInstance(variation, length, generatorGroup, attributes));
+
+        } catch (InvocationTargetException e) {
+            e.getCause().printStackTrace();
+            return new Scramble("");
+        } catch (Throwable e) {
+            if(e.getCause() != null) {
+                e.getCause().printStackTrace();
+            }
+            LOG.info("unexpected exception", e);
+            return new Scramble("");
+        }
 	}
 	
 	public Scramble importScramble(final String variation, final String scramble, final String generatorGroup, final String[] attributes) throws InvalidScrambleException {
@@ -465,7 +466,7 @@ public class ScramblePlugin {
 					throw (InvalidScrambleException) e.getCause();
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 				Thread.dumpStack();
 			}
 		}
@@ -487,7 +488,7 @@ public class ScramblePlugin {
 			} catch (InvocationTargetException e) {
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
 		return null;
@@ -542,7 +543,7 @@ public class ScramblePlugin {
 			} catch (InvocationTargetException e) {
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
 		return -1;
@@ -559,7 +560,7 @@ public class ScramblePlugin {
 			} catch (InvocationTargetException e) {
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
 		return null;
@@ -576,7 +577,7 @@ public class ScramblePlugin {
 			} catch (InvocationTargetException e) {
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
 		return null;
@@ -593,7 +594,7 @@ public class ScramblePlugin {
 			} catch (InvocationTargetException e) {
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {
-				e.printStackTrace();
+				LOG.info("unexpected exception", e);
 			}
 		}
 		return scramble;

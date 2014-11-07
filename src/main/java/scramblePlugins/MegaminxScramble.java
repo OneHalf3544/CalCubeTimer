@@ -1,20 +1,20 @@
 package scramblePlugins;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import net.gnehzr.cct.scrambles.Scramble;
+import org.apache.log4j.Logger;
+
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
-import net.gnehzr.cct.scrambles.Scramble;
-
 public class MegaminxScramble extends Scramble {
-	private static final String[][] FACE_NAMES_COLORS = 
+
+	private static final Logger LOG = Logger.getLogger(MegaminxScramble.class);
+
+	private static final String[][] FACE_NAMES_COLORS =
 	{ { "A", 	 "B",	   "C",		 "D",	   "E",		 "F",	   "a",		 "b",	   "f",		 "e",	   "d",		 "c" },
 	  { "ffffff", "336633", "66ffff", "996633", "3333ff", "993366", "ffff00", "66ff66", "ff9933", "ff0000", "000099", "ff66ff" } };
 	private static final String[] VARIATIONS = { "Megaminx", "Pochmann Megaminx" };
@@ -100,7 +100,7 @@ public class MegaminxScramble extends Scramble {
 				}
 			}
 		} catch(Exception e){
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 			return false;
 		}
 

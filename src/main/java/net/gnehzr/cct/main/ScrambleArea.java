@@ -1,43 +1,32 @@
 package net.gnehzr.cct.main;
 
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.swing.JEditorPane;
-import javax.swing.JLabel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.border.Border;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.html.HTMLEditorKit;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
-
+import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.html.HTMLEditorKit;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class ScrambleArea extends JScrollPane implements ComponentListener, HyperlinkListener, MouseListener, MouseMotionListener {
+
+	private static final Logger LOG = Logger.getLogger(ScrambleArea.class);
+
 	private ScrambleFrame scramblePopup;
 	private JEditorPane scramblePane = null;
 	private JPopupMenu success;
@@ -243,7 +232,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 			} else
 				resetPreferredSize(); //this will call setProperSize() again, with r != null
 		} catch (BadLocationException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 	}
 	

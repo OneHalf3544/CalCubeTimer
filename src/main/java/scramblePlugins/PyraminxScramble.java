@@ -1,10 +1,9 @@
 package scramblePlugins;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import net.gnehzr.cct.scrambles.Scramble;
+import org.apache.log4j.Logger;
+
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
@@ -12,11 +11,12 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.regex.Pattern;
 
-import net.gnehzr.cct.scrambles.Scramble;
-
 @SuppressWarnings("unused")
 public class PyraminxScramble extends Scramble {
-	private static final String[][] FACE_NAMES_COLORS = 
+
+	private static final Logger LOG = Logger.getLogger(PyraminxScramble.class);
+
+	private static final String[][] FACE_NAMES_COLORS =
 	{ { "F", "D", "L", "R" },
 	  { "ff0000", "0000ff", "00ff00", "ffff00" } };
 	private static final String PUZZLE_NAME = "Pyraminx";
@@ -84,7 +84,7 @@ public class PyraminxScramble extends Scramble {
 				else turn(face, dir);
 			}
 		} catch(Exception e){
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 			return false;
 		}
 

@@ -1,6 +1,16 @@
 package net.gnehzr.cct.scrambles;
 
-import java.awt.BorderLayout;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.i18n.ScramblePluginMessages;
+import net.gnehzr.cct.main.ScrambleArea;
+import net.gnehzr.cct.main.ScrambleFrame;
+import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
+import org.apache.log4j.Logger;
+import org.jvnet.substance.skin.SubstanceAutumnLookAndFeel;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -9,34 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import javax.swing.AbstractAction;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.i18n.ScramblePluginMessages;
-import net.gnehzr.cct.main.ScrambleArea;
-import net.gnehzr.cct.main.ScrambleFrame;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-
-import org.jvnet.substance.skin.SubstanceAutumnLookAndFeel;
-
 public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
+
+	private static final Logger LOG = Logger.getLogger(ScrambleDebugger.class);
+
 	private JTextField generatorField;
 	private JTextField unitTokenField;
 	private ScrambleArea scrambleArea;
@@ -49,16 +35,16 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 	public ScrambleDebugger(File plugin, int length) throws SecurityException, IllegalArgumentException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
 		super(plugin);
 		
-		System.out.println("Puzzle name: " + super.PUZZLE_NAME);
-		System.out.println("Puzzle faces and default colors: " + Arrays.deepToString(super.FACE_NAMES_COLORS));
-		System.out.println("Default unit size: " + super.DEFAULT_UNIT_SIZE);
-		System.out.println("Scramble variations: " + Arrays.toString(super.VARIATIONS));
-		System.out.println("Available scramble attributes: " + Arrays.toString(super.ATTRIBUTES));
-		System.out.println("Default attributes: " + Arrays.toString(super.DEFAULT_ATTRIBUTES));
+		LOG.info("Puzzle name: " + super.PUZZLE_NAME);
+		LOG.info("Puzzle faces and default colors: " + Arrays.deepToString(super.FACE_NAMES_COLORS));
+		LOG.info("Default unit size: " + super.DEFAULT_UNIT_SIZE);
+		LOG.info("Scramble variations: " + Arrays.toString(super.VARIATIONS));
+		LOG.info("Available scramble attributes: " + Arrays.toString(super.ATTRIBUTES));
+		LOG.info("Default attributes: " + Arrays.toString(super.DEFAULT_ATTRIBUTES));
 
 		if(length == -1)
 			length = super.getDefaultScrambleLength(new ScrambleVariation(this, ""));
-		System.out.println("Scramble length: " + length);
+		LOG.info("Scramble length: " + length);
 		Configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, true);
 		Configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, true);
 		AbstractAction aa = new AbstractAction() {public void actionPerformed(ActionEvent e) {}};
@@ -147,7 +133,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 		} else if(e.getSource() == newScramble) {
 			TOKEN_REGEX = Pattern.compile(unitTokenField.getText());
 			Scramble s = super.newScramble(sc.getScrambleVariation().getVariation(), (Integer) scrambleLength.getValue(), generatorField.getText(), super.DEFAULT_ATTRIBUTES);
-			System.out.println("New scramble " + s);
+			LOG.info("New scramble " + s);
 			scrambleArea.setScramble(s.toString(), sc);
 			f.pack();
 		} else if(e.getSource() == variationsBox) {
@@ -157,7 +143,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 	}
 	
 	private static void printUsage() {
-		System.out.println("Usage: ScrambleDebugger [class filename] (scramble length)");
+		LOG.info("Usage: ScrambleDebugger [class filename] (scramble length)");
 	}
 	public static void main(final String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -170,7 +156,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 						scramLength = Integer.parseInt(args[1]);
 					}
 				} else {
-					System.out.println("Invalid arguments");
+					LOG.info("Invalid arguments");
 					printUsage();
 					return;
 				}
@@ -185,24 +171,13 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 					JDialog.setDefaultLookAndFeelDecorated(true);
 					JFrame.setDefaultLookAndFeelDecorated(true);
 				} catch (UnsupportedLookAndFeelException e) {
-					e.printStackTrace();
+					LOG.info("unexpected exception", e);
 				}
 				try {
 					new ScrambleDebugger(new File(fileName), scramLength);
-				} catch(NoClassDefFoundError e) {
-					e.printStackTrace();
-				} catch(SecurityException e) {
-					e.printStackTrace();
-				} catch(IllegalArgumentException e) {
-					e.printStackTrace();
-				} catch(NoSuchMethodException e) {
-					e.printStackTrace();
-				} catch(NoSuchFieldException e) {
-					e.printStackTrace();
-				} catch(IllegalAccessException e) {
-					e.printStackTrace();
-				} catch(ClassNotFoundException e) {
-					e.printStackTrace();
+				} catch(NoClassDefFoundError | SecurityException | NoSuchMethodException | IllegalArgumentException
+						| ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+					LOG.info("unexpected exception", e);
 				}
 			}
 		});

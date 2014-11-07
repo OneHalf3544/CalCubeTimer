@@ -1,9 +1,22 @@
 package net.gnehzr.cct.main;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.misc.CCTFileChooser;
+import net.gnehzr.cct.misc.JTextAreaWithHistory;
+import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
+import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import org.apache.log4j.Logger;
+import org.jvnet.lafwidget.LafWidget;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -15,31 +28,10 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JEditorPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.misc.CCTFileChooser;
-import net.gnehzr.cct.misc.JTextAreaWithHistory;
-import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.Scramble;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
-
-import org.jvnet.lafwidget.LafWidget;
-
 public class ScrambleImportDialog extends JDialog implements ActionListener, DocumentListener {
+
+	private static final Logger LOG = Logger.getLogger(ScrambleImportDialog.class);
+
 	private URLHistoryBox urlField;
 	private JButton browse, addToArea;
 	private JTextAreaWithHistory scrambles;
@@ -144,7 +136,7 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 			} catch(FileNotFoundException ee) {
 				Utils.showErrorDialog(this, ee, url + "\n" + StringAccessor.getString("ScrambleImportDialog.notfound"));
 			} catch(Exception ee) {
-				ee.printStackTrace();
+				LOG.info("unexpected exception", ee);
 				Utils.showErrorDialog(this, ee);
 			}
 		} else if(source == importButton) {

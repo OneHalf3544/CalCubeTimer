@@ -1,9 +1,17 @@
 package net.gnehzr.cct.umts.ircclient.hyperlinkTextArea;
 
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Font;
-import java.awt.Toolkit;
+import org.apache.log4j.Logger;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.plaf.basic.BasicTextAreaUI;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.Highlighter.Highlight;
+import javax.swing.text.View;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -13,19 +21,10 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.BorderFactory;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.plaf.basic.BasicTextAreaUI;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.Element;
-import javax.swing.text.View;
-import javax.swing.text.Highlighter.Highlight;
-
 public class HyperlinkTextArea extends JTextArea implements DocumentListener, MouseMotionListener, MouseListener {
+
+	private static final Logger LOG = Logger.getLogger(HyperlinkTextArea.class);
+
 	// TODO - there may be some bug where coloring is getting lost
 	private Document doc;
 	public HyperlinkTextArea() {
@@ -191,7 +190,7 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 				getHighlighter().addHighlight(length + offset, end, new ColoredHighlightPainter(false, false, c));
 			}
 		} catch(BadLocationException e) {
-			e.printStackTrace();
+			LOG.info("unexpected exception", e);
 		}
 		return cctlinks;
 	}

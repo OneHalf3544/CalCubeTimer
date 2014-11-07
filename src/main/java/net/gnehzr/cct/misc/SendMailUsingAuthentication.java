@@ -61,7 +61,7 @@ public class SendMailUsingAuthentication {
 		String[] emailList = {"jeremyfleischman@sbcglobal.net"};
 		SendMailUsingAuthentication smtpMailSender = new SendMailUsingAuthentication(new Configuration());
 		smtpMailSender.postMail(emailList, emailSubjectTxt, emailMsgTxt);
-		System.out.println("Sucessfully sent mail to All Users");
+		LOG.info("Sucessfully sent mail to All Users");
 	}*/
 
 	char[] pass = null;

@@ -1,42 +1,32 @@
 package net.gnehzr.cct.configuration;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import com.google.common.base.Joiner;
+import net.gnehzr.cct.i18n.LocaleAndIcon;
+import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.statistics.Profile;
+import org.apache.log4j.Logger;
+import org.jvnet.substance.SubstanceLookAndFeel;
+import org.jvnet.substance.fonts.FontPolicy;
+import org.jvnet.substance.fonts.FontSet;
+
+import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
+import java.awt.*;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.UIDefaults;
-import javax.swing.plaf.FontUIResource;
-
-import net.gnehzr.cct.i18n.LocaleAndIcon;
-import net.gnehzr.cct.main.CALCubeTimer;
-import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.statistics.Profile;
-
-import org.jvnet.substance.SubstanceLookAndFeel;
-import org.jvnet.substance.fonts.FontPolicy;
-import org.jvnet.substance.fonts.FontSet;
-
 public final class Configuration {
+	private static final Logger LOG = Logger.getLogger(Configuration.class);
+
 	public static final File documentationFile = new File(getRootDirectory(), "documentation/readme.html");
 	public static final File dynamicStringsFile = new File(getRootDirectory(), "documentation/dynamicstrings.html");
 	public static final File profilesFolder = new File(getRootDirectory(), "profiles/");
@@ -248,16 +238,18 @@ public final class Configuration {
 
 	private static File root;
 	public static File getRootDirectory() {
-		if (root == null) {
-			try {
-				root = new File(Configuration.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-				if(root.isFile())
-					root = root.getParentFile();
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
-		}
-		return root;
+        if (root != null) {
+            return root;
+        }
+        try {
+            root = new File(Configuration.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            if(root.isFile()) {
+                root = root.getParentFile();
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
+        return root;
 	}
 
 	//returns empty string if everything is fine, error message otherwise
@@ -274,26 +266,21 @@ public final class Configuration {
 	}
 
 	private static SortedProperties defaults, props;
-	public static void loadConfiguration(File f) throws IOException {
-		InputStream in = null;
-		try {
-			in = new FileInputStream(defaultsFile);
+
+	public static void loadConfiguration(File file) throws IOException {
+		try(InputStream in = new FileInputStream(defaultsFile)) {
 			defaults = new SortedProperties();
 			defaults.load(in);
-			in.close();
-			props = new SortedProperties(defaults);
-			//call loadConfiguration(null) when you want to use cct without dealing with config files
-			if(f != null) {
-				f.createNewFile();
-				in = new FileInputStream(f);
-				props.load(in);
-				in.close();
-			}
-		} finally {
-			if(in != null) {
-				in.close();
-			}
 		}
+
+        props = new SortedProperties(defaults);
+        //call loadConfiguration(null) when you want to use cct without dealing with config files
+        if(file != null) {
+            file.createNewFile();
+            try(InputStream in = new FileInputStream(file)) {
+                props.load(in);
+            }
+        }
 	}
 
 	public static void saveConfigurationToFile(File f) throws IOException {
@@ -316,14 +303,12 @@ public final class Configuration {
 		commandLineProfile = profile;
 	}
 
-	public static ArrayList<Profile> getProfiles() {
-		String[] profDirs = profilesFolder.list(new FilenameFilter() {
-			public boolean accept(File f, String s) {
-				File temp = new File(f, s);
-				return !temp.isHidden() && temp.isDirectory() && !s.equalsIgnoreCase(guestName);
-			}
-		});
-		ArrayList<Profile> profs = new ArrayList<Profile>();
+	public static List<Profile> getProfiles() {
+		String[] profDirs = profilesFolder.list((f, s) -> {
+            File temp = new File(f, s);
+            return !temp.isHidden() && temp.isDirectory() && !s.equalsIgnoreCase(guestName);
+        });
+		List<Profile> profs = new ArrayList<>();
 		profs.add(guestProfile);
 		for(String profDir : profDirs) {
 			profs.add(Profile.getProfileByName(profDir));
@@ -343,12 +328,8 @@ public final class Configuration {
 		return profs;
 	}
 	
-	public static void setProfileOrdering(ArrayList<Profile> profiles) {
-		profileOrdering = "";
-		for(Profile p : profiles) {
-			profileOrdering += "|" + p.getName();
-		}
-		profileOrdering = profileOrdering.substring(1);
+	public static void setProfileOrdering(List<Profile> profiles) {
+        profileOrdering = Joiner.on("|").join(profiles);
 	}
 
 	private static String profileOrdering;
@@ -360,31 +341,22 @@ public final class Configuration {
 	public static Profile getSelectedProfile() {
 		if(profileCache == null) {
 			String profileName;
-			BufferedReader in = null;
-			try {
-				in = new BufferedReader(new FileReader(startupProfileFile));
+			try(BufferedReader in = new BufferedReader(new FileReader(startupProfileFile))) {
 				profileName = in.readLine();
 				profileOrdering = in.readLine();
 			} catch (IOException e) {
+				LOG.info("exception", e);
 				profileName = "";
-			} finally {
-				if(in != null)
-					try {
-						in.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
 			}
 			profileCache = getProfile(profileName);
 		}
 		return profileCache;
 	}
 	private static Profile getProfile(String profileName) {
-		for(Profile p : getProfiles()) {
-			if(p.getName().equalsIgnoreCase(profileName))
-				return p;
-		}
-		return guestProfile;
+		return getProfiles().stream()
+				.filter(p -> p.getName().equalsIgnoreCase(profileName))
+				.findFirst()
+				.orElse(guestProfile);
 	}
 
 	//returns file stored in props file, if available
@@ -504,13 +476,13 @@ public final class Configuration {
 						prop.load(new FileInputStream(lang));
 						i18nName = prop.getProperty("language");
 					} catch(Exception e) {
-						e.printStackTrace();
+						LOG.info("unexpected exception", e);
 					} finally {
 						if(in != null) {
 							try {
 								in.close();
 							} catch(IOException e) {
-								e.printStackTrace();
+								LOG.info("unexpected exception", e);
 							}
 						}
 					}
