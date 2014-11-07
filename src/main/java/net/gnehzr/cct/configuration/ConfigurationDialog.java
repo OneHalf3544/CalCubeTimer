@@ -1,73 +1,9 @@
 package net.gnehzr.cct.configuration;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.DisplayMode;
-import java.awt.Font;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JEditorPane;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingConstants;
-import javax.swing.Timer;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-
 import net.gnehzr.cct.configuration.SolveTypeTagEditorTableModel.TypeAndName;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
-import net.gnehzr.cct.misc.CCTFileChooser;
-import net.gnehzr.cct.misc.ComboItem;
-import net.gnehzr.cct.misc.ComboListener;
-import net.gnehzr.cct.misc.ComboRenderer;
-import net.gnehzr.cct.misc.ImageFilter;
-import net.gnehzr.cct.misc.ImagePreview;
-import net.gnehzr.cct.misc.JTextAreaWithHistory;
-import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.ProfileEditor;
 import net.gnehzr.cct.misc.dynamicGUI.AABorder;
@@ -79,12 +15,23 @@ import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SolveTime.SolveType;
-
+import org.apache.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
-
 import say.swing.JFontChooser;
 
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+
 public class ConfigurationDialog extends JDialog implements KeyListener, MouseListener, ActionListener, ItemListener, HyperlinkListener {
+
+	private static final Logger LOG = Logger.getLogger(ConfigurationDialog.class);
+
 	private static final float DISPLAY_FONT_SIZE = 20;
 	private static final String[] FONT_SIZES = { "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36" };
 
@@ -824,7 +771,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			try {
 				p.saveDatabase();
 			} catch(Exception e1) {
-				e1.printStackTrace();
+				LOG.info("unexpected exception", e1);
 			}
 			Configuration.setSelectedProfile(p);
 			if(!p.loadDatabase()) {
@@ -834,7 +781,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				Configuration.loadConfiguration(p.getConfigurationFile());
 				Configuration.apply();
 			} catch(IOException err) {
-				err.printStackTrace();
+				LOG.info("unexpected exception", err);
 			}
 			syncGUIwithConfig(false);
 		}

@@ -163,7 +163,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 				try {
 					Configuration.loadConfiguration(Configuration.guestProfile.getConfigurationFile());
 				} catch(IOException e1) {
-					e1.printStackTrace();
+					LOG.info("unexpected exception", e1);
 					return;
 				}
 				try {

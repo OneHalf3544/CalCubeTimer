@@ -21,6 +21,7 @@
     <orderEntry type="library" exported="" name="Gradle: org.java.net.substance:substance:5.3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.google.guava:guava:18.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.jetbrains:annotations:13.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: javax.activation:activation:1.1" level="project" />
   </component>
 </module>

@@ -197,9 +197,9 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 							null);
 					Desktop.getDesktop().mail(mailTo);
 				} catch (URISyntaxException e1) {
-					e1.printStackTrace();
+					LOG.info("unexpected exception", e1);
 				} catch (IOException e1) {
-					e1.printStackTrace();
+					LOG.info("unexpected exception", e1);
 				}
 			}
 		} else if (source == doneButton) {

@@ -329,7 +329,7 @@ public class Profile {
 			Exception x = spe;
 			if(spe.getException() != null)
 				x = spe.getException();
-			x.printStackTrace();
+			LOG.info("unexpected exception", x);
 
 		} catch(SAXException se) {
 			Exception x = se;

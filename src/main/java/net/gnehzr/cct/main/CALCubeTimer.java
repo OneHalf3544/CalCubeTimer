@@ -657,7 +657,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 					Configuration.loadConfiguration(affected.getConfigurationFile());
 					Configuration.apply();
 				} catch (IOException err) {
-					err.printStackTrace();
+					LOG.info("unexpected exception", err);
 				}
 				sessionSelected(getNextSession()); //we want to load this profile's startup session
 				statsModel.addTableModelListener(this); //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
@@ -790,12 +790,12 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			Exception x = spe;
 			if(spe.getException() != null)
 				x = spe.getException();
-			x.printStackTrace();
+			LOG.info("unexpected exception", x);
 		} catch(SAXException se) {
 			Exception x = se;
 			if(se.getException() != null)
 				x = se.getException();
-			x.printStackTrace();
+			LOG.info("unexpected exception", x);
 		} catch(ParserConfigurationException | IOException pce) {
 			LOG.info("unexpected exception", pce);
 		}
@@ -1341,11 +1341,9 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 
 	static void setLookAndFeel() {
 		try {
-//			UIManager.setLookAndFeel(new org.jvnet.substance.SubstanceLegacyDefaultLookAndFeel());
-//			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			UIManager.setLookAndFeel(new org.jvnet.substance.skin.SubstanceModerateLookAndFeel());
 		} catch (Exception e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 		}
 		updateWatermark();
 	}
@@ -1417,13 +1415,13 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		try {
 			p.saveDatabase();
 		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 		} catch (TransformerConfigurationException e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 		} catch (SAXException e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 		} catch (IOException e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 		}
 		saveToConfiguration();
 		try {
@@ -2003,13 +2001,14 @@ class ExitAction extends AbstractAction{
 	}
 }
 class AboutAction extends AbstractAction {
+	private static final Logger LOG = Logger.getLogger(AboutAction.class);
 	private AboutScrollFrame makeMeVisible;
 	public AboutAction() {
 		try {
 			makeMeVisible = new AboutScrollFrame(CALCubeTimer.class.getResource("about.html"), CALCubeTimer.cubeIcon.getImage());
 			setEnabled(true);
 		} catch (Exception e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 			setEnabled(false);
 		}
 	}

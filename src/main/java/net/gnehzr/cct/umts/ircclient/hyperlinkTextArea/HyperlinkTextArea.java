@@ -71,7 +71,7 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 						for(HyperlinkListener l : hyperlinkListeners)
 							l.hyperlinkUpdate(this, text, linkNum);
 					} catch(BadLocationException e1) {
-						e1.printStackTrace();
+						LOG.info("unexpected exception", e1);
 					}
 					return;
 				}

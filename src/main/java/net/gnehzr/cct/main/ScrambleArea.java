@@ -181,7 +181,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 				try {
 					s = currentCustomization.generateScramble(incrScramble);
 				} catch (InvalidScrambleException e1) {
-					e1.printStackTrace();
+					LOG.info("unexpected exception", e1);
 				}
 			}
 			scramblePopup.setScramble(s, fullScramble, currentCustomization.getScrambleVariation());

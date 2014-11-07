@@ -1,10 +1,11 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+import org.apache.log4j.Logger;
+
+import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
@@ -13,15 +14,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
-import javax.swing.JPopupMenu;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
-
 public class InternalFrameButton extends JButton implements MouseListener, Icon, PropertyChangeListener, ComponentListener {
+
+	private static final Logger LOG = Logger.getLogger(InternalFrameButton.class);
+
 	public JInternalFrame f;
 	private JPopupMenu preview;
 
@@ -143,7 +139,7 @@ public class InternalFrameButton extends JButton implements MouseListener, Icon,
 			try {
 				f.setSelected(true);
 			} catch(PropertyVetoException e1) {
-				e1.printStackTrace();
+				LOG.info("unexpected exception", e1);
 			}
 		}
 	}

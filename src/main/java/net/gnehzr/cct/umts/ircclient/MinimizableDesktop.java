@@ -1,23 +1,18 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import java.awt.Component;
-import java.awt.KeyEventPostProcessor;
-import java.awt.KeyboardFocusManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
+import org.apache.log4j.Logger;
+import org.jvnet.substance.SubstanceLookAndFeel;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
 
-import javax.swing.JDesktopPane;
-import javax.swing.JInternalFrame;
-import javax.swing.JToolBar;
-
-import org.jvnet.substance.SubstanceLookAndFeel;
-
 public class MinimizableDesktop extends JDesktopPane implements ActionListener, KeyEventPostProcessor {
+
+	private static final Logger LOG = Logger.getLogger(MinimizableDesktop.class);
+
 	private JToolBar windows;
 	public MinimizableDesktop() {
 		windows = new JToolBar();
@@ -65,7 +60,7 @@ public class MinimizableDesktop extends JDesktopPane implements ActionListener, 
 					try {
 						top.setSelected(true);
 					} catch(PropertyVetoException e1) {
-						e1.printStackTrace();
+						LOG.info("unexpected exception", e1);
 					}
 				}
 			}
@@ -148,7 +143,7 @@ public class MinimizableDesktop extends JDesktopPane implements ActionListener, 
 				try {
 					b.f.setMaximum(!b.f.isMaximum());
 				} catch(PropertyVetoException e1) {
-					e1.printStackTrace();
+					LOG.info("unexpected exception", e1);
 				}
 				return true;
 			}
@@ -159,7 +154,7 @@ public class MinimizableDesktop extends JDesktopPane implements ActionListener, 
 				try {
 					b.f.setClosed(true);
 				} catch(PropertyVetoException e1) {
-					e1.printStackTrace();
+					LOG.info("unexpected exception", e1);
 				}
 				return true;
 			}

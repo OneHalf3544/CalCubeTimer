@@ -35,6 +35,7 @@ dependencies {
     compile('org.java.net.substance:substance:5.3')
     compile('com.google.guava:guava:18.0')
     compile('log4j:log4j:1.2.17')
+    compile('org.jetbrains:annotations:13.0')
 }
 
 task createDocs {

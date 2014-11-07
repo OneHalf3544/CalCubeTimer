@@ -285,7 +285,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 			try {
 				Desktop.getDesktop().browse(new URI(url));
 			} catch(Exception error) {
-				error.printStackTrace();
+				LOG.info("unexpected exception", error);
 			}
 		} else {
 			CCTLink l = scramblesLinkMap.get(linkNum);

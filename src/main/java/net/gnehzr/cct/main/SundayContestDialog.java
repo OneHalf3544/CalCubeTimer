@@ -218,12 +218,12 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 			Exception x = spe;
 			if(spe.getException() != null)
 				x = spe.getException();
-			x.printStackTrace();
+			LOG.info("unexpected exception", x);
 		} catch(SAXException se) {
 			Exception x = se;
 			if(se.getException() != null)
 				x = se.getException();
-			x.printStackTrace();
+			LOG.info("unexpected exception", x);
 		} catch(ParserConfigurationException | IOException pce) {
 			LOG.info("unexpected exception", pce);
 		} finally {
@@ -250,7 +250,7 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 				dwd.setVisible(true);
 			} catch (IOException e1) {
 				Utils.showErrorDialog(this, e1);
-				e1.printStackTrace();
+				LOG.info("unexpected exception", e1);
 			}
 		} else if(source == doneButton) {
 			setVisible(false);

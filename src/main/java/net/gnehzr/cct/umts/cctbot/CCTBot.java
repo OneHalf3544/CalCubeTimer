@@ -194,7 +194,7 @@ public class CCTBot implements IRCListener {
 			if(argMap.containsKey("u"))
 				u = new URI(argMap.get("u"));
 		} catch(Exception e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 		}
 		if(u == null || u.getHost() == null) {
 			logger.info("Invalid URI");

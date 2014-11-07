@@ -146,7 +146,7 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 		try {
 			htmlFile = new File(outputFile.toURI());
 		} catch (URISyntaxException e1) {
-			e1.printStackTrace();
+			LOG.info("unexpected exception", e1);
 			Utils.showErrorDialog(this, e1);
 			return false;
 		}

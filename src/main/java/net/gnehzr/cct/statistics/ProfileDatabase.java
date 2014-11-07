@@ -1,6 +1,19 @@
 package net.gnehzr.cct.statistics;
 
-import java.awt.Component;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.misc.customJTable.DraggableJTable;
+import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
+import net.gnehzr.cct.misc.customJTable.SessionListener;
+import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import net.gnehzr.cct.statistics.Statistics.AverageType;
+import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
+
+import javax.swing.*;
+import javax.xml.transform.TransformerConfigurationException;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -10,23 +23,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.xml.transform.TransformerConfigurationException;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.misc.customJTable.DraggableJTable;
-import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import net.gnehzr.cct.misc.customJTable.SessionListener;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
-import net.gnehzr.cct.statistics.Statistics.AverageType;
-
-import org.xml.sax.SAXException;
-
 public class ProfileDatabase extends DraggableJTableModel implements ActionListener {
+
+	private static final Logger LOG = Logger.getLogger(ProfileDatabase.class);
+
 	private HashMap<String, PuzzleStatistics> database = new HashMap<String, PuzzleStatistics>();
 	private Profile owner;
 	public ProfileDatabase(Profile owner) {
@@ -244,13 +244,13 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 			try {
 				to.saveDatabase();
 			} catch (FileNotFoundException e1) {
-				e1.printStackTrace();
+				LOG.info("unexpected exception", e1);
 			} catch (TransformerConfigurationException e1) {
-				e1.printStackTrace();
+				LOG.info("unexpected exception", e1);
 			} catch (IOException e1) {
-				e1.printStackTrace();
+				LOG.info("unexpected exception", e1);
 			} catch (SAXException e1) {
-				e1.printStackTrace();
+				LOG.info("unexpected exception", e1);
 			}
 		}
 	}
