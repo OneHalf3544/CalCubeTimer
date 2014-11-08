@@ -10,7 +10,7 @@
     </appender>
 
     <logger name="net.gnehzr">
-        <level value="INFO"/>
+        <level value="TRACE"/>
     </logger>
 
     <logger name="org.kociemba">
