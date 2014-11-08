@@ -1,6 +1,9 @@
 package net.gnehzr.cct.main;
 
-import net.gnehzr.cct.configuration.*;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.ConfigurationChangeListener;
+import net.gnehzr.cct.configuration.ConfigurationDialog;
+import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.help.AboutScrollFrame;
 import net.gnehzr.cct.i18n.*;
 import net.gnehzr.cct.keyboardTiming.KeyboardHandler;
@@ -15,7 +18,6 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 import net.gnehzr.cct.statistics.Statistics.CCTUndoableEdit;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
@@ -51,6 +53,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.URI;
 import java.util.*;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -1762,7 +1765,9 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	}
 
 	private StackmatState lastAccepted = new StackmatState();
-	private ArrayList<SolveTime> splits = new ArrayList<SolveTime>();
+
+	private List<SolveTime> splits = new ArrayList<SolveTime>();
+
 	private boolean addTime(TimerState addMe) {
 		SolveTime protect = addMe.toSolveTime(null, splits);
 		if(penalty == null)

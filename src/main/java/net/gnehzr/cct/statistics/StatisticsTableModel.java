@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.ListIterator;
+import java.util.List;
 
 public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
 	Statistics stats;
@@ -160,7 +161,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			rawTime.setEnabled(false);
 			jpopup.add(rawTime);
 
-			ArrayList<SolveTime> split = selectedSolve.getSplits();
+			List<SolveTime> split = selectedSolve.getSplits();
 			if (split != null) {
 				ListIterator<SolveTime> splits = split.listIterator();
 				while (splits.hasNext()) {

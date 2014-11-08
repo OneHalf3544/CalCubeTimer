@@ -4,6 +4,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -19,12 +20,12 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 
 	private Set<SolveType> types = new HashSet<SolveType>();
 
-	int hundredths;
+	Duration hundredths;
 	private String scramble = null;
 	private List<SolveTime> splits;
 
 	public SolveTime() {
-		hundredths = Integer.MAX_VALUE;
+		hundredths = null;
 		setScramble(null);
 	}
 
@@ -40,7 +41,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 	
 	public SolveTime(double seconds, String scramble) {
-		this.hundredths = (int)(100 * seconds + .5);
+		this.hundredths = Duration.ofMillis(10 * (long) (100 * seconds + .5));
 		setScramble(scramble);
 	}
 
@@ -51,7 +52,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		setScramble(scramble);
 	}
 
-	public SolveTime(TimerState time, String scramble, ArrayList<SolveTime> splits) {
+	public SolveTime(TimerState time, String scramble, List<SolveTime> splits) {
 		this(time, scramble);
 		this.splits = splits;
 	}
@@ -68,7 +69,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	protected void setTime(String toParse, boolean importing) throws Exception {
-		hundredths = 0; //don't remove this
+		hundredths = Duration.ZERO; //don't remove this
 		toParse = toParse.trim();
 		if(toParse.isEmpty())
 			throw new Exception(StringAccessor.getString("SolveTime.noemptytimes"));
@@ -131,7 +132,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		if(seconds > 21000000) {
 			throw new Exception(StringAccessor.getString("SolveTime.toolarge"));
 		}
-		this.hundredths = (int)(100 * seconds + .5);
+		this.hundredths = Duration.ofMillis(10 * (int)(100 * seconds + .5));
 	}
 	static String toUSFormatting(String time) {
 		return time.replaceAll(Pattern.quote(Utils.getDecimalSeparator()), "");
@@ -147,7 +148,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	
 	//this is for display by CCT
 	public String toString() {
-		if(hundredths == Integer.MAX_VALUE || hundredths < 0) return "N/A";
+		if(hundredths == null || hundredths.isNegative()) return "N/A";
 		for(SolveType t : types)
 			if(!t.isSolved())
 				return t.toString();
@@ -193,7 +194,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	public double rawSecondsValue() {
-		return hundredths / 100.;
+		return hundredths.toMillis() / 1000.;
 	}
 
 	public double secondsValue() {
@@ -202,7 +203,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	private int value() {
-		return hundredths + (isType(SolveType.PLUS_TWO) ? 200 : 0);
+		return (int) (hundredths.toMillis() / 10  + (isType(SolveType.PLUS_TWO) ? 200 : 0));
 	}
 
 	//the behavior of the following 3 methods is kinda contradictory,
@@ -249,12 +250,12 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	public boolean isInfiniteTime() {
-		return isType(SolveType.DNF) || hundredths == Integer.MAX_VALUE;
+		return isType(SolveType.DNF) || hundredths == null;
 	}
 
 	//"true" in the sense that it was manually entered as POP or DNF
 	public boolean isTrueWorstTime(){
-		return hundredths == 0 && isInfiniteTime();
+		return hundredths.isZero() && isInfiniteTime();
 	}
 
 	public List<SolveTime> getSplits() {

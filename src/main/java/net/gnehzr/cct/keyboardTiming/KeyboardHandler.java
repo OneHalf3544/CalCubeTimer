@@ -1,13 +1,13 @@
 package net.gnehzr.cct.keyboardTiming;
 
-import java.awt.event.ActionEvent;
-
-import javax.swing.Timer;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.TimingListener;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.time.Duration;
 
 public class KeyboardHandler extends Timer {
 	private static final int PERIOD = 90; //measured in milliseconds
@@ -52,7 +52,7 @@ public class KeyboardHandler extends Timer {
 	}
 	
 	private TimerState getTimerState() {
-		return new TimerState((int) Math.rint(100*getElapsedTimeSeconds()));
+		return new TimerState(Duration.ofMillis((int)Math.rint(100*getElapsedTimeSeconds()) * 10));
 	}
 
 	private double getElapsedTimeSeconds() {

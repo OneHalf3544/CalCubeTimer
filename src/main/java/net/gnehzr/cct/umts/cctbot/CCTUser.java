@@ -1,13 +1,12 @@
 package net.gnehzr.cct.umts.cctbot;
 
+import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import net.gnehzr.cct.statistics.SolveTime;
+import org.jibble.pircbot.User;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import net.gnehzr.cct.statistics.SolveTime;
-
-import org.jibble.pircbot.User;
 
 public class CCTUser {
 	private String prefix;
@@ -100,7 +99,7 @@ public class CCTUser {
 			else
 				startTime = STOPPED;
 		} else
-			startTime = System.currentTimeMillis() - state.value() * 10;
+			startTime = System.currentTimeMillis() - state.value().toMillis();
 	}
 	public String getTimingState(boolean formatted) {
 		if(startTime == INSPECTING)

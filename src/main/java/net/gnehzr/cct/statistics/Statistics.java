@@ -1,17 +1,13 @@
 package net.gnehzr.cct.statistics;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
+
+import java.util.*;
 
 public class Statistics implements ConfigurationChangeListener, SolveCounter {
 	public static enum AverageType {
@@ -45,8 +41,11 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			newTime = newValue;
 		}
 		int row = -1;
-		private ArrayList<SolveType> oldTypes, newTypes;
-		public StatisticsEdit(int row, ArrayList<SolveType> oldTypes, ArrayList<SolveType> newTypes) {
+
+		private List<SolveType> oldTypes;
+		private ArrayList<SolveType> newTypes;
+
+		public StatisticsEdit(int row, List<SolveType> oldTypes, ArrayList<SolveType> newTypes) {
 			this.row = row;
 			this.oldTypes = oldTypes;
 			this.newTypes = newTypes;
@@ -114,7 +113,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 	public void setUndoRedoListener(UndoRedoListener url) {
 		editActions.setUndoRedoListener(url);
 	}
-	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<CCTUndoableEdit>();
+	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<>();
 	
 	ArrayList<SolveTime> times;
 	private ArrayList<Double>[] averages;
@@ -282,7 +281,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 	
 	public void setSolveTypes(int row, ArrayList<SolveType> newTypes) {
 		SolveTime selectedSolve = times.get(row);
-		ArrayList<SolveType> oldTypes = selectedSolve.getTypes();
+		List<SolveType> oldTypes = selectedSolve.getTypes();
 		selectedSolve.setTypes(newTypes);
 		editActions.add(new StatisticsEdit(row, oldTypes, newTypes));
 		refresh();
@@ -358,7 +357,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			}
 
 			for(i = 0; i < sortaverages[k].size() && averages[k].get(sortaverages[k].get(i)).compareTo(av) < 0; i++) ;
-			sortaverages[k].add(i, averages[k].size()-1);
+			sortaverages[k].add(i, averages[k].size() - 1);
 			if(i == 0){
 				int newbest = averages[k].size() - 1;
 				if(indexOfBestRA[k] < 0 || !Utils.equalDouble(averages[k].get(indexOfBestRA[k]), averages[k].get(newbest))){

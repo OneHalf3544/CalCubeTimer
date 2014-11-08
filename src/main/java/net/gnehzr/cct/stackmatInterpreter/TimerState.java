@@ -1,29 +1,32 @@
 package net.gnehzr.cct.stackmatInterpreter;
-import java.util.ArrayList;
 
 import net.gnehzr.cct.statistics.SolveTime;
+import org.jetbrains.annotations.NotNull;
+
+import java.time.Duration;
+import java.util.List;
 
 public class TimerState implements Comparable<TimerState> {
-	public static final TimerState ZERO_STATE = new TimerState();
-	private int hundredthsValue;
 
-	public TimerState() {}
+	public static final TimerState ZERO_STATE = new TimerState(Duration.ZERO);
 
-	public TimerState(int hundredths) {
-		setValue(hundredths);
+	private Duration time;
+
+	public TimerState() {
 	}
-	public void setValue(int hundredths) {
-		hundredthsValue = hundredths;
+
+	public TimerState(@NotNull Duration hundredths) {
+		this.time = hundredths;
 	}
-	
-	public SolveTime toSolveTime(String scramble, ArrayList<SolveTime> splits) {
+
+	public SolveTime toSolveTime(String scramble, List<SolveTime> splits) {
 		return new SolveTime(this, scramble, splits);
 	}
-	public int value() {
-		return hundredthsValue;
+	public Duration value() {
+		return time;
 	}
 	public int hashCode() {
-		return this.value();
+		return this.value().hashCode();
 	}
 	public boolean equals(Object obj) {
 		if(obj instanceof TimerState) {
@@ -33,11 +36,24 @@ public class TimerState implements Comparable<TimerState> {
 		return false;
 	}
 	public int compareTo(TimerState o) {
-		if(o == null)
-			return this.value();
-		return this.value() - o.value();
+		if(o == null || o.getTime() == null) {
+			return (int) this.value().toMillis();
+		}
+		return this.value().compareTo(o.value());
 	}
 	public String toString() {
 		return toSolveTime(null, null).toString();
+	}
+
+	public void setValue(Duration value) {
+		this.time = value;
+	}
+
+	public Duration getTime() {
+		return time;
+	}
+
+	public void setTime(Duration time) {
+		this.time = time;
 	}
 }

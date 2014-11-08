@@ -64,13 +64,13 @@ public class Stackapplet extends Applet implements PropertyChangeListener {
 		g.drawString(""+stackmat.isOn(), 10, 60);
 	}
 	private String status;
-	private int time;
+	private long time;
 	public void propertyChange(PropertyChangeEvent evt) {
 		status = evt.getPropertyName();
 		boolean leftHand=false, rightHand=false, greenLight=false, redLight=false;
 		if(evt.getNewValue() instanceof StackmatState) {
 			StackmatState state = (StackmatState) evt.getNewValue();
-			time = state.value();
+			time = state.value().toMillis() / 10;
 			leftHand = state.leftHand(); rightHand = state.rightHand();
 			greenLight = state.isGreenLight(); redLight = state.isRedLight();
 		}

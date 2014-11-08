@@ -1,5 +1,6 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import java.time.Duration;
 import java.util.ArrayList;
 
 public class StackmatState extends TimerState {
@@ -27,15 +28,16 @@ public class StackmatState extends TimerState {
 		return invertedHun;
 	}
 	
-	public StackmatState() {}
+	public StackmatState() {
+    }
 
 	public StackmatState(StackmatState previous, ArrayList<Integer> periodData) {
 		if(periodData.size() == 89) { //all data present
 			isValid = true;
-			int value = parseTime(periodData);
+			Duration value = parseTime(periodData);
 			super.setValue(value);
-			running = previous == null || this.compareTo(previous) > 0 && value > 0;
-			reset = value == 0;
+			running = previous == null || this.compareTo(previous) > 0 && !value.isZero();
+			reset = value.isZero();
 		} else if (previous != null) { //if corrupt and previous not null, make time equal to previous
 			this.rightHand = previous.rightHand;
 			this.leftHand = previous.leftHand;
@@ -50,12 +52,15 @@ public class StackmatState extends TimerState {
 		}
 	}
 
-	private int parseTime(ArrayList<Integer> periodData){
+	private Duration parseTime(ArrayList<Integer> periodData){
 		parseHeader(periodData);
 		minutes = parseDigit(periodData, 1, invertedMin);
 		seconds = parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec);
 		hundredths = parseDigit(periodData, 4, invertedHun) * 10 + parseDigit(periodData, 5, invertedHun);
-		return 6000 * minutes + 100 * seconds + hundredths;
+		return Duration
+                .ofMinutes(minutes)
+                .plus(Duration.ofSeconds(seconds))
+                .plus(Duration.ofMillis(hundredths * 10));
 	}
 
 	private void parseHeader(ArrayList<Integer> periodData){

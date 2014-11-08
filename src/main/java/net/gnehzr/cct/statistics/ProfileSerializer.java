@@ -88,39 +88,46 @@ public class ProfileSerializer {
             hd.endElement("", "", "comment");
         }
         for (int ch = 0; ch < stats.getAttemptCount(); ch++) {
-            SolveTime st = stats.get(ch);
-            atts.clear();
-            hd.startElement("", "", "solve", atts);
-            char[] chs = st.toExternalizableString().toCharArray();
-            hd.characters(chs, 0, chs.length);
-            temp = st.getComment();
-            if (!temp.isEmpty()) {
-                atts.clear();
-                hd.startElement("", "", "comment", atts);
-                chs = temp.toCharArray();
-                hd.characters(chs, 0, chs.length);
-                hd.endElement("", "", "comment");
-            }
-            temp = st.toSplitsString();
-            if (!temp.isEmpty()) {
-                atts.clear();
-                hd.startElement("", "", "splits", atts);
-                chs = temp.toCharArray();
-                hd.characters(chs, 0, chs.length);
-                hd.endElement("", "", "splits");
-            }
-            temp = st.getScramble();
-            if (!temp.isEmpty()) {
-                atts.clear();
-                hd.startElement("", "", "scramble", atts);
-                chs = temp.toCharArray();
-                hd.characters(chs, 0, chs.length);
-                hd.endElement("", "", "scramble");
-            }
-
-            hd.endElement("", "", "solve");
+            writeSolveData(hd, atts, stats, ch);
         }
         hd.endElement("", "", "session");
+    }
+
+    private void writeSolveData(TransformerHandler hd, AttributesImpl atts, Statistics stats, int ch) throws SAXException {
+        String temp;
+        SolveTime solveTime = stats.get(ch);
+        LOG.trace("write solveTime: " + solveTime);
+        atts.clear();
+        hd.startElement("", "", "solve", atts);
+        char[] chs = solveTime.toExternalizableString().toCharArray();
+        hd.characters(chs, 0, chs.length);
+        temp = solveTime.getComment();
+        if (!temp.isEmpty()) {
+            atts.clear();
+            hd.startElement("", "", "comment", atts);
+            chs = temp.toCharArray();
+            hd.characters(chs, 0, chs.length);
+            hd.endElement("", "", "comment");
+        }
+        temp = solveTime.toSplitsString();
+        if (!temp.isEmpty()) {
+            atts.clear();
+            hd.startElement("", "", "splits", atts);
+            chs = temp.toCharArray();
+            hd.characters(chs, 0, chs.length);
+            hd.endElement("", "", "splits");
+        }
+        temp = solveTime.getScramble();
+        if (!temp.isEmpty()) {
+            LOG.trace("write scramble: " + temp);
+            atts.clear();
+            hd.startElement("", "", "scramble", atts);
+            chs = temp.toCharArray();
+            hd.characters(chs, 0, chs.length);
+            hd.endElement("", "", "scramble");
+        }
+
+        hd.endElement("", "", "solve");
     }
 
     private TransformerHandler createTransformer() throws TransformerConfigurationException {
