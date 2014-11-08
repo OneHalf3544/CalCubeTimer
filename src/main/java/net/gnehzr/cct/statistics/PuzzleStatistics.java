@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import net.gnehzr.cct.main.CALCubeTimer;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
 
 public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter {
 	private String customization;

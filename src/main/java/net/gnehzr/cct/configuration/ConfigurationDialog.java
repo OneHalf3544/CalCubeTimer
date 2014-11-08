@@ -15,7 +15,7 @@ import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.ProfileDao;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import net.gnehzr.cct.statistics.SolveType;
 import org.apache.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import say.swing.JFontChooser;

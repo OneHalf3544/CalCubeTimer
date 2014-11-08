@@ -13,7 +13,7 @@ import net.gnehzr.cct.statistics.PuzzleStatistics;
 import net.gnehzr.cct.statistics.SolveCounter;
 import net.gnehzr.cct.statistics.Statistics;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 
 public class DynamicString{

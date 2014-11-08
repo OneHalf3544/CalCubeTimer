@@ -151,6 +151,7 @@ public class ProfileDao {
     }
 
     private void openAndLockStatFile(Profile profile) {
+        LOG.debug("openAndLockStatFile + " + profile.getStatistics());
         RandomAccessFile t = null;
         try {
             t = new RandomAccessFile(profile.getStatistics(), "rw");
@@ -163,6 +164,7 @@ public class ProfileDao {
     }
 
     void closeStatFileAndReleaseLock(Profile profile) {
+        LOG.debug("closeStatFileAndReleaseLock");
         try {
             profile.getStatisticsRandomAccessFile().close();
         } catch (IOException e) {

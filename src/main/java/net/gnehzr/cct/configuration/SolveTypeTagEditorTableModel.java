@@ -4,7 +4,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import net.gnehzr.cct.statistics.SolveType;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;

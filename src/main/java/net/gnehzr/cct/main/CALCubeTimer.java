@@ -15,7 +15,7 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 import net.gnehzr.cct.statistics.Statistics.CCTUndoableEdit;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
@@ -1793,9 +1793,9 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		}
 		if(choice == JOptionPane.YES_OPTION) {
 		} else if(choice == JOptionPane.NO_OPTION) {
-			protect.setTypes(Arrays.asList(SolveTime.SolveType.PLUS_TWO));
+			protect.setTypes(Arrays.asList(SolveType.PLUS_TWO));
 		} else if(choice == JOptionPane.CANCEL_OPTION) {
-			protect.setTypes(Arrays.asList(SolveTime.SolveType.DNF));
+			protect.setTypes(Arrays.asList(SolveType.DNF));
 		} else {
 			return false;
 		}

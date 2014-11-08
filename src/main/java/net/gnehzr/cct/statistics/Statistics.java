@@ -12,7 +12,6 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
 
 public class Statistics implements ConfigurationChangeListener, SolveCounter {
 	public static enum AverageType {

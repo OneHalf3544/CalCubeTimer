@@ -29,7 +29,7 @@ public class ProfileSerializer {
         this.profileDao = profileDao;
     }
 
-    void parseBySaxHandler(DefaultHandler parseLogic, RandomInputStream inputStream) {
+    public void parseBySaxHandler(DefaultHandler parseLogic, RandomInputStream inputStream) {
         try {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
@@ -57,7 +57,7 @@ public class ProfileSerializer {
         }
     }
 
-    void writeStatisticByPuzzle(TransformerHandler hd, AttributesImpl atts, PuzzleStatistics ps) throws SAXException {
+    private void writeStatisticByPuzzle(TransformerHandler hd, AttributesImpl atts, PuzzleStatistics ps) throws SAXException {
         //TODO - check if there are 0 sessions here and continue? NOTE: this isn't good enough, as there could be a bunch of empty sessions
         atts.clear();
         atts.addAttribute("", "", "customization", "CDATA", ps.getCustomization());
@@ -68,7 +68,7 @@ public class ProfileSerializer {
         hd.endElement("", "", "puzzle");
     }
 
-    void writeSessionStatistic(TransformerHandler hd, AttributesImpl atts, Session s) throws SAXException {
+    private void writeSessionStatistic(TransformerHandler hd, AttributesImpl atts, Session s) throws SAXException {
         Statistics stats = s.getStatistics();
         if (stats.getAttemptCount() == 0) { //this indicates that the session wasn't started
             return;
@@ -123,7 +123,7 @@ public class ProfileSerializer {
         hd.endElement("", "", "session");
     }
 
-    TransformerHandler createTransformer() throws TransformerConfigurationException {
+    private TransformerHandler createTransformer() throws TransformerConfigurationException {
         SAXTransformerFactory tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
         tf.setAttribute("indent-number", Integer.valueOf(4));
         // SAX2.0 ContentHandler.

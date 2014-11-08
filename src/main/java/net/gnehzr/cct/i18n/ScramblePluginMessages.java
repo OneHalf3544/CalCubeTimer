@@ -1,11 +1,15 @@
 package net.gnehzr.cct.i18n;
 
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import org.apache.log4j.Logger;
+
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-
 public class ScramblePluginMessages implements MessageAccessor {
+
+	private static final Logger LOG = Logger.getLogger(ScramblePluginMessages.class);
+
 	private static ResourceBundle RESOURCE_BUNDLE = null;
 
 	public static final MessageAccessor SCRAMBLE_ACCESSOR = new ScramblePluginMessages();
@@ -22,11 +26,15 @@ public class ScramblePluginMessages implements MessageAccessor {
 	}
 
 	public String getString(String key) {
-		if(RESOURCE_BUNDLE == null)
-			return "Could not find " + bundleFileName + ".properties!"; 
+		if(RESOURCE_BUNDLE == null) {
+			String error = "Could not find " + bundleFileName + ".properties!";
+			LOG.error(error);
+			return error;
+		}
 		try {
 			return RESOURCE_BUNDLE.getString(key);
 		} catch (MissingResourceException e) {
+			LOG.error("Could not find " + key + "!");
 			return '!' + key + '!';
 		}
 	}

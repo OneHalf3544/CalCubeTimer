@@ -4,7 +4,7 @@ import javazoom.jl.decoder.JavaLayerException;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.statistics.SolveTime.SolveType;
+import net.gnehzr.cct.statistics.SolveType;
 import org.apache.log4j.Logger;
 
 import java.io.File;

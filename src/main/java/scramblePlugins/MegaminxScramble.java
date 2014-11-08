@@ -14,6 +14,8 @@ public class MegaminxScramble extends Scramble {
 
 	private static final Logger LOG = Logger.getLogger(MegaminxScramble.class);
 
+	private static final String PUZZLE_NAME = "Megaminx";
+
 	private static final String[][] FACE_NAMES_COLORS =
 	{ { "A", 	 "B",	   "C",		 "D",	   "E",		 "F",	   "a",		 "b",	   "f",		 "e",	   "d",		 "c" },
 	  { "ffffff", "336633", "66ffff", "996633", "3333ff", "993366", "ffff00", "66ff66", "ff9933", "ff0000", "000099", "ff66ff" } };
