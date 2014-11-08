@@ -3,12 +3,15 @@ package net.gnehzr.cct.statistics;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import org.apache.log4j.Logger;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class SolveTime extends Commentable implements Comparable<SolveTime> {
+
+	private static final Logger LOG = Logger.getLogger(SolveTime.class);
 
 	public static final SolveTime BEST = new SolveTime(0, null) {
 		public void setTime(String toParse, boolean importing) throws Exception { throw new AssertionError(); };
@@ -24,32 +27,35 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	private String scramble = null;
 	private List<SolveTime> splits;
 
+	//this constructor exists to allow the jtable of times to contain the averages also
+	//we need to know the index so we can syntax highlight it
+	private int whichRA = -1;
+
 	public SolveTime() {
 		hundredths = null;
 		setScramble(null);
 	}
 
-	//this constructor exists to allow the jtable of times to contain the averages also
-	//we need to know the index so we can syntax highlight it
-	private int whichRA = -1;
+	public SolveTime(double seconds, String scramble) {
+		this.hundredths = Duration.ofMillis(10 * (long) (100 * seconds + .5));
+		LOG.trace("new SolveTime " + seconds);
+		setScramble(scramble);
+	}
 	public SolveTime(double seconds, int whichRA) {
 		this(seconds, null);
 		this.whichRA = whichRA;
-	}
-	public int getWhichRA() {
-		return whichRA;
-	}
-	
-	public SolveTime(double seconds, String scramble) {
-		this.hundredths = Duration.ofMillis(10 * (long) (100 * seconds + .5));
-		setScramble(scramble);
 	}
 
 	private SolveTime(TimerState time, String scramble) {
 		if(time != null) {
 			hundredths = time.value();
+			LOG.trace("new SolveTime " + time.getTime());
 		}
 		setScramble(scramble);
+	}
+
+	public int getWhichRA() {
+		return whichRA;
 	}
 
 	public SolveTime(TimerState time, String scramble, List<SolveTime> splits) {
@@ -71,8 +77,9 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	protected void setTime(String toParse, boolean importing) throws Exception {
 		hundredths = Duration.ZERO; //don't remove this
 		toParse = toParse.trim();
-		if(toParse.isEmpty())
+		if(toParse.isEmpty()) {
 			throw new Exception(StringAccessor.getString("SolveTime.noemptytimes"));
+		}
 		
 		String[] split = toParse.split(",");
 		boolean isSolved = true;
@@ -80,8 +87,9 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		for(c = 0; c < split.length - 1; c++) {
 			SolveType t = SolveType.getSolveType(split[c]);
 			if(t == null) {
-				if(!importing)
+				if(!importing) {
 					throw new Exception(StringAccessor.getString("SolveTime.invalidtype"));
+				}
 				t = SolveType.createSolveType(split[c]);
 			}
 			types.add(t);
@@ -135,7 +143,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		this.hundredths = Duration.ofMillis(10 * (int)(100 * seconds + .5));
 	}
 	static String toUSFormatting(String time) {
-		return time.replaceAll(Pattern.quote(Utils.getDecimalSeparator()), "");
+		return time.replaceAll(Pattern.quote(Utils.getDecimalSeparator()), ".");
 	}
 	
 	public void setScramble(String scramble) {
