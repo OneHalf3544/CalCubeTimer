@@ -1,12 +1,16 @@
 package net.gnehzr.cct.statistics;
 
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 
 public class Profile {
 
     private static final Logger LOG = Logger.getLogger(Profile.class);
+
+    private RandomAccessFile statisticsRandomAccessFile = null;
 
     private String name;
     private File directory;
@@ -103,5 +107,21 @@ public class Profile {
 
     public void setDirectory(File directory) {
         this.directory = directory;
+    }
+
+    public RandomAccessFile getStatisticsRandomAccessFile() {
+        return statisticsRandomAccessFile;
+    }
+
+    public void setStatisticsRandomAccessFile(@Nullable RandomAccessFile statisticsRandomAccessFile) {
+        this.statisticsRandomAccessFile = statisticsRandomAccessFile;
+    }
+
+    public void setStatistics(File statistics) {
+        this.statistics = statistics;
+    }
+
+    public void setConfiguration(File configuration) {
+        this.configuration = configuration;
     }
 }

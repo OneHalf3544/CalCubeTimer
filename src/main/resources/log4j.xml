@@ -9,8 +9,20 @@
         </layout>
     </appender>
 
+    <logger name="net.gnehzr">
+        <level value="INFO"/>
+    </logger>
+
+    <logger name="org.kociemba">
+        <level value="ERROR"/>
+    </logger>
+
+    <logger name="scramblePlugins">
+        <level value="ERROR"/>
+    </logger>
+
     <root>
-        <level value="error"/>
+        <level value="ERROR"/>
         <appender-ref ref="Console"/>
     </root>
 </log4j:configuration>

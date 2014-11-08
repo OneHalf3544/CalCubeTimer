@@ -1,8 +1,7 @@
 package net.gnehzr.cct.main;
 
+import javax.swing.*;
 import java.awt.event.ItemEvent;
-
-import javax.swing.JComboBox;
 
 public class LoudComboBox extends JComboBox {
 	//overriden to cause selected events to be fired even if the new item
@@ -10,7 +9,8 @@ public class LoudComboBox extends JComboBox {
 	public void setSelectedItem(Object selectMe) {
 		super.setSelectedItem(selectMe);
 		Object selected = getSelectedItem();
-		if(selectMe == null || selected == null || selectMe.equals(selected) || !getSelectedItem().equals(selectMe))
+		if(selectMe == null || selected == null || selectMe.equals(selected) || !getSelectedItem().equals(selectMe)) {
 			fireItemStateChanged(new ItemEvent(this, 0, selectMe, ItemEvent.SELECTED));
+		}
 	}
 }
