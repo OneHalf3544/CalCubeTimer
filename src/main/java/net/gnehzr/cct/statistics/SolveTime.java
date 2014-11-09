@@ -1,5 +1,6 @@
 package net.gnehzr.cct.statistics;
 
+import com.google.common.base.Joiner;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
@@ -162,9 +163,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 				return t.toString();
 		return Utils.formatTime(secondsValue()) + (isType(SolveType.PLUS_TWO) ? "+" : "");
 	}
-	public String toUSString() {
-		return toUSFormatting(toString());
-	}
+
 	//this is for use by the database, and will save the raw time if the solve was a POP or DNF
 	public String toExternalizableString() {
 		String time = "" + (value() / 100.); //this must work for +2 and DNF
@@ -180,20 +179,14 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		if(plusTwo) time += "+";
 		return typeString + time;
 	}
+
 	public String toSplitsString() {
-		if(splits == null) return "";
-		String temp = "";
-		for(SolveTime st : splits) {
-			temp += ", " + st;
-		}
-		if(!temp.isEmpty())
-			temp = temp.substring(2);
-		return temp;
+		return Joiner.on(", ").join(splits);
 	}
 	
 	//this follows the same formatting as the above method spits out
 	public void setSplitsFromString(String splitsString) {
-		splits = new ArrayList<SolveTime>();
+		splits = new ArrayList<>();
 		for(String s : splitsString.split(", *")) {
 			try {
 				splits.add(new SolveTime(s, null));

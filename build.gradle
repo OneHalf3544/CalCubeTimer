@@ -5,11 +5,14 @@ version = '1.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+mainClassName = "net.gnehzr.cct.main.CALCubeTimer"
+applicationDefaultJvmArgs = ["-DrootDir=" + new File("${buildDir}/resources/main").toURI().toString()]
+
 jar {
     manifest {
         attributes(
             'Class-Path': '.',
-            'Main-Class': 'net.gnehzr.cct.main.CALCubeTimer',
+            'Main-Class': mainClassName,
             'SplashScreen-Image': ' net/gnehzr/cct/main/battle.jpg',
             'Implementation-Title': project.name,
             'Implementation-Version': project.version,
@@ -36,19 +39,5 @@ dependencies {
     compile('com.google.guava:guava:18.0')
     compile('log4j:log4j:1.2.17')
     compile('org.jetbrains:annotations:13.0')
-    testCompile('org.testng:testng:6.8.8'
-    )
-}
-
-task createDocs {
-    def docs = file("$buildDir/documentation")
-    outputs.dir docs
-    doLast {
-        docs.mkdirs()
-        new File(docs, "readme.txt").write("Read me!")
-    }
-}
-
-applicationDistribution.from(createDocs) {
-    into "documentation"
+    testCompile('org.testng:testng:6.8.8')
 }
