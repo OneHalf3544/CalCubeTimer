@@ -1271,6 +1271,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 
 	public static void main(String[] args) {
 		LOG.info("start CalCubeTimer");
+		DefaultUncaughtExceptionHandler.initialize();
 
 		//apple broke something in java 6
 		try {

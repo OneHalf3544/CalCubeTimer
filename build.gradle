@@ -40,4 +40,5 @@ dependencies {
     compile('log4j:log4j:1.2.17')
     compile('org.jetbrains:annotations:13.0')
     testCompile('org.testng:testng:6.8.8')
+    testCompile('org.hamcrest:hamcrest-all:1.3')
 }

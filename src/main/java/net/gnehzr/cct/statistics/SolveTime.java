@@ -1,6 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
@@ -26,7 +27,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 
 	Duration hundredths;
 	private String scramble = null;
-	private List<SolveTime> splits;
+	private List<SolveTime> splits = ImmutableList.of();
 
 	//this constructor exists to allow the jtable of times to contain the averages also
 	//we need to know the index so we can syntax highlight it
@@ -186,11 +187,13 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	
 	//this follows the same formatting as the above method spits out
 	public void setSplitsFromString(String splitsString) {
-		splits = new ArrayList<>();
+		this.splits = new ArrayList<>();
 		for(String s : splitsString.split(", *")) {
 			try {
-				splits.add(new SolveTime(s, null));
-			} catch (Exception e) {}
+				this.splits.add(new SolveTime(s, null));
+			} catch (Exception e) {
+				LOG.error(e.getMessage(), e);
+			}
 		}
 	}
 
