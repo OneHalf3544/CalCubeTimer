@@ -25,7 +25,6 @@ import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.lafwidget.LafWidget;
-import org.jvnet.lafwidget.utils.LafConstants;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.api.SubstanceConstants;
 import org.jvnet.substance.watermark.SubstanceImageWatermark;
@@ -1268,77 +1267,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	}
 
 	static CALCubeTimer cct; //need this instance to be able to easily set the waiting cursor
-	private static ScrambleSecurityManager security;
 
-	public static void main(String[] args) {
-		LOG.info("start CalCubeTimer");
-		DefaultUncaughtExceptionHandler.initialize();
-
-		//apple broke something in java 6
-		try {
-			File.createTempFile("tmp", "ihateapple");
-		} catch(Exception e) {}
-		
-		//The error messages are not internationalized because I want people to
-		//be able to google the following messages
-		if(args.length >= 2) {
-			System.out.println("Too many arguments!");
-			System.out.println("Usage: CALCubeTimer (profile directory)");
-		} else if(args.length == 1) {
-			File startupProfileDir = new File(args[0]);
-			if(!startupProfileDir.exists() || !startupProfileDir.isDirectory()) {
-				LOG.info("Couldn't find directory " + startupProfileDir.getAbsolutePath());
-			} else {
-				Profile commandedProfile = ProfileDao.loadProfile(startupProfileDir);
-				Configuration.setCommandLineProfile(commandedProfile);
-				Configuration.setSelectedProfile(commandedProfile);
-			}
-		}
-
-		System.setSecurityManager(security = new ScrambleSecurityManager(TimeoutJob.PLUGIN_LOADER));
-
-		SwingUtilities.invokeLater(() -> {
-            String errors = Configuration.getStartupErrors();
-            if(!errors.isEmpty()) {
-                Utils.showErrorDialog(null, errors, "Couldn't start CCT!");
-                System.exit(1);
-            }
-            try {
-                Configuration.loadConfiguration(Configuration.getSelectedProfile().getConfigurationFile());
-            } catch (IOException e) {
-                LOG.info("unexpected exception", e);
-            }
-
-            JDialog.setDefaultLookAndFeelDecorated(true);
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            setLookAndFeel();
-//				if(1==1) {
-//					JFrame f = new JFrame();
-//					f.add(new JButton("HIYA"));
-//					f.pack();
-//					f.setVisible(true);
-//					return;
-//				}
-
-            UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
-            UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
-            UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
-            UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
-
-            cct = new CALCubeTimer();
-            Configuration.addConfigurationChangeListener(cct);
-            cct.setTitle("CCT " + CCT_VERSION);
-            cct.setIconImage(cubeIcon.getImage());
-            cct.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            cct.setSelectedProfile(Configuration.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
-            cct.setVisible(true);
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    cct.prepareForProfileSwitch();
-                }
-            });
-        });
-	}
 	//this happens in windows when alt+f4 is pressed
 	public void dispose() {
 		super.dispose();
@@ -1610,7 +1539,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	public void configurationChanged() {
 		//we need to notify the security manager ourself, because it may not have any reference to
 		//Configuration for the cctbot to work.
-		security.configurationChanged();
+		Main.SCRAMBLE_SECURITY_MANAGER.configurationChanged();
 
 		refreshActions();
 		

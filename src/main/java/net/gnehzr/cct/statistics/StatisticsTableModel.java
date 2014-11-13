@@ -34,7 +34,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		stats.notifyListeners(false);
 	}
 
-	@NotNull
+	//@NotNull
 	public Session getCurrentSession() {
 		return session;
 	}
@@ -168,14 +168,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			rawTime.setEnabled(false);
 			jpopup.add(rawTime);
 
-			ListIterator<SolveTime> splits = selectedSolve.getSplits().listIterator();
-			while (splits.hasNext()) {
-                SolveTime next = splits.next();
-                rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.split") + splits.nextIndex()
-                        + ": " + next + "\t" + next.getScramble());
-                rawTime.setEnabled(false);
-                jpopup.add(rawTime);
-            }
+			addSplitsPopup(jpopup, selectedSolve);
 
 			edit = new JMenuItem(StringAccessor.getString("StatisticsTableModel.edittime"));
 			edit.addActionListener(this);
@@ -212,5 +205,16 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		jpopup.add(discard);
 		timesTable.requestFocusInWindow();
 		jpopup.show(e.getComponent(), e.getX(), e.getY());
+	}
+
+	private void addSplitsPopup(JPopupMenu jpopup, SolveTime selectedSolve) {
+		List<SolveTime> splits = selectedSolve.getSplits();
+		for (int i = 0; i < splits.size(); i++) {
+			SolveTime next = splits.get(i);
+			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.split") + i
+					+ ": " + next + "\t" + next.getScramble());
+			rawTime.setEnabled(false);
+			jpopup.add(rawTime);
+		}
 	}
 }

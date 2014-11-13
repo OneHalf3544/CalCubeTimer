@@ -5,7 +5,7 @@ version = '1.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-mainClassName = "net.gnehzr.cct.main.CALCubeTimer"
+mainClassName = "net.gnehzr.cct.main.Main"
 applicationDefaultJvmArgs = ["-DrootDir=" + new File("${buildDir}/resources/main").toURI().toString()]
 
 jar {
