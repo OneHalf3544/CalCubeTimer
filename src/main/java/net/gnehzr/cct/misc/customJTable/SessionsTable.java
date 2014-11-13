@@ -1,11 +1,5 @@
 package net.gnehzr.cct.misc.customJTable;
 
-import java.awt.Dimension;
-
-import javax.swing.DefaultCellEditor;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.TableModelEvent;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.main.ScrambleChooserComboBox;
@@ -14,6 +8,10 @@ import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.statistics.ProfileDatabase;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
+
+import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import java.awt.*;
 
 public class SessionsTable extends DraggableJTable implements SelectionListener {
 	private StatisticsTableModel statsModel;
@@ -42,8 +40,9 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 	}
 	public void rowSelected(int row) {
 		Session selected = (Session) getValueAt(row, convertColumnIndexToView(0));
-		if(statsModel.getCurrentSession() != selected) //we don't want to reload the current session
+		if(statsModel.getCurrentSession() != selected) {  //we don't want to reload the current session
 			fireSessionSelected(selected);
+		}
 	}
 	
 	private ProfileDatabase pd;

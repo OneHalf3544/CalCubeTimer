@@ -11,40 +11,46 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.ListIterator;
+import java.util.*;
+import java.util.List;
 
 public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
 	Statistics stats;
-	private Session sesh;
 
-	public void setSession(@NotNull Session sesh) {
-		this.sesh = sesh;
+	@NotNull
+	private Session session;
+
+	public void setSession(@NotNull Session session) {
+		this.session = session;
 		if(stats != null) {
 			stats.setUndoRedoListener(null);
 			stats.setTableListener(null);
 			stats.setStatisticsUpdateListeners(null);
 		}
-		stats = sesh.getStatistics();
+		stats = session.getStatistics();
 		stats.setTableListener(this);
-		stats.setUndoRedoListener(l);
+		stats.setUndoRedoListener(undoRedoListener);
 		stats.setStatisticsUpdateListeners(statsListeners);
 		stats.notifyListeners(false);
 	}
 
+	@NotNull
 	public Session getCurrentSession() {
-		return sesh;
+		return session;
 	}
+
 	public Statistics getCurrentStatistics() {
 		return stats;
 	}
-	private UndoRedoListener l;
+
+	private UndoRedoListener undoRedoListener;
+
 	public void setUndoRedoListener(UndoRedoListener l) {
-		this.l = l;
+		this.undoRedoListener = l;
 	}
-	private ArrayList<StatisticsUpdateListener> statsListeners = new ArrayList<StatisticsUpdateListener>();
+
+	private List<StatisticsUpdateListener> statsListeners = new ArrayList<StatisticsUpdateListener>();
+
 	public void addStatisticsUpdateListener(StatisticsUpdateListener l) {
 		//This nastyness is to ensure that PuzzleStatistics have had a chance to see the change (see notifyListeners() in Statistics)
 		//before the dynamicstrings
@@ -61,7 +67,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	public void fireStringUpdates() {
 		for(StatisticsUpdateListener sul : statsListeners)
 			sul.update();
-		l.refresh();
+		undoRedoListener.refresh();
 	}
 	
 	private String[] columnNames = new String[] { "StatisticsTableModel.times", "StatisticsTableModel.ra0", "StatisticsTableModel.ra1", "StatisticsTableModel.comment", "StatisticsTableModel.tags" };
@@ -145,14 +151,16 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	private JMenuItem edit, discard;
 	private DraggableJTable timesTable;
 	private Component prevFocusOwner;
-	private HashMap<SolveType, JMenuItem> typeButtons;
+	private Map<SolveType, JMenuItem> typeButtons;
+
 	public void showPopup(MouseEvent e, DraggableJTable timesTable, Component prevFocusOwner) {
 		this.timesTable = timesTable;
 		this.prevFocusOwner = prevFocusOwner;
 		JPopupMenu jpopup = new JPopupMenu();
 		int[] selectedSolves = timesTable.getSelectedRows();
-		if(selectedSolves.length == 0)
+		if(selectedSolves.length == 0) {
 			return;
+		}
 		else if(selectedSolves.length == 1) {
 			SolveTime selectedSolve = stats.get(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")

@@ -637,8 +637,9 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			sendUserstate();
 			
 			//change current session's scramble customization
-			if(statsModel.getCurrentSession() != null)
+			if(statsModel.getCurrentSession() != null) {
 				statsModel.getCurrentSession().setCustomization(scramblesList.getScrambleCustomization().toString());
+			}
 			
 			//update new scramble generator
 			generator.setText(scramblesList.getScrambleCustomization().getGenerator());

@@ -210,8 +210,8 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 		notifyListeners(false);
 	}
 
-	private ArrayList<StatisticsUpdateListener> strlisten;
-	public void setStatisticsUpdateListeners(ArrayList<StatisticsUpdateListener> listener) {
+	private List<StatisticsUpdateListener> strlisten;
+	public void setStatisticsUpdateListeners(List<StatisticsUpdateListener> listener) {
 		strlisten = listener;
 	}
 	
@@ -306,7 +306,9 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 		times.add(s);
 
 		int i;
-		for(i = 0; i < sorttimes.size() && sorttimes.get(i).compareTo(s) <= 0; i++) ;
+		for(i = 0; i < sorttimes.size() && sorttimes.get(i).compareTo(s) <= 0; i++) {
+			;
+		}
 		sorttimes.add(i, s);
 
 		for(int k = 0; k < RA_SIZES_COUNT; k++)
