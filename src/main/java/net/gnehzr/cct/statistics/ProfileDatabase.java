@@ -20,12 +20,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ProfileDatabase extends DraggableJTableModel implements ActionListener {
 
 	private static final Logger LOG = Logger.getLogger(ProfileDatabase.class);
 
-	private HashMap<String, PuzzleStatistics> database = new HashMap<>();
+	private Map<String, PuzzleStatistics> database = new HashMap<>();
 	private Profile owner;
 
 	public ProfileDatabase(Profile owner) {
@@ -59,14 +60,7 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 			}
 		}
 	}
-	
-//	public void removeEmptyPuzzles() {
-//		for(PuzzleStatistics ps : getPuzzlesStatistics()) {
-//			if(ps.getSessionsCount() == 0)
-//				database.remove(ps.getCustomization());
-//		}
-//	}
-	
+
 	public int getDatabaseTypeCount(SolveType t) {
 		int c = 0;
 		for(PuzzleStatistics ps : database.values())
@@ -93,11 +87,7 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 	public void setSessionListener(SessionListener sl) {
 		l = sl;
 	}
-//	private void fireSessionSelected(Session s) {
-//		if(l != null) {
-//			l.sessionSelected(s);
-//		}
-//	}
+
 	private void fireSessionsDeleted() {
 		if(l != null) {
 			l.sessionsDeleted();

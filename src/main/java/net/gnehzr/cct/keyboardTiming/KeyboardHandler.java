@@ -8,13 +8,17 @@ import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.time.Duration;
+import java.time.Instant;
 
 public class KeyboardHandler extends Timer {
+
 	private static final int PERIOD = 90; //measured in milliseconds
-	private TimingListener tl;
-	public KeyboardHandler(TimingListener tl) {
+
+	private TimingListener timingListener;
+
+	public KeyboardHandler(TimingListener timingListener) {
 		super(PERIOD, null);
-		this.tl = tl;
+		this.timingListener = timingListener;
 		reset();
 	}
 
@@ -25,40 +29,44 @@ public class KeyboardHandler extends Timer {
 	}
 	
 	public boolean canStartTimer() {
-		return System.currentTimeMillis() - current > Configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES, false);
+		return Duration.between(current, Instant.now()).toMillis() > Configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES, false);
 	}
 
-	private long start;
+	private Instant start;
+
 	public void startTimer() {
 		boolean inspectionEnabled = Configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false);
-		if(!canStartTimer())
+		if(!canStartTimer()) {
 			return;
-		current = start = System.currentTimeMillis();;
+		}
+		current = start = Instant.now();
 		if(!inspectionEnabled || inspecting) {
 			start();
 			inspecting = false;
 			reset = false;
-			tl.timerStarted();
+			timingListener.timerStarted();
 		} else {
 			inspecting = true;
-			tl.inspectionStarted();
+			timingListener.inspectionStarted();
 		}
 	}
 	
-	private long current;
+	private Instant current;
+	@Override
 	protected void fireActionPerformed(ActionEvent e) {
-		current = System.currentTimeMillis();
-		tl.refreshDisplay(getTimerState());
+		current = Instant.now();
+		timingListener.refreshDisplay(getTimerState());
 	}
 	
 	private TimerState getTimerState() {
-		return new TimerState(Duration.ofMillis((int)Math.rint(100*getElapsedTimeSeconds()) * 10));
+		return new TimerState(getElapsedTimeSeconds());
 	}
 
-	private double getElapsedTimeSeconds() {
-		if(reset)
-			return 0;
-		return (current - start) / 1000.;
+	private Duration getElapsedTimeSeconds() {
+		if(reset) {
+			return Duration.ZERO;
+		}
+		return Duration.between(start, current);
 	}
 
 	private boolean reset;
@@ -71,17 +79,19 @@ public class KeyboardHandler extends Timer {
 	}
 
 	public void split() {
-		tl.timerSplit(getTimerState());
+		timingListener.timerSplit(getTimerState());
 	}
 
+	@Override
 	public void stop() {
-		current = System.currentTimeMillis();
+		current = Instant.now();
 		super.stop();
-		tl.refreshDisplay(getTimerState());
+		timingListener.refreshDisplay(getTimerState());
 	}
+
 	public void fireStop() {
-		tl.timerStopped(getTimerState());
+		timingListener.timerStopped(getTimerState());
 		reset = true;
-		current = System.currentTimeMillis();
+		current = Instant.now();
 	}
 }

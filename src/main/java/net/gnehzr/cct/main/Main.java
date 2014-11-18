@@ -83,6 +83,7 @@ public class Main {
             CALCubeTimer.cct.setSelectedProfile(Configuration.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
             CALCubeTimer.cct.setVisible(true);
             Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
                 public void run() {
                     CALCubeTimer.cct.prepareForProfileSwitch();
                 }

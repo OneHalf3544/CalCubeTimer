@@ -3,17 +3,18 @@ package net.gnehzr.cct.statistics;
 import com.google.common.base.Throwables;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.ProfileSerializer.RandomInputStream;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXException;
 
 import javax.xml.transform.TransformerConfigurationException;
-import java.io.*;
-import java.nio.channels.FileLock;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * <p>
@@ -42,6 +43,7 @@ public class ProfileDao {
     }
 
     public static Profile loadProfile(File directory) {
+        LOG.info("load profile from " + directory);
         String name = directory.getAbsolutePath();
         File configuration = getConfiguration(directory, directory.getName());
         File statistics = getStatistics(directory, directory.getName());
@@ -81,14 +83,14 @@ public class ProfileDao {
             return false;
         }
 
-        return doWithLockedFile(profile.getStatistics(), file -> {
-            profileSerializer.doInWaitingState(() -> {
+        return Utils.doWithLockedFile(profile.getStatistics(), file -> {
+            Utils.doInWaitingState(() -> {
                 try {
                     ProfileDatabase puzzleDB = new ProfileDatabase(profile); //reset the database
                     profile.setPuzzleDatabase(puzzleDB);
+                    profile.setStatisticsRandomAccessFile(file);
 
                     if (file.length() != 0) { // if the file is empty, don't bother to parse it
-                        profile.setStatisticsRandomAccessFile(file);
                         DatabaseLoader handler = new DatabaseLoader(profile);
                         profileSerializer.parseBySaxHandler(handler, new RandomInputStream(profile.getStatisticsRandomAccessFile()));
                     }
@@ -98,32 +100,6 @@ public class ProfileDao {
                 }
             });
         });
-    }
-
-    /**
-     * @param file
-     * @param fileConsumer
-     * @return true, if file was processed. false, if file locked by another task
-     */
-    private boolean doWithLockedFile(@NotNull File file,
-                                     @NotNull Consumer<RandomAccessFile> fileConsumer) {
-        RandomAccessFile t;
-        try {
-            t = new RandomAccessFile(file, "rw");
-        } catch (FileNotFoundException e) {
-            throw Throwables.propagate(e);
-        }
-
-        try(FileLock fileLock = t.getChannel().tryLock()) {
-            if (fileLock != null) {
-                fileConsumer.accept(t);
-                return true;
-            }
-            return false;
-
-        } catch (IOException e) {
-            throw Throwables.propagate(e);
-        }
     }
 
     public void saveDatabase(Profile profile) throws IOException, TransformerConfigurationException, SAXException {
@@ -138,7 +114,7 @@ public class ProfileDao {
             return;
         }
 
-        profileSerializer.doInWaitingState(() -> {
+        Utils.doInWaitingState(() -> {
             try {
                 profileSerializer.writeStatisticFile(profile);
 
@@ -218,5 +194,5 @@ public class ProfileDao {
         profiles.remove(profile.getName());
         profile.setName(newName);
         profiles.put(profile.getName(), profile);
-    }//I can't believe I had to create these two silly little classses
+    }
 }

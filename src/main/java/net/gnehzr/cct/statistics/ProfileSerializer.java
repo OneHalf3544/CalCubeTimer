@@ -159,16 +159,6 @@ public class ProfileSerializer {
         hd.endDocument();
     }
 
-    void doInWaitingState(Runnable runnable) {
-        try {
-            CALCubeTimer.setWaiting(true);
-            runnable.run();
-
-        } finally {
-            CALCubeTimer.setWaiting(false);
-        }
-    }
-
     static class RandomInputStream extends InputStream {
         private RandomAccessFile raf;
 

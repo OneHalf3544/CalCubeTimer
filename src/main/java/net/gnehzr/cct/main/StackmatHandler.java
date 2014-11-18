@@ -1,17 +1,17 @@
 package net.gnehzr.cct.main;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
 public class StackmatHandler implements PropertyChangeListener {
 	private TimingListener tl;
-	public StackmatHandler(TimingListener tl, StackmatInterpreter si) {
-		this.tl = tl;
+	public StackmatHandler(TimingListener timingListener, StackmatInterpreter si) {
+		this.tl = timingListener;
 		si.addPropertyChangeListener(this);
 		reset();
 	}

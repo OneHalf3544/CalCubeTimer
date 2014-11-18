@@ -54,10 +54,12 @@ public class Profile {
         newName = null;
     }
 
+    @Override
     public int hashCode() {
         return name.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o == null)
             return false;

@@ -1,23 +1,27 @@
 package net.gnehzr.cct.misc;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.Window;
-import java.io.CharArrayWriter;
-import java.io.PrintWriter;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
-
-import javax.swing.JOptionPane;
-
+import com.google.common.base.Throwables;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CALCubeTimer;
+import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.*;
+import java.math.RoundingMode;
+import java.nio.channels.FileLock;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
+import java.util.function.Consumer;
 
 public class Utils {
+
+	private static final Logger LOG = Logger.getLogger(Utils.class);
+
 	public static DecimalFormat getDecimalFormat() {
 		DecimalFormat df = new DecimalFormat("0.00");
 		df.setRoundingMode(RoundingMode.HALF_UP);
@@ -176,4 +180,42 @@ public class Utils {
 		return JOptionPane.showOptionDialog(c, message, StringAccessor.getString("Utils.confirm"), JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE,
 				null, yesNo, yesNo[0]);
 	}
+
+	public static void doInWaitingState(Runnable runnable) {
+        try {
+            CALCubeTimer.setWaiting(true);
+            runnable.run();
+
+        } finally {
+            CALCubeTimer.setWaiting(false);
+        }
+    }
+
+	/**
+     * @param file file to be locked. Lock is not released after method execution
+     * @param fileConsumer
+     * @return true, if file was processed. false, if file locked by another task
+     */
+    public static boolean doWithLockedFile(@NotNull File file,
+										   @NotNull Consumer<RandomAccessFile> fileConsumer) {
+        RandomAccessFile t;
+		try {
+			t = new RandomAccessFile(file, "rw");
+		} catch (FileNotFoundException e) {
+			throw Throwables.propagate(e);
+		}
+
+		try (FileLock fileLock = t.getChannel().tryLock()) {
+			if (fileLock != null) {
+				LOG.debug("lock file " + file);
+				fileConsumer.accept(t);
+                return true;
+            }
+            LOG.warn("cannot lock file " + file);
+            return false;
+
+        } catch (IOException e) {
+            throw Throwables.propagate(e);
+        }
+    }
 }

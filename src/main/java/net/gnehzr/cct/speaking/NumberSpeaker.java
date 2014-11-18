@@ -35,7 +35,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 	private static HashMap<String, NumberSpeaker> numberSpeakers;
 	private static HashMap<String, NumberSpeaker> getNumberSpeakers() {
 		if(numberSpeakers == null) {
-			numberSpeakers = new HashMap<String, NumberSpeaker>();
+			numberSpeakers = new HashMap<>();
 			for(File f : Configuration.voicesFolder.listFiles()) {
 				String fileName = f.getName();
 				if(fileName.endsWith(ZIP_EXTENSION) && f.isFile()) {
@@ -45,8 +45,8 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 						name = name.substring(0, name.length() - ZIP_EXTENSION.length());
 						ns = new NumberSpeaker(name, f);
 						numberSpeakers.put(name, ns);
-					} catch (ZipException e) {
 					} catch (IOException e) {
+						LOG.warn("ignored exception", e);
 					}
 				}
 			}
@@ -122,7 +122,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     
     //"Your time is " + lastin.toSolveTime(null, null).value() / 100. + " seconds"
     //Speaks something of the form "xyz.ab seconds"
-    public void speak(boolean yourTime, int hundredths) throws Exception {
+    public void speak(boolean yourTime, long hundredths) throws Exception {
     	if(clips == null)
     		throw new Exception("Failed to open " + name + ".zip!");
     	if(yourTime) {
@@ -140,8 +140,8 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     	}
     }
     
-    private LinkedList<String> breakItDown(int hundredths, boolean clockFormat) {
-    	int largest; //either the number of minutes or hundreds of seconds
+    private LinkedList<String> breakItDown(long hundredths, boolean clockFormat) {
+    	long largest; //either the number of minutes or hundreds of seconds
     	if(clockFormat) {
     		largest = hundredths / (60*100);
     		hundredths %= (60*100);
@@ -149,17 +149,17 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     		largest = hundredths / 10000;
     		hundredths %= 10000;
     	}
-    	int tens = hundredths / 1000;
+    	long tens = hundredths / 1000;
     	hundredths %= 1000;
-    	int ones = hundredths / 100;
+    	long ones = hundredths / 100;
     	hundredths %= 100;
-    	int tenths = hundredths / 10;
+    	long tenths = hundredths / 10;
     	hundredths %= 10;
     	LinkedList<String> temp = new LinkedList<String>();
     	if(largest != 0) {
     		if(clockFormat) {
-    			int minTens = largest / 10;
-    			int minSecs = largest % 10;
+    			long minTens = largest / 10;
+    			long minSecs = largest % 10;
     			dealWithTens(temp, minTens, minSecs);
     			if(largest == 1)
     				temp.add("minute");
@@ -185,7 +185,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     	return temp;
     }
     
-    private void dealWithTens(LinkedList<String> temp, int tens, int ones) {
+    private void dealWithTens(LinkedList<String> temp, long tens, long ones) {
 		if(tens == 1)
 			temp.add((10*tens + ones) + "");
 		else if(tens != 0) {

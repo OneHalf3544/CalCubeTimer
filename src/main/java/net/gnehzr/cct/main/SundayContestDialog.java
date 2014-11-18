@@ -26,6 +26,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 
+import static net.gnehzr.cct.i18n.StringAccessor.getString;
+
 public class SundayContestDialog extends JDialog implements ActionListener {
 
 	private static final Logger LOG = Logger.getLogger(SundayContestDialog.class);
@@ -213,10 +215,10 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 			SAXParser saxParser = factory.newSAXParser();
 			saxParser.parse(new ByteArrayInputStream(str.getBytes()), handler);
 		} catch(SAXParseException spe) {
-			System.err.println(spe.getSystemId() + ":" + spe.getLineNumber() + StringAccessor.getString("SundayContestDialog.parseerror") + spe.getMessage());
+			LOG.error(spe.getSystemId() + ":" + spe.getLineNumber() + getString("SundayContestDialog.parseerror") + spe.getMessage());
 
 			Exception x = spe;
-			if(spe.getException() != null)
+			if (spe.getException() != null)
 				x = spe.getException();
 			LOG.info("unexpected exception", x);
 		} catch(SAXException se) {
