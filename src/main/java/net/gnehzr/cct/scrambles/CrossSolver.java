@@ -464,10 +464,4 @@ public class CrossSolver {
 		
 		return solutions;
 	}
-	
-	public static void main(String[] args) {
-		LOG.info(solveCross('U', 'D', "B' F D U2 L2 R2 D B F' L' F2 L' R2 D' U' B' R' U2 F D L R D2 U L2"));
-//		LOG.info(solveCross('U', 'D', "B' F D U2"));
-//		LOG.info(solveCross('U', 'U', "B' F D U2"));
-	}
 }
