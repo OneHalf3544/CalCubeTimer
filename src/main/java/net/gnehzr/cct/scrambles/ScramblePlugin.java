@@ -318,12 +318,16 @@ public class ScramblePlugin {
 					if(FACE_NAMES_COLORS[0].length != FACE_NAMES_COLORS[1].length)
 						throw new ArrayIndexOutOfBoundsException("FACE_NAMES_COLORS[0].length (" + FACE_NAMES_COLORS[0].length + ") != FACE_NAMES_COLORS[1].length (" + FACE_NAMES_COLORS[1].length + ")");
 				}
-			} catch(NoSuchFieldException e) {}
+			} catch(NoSuchFieldException e) {
+				LOG.warn("no FACE_NAMES_COLORS field");
+			}
 	
 			try {
 				f = getPrivateStaticField(pluginClass, "DEFAULT_UNIT_SIZE");
 				DEFAULT_UNIT_SIZE = f.getInt(null);
-			} catch(NoSuchFieldException e) {}
+			} catch(NoSuchFieldException e) {
+				LOG.warn("no DEFAULT_UNIT_SIZE field");
+			}
 			
 			try {
 				f = getPrivateStaticField(pluginClass, "VARIATIONS");
@@ -337,6 +341,7 @@ public class ScramblePlugin {
 						throw new IllegalArgumentException("Scramble variation (" + var + ") may not contain ':'!");
 				}
 			} catch(NoSuchFieldException e) {
+				LOG.warn("no VARIATIONS field");
 				VARIATIONS = new String[] { "" };
 			}
 			
@@ -347,6 +352,7 @@ public class ScramblePlugin {
 					throw new NullPointerException("DEFAULT_LENGTHS may not be null!");
 				//there's no need to deal w/ negative lengths here, we'll deal with it later
 			} catch(NoSuchFieldException e) {
+				LOG.warn("no DEFAULT_LENGTHS field");
 				DEFAULT_LENGTHS = new int[] { 0 };
 			}
 

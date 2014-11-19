@@ -43,7 +43,7 @@ public class ProfileDao {
     }
 
     public static Profile loadProfile(File directory) {
-        LOG.info("load profile from " + directory);
+        LOG.debug("load profile from " + directory);
         String name = directory.getAbsolutePath();
         File configuration = getConfiguration(directory, directory.getName());
         File statistics = getStatistics(directory, directory.getName());
@@ -103,7 +103,7 @@ public class ProfileDao {
     }
 
     public void saveDatabase(Profile profile) throws IOException, TransformerConfigurationException, SAXException {
-        LOG.info("save database");
+        LOG.debug("save database");
         profile.getPuzzleDatabase().removeEmptySessions();
         if (profile == Configuration.guestProfile) {
             guestSession = CALCubeTimer.statsModel.getCurrentSession();

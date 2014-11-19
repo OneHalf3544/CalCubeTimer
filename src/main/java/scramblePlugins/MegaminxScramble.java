@@ -20,7 +20,8 @@ public class MegaminxScramble extends Scramble {
 	{ { "A", 	 "B",	   "C",		 "D",	   "E",		 "F",	   "a",		 "b",	   "f",		 "e",	   "d",		 "c" },
 	  { "ffffff", "336633", "66ffff", "996633", "3333ff", "993366", "ffff00", "66ff66", "ff9933", "ff0000", "000099", "ff66ff" } };
 	private static final String[] VARIATIONS = { "Megaminx", "Pochmann Megaminx" };
-	
+	private static final int[] DEFAULT_LENGTHS = { 77, 77 };
+
 	private static final double UNFOLDHEIGHT = 2 + 3 * Math.sin(.3 * Math.PI) + Math.sin(.1 * Math.PI);
 	private static final double UNFOLDWIDTH = 4 * Math.cos(.1 * Math.PI) + 2 * Math.cos(.3 * Math.PI);
 	private boolean pochmann = false;
