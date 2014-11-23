@@ -15,8 +15,8 @@ public class TimerState implements Comparable<TimerState> {
 	public TimerState() {
 	}
 
-	public TimerState(@NotNull Duration hundredths) {
-		this.time = hundredths;
+	public TimerState(@NotNull Duration time) {
+		this.time = time;
 	}
 
 	public SolveTime toSolveTime(String scramble, List<SolveTime> splits) {
@@ -35,12 +35,15 @@ public class TimerState implements Comparable<TimerState> {
 		}
 		return false;
 	}
+
+	@Override
 	public int compareTo(TimerState o) {
 		if(o == null || o.getTime() == null) {
 			return (int) this.value().toMillis();
 		}
 		return this.value().compareTo(o.value());
 	}
+	@Override
 	public String toString() {
 		return toSolveTime(null, null).toString();
 	}

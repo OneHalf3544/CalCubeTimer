@@ -34,7 +34,7 @@ public class ScramblePluginMessages implements MessageAccessor {
 		try {
 			return RESOURCE_BUNDLE.getString(key);
 		} catch (MissingResourceException e) {
-			LOG.error("Could not find " + key + "!");
+			LOG.error("Could not find " + key + " in " + bundleFileName + "!");
 			return '!' + key + '!';
 		}
 	}

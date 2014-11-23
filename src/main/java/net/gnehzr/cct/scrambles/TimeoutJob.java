@@ -1,15 +1,21 @@
 package net.gnehzr.cct.scrambles;
 
+import com.google.common.base.Throwables;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import org.apache.log4j.Logger;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-
 public final class TimeoutJob {
+
+	private static final Logger LOG = Logger.getLogger(TimeoutJob.class);
+
 	private TimeoutJob() {}
 	
 	public static final ScramblePluginClassLoader PLUGIN_LOADER = new ScramblePluginClassLoader();
+
 	private static class ThreadJob<T> extends Thread {
 		T result;
 		Throwable error;
@@ -17,6 +23,7 @@ public final class TimeoutJob {
 		public ThreadJob(Callable<T> callMe) {
 			this.callMe = callMe;
 		}
+		@Override
 		public void run() {
 			try {
 				result = callMe.call();
@@ -34,12 +41,17 @@ public final class TimeoutJob {
 		Integer timeout = null;
 		try {
 			timeout = Configuration.getInt(VariableKey.SCRAMBLE_PLUGIN_TIMEOUT, false);
-		} catch(Throwable c) {} //we want to be able to handle no configuration at all
+		} catch(Throwable c) {
+			//we want to be able to handle no configuration at all
+			LOG.warn("cannot get configuration parameter", c);
+		}
 		if(timeout == null)
 			timeout = 0;
 		try {
 			t.join(timeout);
-		} catch(InterruptedException e) {}
+		} catch(InterruptedException e) {
+			throw Throwables.propagate(e);
+		}
 		if(t.isAlive()) {
 			t.stop();
 			throw new TimeoutException("Job timed out after " + timeout + " milliseconds.");
