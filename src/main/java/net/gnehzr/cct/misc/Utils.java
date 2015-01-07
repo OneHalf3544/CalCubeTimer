@@ -22,7 +22,7 @@ public class Utils {
 
 	private static final Logger LOG = Logger.getLogger(Utils.class);
 
-	public static DecimalFormat getDecimalFormat() {
+	private static DecimalFormat getDecimalFormat() {
 		DecimalFormat df = new DecimalFormat("0.00");
 		df.setRoundingMode(RoundingMode.HALF_UP);
 		df.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.ENGLISH));

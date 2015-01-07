@@ -104,7 +104,7 @@ public class CCTUser {
 			else
 				startTime = STOPPED;
 		} else
-			startTime = System.currentTimeMillis() - state.value().toMillis();
+			startTime = System.currentTimeMillis() - state.getTime().toMillis();
 	}
 	public String getTimingState(boolean formatted) {
 		if(startTime == INSPECTING)

@@ -58,7 +58,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	private SolveTime(TimerState time, String scramble, Configuration configuration) {
 		this.configuration = configuration;
 		if(time != null) {
-			this.time = time.value();
+			this.time = time.getTime();
 			LOG.trace("new SolveTime " + time.getTime());
 		}
 		setScramble(scramble);

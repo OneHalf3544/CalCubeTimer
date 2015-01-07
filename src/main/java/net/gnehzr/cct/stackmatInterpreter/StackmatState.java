@@ -1,5 +1,7 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import net.gnehzr.cct.misc.Utils;
+
 import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
 
@@ -18,10 +20,16 @@ public class StackmatState extends TimerState {
 	private boolean isValid = false;
 	private boolean greenLight = false;
 
-	private static boolean invertedMin, invertedSec, invertedHun;
+	private static boolean invertedMin;
+	private static boolean invertedSec;
+	private static boolean invertedHun;
+
 	public static void setInverted(boolean minutes, boolean seconds, boolean hundredths) {
-		invertedMin = minutes; invertedSec = seconds; invertedHun = hundredths;
+		invertedMin = minutes;
+		invertedSec = seconds;
+		invertedHun = hundredths;
 	}
+
 	public static boolean isInvertedMinutes() {
 		return invertedMin;
 	}
@@ -42,7 +50,7 @@ public class StackmatState extends TimerState {
 		if(periodData.size() == 89) { //all data present
 			isValid = true;
 			Duration value = parseTime(periodData);
-			super.setValue(value);
+			setTime(value);
 			running = previous == null || this.compareTo(previous) > 0 && !value.isZero();
 			reset = value.isZero();
 		} else if (previous != null) { //if corrupt and previous not null, make time equal to previous
@@ -55,7 +63,7 @@ public class StackmatState extends TimerState {
 			this.hundredths = previous.hundredths;
 			this.isValid = previous.isValid;
 			this.greenLight = previous.greenLight;
-			super.setValue(previous.value());
+			setTime(previous.getTime());
 		}
 	}
 
@@ -82,7 +90,9 @@ public class StackmatState extends TimerState {
 
 	private int parseDigit(List<Integer> periodData, int pos, boolean invert){
 		int temp = 0;
-		for(int i = 1; i <= 4; i++) temp += periodData.get(pos * 10 + i) << (i - 1);
+		for(int i = 1; i <= 4; i++) {
+			temp += periodData.get(pos * 10 + i) << (i - 1);
+		}
 
 		return invert ? 15 - temp : temp;
 	}
@@ -121,7 +131,8 @@ public class StackmatState extends TimerState {
 	public boolean isGreenLight(){
 		return greenLight;
 	}
+
 	public String toString() {
-		return minutes + ":" + ((seconds < 10) ? "0" : "") + seconds + "" + ((hundredths < 10) ? "0" : "") + hundredths;
+		return Utils.formatTime(getTime().toMillis() / 1000.0);
 	}
 }

@@ -29,5 +29,9 @@ public class UtilsTest {
                 {new SolveTime(2134234.23, "F' U2 R", configuration), "592:50:2.30"},
                 {new SolveTime(34.23, "F' U2 R", configuration), "592:50:2.30"},
         };
+
+    @Test
+    public void testClockFormat() throws Exception {
+        assertEquals(Utils.clockFormat(72.2142), "1:12:21");
     }
 }

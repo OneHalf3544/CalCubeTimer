@@ -70,7 +70,7 @@ public class Stackapplet extends Applet implements PropertyChangeListener {
 	public void paint(Graphics g) {
 		g.drawString(""+status, 10, 20);
 		g.drawString(""+time, 10, 40);
-		g.drawString(""+stackmat.isOn(), 10, 60);
+		g.drawString("" + stackmat.isOn(), 10, 60);
 	}
 	private String status;
 	private long time;
@@ -79,7 +79,7 @@ public class Stackapplet extends Applet implements PropertyChangeListener {
 		boolean leftHand=false, rightHand=false, greenLight=false, redLight=false;
 		if(evt.getNewValue() instanceof StackmatState) {
 			StackmatState state = (StackmatState) evt.getNewValue();
-			time = state.value().toMillis() / 10;
+			time = state.getTime().toMillis() / 10;
 			leftHand = state.leftHand(); rightHand = state.rightHand();
 			greenLight = state.isGreenLight(); redLight = state.isRedLight();
 		}
