@@ -1,7 +1,9 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import net.gnehzr.cct.misc.Utils;
+
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.List;
 
 public class StackmatState extends TimerState {
 	private Boolean rightHand = false;
@@ -14,10 +16,16 @@ public class StackmatState extends TimerState {
 	private boolean isValid = false;
 	private boolean greenLight = false;
 
-	private static boolean invertedMin, invertedSec, invertedHun;
+	private static boolean invertedMin;
+	private static boolean invertedSec;
+	private static boolean invertedHun;
+
 	public static void setInverted(boolean minutes, boolean seconds, boolean hundredths) {
-		invertedMin = minutes; invertedSec = seconds; invertedHun = hundredths;
+		invertedMin = minutes;
+		invertedSec = seconds;
+		invertedHun = hundredths;
 	}
+
 	public static boolean isInvertedMinutes() {
 		return invertedMin;
 	}
@@ -31,11 +39,11 @@ public class StackmatState extends TimerState {
 	public StackmatState() {
     }
 
-	public StackmatState(StackmatState previous, ArrayList<Integer> periodData) {
-		if(periodData.size() == 89) { //all data present
+	public StackmatState(StackmatState previous, List<Integer> periodData) {
+		if (periodData.size() == 89) { //all data present
 			isValid = true;
 			Duration value = parseTime(periodData);
-			super.setValue(value);
+			setTime(value);
 			running = previous == null || this.compareTo(previous) > 0 && !value.isZero();
 			reset = value.isZero();
 		} else if (previous != null) { //if corrupt and previous not null, make time equal to previous
@@ -48,11 +56,11 @@ public class StackmatState extends TimerState {
 			this.hundredths = previous.hundredths;
 			this.isValid = previous.isValid;
 			this.greenLight = previous.greenLight;
-			super.setValue(previous.value());
+			setTime(previous.getTime());
 		}
 	}
 
-	private Duration parseTime(ArrayList<Integer> periodData){
+	private Duration parseTime(List<Integer> periodData){
 		parseHeader(periodData);
 		minutes = parseDigit(periodData, 1, invertedMin);
 		seconds = parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec);
@@ -63,7 +71,7 @@ public class StackmatState extends TimerState {
                 .plus(Duration.ofMillis(hundredths * 10));
 	}
 
-	private void parseHeader(ArrayList<Integer> periodData){
+	private void parseHeader(List<Integer> periodData){
 		int temp = 0;
 		for(int i = 1; i <= 5; i++) temp += periodData.get(i) << (5 - i);
 
@@ -73,9 +81,11 @@ public class StackmatState extends TimerState {
 		greenLight = temp == 16;
 	}
 
-	private int parseDigit(ArrayList<Integer> periodData, int pos, boolean invert){
+	private int parseDigit(List<Integer> periodData, int pos, boolean invert){
 		int temp = 0;
-		for(int i = 1; i <= 4; i++) temp += periodData.get(pos * 10 + i) << (i - 1);
+		for(int i = 1; i <= 4; i++) {
+			temp += periodData.get(pos * 10 + i) << (i - 1);
+		}
 
 		return invert ? 15 - temp : temp;
 	}
@@ -114,7 +124,8 @@ public class StackmatState extends TimerState {
 	public boolean isGreenLight(){
 		return greenLight;
 	}
+
 	public String toString() {
-		return minutes + ":" + ((seconds < 10) ? "0" : "") + seconds + "" + ((hundredths < 10) ? "0" : "") + hundredths;
+		return Utils.formatTime(getTime().toMillis() / 1000.0);
 	}
 }
