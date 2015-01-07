@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-public class TimerLabel extends JColorComponent implements ComponentListener, ConfigurationChangeListener, FocusListener, KeyListener, MouseListener {
+public class TimerLabel extends JColorComponent implements ComponentListener, ConfigurationChangeListener {
 
 	private static final Logger LOG = Logger.getLogger(TimerLabel.class);
 
@@ -37,23 +37,80 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		this.scrambleArea = scrambleArea;
 		addComponentListener(this);
 		setFocusable(true);
-		addFocusListener(this);
-		addKeyListener(this);
-		addMouseListener(this);
+		addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				refreshTimer();
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				refreshTimer();
+			}
+		});
+		addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) return;
+				int code = e.getKeyCode();
+				if (e.getWhen() - getTime(code) < 10) {
+					timeup.put(code, (long) 0);
+				} else if(!isKeyDown(code)){
+					keyDown.put(code, true);
+					keyReallyPressed(e);
+				}
+				refreshTimer();
+			}
+
+			@Override
+			public void keyReleased(final KeyEvent e) {
+				if(Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+					return;
+				}
+				int code = e.getKeyCode();
+				timeup.put(code, e.getWhen());
+				ActionListener checkForKeyPress = new ActionListener() {
+                    @Override
+					public void actionPerformed(ActionEvent evt) {
+                        if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
+                            keyDown.put(keyCode, false);
+                            keyReallyReleased(e);
+                        }
+                        ((Timer) evt.getSource()).stop();
+                    }
+                    private int keyCode;
+                    public ActionListener setKeyCode(int keyCode) {
+                        this.keyCode = keyCode;
+                        return this;
+                    }
+                }.setKeyCode(code);
+
+				new Timer(10, checkForKeyPress).start();
+			}
+		});
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				requestFocusInWindow();
+			}
+		});
 		setFocusTraversalKeysEnabled(false);
-//		Configuration.addConfigurationChangeListener(this); //CCT.java will notify us @ a better time than Configuration would
 	}
 	public void setKeyboardHandler(KeyboardHandler keyHandler) {
 		this.keyHandler = keyHandler;
 	}
 	
 	private static final Dimension MIN_SIZE = new Dimension(0, 150);
+
+	@Override
 	public Dimension getMaximumSize() {
 		return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
 	}
+	@Override
 	public Dimension getMinimumSize() {
 		return MIN_SIZE;
 	}
+	@Override
 	public Dimension getPreferredSize() {
 		return MIN_SIZE;
 	}
@@ -62,8 +119,11 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	private boolean on;
 	public void setStackmatOn(boolean on) {
 		this.on = on;
-		if(!on)
-			leftHand = rightHand = greenLight = false;
+		if(!on) {
+			leftHand = false;
+			rightHand = false;
+			greenLight = false;
+		}
 		refreshTimer();
 	}
 	private boolean greenLight;
@@ -77,6 +137,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	}
 
 	private TimerState time;
+
 	public void setTime(TimerState time) {
 		setForeground(Configuration.getColor(VariableKey.TIMER_FG, false));
 		this.time = time;
@@ -86,21 +147,27 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	public TimerState getTimerState() {
 		return time;
 	}
+
+	@Override
 	public void setText(String s) {
 		setForeground(Color.RED);
 		time = null;
 		super.setText(s);
 		componentResized(null);
 	}
+	@Override
 	public void componentHidden(ComponentEvent arg0) {}
+	@Override
 	public void componentMoved(ComponentEvent arg0) {}
 
 	private Font font;
+	@Override
 	public void setFont(Font font) {
 		this.font = font;
 		super.setFont(font);
 	}
-	
+
+	@Override
 	public void componentResized(ComponentEvent e) {
 		if(font != null) { //this is to avoid an exception before showing the component
 			String newTime = getText();
@@ -112,18 +179,20 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			super.setFont(font.deriveFont(AffineTransform.getScaleInstance(ratio, ratio)));
 		}
 	}
-	
+
+	@Override
 	public void componentShown(ComponentEvent arg0) {}
 
 	private static BufferedImage curr, red, green;
 	static {
 		try { //can't use TimerLabel.class because the class hasn't been loaded yet
-			red = ImageIO.read(CALCubeTimer.class.getResourceAsStream("red-button.png")); 
-			green = ImageIO.read(CALCubeTimer.class.getResourceAsStream("green-button.png")); 
+			red = ImageIO.read(CALCubeTimer.class.getResourceAsStream("red-button.png"));
+			green = ImageIO.read(CALCubeTimer.class.getResourceAsStream("green-button.png"));
 		} catch (IOException e) {
 			LOG.info("unexpected exception", e);
 		}
 	}
+	@Override
 	public void paintComponent(Graphics g) {
 		if(Configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false))
 			g.drawImage(curr, 10, 20, null);
@@ -145,9 +214,10 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		return hand ? red : null;
 	}
 
+	@Override
 	public void configurationChanged() {
 		setBackground(Configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, false));
-		
+
 		setFont(Configuration.getFont(VariableKey.TIMER_FONT, false));
 		if(time != null) //this will deal with any internationalization issues, if appropriate
 			setTime(time);
@@ -155,13 +225,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			setText(getText());
 		refreshTimer();
 	}
-	public void focusGained(FocusEvent e) {
-		refreshTimer();
-	}
-	public void focusLost(FocusEvent e) {
-		refreshTimer();
-	}
-	
+
 	private boolean canStartTimer() {
 		boolean stackmatEmulation = Configuration.getBoolean(VariableKey.STACKMAT_EMULATION, false);
 		boolean spacebarOnly = Configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false);
@@ -175,7 +239,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		String title;
 		boolean keyboard = !Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
 
-		Color borderColor = null;
+		Color borderColor;
 		boolean lowered = false;
 		if(keyboard) {
 			boolean focused = isFocusOwner();
@@ -220,59 +284,18 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		repaint();
 	}
 	
-	public void mouseClicked(MouseEvent e) {
-		requestFocusInWindow();
-	}
-	public void mouseEntered(MouseEvent e) {}
-	public void mouseExited(MouseEvent e) {}
-	public void mousePressed(MouseEvent e) {}
-	public void mouseReleased(MouseEvent e) {}
-	
+
 	//What follows is some really nasty code to deal with linux and window's differing behavior for keyrepeats
 	private Hashtable<Integer, Long> timeup = new Hashtable<Integer, Long>(KeyEvent.KEY_LAST);
 	long getTime(int keycode) {
 		Long temp = timeup.get(keycode);
 		return (temp == null) ? 0 : temp;
 	}
-	Hashtable<Integer, Boolean> keyDown = new Hashtable<Integer, Boolean>(KeyEvent.KEY_LAST);
+	Hashtable<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
 	boolean isKeyDown(int keycode) {
 		Boolean temp = keyDown.get(keycode);
 		return (temp == null) ? false : temp;
 	}
-	public void keyReleased(final KeyEvent e) {
-		if(Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) return;
-		int code = e.getKeyCode();
-		timeup.put(code, e.getWhen());
-		ActionListener checkForKeyPress = new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
-					keyDown.put(keyCode, false);
-					keyReallyReleased(e);
-				}
-				((Timer) evt.getSource()).stop();
-			}
-			private int keyCode;
-			public ActionListener setKeyCode(int keyCode) {
-				this.keyCode = keyCode;
-				return this;
-			}
-		}.setKeyCode(code);
-
-		new Timer(10, checkForKeyPress).start();
-	}
-
-	public void keyPressed(final KeyEvent e) {
-		if(Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) return;
-		int code = e.getKeyCode();
-		if (e.getWhen() - getTime(code) < 10) {
-			timeup.put(code, (long) 0);
-		} else if(!isKeyDown(code)){
-			keyDown.put(code, true);
-			keyReallyPressed(e);
-		}
-		refreshTimer();
-	}
-	public void keyTyped(KeyEvent e) {}
 
 	private boolean atMostKeysDown(int count){
 		Enumeration<Boolean> keys = keyDown.elements();

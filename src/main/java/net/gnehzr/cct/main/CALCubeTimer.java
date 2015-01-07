@@ -176,6 +176,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 							putValue(Action.NAME, "+");
 						}
 
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							setFullScreen(!isFullscreen);
 						}
@@ -189,6 +190,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 									KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
 						}
 
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							new ScrambleImportDialog(cct, scramblesList.getScrambleCustomization());
 						}
@@ -207,6 +209,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 							putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
 						}
 
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							if (e == null) { //this means that the client gui was disposed
 								this.setEnabled(true);
@@ -251,6 +254,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 					break;
 				case "togglescramblepopup":
 					a = new AbstractAction() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							Configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, ((AbstractButton) e.getSource()).isSelected());
 							scramblePopup.refreshPopup();
@@ -259,6 +263,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 					break;
 				case "undo":
 					a = new AbstractAction() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							if (timesTable.isEditing())
 								return;
@@ -274,6 +279,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 					break;
 				case "redo":
 					a = new AbstractAction() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							if (timesTable.isEditing())
 								return;
@@ -285,6 +291,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 				case "submitsundaycontest":
 					final SundayContestDialog submitter = new SundayContestDialog(cct);
 					a = new AbstractAction() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							submitter.syncWithStats(statsModel.getCurrentStatistics(), AverageType.CURRENT, 0);
 							submitter.setVisible(true);
@@ -293,6 +300,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 					break;
 				case "newsession":
 					a = new AbstractAction() {
+						@Override
 						public void actionPerformed(ActionEvent arg0) {
 							if (statsModel.getRowCount() > 0) { //only create a new session if we've added any times to the current one
 								statsModel.setSession(createNewSession(Configuration.getSelectedProfile(), scramblesList.getScrambleCustomization().toString()));
@@ -539,10 +547,12 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.FALSE);
 			setToolTipText(StringAccessor.getString("CALCubeTimer.generatorgroup"));
 		}
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			setText(getText());
 		}
 		private String oldText;
+		@Override
 		public void setText(String t) {
 			setVisible(t != null);
 
@@ -554,9 +564,11 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			
 			super.setText(t);
 		}
+		@Override
 		public void focusGained(FocusEvent e) {
 			oldText = getText();
 		}
+		@Override
 		public void focusLost(FocusEvent e) {
 			setText(oldText);
 		}
@@ -599,6 +611,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		return nextSesh;
 	}
 
+	@Override
 	public void sessionSelected(Session s) {
 		statsModel.setSession(s);
 		scramblesList.clear();
@@ -614,6 +627,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		sendUserstate();
 	}
 
+	@Override
 	public void sessionsDeleted() {
 		Session s = getNextSession();
 		statsModel.setSession(s);
@@ -627,6 +641,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			this.oldCustom = oldCustom;
 			this.newCustom = newCustom;
 		}
+		@Override
 		public void doEdit() {
 			customizationEditsDisabled = true;
 			scrambleChooser.setSelectedItem(newCustom);

@@ -16,9 +16,11 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	private static final Logger LOG = Logger.getLogger(SolveTime.class);
 
 	public static final SolveTime BEST = new SolveTime(0, null) {
+		@Override
 		public void setTime(String toParse, boolean importing) throws Exception { throw new AssertionError(); };
 	};
 	public static final SolveTime WORST = new SolveTime() {
+		@Override
 		public void setTime(String toParse, boolean importing) throws Exception { throw new AssertionError(); };
 	};
 	public static final SolveTime NA = WORST;
@@ -50,7 +52,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 
 	private SolveTime(TimerState time, String scramble) {
 		if(time != null) {
-			hundredths = time.value();
+			hundredths = time.getTime();
 			LOG.trace("new SolveTime " + time.getTime());
 		}
 		setScramble(scramble);
@@ -158,10 +160,14 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	
 	//this is for display by CCT
 	public String toString() {
-		if(hundredths == null || hundredths.isNegative()) return "N/A";
-		for(SolveType t : types)
-			if(!t.isSolved())
+		if(hundredths == null || hundredths.isNegative()) {
+			return "N/A";
+		}
+		for(SolveType t : types) {
+			if (!t.isSolved()) {
 				return t.toString();
+			}
+		}
 		return Utils.formatTime(secondsValue()) + (isType(SolveType.PLUS_TWO) ? "+" : "");
 	}
 

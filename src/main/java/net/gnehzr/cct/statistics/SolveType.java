@@ -17,6 +17,7 @@ import java.util.HashMap;
 * @author OneHalf
 */
 public class SolveType {
+
     private static final HashMap<String, SolveType> SOLVE_TYPES = new HashMap<String, SolveType>();
     public static SolveType createSolveType(String desc) throws Exception {
         if(desc.isEmpty() || desc.indexOf(',') != -1)

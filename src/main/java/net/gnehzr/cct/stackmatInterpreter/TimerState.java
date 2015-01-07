@@ -8,8 +8,6 @@ import java.util.List;
 
 public class TimerState implements Comparable<TimerState> {
 
-	public static final TimerState ZERO_STATE = new TimerState(Duration.ZERO);
-
 	private Duration time;
 
 	public TimerState() {
@@ -22,41 +20,35 @@ public class TimerState implements Comparable<TimerState> {
 	public SolveTime toSolveTime(String scramble, List<SolveTime> splits) {
 		return new SolveTime(this, scramble, splits);
 	}
-	public Duration value() {
+
+	public Duration getTime() {
 		return time;
 	}
+
 	public int hashCode() {
-		return this.value().hashCode();
+		return this.getTime().hashCode();
 	}
 	public boolean equals(Object obj) {
 		if(obj instanceof TimerState) {
 			TimerState o = (TimerState) obj;
-			return this.value() == o.value();
+			return this.getTime() == o.getTime();
 		}
 		return false;
 	}
 
 	@Override
-	public int compareTo(TimerState o) {
+	public int compareTo(@NotNull TimerState o) {
 		if(o == null || o.getTime() == null) {
-			return (int) this.value().toMillis();
+			return (int) this.getTime().toMillis();
 		}
-		return this.value().compareTo(o.value());
+		return this.getTime().compareTo(o.getTime());
 	}
 	@Override
 	public String toString() {
 		return toSolveTime(null, null).toString();
 	}
 
-	public void setValue(Duration value) {
+	public void setTime(Duration value) {
 		this.time = value;
-	}
-
-	public Duration getTime() {
-		return time;
-	}
-
-	public void setTime(Duration time) {
-		this.time = time;
 	}
 }

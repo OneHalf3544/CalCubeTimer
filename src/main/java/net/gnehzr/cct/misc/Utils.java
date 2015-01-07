@@ -22,7 +22,7 @@ public class Utils {
 
 	private static final Logger LOG = Logger.getLogger(Utils.class);
 
-	public static DecimalFormat getDecimalFormat() {
+	private static DecimalFormat getDecimalFormat() {
 		DecimalFormat df = new DecimalFormat("0.00");
 		df.setRoundingMode(RoundingMode.HALF_UP);
 		df.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.ENGLISH));
@@ -35,8 +35,9 @@ public class Utils {
 	
 	public static String join(Object[] arr, String sep) {
 		StringBuilder s = new StringBuilder();
-		for(Object o : arr)
+		for(Object o : arr) {
 			s.append(sep + o.toString());
+		}
 		return s.substring(sep.length());
 	}
 
@@ -58,8 +59,9 @@ public class Utils {
 	}
 
 	public static String formatTime(double seconds) {
-		if(seconds == Double.POSITIVE_INFINITY)
+		if(seconds == Double.POSITIVE_INFINITY) {
 			return "N/A";
+		}
 		seconds = round(seconds, 2);
 		return Configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ? clockFormat(seconds) : format(seconds);
 	}
@@ -68,7 +70,7 @@ public class Utils {
 		return getDecimalFormat().format(seconds);
 	}
 
-	private static String clockFormat(double seconds) {
+	static String clockFormat(double seconds) {
 		int hours = (int) (seconds / 3600.);
 		seconds %= 3600;
 		int minutes = (int) (seconds / 60.);
