@@ -1,24 +1,26 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import javax.swing.JEditorPane;
-import javax.swing.border.Border;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
+import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
-
 import org.jvnet.lafwidget.LafWidget;
 
+import javax.swing.*;
+import javax.swing.border.Border;
+
 public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+	private final Configuration configuration;
 	private DynamicString s = null;
 
-	public DynamicSelectableLabel(){
+	public DynamicSelectableLabel(Configuration configuration){
 		super("text/html", null);
+		this.configuration = configuration;
 		putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.FALSE);
 		setEditable(false);
 		setBorder(null);
 		setOpaque(false);
-		Configuration.addConfigurationChangeListener(this);
+		this.configuration.addConfigurationChangeListener(this);
 	}
 	
 	public void updateUI() {
@@ -27,8 +29,8 @@ public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpd
 		setBorder(b);
 	}
 
-	public DynamicSelectableLabel(DynamicString s){
-		this();
+	public DynamicSelectableLabel(DynamicString s, Configuration configuration){
+		this(configuration);
 		setDynamicString(s);
 	}
 
@@ -47,12 +49,13 @@ public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpd
 		if(s != null) setText(s.toString());
 	}
 
-	public void configurationChanged(){
+	@Override
+	public void configurationChanged(Profile profile){
 		update();
 	}
 
 	public void destroy(){
 		setDynamicString(null);
-		Configuration.removeConfigurationChangeListener(this);
+		configuration.removeConfigurationChangeListener(this);
 	}
 }

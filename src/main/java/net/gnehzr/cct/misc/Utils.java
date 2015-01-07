@@ -1,10 +1,9 @@
 package net.gnehzr.cct.misc;
 
 import com.google.common.base.Throwables;
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +14,7 @@ import java.math.RoundingMode;
 import java.nio.channels.FileLock;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.function.Consumer;
 
@@ -35,8 +35,9 @@ public class Utils {
 	
 	public static String join(Object[] arr, String sep) {
 		StringBuilder s = new StringBuilder();
-		for(Object o : arr)
-			s.append(sep + o.toString());
+		for(Object o : arr) {
+			s.append(sep).append(o.toString());
+		}
 		return s.substring(sep.length());
 	}
 
@@ -57,33 +58,41 @@ public class Utils {
 		return Math.round(c * pow) / (double) pow;
 	}
 
-	public static String formatTime(double seconds) {
-		if(seconds == Double.POSITIVE_INFINITY)
+	@Deprecated
+	public static String formatTime(double solveTime, boolean useClockFormat) {
+		if(Double.isInfinite(solveTime)) {
 			return "N/A";
-		seconds = round(seconds, 2);
-		return Configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ? clockFormat(seconds) : format(seconds);
+		}
+		return formatTime(new SolveTime(solveTime, null, null), useClockFormat);
 	}
 
+	public static String formatTime(SolveTime solveTime, boolean useClockFormat) {
+		if(solveTime.isInfiniteTime()) {
+			return "N/A";
+		}
+		return useClockFormat ? clockFormat(solveTime) : format(solveTime);
+	}
+
+	public static String format(SolveTime seconds) {
+		return getDecimalFormat().format(seconds.getTime().toMillis());
+	}
+
+	@Deprecated
 	public static String format(double seconds) {
 		return getDecimalFormat().format(seconds);
 	}
 
-	private static String clockFormat(double seconds) {
-		int hours = (int) (seconds / 3600.);
-		seconds %= 3600;
-		int minutes = (int) (seconds / 60.);
-		seconds %= 60;
-		if(seconds >= 59.995) {
-			seconds = 0;
-			minutes++;
-		}
-		if(minutes >= 60) {
-			minutes -= 60;
-			hours++;
-		}
+	static String clockFormat(SolveTime solveTime) {
+		Duration time = solveTime.getTime();
+		long hours = time.toHours();
+		time = time.minusHours(hours);
+		long minutes = time.toMinutes();
+		time = time.minusMinutes(minutes);
+		long seconds = time.toMillis() / 1000;
+
 		return (hours == 0 ? (minutes == 0 ? "" : minutes + ":" + (seconds < 10 ? "0" : "")) :
 				hours + ":" + (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : ""))
-				+ format(seconds);
+				+ format(time.toMillis() / 1000.0 );
 	}
 
 	public static Color invertColor(Color c) {
@@ -181,13 +190,13 @@ public class Utils {
 				null, yesNo, yesNo[0]);
 	}
 
-	public static void doInWaitingState(Runnable runnable) {
+	public static void doInWaitingState(CALCubeTimer calCubeTimer, Runnable runnable) {
         try {
-            CALCubeTimer.setWaiting(true);
+            calCubeTimer.setWaiting(true);
             runnable.run();
 
         } finally {
-            CALCubeTimer.setWaiting(false);
+            calCubeTimer.setWaiting(false);
         }
     }
 

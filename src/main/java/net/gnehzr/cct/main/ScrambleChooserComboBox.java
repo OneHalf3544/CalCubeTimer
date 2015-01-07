@@ -1,25 +1,34 @@
 package net.gnehzr.cct.main;
 
-import java.awt.Component;
-
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
-
+import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.ProfileDao;
+
+import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 
 public class ScrambleChooserComboBox extends LoudComboBox implements TableCellRenderer, ConfigurationChangeListener {
 	private boolean customizations;
-	public ScrambleChooserComboBox(boolean icons, boolean customizations) {
+	private final ScramblePlugin scramblePlugin;
+	private final Configuration configuration;
+
+	@Inject
+	public ScrambleChooserComboBox(boolean icons, boolean customizations, ScramblePlugin scramblePlugin,
+								   Configuration configuration, ProfileDao profileDao) {
 		this.customizations = customizations;
+		this.scramblePlugin = scramblePlugin;
+		this.configuration = configuration;
 		this.setRenderer(new PuzzleCustomizationCellRenderer(icons));
-		Configuration.addConfigurationChangeListener(this);
-		configurationChanged();
+		configuration.addConfigurationChangeListener(this);
+		configurationChanged(profileDao.getSelectedProfile());
 	}
 
+	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 		if (isSelected) {
 			setForeground(table.getSelectionForeground());
@@ -34,13 +43,14 @@ public class ScrambleChooserComboBox extends LoudComboBox implements TableCellRe
 		return this;
 	}
 	
-	public void configurationChanged() {
+	@Override
+	public void configurationChanged(Profile profile) {
 		Object[] model;
 		if(customizations)
-			model = ScramblePlugin.getScrambleCustomizations(false).toArray();
+			model = scramblePlugin.getScrambleCustomizations(profile, false).toArray();
 		else
-			model = ScramblePlugin.getScrambleVariations();
+			model = scramblePlugin.getScrambleVariations();
 		this.setModel(new DefaultComboBoxModel(model));
-		this.setMaximumRowCount(Configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS, false));
+		this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS, false));
 	}
 }

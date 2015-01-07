@@ -10,6 +10,7 @@ import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.statistics.ProfileDao;
 import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 
@@ -31,17 +32,22 @@ import java.util.ArrayList;
 public class ScrambleImportDialog extends JDialog implements ActionListener, DocumentListener {
 
 	private static final Logger LOG = Logger.getLogger(ScrambleImportDialog.class);
-
+	private final ScramblePlugin scramblePlugin;
 	private URLHistoryBox urlField;
+
+	private final Configuration configuration;
 	private JButton browse, addToArea;
 	private JTextAreaWithHistory scrambles;
 	private JEditorPane qualityControl;
 	private ScrambleChooserComboBox scrambleChooser;
 	private JButton importButton, cancelButton;
 	private CALCubeTimer cct;
-	public ScrambleImportDialog(CALCubeTimer cct, ScrambleCustomization sc) {
+
+	public ScrambleImportDialog(ProfileDao profileDao, CALCubeTimer cct, ScrambleCustomization sc, ScramblePlugin scramblePlugin, Configuration configuration) {
 		super(cct, StringAccessor.getString("ScrambleImportDialog.importscrambles"), true); 
 		this.cct = cct;
+		this.scramblePlugin = scramblePlugin;
+		this.configuration = configuration;
 
 		JPanel contentPane = new JPanel(new BorderLayout());
 		setContentPane(contentPane);
@@ -51,8 +57,8 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 
 		JPanel sideBySide = new JPanel();
 		sideBySide.setLayout(new BoxLayout(sideBySide, BoxLayout.X_AXIS));
-		urlField = new URLHistoryBox(VariableKey.IMPORT_URLS);
-		urlField.setSelectedItem(Configuration.getString(VariableKey.DEFAULT_SCRAMBLE_URL, false));
+		urlField = new URLHistoryBox(VariableKey.IMPORT_URLS, this.configuration);
+		urlField.setSelectedItem(configuration.getString(VariableKey.DEFAULT_SCRAMBLE_URL, false));
 		urlField.setToolTipText(StringAccessor.getString("ScrambleImportDialog.browsescrambles")); 
 		sideBySide.add(urlField);
 		browse = new JButton(StringAccessor.getString("ScrambleImportDialog.browse")); 
@@ -63,8 +69,8 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 		sideBySide.add(addToArea);
 		topBot.add(sideBySide);
 
-		scrambleChooser = new ScrambleChooserComboBox(false, true);
-		scrambleChooser.addItem(ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION);
+		scrambleChooser = new ScrambleChooserComboBox(false, true, this.scramblePlugin, this.configuration, profileDao);
+		scrambleChooser.addItem(this.scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION);
 		scrambleChooser.setSelectedItem(sc);
 		scrambleChooser.addActionListener(this);
 		topBot.add(scrambleChooser);
@@ -102,10 +108,11 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 		setVisible(true);
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if(source == browse) {
-			CCTFileChooser fc = new CCTFileChooser(); 
+			CCTFileChooser fc = new CCTFileChooser(configuration);
 			if(fc.showDialog(this, StringAccessor.getString("ScrambleImportDialog.open")) == CCTFileChooser.APPROVE_OPTION) { 
 				File selectedFile = fc.getSelectedFile();
 				urlField.setSelectedItem(selectedFile.toURI().toString());
@@ -115,7 +122,7 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 				}
 			}
 		} else if(source == addToArea) {
-			URL url = null;
+			URL url;
 			try {
 				url = new URI(urlField.getSelectedItem().toString()).toURL();
 			} catch(Exception ee) {
@@ -153,14 +160,17 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 		return (ScrambleCustomization) scrambleChooser.getSelectedItem();
 	}
 
+	@Override
 	public void changedUpdate(DocumentEvent e) {}
+	@Override
 	public void insertUpdate(DocumentEvent e) {
 		validateScrambles();
 	}
+	@Override
 	public void removeUpdate(DocumentEvent e) {
 		validateScrambles();
 	}
-	private ArrayList<Scramble> scrams = new ArrayList<Scramble>();
+	private ArrayList<Scramble> scrams = new ArrayList<>();
 	private void validateScrambles() {
 		ScrambleCustomization sc = getSelectedCustomization();
 		
@@ -185,22 +195,22 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 		boolean empty = true;
 		int scramNumber = 1;
 		scrams.clear();
-		for(int ch = 0; ch < importedScrams.length; ch++) {
-			if(!importedScrams[ch].trim().isEmpty()) {
+		for (String importedScram : importedScrams) {
+			if (!importedScram.trim().isEmpty()) {
 				empty = false;
 				try {
-					scrams.add(sc.generateScramble(importedScrams[ch]));
-					validationString.append("<span class=\"green\">O"); 
+					scrams.add(sc.generateScramble(importedScram));
+					validationString.append("<span class=\"green\">O");
 				} catch (InvalidScrambleException e) {
 					perfect = false;
-					validationString.append("<span class=\"red\">X"); 
+					validationString.append("<span class=\"red\">X");
 				}
-				validationString.append(" ").append(scramNumber).append(". ");  
+				validationString.append(" ").append(scramNumber).append(". ");
 				scramNumber++;
 			} else {
-				validationString.append("<span>"); 
+				validationString.append("<span>");
 			}
-			validationString.append("<br></span>"); 
+			validationString.append("<br></span>");
 		}
 		validationString.append("</body></html>"); 
 		qualityControl.setText(validationString.toString());

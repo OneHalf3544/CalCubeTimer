@@ -10,8 +10,11 @@ import java.beans.PropertyChangeListener;
 
 public class StackmatHandler implements PropertyChangeListener {
 	private TimingListener tl;
-	public StackmatHandler(TimingListener timingListener, StackmatInterpreter si) {
+	private final Configuration configuration;
+
+	public StackmatHandler(TimingListener timingListener, StackmatInterpreter si, Configuration configuration) {
 		this.tl = timingListener;
+		this.configuration = configuration;
 		si.addPropertyChangeListener(this);
 		reset();
 	}
@@ -25,7 +28,7 @@ public class StackmatHandler implements PropertyChangeListener {
 	private boolean stackmatInspecting;
 	public void propertyChange(PropertyChangeEvent evt) {
 		String event = evt.getPropertyName();
-		boolean stackmatEnabled = Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
+		boolean stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
 		tl.stackmatChanged();
 		if(!stackmatEnabled)
 			return;
@@ -78,8 +81,8 @@ public class StackmatHandler implements PropertyChangeListener {
 	}
 
 	private boolean timeToStart(long time) {
-		if(time <= 0 || !Configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false))
+		if(time <= 0 || !configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false))
 			return false;
-		return (System.currentTimeMillis() - time >= Configuration.getInt(VariableKey.DELAY_UNTIL_INSPECTION, false));
+		return (System.currentTimeMillis() - time >= configuration.getInt(VariableKey.DELAY_UNTIL_INSPECTION, false));
 	}
 }

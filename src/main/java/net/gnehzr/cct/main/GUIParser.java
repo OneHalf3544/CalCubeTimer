@@ -5,6 +5,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.*;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
 import org.apache.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.xml.sax.Attributes;
@@ -38,10 +39,19 @@ class GUIParser extends DefaultHandler {
     private List<Boolean> needText;
     private List<String> elementNames;
     private JFrame frame;
+    private final Configuration configuration;
+    private final StatisticsTableModel statsModel;
+    private final DynamicBorderSetter dynamicBorderSetter;
+    private final XMLGuiMessages xmlGuiMessages;
 
-	public GUIParser(CALCubeTimer calCubeTimer, JFrame frame){
+    public GUIParser(CALCubeTimer calCubeTimer, JFrame frame, Configuration configuration,
+                     StatisticsTableModel statsModel, DynamicBorderSetter dynamicBorderSetter, XMLGuiMessages xmlGuiMessages){
         this.calCubeTimer = calCubeTimer;
         this.frame = frame;
+        this.configuration = configuration;
+        this.statsModel = statsModel;
+        this.dynamicBorderSetter = dynamicBorderSetter;
+        this.xmlGuiMessages = xmlGuiMessages;
 
         componentTree = new ArrayList<>();
         strs = new ArrayList<>();
@@ -51,12 +61,12 @@ class GUIParser extends DefaultHandler {
         calCubeTimer.tabbedPanes.clear();
         calCubeTimer.splitPanes.clear();
 
-        for(DynamicDestroyable dd : calCubeTimer.dynamicStringComponents)
+        for(DynamicDestroyable dd : calCubeTimer.dynamicStringComponents) {
             dd.destroy();
+        }
         calCubeTimer.dynamicStringComponents.clear();
     }
 
-    //{{{ startElement
     @Override
     public void startElement(String namespaceURI, String lName, String qName, Attributes attrs) throws SAXException {
         String temp;
@@ -79,15 +89,21 @@ class GUIParser extends DefaultHandler {
 
         //must deal with level < 0 before adding anything
         elementNames.add(elementName);
-        needText.add(elementName.equals("label") || elementName.equals("selectablelabel") || elementName.equals("button") || elementName.equals("checkbox") || elementName.equals("menu") || elementName.equals("menuitem") || elementName.equals("checkboxmenuitem"));
+        needText.add(elementName.equals("label")
+                || elementName.equals("selectablelabel")
+                || elementName.equals("button")
+                || elementName.equals("checkbox")
+                || elementName.equals("menu")
+                || elementName.equals("menuitem")
+                || elementName.equals("checkboxmenuitem"));
         strs.add("");
 
         switch (elementName) {
             case "label":
-                com = new DynamicLabel();
+                com = new DynamicLabel(configuration);
                 break;
             case "selectablelabel":
-                com = new DynamicSelectableLabel();
+                com = new DynamicSelectableLabel(configuration);
                 try {
                     if ((temp = attrs.getValue("editable")) != null)
                         ((DynamicSelectableLabel) com).setEditable(Boolean.parseBoolean(temp));
@@ -96,12 +112,12 @@ class GUIParser extends DefaultHandler {
                 }
                 break;
             case "button":
-                com = new DynamicButton();
-                com.setFocusable(Configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
+                com = new DynamicButton(configuration);
+                com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
                 break;
             case "checkbox":
-                com = new DynamicCheckBox();
-                com.setFocusable(Configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
+                com = new DynamicCheckBox(configuration);
+                com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
                 break;
             case "panel":
                 com = new JPanel() {
@@ -195,17 +211,17 @@ class GUIParser extends DefaultHandler {
                 };
                 break;
             case "menu":
-                JMenu menu = new DynamicMenu();
+                JMenu menu = new DynamicMenu(configuration);
                 if ((temp = attrs.getValue("mnemonic")) != null)
                     menu.setMnemonic(temp.charAt(0));
 
                 com = menu;
                 break;
             case "menuitem":
-                com = new DynamicMenuItem();
+                com = new DynamicMenuItem(configuration);
                 break;
             case "checkboxmenuitem":
-                com = new DynamicCheckBoxMenuItem();
+                com = new DynamicCheckBoxMenuItem(configuration);
                 break;
             case "separator":
                 com = new JSeparator();
@@ -240,7 +256,7 @@ class GUIParser extends DefaultHandler {
                 com = scroll;
                 break;
             case "tabbedpane":
-                com = new DynamicTabbedPane();
+                com = new DynamicTabbedPane(statsModel, configuration, xmlGuiMessages);
                 com.setName(componentID + "");
                 calCubeTimer.tabbedPanes.add((JTabbedPane) com);
                 break;
@@ -280,7 +296,7 @@ class GUIParser extends DefaultHandler {
                 if((temp = attrs.getValue("alignmentY")) != null)
                     com.setAlignmentY(Float.parseFloat(temp));
                 if((temp = attrs.getValue("border")) != null)
-                    com.setBorder(DynamicBorderSetter.getBorder(temp));
+                    com.setBorder(dynamicBorderSetter.getBorder(temp));
                 if((temp = attrs.getValue("minimumsize")) != null) {
                     String[] dims = temp.split("x");
                     com.setMinimumSize(new Dimension(Integer.parseInt(dims[0]), Integer.parseInt(dims[1])));
@@ -427,18 +443,17 @@ class GUIParser extends DefaultHandler {
         if(com instanceof DynamicDestroyable)
             calCubeTimer.dynamicStringComponents.add((DynamicDestroyable)com);
     }
-    //}}}
 
     @Override
     public void endElement(String namespaceURI, String sName, String qName) throws SAXException {
         if(level >= 0){
             if(needText.get(level) && strs.get(level).length() > 0) {
                 if(componentTree.get(level) instanceof DynamicStringSettable)
-                    ((DynamicStringSettable)componentTree.get(level)).setDynamicString(new DynamicString(strs.get(level), CALCubeTimer.statsModel, XMLGuiMessages.XMLGUI_ACCESSOR));
+                    ((DynamicStringSettable)componentTree.get(level)).setDynamicString(new DynamicString(strs.get(level), statsModel, xmlGuiMessages.XMLGUI_ACCESSOR, configuration));
             }
             if(componentTree.get(level) instanceof JTabbedPane) {
                 JTabbedPane temp = (JTabbedPane) componentTree.get(level);
-                Integer t = Configuration.getInt(VariableKey.JCOMPONENT_VALUE(temp.getName(), true), false);
+                Integer t = configuration.getInt(VariableKey.JCOMPONENT_VALUE(temp.getName(), true, configuration.getXMLGUILayout()), false);
                 if(t != null)
                     temp.setSelectedIndex(t);
             }
@@ -467,4 +482,4 @@ class GUIParser extends DefaultHandler {
     public void warning(SAXParseException e) throws SAXParseException {
         LOG.error(e.getSystemId() + ":" + e.getLineNumber() + ": warning: " + e.getMessage());
     }
-} //}}}
+}

@@ -1,11 +1,16 @@
 package net.gnehzr.cct.scrambles;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.ScramblePluginMessages;
+import net.gnehzr.cct.main.Main;
 import net.gnehzr.cct.main.ScrambleArea;
 import net.gnehzr.cct.main.ScrambleFrame;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
+import net.gnehzr.cct.statistics.ProfileDao;
 import org.apache.log4j.Logger;
 import org.jvnet.substance.skin.SubstanceAutumnLookAndFeel;
 
@@ -22,6 +27,7 @@ import java.util.regex.Pattern;
 public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 
 	private static final Logger LOG = Logger.getLogger(ScrambleDebugger.class);
+	private final ScramblePlugin scramblePlugin;
 
 	private JTextField generatorField;
 	private JTextField unitTokenField;
@@ -30,11 +36,18 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 	private JButton newScramble;
 	private JSpinner scrambleLength;
 	private JPanel scrambleAttributes;
-	private JComboBox variationsBox;
+	private JComboBox<String> variationsBox;
 	private JFrame f;
-	public ScrambleDebugger(File plugin, int length) throws SecurityException, IllegalArgumentException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
-		super(plugin);
-		
+	private final Configuration configuration;
+
+	@Inject
+	public ScrambleDebugger(File plugin, int length, ScramblePlugin scramblePlugin, Configuration configuration, ProfileDao profileDao)
+			throws SecurityException, IllegalArgumentException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+
+		super(plugin, configuration);
+		this.scramblePlugin = scramblePlugin;
+		this.configuration = configuration;
+
 		LOG.info("Puzzle name: " + super.PUZZLE_NAME);
 		LOG.info("Puzzle faces and default colors: " + Arrays.deepToString(super.FACE_NAMES_COLORS));
 		LOG.info("Default unit size: " + super.DEFAULT_UNIT_SIZE);
@@ -43,12 +56,14 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 		LOG.info("Default attributes: " + Arrays.toString(super.DEFAULT_ATTRIBUTES));
 
 		if(length == -1)
-			length = super.getDefaultScrambleLength(new ScrambleVariation(this, ""));
+			length = super.getDefaultScrambleLength(new ScrambleVariation(this, "", configuration));
 		LOG.info("Scramble length: " + length);
-		Configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, true);
-		Configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, true);
-		AbstractAction aa = new AbstractAction() {public void actionPerformed(ActionEvent e) {}};
-		ScrambleFrame view = new ScrambleFrame(null, aa, true);
+		configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, true);
+		configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, true);
+		AbstractAction aa = new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {}};
+		ScrambleFrame view = new ScrambleFrame(null, aa, true, configuration);
 		view.setTitle("ScrambleDebugger View");
 		view.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 		view.pack();
@@ -58,7 +73,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 		unitTokenField = new JTextField(TOKEN_REGEX.toString(), 20);
 		scrambleLength = new JSpinner(new SpinnerNumberModel(length, 0, null, 1));
 		((JSpinner.DefaultEditor) scrambleLength.getEditor()).getTextField().setColumns(3);
-		scrambleArea = new ScrambleArea(view);
+		scrambleArea = new ScrambleArea(view, configuration, this.scramblePlugin);
 		variationsBox = new JComboBox(VARIATIONS);
 		variationsBox.addActionListener(this);
 		newScramble = new JButton("New scramble");
@@ -97,6 +112,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 	//basically copied from cct.java
 	private JCheckBox[] attributes;
 	private static final String SCRAMBLE_ATTRIBUTE_CHANGED = "Scramble Attribute Changed";
+
 	public void createScrambleAttributes() {
 		scrambleAttributes.removeAll();
 		String[] attrs = getAvailablePuzzleAttributes();
@@ -110,10 +126,10 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 					break;
 				}
 			}
-			attributes[ch] = new JCheckBox(new DynamicString(attrs[ch], null, ScramblePluginMessages.SCRAMBLE_ACCESSOR).toString());
+			attributes[ch] = new JCheckBox(new DynamicString(attrs[ch], null, ScramblePluginMessages.SCRAMBLE_ACCESSOR, configuration).toString());
 			attributes[ch].setName(attrs[ch]); //this is so we can access the raw string later
 			attributes[ch].setSelected(selected);
-			attributes[ch].setFocusable(Configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
+			attributes[ch].setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
 			attributes[ch].setActionCommand(SCRAMBLE_ATTRIBUTE_CHANGED);
 			attributes[ch].addActionListener(this);
 			scrambleAttributes.add(attributes[ch]);
@@ -122,9 +138,10 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 			scrambleAttributes.getParent().validate();
 	}
 	
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getActionCommand().equals(SCRAMBLE_ATTRIBUTE_CHANGED)) {
-			ArrayList<String> attrs = new ArrayList<String>();
+			ArrayList<String> attrs = new ArrayList<>();
 			for(JCheckBox attr : attributes)
 				if(attr.isSelected())
 					attrs.add(attr.getName());
@@ -137,7 +154,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 			scrambleArea.setScramble(s.toString(), sc);
 			f.pack();
 		} else if(e.getSource() == variationsBox) {
-			sc = new ScrambleCustomization(new ScrambleVariation(this, (String)variationsBox.getSelectedItem()), "");
+			sc = new ScrambleCustomization(configuration, new ScrambleVariation(this, (String)variationsBox.getSelectedItem(), configuration), "");
 			generatorField.setText(getDefaultGeneratorGroup(sc.getScrambleVariation()));
 		}
 	}
@@ -145,41 +162,45 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 	private static void printUsage() {
 		LOG.info("Usage: ScrambleDebugger [class filename] (scramble length)");
 	}
+
 	public static void main(final String[] args) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				String fileName;
-				int scramLength = -1;
-				if(args.length >= 1) {
-					fileName = args[0];
-					if(args.length == 2) {
-						scramLength = Integer.parseInt(args[1]);
-					}
-				} else {
-					LOG.info("Invalid arguments");
-					printUsage();
-					return;
-				}
-				try {
-					Configuration.loadConfiguration(Configuration.guestProfile.getConfigurationFile());
-				} catch(IOException e1) {
-					LOG.info("unexpected exception", e1);
-					return;
-				}
-				try {
-					UIManager.setLookAndFeel(new SubstanceAutumnLookAndFeel());
-					JDialog.setDefaultLookAndFeelDecorated(true);
-					JFrame.setDefaultLookAndFeelDecorated(true);
-				} catch (UnsupportedLookAndFeelException e) {
-					LOG.info("unexpected exception", e);
-				}
-				try {
-					new ScrambleDebugger(new File(fileName), scramLength);
-				} catch(NoClassDefFoundError | SecurityException | NoSuchMethodException | IllegalArgumentException
-						| ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-					LOG.info("unexpected exception", e);
-				}
-			}
-		});
+		Injector injector = Guice.createInjector(new Main());
+		Configuration configuration = injector.getInstance(Configuration.class);
+
+		SwingUtilities.invokeLater(() -> {
+            String fileName;
+            int scramLength = -1;
+            if(args.length >= 1) {
+                fileName = args[0];
+                if(args.length == 2) {
+                    scramLength = Integer.parseInt(args[1]);
+                }
+            } else {
+                LOG.info("Invalid arguments");
+                printUsage();
+                return;
+            }
+            try {
+				ProfileDao profileDao = injector.getInstance(ProfileDao.class);
+				configuration.loadConfiguration(profileDao.guestProfile.getConfigurationFile());
+            } catch(IOException e1) {
+                LOG.info("unexpected exception", e1);
+                return;
+            }
+            try {
+                UIManager.setLookAndFeel(new SubstanceAutumnLookAndFeel());
+                JDialog.setDefaultLookAndFeelDecorated(true);
+                JFrame.setDefaultLookAndFeelDecorated(true);
+            } catch (UnsupportedLookAndFeelException e) {
+                LOG.info("unexpected exception", e);
+            }
+
+			try {
+				ScrambleDebugger instance = injector.getInstance(ScrambleDebugger.class);
+
+            } catch(NoClassDefFoundError | SecurityException | IllegalArgumentException e) {
+                LOG.info("unexpected exception", e);
+            }
+        });
 	}
 }

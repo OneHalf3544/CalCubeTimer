@@ -7,13 +7,17 @@ import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
 
 public class KillablePircBot extends PircBot {
+
+	private final Configuration configuration;
+
 	private IRCListener l;
 
-	public KillablePircBot(IRCListener l, String fingerMsg) {
+	public KillablePircBot(IRCListener l, String fingerMsg, Configuration configuration) {
 		this.l = l;
+		this.configuration = configuration;
 		setFinger(fingerMsg);
 		try {
-			if(Configuration.getBoolean(VariableKey.IDENT_SERVER, false))
+			if(configuration.getBoolean(VariableKey.IDENT_SERVER, false))
 				startIdentServer();
 		} catch(Throwable t) { //if we're running without a configuration, enable the ident server
 			startIdentServer();

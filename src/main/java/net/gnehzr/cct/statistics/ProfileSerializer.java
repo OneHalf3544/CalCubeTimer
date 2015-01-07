@@ -1,7 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Throwables;
-import net.gnehzr.cct.main.CALCubeTimer;
+import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -17,16 +17,20 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 
 public class ProfileSerializer {
 
     private static final Logger LOG = Logger.getLogger(ProfileSerializer.class);
 
-    final ProfileDao profileDao;
+    private final StatisticsTableModel statsModel;
 
-    public ProfileSerializer(ProfileDao profileDao) {
-        this.profileDao = profileDao;
+    @Inject
+    public ProfileSerializer(StatisticsTableModel statsModel) {
+        this.statsModel = statsModel;
     }
 
     public void parseBySaxHandler(DefaultHandler parseLogic, RandomInputStream inputStream) {
@@ -75,7 +79,7 @@ public class ProfileSerializer {
         }
         atts.clear();
         atts.addAttribute("", "", "date", "CDATA", s.toDateString());
-        if (s == CALCubeTimer.statsModel.getCurrentSession()) {
+        if (s == statsModel.getCurrentSession()) {
             atts.addAttribute("", "", "loadonstartup", "CDATA", "true");
         }
         hd.startElement("", "", "session", atts);

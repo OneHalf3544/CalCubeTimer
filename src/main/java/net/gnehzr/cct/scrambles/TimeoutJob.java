@@ -11,8 +11,11 @@ import java.util.concurrent.TimeoutException;
 public final class TimeoutJob {
 
 	private static final Logger LOG = Logger.getLogger(TimeoutJob.class);
+	private final Configuration configuration;
 
-	private TimeoutJob() {}
+	private TimeoutJob(Configuration configuration) {
+		this.configuration = configuration;
+	}
 	
 	public static final ScramblePluginClassLoader PLUGIN_LOADER = new ScramblePluginClassLoader();
 
@@ -34,13 +37,13 @@ public final class TimeoutJob {
 	}
 	
 	//throws TimeoutException if the job timed out
-	public static <T> T doWork(final Callable<T> callMe) throws Throwable {
+	public static <T> T doWork(final Callable<T> callMe, Configuration configuration) throws Throwable {
 		ThreadJob<T> t = new ThreadJob<T>(callMe);
 		t.setContextClassLoader(PLUGIN_LOADER);
 		t.start();
 		Integer timeout = null;
 		try {
-			timeout = Configuration.getInt(VariableKey.SCRAMBLE_PLUGIN_TIMEOUT, false);
+			timeout = configuration.getInt(VariableKey.SCRAMBLE_PLUGIN_TIMEOUT, false);
 		} catch(Throwable c) {
 			//we want to be able to handle no configuration at all
 			LOG.warn("cannot get configuration parameter", c);

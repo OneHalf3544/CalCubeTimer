@@ -1,8 +1,17 @@
 package net.gnehzr.cct.scrambles;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class ScrambleList {
+
+	public ScrambleList(ScramblePlugin scramblePlugin) {
+		this.scramblePlugin = scramblePlugin;
+		this.scrambleCustomisation = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
+	}
+
 	public static class ScrambleString {
 		private String scramble;
 		private boolean imported;
@@ -25,24 +34,27 @@ public class ScrambleList {
 			return scramble;
 		}
 	}
-	private ArrayList<ScrambleString> scrambles = new ArrayList<ScrambleString>();
-	private ScrambleCustomization custom;
+
+	private final ScramblePlugin scramblePlugin;
+	private List<ScrambleString> scrambles = new ArrayList<>();
+	private ScrambleCustomization scrambleCustomisation;
 	private int scrambleNumber = 0;
 
+	@NotNull
 	public ScrambleCustomization getScrambleCustomization() {
-		return custom;
+		return scrambleCustomisation;
 	}
 	//this should only be called if we're on the last scramble in this list
-	public void setScrambleCustomization(ScrambleCustomization sc) {
-		if(sc == null)
-			sc = ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
-		if(custom == null || !sc.getScrambleVariation().equals(custom.getScrambleVariation())) {
-			removeLatestAndFutureScrambles();
-//			if(scrambleNumber != scrambles.size())
-//				scrambles.remove(scrambles.size() - 1);
+	public void setScrambleCustomization(ScrambleCustomization scrambleCustomization) {
+		if(scrambleCustomization == null) {
+			scrambleCustomization = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
 		}
-		if(!sc.equals(ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION))
-			custom = sc;
+		if(scrambleCustomisation == null || !scrambleCustomization.getScrambleVariation().equals(scrambleCustomisation.getScrambleVariation())) {
+			removeLatestAndFutureScrambles();
+		}
+		if(!scrambleCustomization.equals(scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION)) {
+			scrambleCustomisation = scrambleCustomization;
+		}
 	}
 	
 	public void removeLatestAndFutureScrambles() {
@@ -53,7 +65,7 @@ public class ScrambleList {
 	}
 	
 	public void setScrambleLength(int l) {
-		ScrambleVariation sv = custom.getScrambleVariation();
+		ScrambleVariation sv = scrambleCustomisation.getScrambleVariation();
 		if(l != sv.getLength()) {
 			sv.setLength(l);
 			removeLatestAndFutureScrambles();
@@ -61,8 +73,8 @@ public class ScrambleList {
 	}
 
 	public void updateGeneratorGroup(String group) {
-		custom.setGenerator(group);
-		custom.saveGeneratorToConfiguration();
+		scrambleCustomisation.setGenerator(group);
+		scrambleCustomisation.saveGeneratorToConfiguration();
 		String scramble = null;
 		if(scrambleNumber < scrambles.size() && scrambles.get(scrambleNumber) != null)
 			scramble = scrambles.get(scrambleNumber).getScramble();
@@ -88,14 +100,14 @@ public class ScrambleList {
 			scrambles.add(null); //ensure that there's capacity for the current scramble
 		ScrambleString c = scrambles.get(scrambleNumber);
 		if(c == null) {
-			Scramble s = custom.generateScramble();
+			Scramble s = scrambleCustomisation.generateScramble();
 			c = new ScrambleString(s.toString(), false, s.getLength());
 			scrambles.set(scrambleNumber, c);
 		}
 		return c;
 	}
 	
-	public void importScrambles(ArrayList<Scramble> scrams) {
+	public void importScrambles(List<Scramble> scrams) {
 		removeLatestAndFutureScrambles();
 		for(int c = 0; c < scrams.size(); c++) {
 			ScrambleString s = new ScrambleString(scrams.get(c).toString(), true, scrams.get(c).getLength());

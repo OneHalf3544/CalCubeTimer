@@ -7,7 +7,10 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.main.URLHistoryBox;
 import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.ProfileDao;
 import net.gnehzr.cct.umts.IRCListener;
 import net.gnehzr.cct.umts.IRCUtils;
 import net.gnehzr.cct.umts.KillablePircBot;
@@ -27,11 +30,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
-import java.io.IOException;
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeSet;
 
 public class IRCClientGUI implements CommandListener, ActionListener, ConfigurationChangeListener, DocumentListener, IRCListener {
@@ -42,6 +44,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 	private static final String VERSION = IRCClientGUI.class.getPackage().getImplementationVersion();
 	private static final String FINGER_MSG = "This is the cct/irc client " + VERSION;
 	private static final Image IRC_IMAGE = new ImageIcon(IRCClientGUI.class.getResource("cube-irc.png")).getImage();
+	private final ScramblePlugin scramblePlugin;
 
 	// TODO - disable ctrl(+shift)+tab for swing components
 	// TODO - how to save state of the user tables for each message frame? synchronize them somehow?
@@ -53,12 +56,17 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 	private JLabel statusBar;
 	private CALCubeTimer cct;
 	private KillablePircBot bot;
+	private final Configuration configuration;
+	private final ProfileDao profileDao;
 
-	public IRCClientGUI(CALCubeTimer cct, final ActionListener closeListener) {
+	public IRCClientGUI(CALCubeTimer cct, final ActionListener closeListener, ScramblePlugin scramblePlugin,
+						Configuration configuration, ProfileDao profileDao) {
 		this.cct = cct;
-		bot = new KillablePircBot(this, FINGER_MSG);
+		this.scramblePlugin = scramblePlugin;
+		bot = new KillablePircBot(this, FINGER_MSG, configuration);
 
 		login = new JInternalFrame("", false, false, false, true) {
+			@Override
 			public void setVisible(boolean visible) {
 				if(visible)
 					setConnectDefault();
@@ -67,6 +75,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		};
 		login.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, IRCClientGUI.WATERMARK);
 		login.addInternalFrameListener(new InternalFrameAdapter() {
+			@Override
 			public void internalFrameActivated(InternalFrameEvent e) {
 				setConnectDefault();
 				loginChanged();
@@ -87,6 +96,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		pane.add(statusBar, BorderLayout.PAGE_END);
 
 		clientFrame = new JFrame() {
+			@Override
 			public void dispose() {
 				if(connecting)
 					cancelConnecting();
@@ -103,24 +113,26 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		clientFrame.setPreferredSize(new Dimension(500, 450));
 		clientFrame.setContentPane(pane);
 
-		serverFrame = new MessageFrame(desk, false, null);
+		serverFrame = new MessageFrame(desk, false, null, this.scramblePlugin, profileDao.getSelectedProfile());
 		serverFrame.addCommandListener(this);
 		serverFrame.pack();
 		desk.add(serverFrame);
 
 		clientFrame.pack();
 		onDisconnect(); // this will add and set login visible & the title of serverFrame
-		Configuration.addConfigurationChangeListener(this);
-		configurationChanged();
+		configuration.addConfigurationChangeListener(this);
+		configurationChanged(profileDao.getSelectedProfile());
 		updateStrings();
+		this.configuration = configuration;
+		this.profileDao = profileDao;
 	}
 	
 	public void updateStrings() {
 		login.setTitle(StringAccessor.getString("IRCClientGUI.connect"));
 		nameLabel.setText(StringAccessor.getString("IRCClientGUI.name"));
-		nameField.setText(Configuration.getString(VariableKey.IRC_NAME, false));
+		nameField.setText(configuration.getString(VariableKey.IRC_NAME, false));
 		nickLabel.setText(StringAccessor.getString("IRCClientGUI.nick"));
-		nickField.setText(Configuration.getString(VariableKey.IRC_NICK, false));
+		nickField.setText(configuration.getString(VariableKey.IRC_NICK, false));
 		serverLabel.setText(StringAccessor.getString("IRCClientGUI.server"));
 		
 		clientFrame.setTitle(StringAccessor.getString("IRCClientGUI.title") + " " + IRCClientGUI.class.getPackage().getImplementationVersion());
@@ -132,15 +144,16 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 			f.updateStrings();
 	}
 
-	public void configurationChanged() {
+	@Override
+	public void configurationChanged(Profile profile) {
 		try {
-			clientFrame.setSize(Configuration.getDimension(VariableKey.IRC_FRAME_DIMENSION, false));
-			clientFrame.setLocation(Configuration.getPoint(VariableKey.IRC_FRAME_LOCATION, false));
-		} catch(NullPointerException e) {} //we don't really care if the variables were undefined, things should still work
+			clientFrame.setSize(configuration.getDimension(VariableKey.IRC_FRAME_DIMENSION, false));
+			clientFrame.setLocation(configuration.getPoint(VariableKey.IRC_FRAME_LOCATION, false));
+		} catch(NullPointerException ignored) {} //we don't really care if the variables were undefined, things should still work
 	}
 	public void saveToConfiguration() {
-		Configuration.setDimension(VariableKey.IRC_FRAME_DIMENSION, clientFrame.getSize());
-		Configuration.setPoint(VariableKey.IRC_FRAME_LOCATION, clientFrame.getLocation());
+		configuration.setDimension(VariableKey.IRC_FRAME_DIMENSION, clientFrame.getSize());
+		configuration.setPoint(VariableKey.IRC_FRAME_LOCATION, clientFrame.getLocation());
 	}
 
 	private void setConnectDefault() {
@@ -153,7 +166,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 			try {
 				setConnectDefault();
 				login.setSelected(true);
-			} catch(PropertyVetoException e) {}
+			} catch(PropertyVetoException ignored) {}
 		}
 	}
 
@@ -195,7 +208,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		c.gridx = 1;
 		c.gridy = 3;
 		c.weightx = 1;
-		login.add(server = new URLHistoryBox(VariableKey.IRC_SERVERS), c);
+		login.add(server = new URLHistoryBox(VariableKey.IRC_SERVERS, configuration), c);
 		
 		c.gridx = 0;
 		c.gridy = 4;
@@ -210,28 +223,21 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		return login;
 	}
 
+	@Override
 	public void changedUpdate(DocumentEvent e) {}
 
+	@Override
 	public void insertUpdate(DocumentEvent e) {
 		loginChanged();
 	}
 
+	@Override
 	public void removeUpdate(DocumentEvent e) {
 		loginChanged();
 	}
 
 	private void loginChanged() {
 		connectButton.setEnabled(!nickField.getText().isEmpty() && !nameField.getText().isEmpty());
-	}
-
-	public static void main(String[] args) throws UnsupportedLookAndFeelException, IOException {
-		Configuration.loadConfiguration(Configuration.getSelectedProfile().getConfigurationFile());
-		UIManager.setLookAndFeel(new org.jvnet.substance.skin.SubstanceModerateLookAndFeel());
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				new IRCClientGUI(null, null).setVisible(true);
-			}
-		});
 	}
 
 	private boolean connecting = false;
@@ -245,12 +251,14 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 	
 	private void forkDisconnect() {
 		new Thread() {
+			@Override
 			public void run() {
 				bot.disconnect();
 			}
 		}.start();
 	}
 	
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object src = e.getSource();
 		if(src == connectButton) {
@@ -271,6 +279,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		forkDisconnect();
 	}
 
+	@Override
 	public void windowClosed(MessageFrame src) {
 		if(src instanceof PMMessageFrame) {
 			pmFrames.remove(((PMMessageFrame) src).getBuddyNick());
@@ -343,6 +352,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		cmdHelp.put(CMD_HELP, "/help (COMMAND)");
 	}
 
+	@Override
 	public void commandEntered(MessageFrame src, String cmd) {
 		if(cmd.startsWith("//"))
 			cmd = cmd.substring(1);
@@ -470,17 +480,16 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		}
 	}
 
-	public void scramblesImported(final MessageFrame src, ScrambleVariation sv, ArrayList<Scramble> scrambles) {
+	@Override
+	public void scramblesImported(final MessageFrame src, ScrambleVariation sv, List<Scramble> scrambles, Profile profile) {
 		if(cct == null) {
 			LOG.info(scrambles);
 			return;
 		}
-		cct.importScrambles(sv, scrambles);
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				clientFrame.toFront(); // this is to keep the scramble frame from stealing focus
-			}
-		});
+		cct.importScrambles(sv, scrambles, profile);
+		SwingUtilities.invokeLater(() -> {
+            clientFrame.toFront(); // this is to keep the scramble frame from stealing focus
+        });
 	}
 
 	private void messageReceived(final String nick, final String msg, final String channel) {
@@ -522,7 +531,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 	private PMMessageFrame getPMFrame(String nick) {
 		PMMessageFrame f = pmFrames.get(nick);
 		if(f == null) {
-			f = new PMMessageFrame(desk, nick);
+			f = new PMMessageFrame(desk, nick, scramblePlugin, profileDao.getSelectedProfile());
 			f.addCommandListener(this);
 			pmFrames.put(nick, f);
 		}
@@ -531,18 +540,18 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 
 	private HashMap<String, PMMessageFrame> pmFrames = new HashMap<String, PMMessageFrame>();
 	private HashMap<String, ChatMessageFrame> channelFrames = new HashMap<String, ChatMessageFrame>();
-	private HashMap<String, CCTCommChannel> commChannelMap = new HashMap<String, CCTCommChannel>();
+	private HashMap<String, CCTCommChannel> commChannelMap = new HashMap<>();
 
+	@Override
 	public void onMessage(String channel, String sender, String login, String hostname, String message) {
 		messageReceived(sender, message, channel);
 	}
 
+	@Override
 	public void onAction(final String sender, String login, String hostname, String target, final String action) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				_onAction(sender, action);
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            _onAction(sender, action);
+        });
 	}
 	//must be invoked from EDT!
 	private void _onAction(String sender, String action) {
@@ -555,218 +564,212 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 				f.appendInformation("* " + sender + " " + action);
 	}
 	
+	@Override
 	public void onJoin(final String channel, final String sender, String login, String hostname) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				boolean weJoined = sender.equals(bot.getNick());
-				if(commChannelMap.containsKey(channel)) {
-					CCTCommChannel c = commChannelMap.get(channel);
-					sendUserstate(c, IRCUtils.createMessage(IRCUtils.CLIENT_USERSTATE, myself.getUserState())); //whenever we or another user connects to a comm channel, we send our userstate immediately
-					c.getChatFrame().addCCTUser(getUser(c.getChatFrame().getChannel(), sender), sender);
-					c.getChatFrame().usersListChanged();
-				} else { //we or someone else joined a chat channel
-					ChatMessageFrame f = channelFrames.get(channel);
-					if(weJoined) {
-						String commChannel;
-						if(f == null) {
-							f = new ChatMessageFrame(desk, channel);
-							channelFrames.put(channel, f);
+		SwingUtilities.invokeLater(() -> {
+            boolean weJoined = sender.equals(bot.getNick());
+            if(commChannelMap.containsKey(channel)) {
+                CCTCommChannel c = commChannelMap.get(channel);
+                sendUserstate(c, IRCUtils.createMessage(IRCUtils.CLIENT_USERSTATE, myself.getUserState())); //whenever we or another user connects to a comm channel, we send our userstate immediately
+                c.getChatFrame().addCCTUser(getUser(c.getChatFrame().getChannel(), sender), sender);
+                c.getChatFrame().usersListChanged();
+            } else { //we or someone else joined a chat channel
+                ChatMessageFrame f = channelFrames.get(channel);
+                if(weJoined) {
+                    String commChannel;
+                    if(f == null) {
+                        f = new ChatMessageFrame(desk, configuration, channel, scramblePlugin, profileDao.getSelectedProfile());
+                        channelFrames.put(channel, f);
 
-							desk.add(f);
-							f.addCommandListener(IRCClientGUI.this);
-							f.setLocation(20, 20); // this may help make it easier to see the new window
-							f.setVisible(true);
-							commChannel = channel + "-cct";
-						} else {
-							commChannel = f.getCommChannel().getChannel();
-							f.setCommChannel(null); //make this guy look like a new frame, so setcommchannel will work
-						}
-						f.appendInformation(StringAccessor.getString("IRCClientGUI.connected") + ": " + channel);
-						try {
-							f.setSelected(true);
-						} catch(PropertyVetoException e) {}
-						setCommChannel(f, commChannel);
-						f.setConnected(true);
-					}
-					f.appendInformation(StringAccessor.format("IRCClientGUI.joined", sender, channel));
-					f.setIRCUsers(bot.getUsers(channel));
-				}
-				if(weJoined)
-					updateStatusBar();
-			}
-		});
+                        desk.add(f);
+                        f.addCommandListener(IRCClientGUI.this);
+                        f.setLocation(20, 20); // this may help make it easier to see the new window
+                        f.setVisible(true);
+                        commChannel = channel + "-cct";
+                    } else {
+                        commChannel = f.getCommChannel().getChannel();
+                        f.setCommChannel(null); //make this guy look like a new frame, so setcommchannel will work
+                    }
+                    f.appendInformation(StringAccessor.getString("IRCClientGUI.connected") + ": " + channel);
+                    try {
+                        f.setSelected(true);
+                    } catch(PropertyVetoException e) {}
+                    setCommChannel(f, commChannel);
+                    f.setConnected(true);
+                }
+                f.appendInformation(StringAccessor.format("IRCClientGUI.joined", sender, channel));
+                f.setIRCUsers(bot.getUsers(channel));
+            }
+            if(weJoined)
+                updateStatusBar();
+        });
 	}
 
+	@Override
 	public void onUserList(final String channel, final User[] users) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				if(channelFrames.containsKey(channel))
-					channelFrames.get(channel).setIRCUsers(users);
-				else if(commChannelMap.containsKey(channel)) {
-					ChatMessageFrame c = commChannelMap.get(channel).getChatFrame();
-					User[] ircusers = bot.getUsers(c.getChannel());
-					for(User cctuser : bot.getUsers(channel)) {
-						CCTUser u = c.addCCTUser(null, cctuser.getNick());
-						for(User ircuser : ircusers)
-							if(ircuser.equals(cctuser))
-								u.setPrefix(ircuser.getPrefix());
-					}
-					c.usersListChanged();
-				} else
-					assert false : channel;
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            if(channelFrames.containsKey(channel))
+                channelFrames.get(channel).setIRCUsers(users);
+            else if(commChannelMap.containsKey(channel)) {
+                ChatMessageFrame c = commChannelMap.get(channel).getChatFrame();
+                User[] ircusers = bot.getUsers(c.getChannel());
+                for(User cctuser : bot.getUsers(channel)) {
+                    CCTUser u = c.addCCTUser(null, cctuser.getNick());
+                    for(User ircuser : ircusers)
+                        if(ircuser.equals(cctuser))
+                            u.setPrefix(ircuser.getPrefix());
+                }
+                c.usersListChanged();
+            } else
+                assert false : channel;
+        });
 	}
 
+	@Override
 	public void onQuit(final String sourceNick, String sourceLogin, String sourceHostname, final String reason) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				for(String channel : bot.getChannels()) {
-					if(channelFrames.containsKey(channel)) {
-						ChatMessageFrame f = channelFrames.get(channel);
-						for(User u : f.getIRCUsers()) {
-							if(u.getNick().equals(sourceNick)) {
-								f.setIRCUsers(bot.getUsers(channel));
-								f.appendInformation(StringAccessor.format("IRCClientGUI.quit", sourceNick, reason));
-								generalizedLeftChannel(channel, sourceNick, null);
-								break;
-							}
-						}
-					} else if(commChannelMap.containsKey(channel)) {
-						CCTCommChannel chatChannel = commChannelMap.get(channel);
-						chatChannel.getChatFrame().removeCCTUser(sourceNick);
-						chatChannel.getChatFrame().usersListChanged();
-					} else
-						assert false : channel; //all channels are chat channels or comm channels
-				}
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            for(String channel : bot.getChannels()) {
+                if(channelFrames.containsKey(channel)) {
+                    ChatMessageFrame f = channelFrames.get(channel);
+                    for(User u : f.getIRCUsers()) {
+                        if(u.getNick().equals(sourceNick)) {
+                            f.setIRCUsers(bot.getUsers(channel));
+                            f.appendInformation(StringAccessor.format("IRCClientGUI.quit", sourceNick, reason));
+                            generalizedLeftChannel(channel, sourceNick, null);
+                            break;
+                        }
+                    }
+                } else if(commChannelMap.containsKey(channel)) {
+                    CCTCommChannel chatChannel = commChannelMap.get(channel);
+                    chatChannel.getChatFrame().removeCCTUser(sourceNick);
+                    chatChannel.getChatFrame().usersListChanged();
+                } else
+                    assert false : channel; //all channels are chat channels or comm channels
+            }
+        });
 	}
 
+	@Override
 	public void onPart(String channel, String sender, String login, String hostname) {
 		generalizedLeftChannel(channel, sender, null);
 	}
 
+	@Override
 	public void onKick(String channel, String kickerNick, String kickerLogin, String kickerHostname, String recipientNick, String reason) {
 		generalizedLeftChannel(channel, recipientNick, kickerNick);
 	}
 
 	private void generalizedLeftChannel(final String channel, final String user, final String kicker) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				boolean iLeft = user.equals(bot.getNick());
-				if(channelFrames.containsKey(channel)) {
-					ChatMessageFrame f = channelFrames.get(channel);
-					if(iLeft) {
-						f.appendInformation(StringAccessor.format(kicker != null ? "IRCClientGUI.youkicked" : "IRCClientGUI.youleft", channel, kicker));
-						f.setConnected(false);
-						
-						if(f.isClosed())
-							channelFrames.remove(f.getChannel());
-						
-						//since we left this chat channel, we should attempt to leave the associated comm channel 
-						bot.partChannel(f.getCommChannel().getChannel(), StringAccessor.format("IRCClientGUI.alsoleft", channel));
-					} else {
-						f.appendInformation(StringAccessor.format(kicker != null ? "IRCClientGUI.someonekicked" : "IRCClientGUI.someoneleft", channel, user,
-								kicker));
-						f.setIRCUsers(bot.getUsers(channel));
-					}
-				} else if(commChannelMap.containsKey(channel)) {
-					CCTCommChannel c = commChannelMap.get(channel);
-					if(c.getChatFrame().isConnected()) {
-						if(iLeft) {
-							verifyCommChannels.start();
-							updateStatusBar();
-						}
-					} else
-						commChannelMap.remove(c.getChannel()); //we don't want to attempt to reconnect when onPart() is called
-					
-					c.getChatFrame().removeCCTUser(user);
-					c.getChatFrame().usersListChanged();
-				} else {} //this must be a comm channel that we intentionally left via /cctstats, or a chat channel we x-ed close
+		SwingUtilities.invokeLater(() -> {
+            boolean iLeft = user.equals(bot.getNick());
+            if(channelFrames.containsKey(channel)) {
+                ChatMessageFrame f = channelFrames.get(channel);
+                if(iLeft) {
+                    f.appendInformation(StringAccessor.format(kicker != null ? "IRCClientGUI.youkicked" : "IRCClientGUI.youleft", channel, kicker));
+                    f.setConnected(false);
 
-				if(iLeft)
-					updateStatusBar();
-			}
-		});
+                    if(f.isClosed())
+                        channelFrames.remove(f.getChannel());
+
+                    //since we left this chat channel, we should attempt to leave the associated comm channel
+                    bot.partChannel(f.getCommChannel().getChannel(), StringAccessor.format("IRCClientGUI.alsoleft", channel));
+                } else {
+                    f.appendInformation(StringAccessor.format(kicker != null ? "IRCClientGUI.someonekicked" : "IRCClientGUI.someoneleft", channel, user,
+                            kicker));
+                    f.setIRCUsers(bot.getUsers(channel));
+                }
+            } else if(commChannelMap.containsKey(channel)) {
+                CCTCommChannel c = commChannelMap.get(channel);
+                if(c.getChatFrame().isConnected()) {
+                    if(iLeft) {
+                        verifyCommChannels.start();
+                        updateStatusBar();
+                    }
+                } else
+                    commChannelMap.remove(c.getChannel()); //we don't want to attempt to reconnect when onPart() is called
+
+                c.getChatFrame().removeCCTUser(user);
+                c.getChatFrame().usersListChanged();
+            } else {} //this must be a comm channel that we intentionally left via /cctstats, or a chat channel we x-ed close
+
+            if(iLeft)
+                updateStatusBar();
+        });
 	}
 
+	@Override
 	public void onNickChange(final String oldNick, String login, String hostname, final String newNick) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				String msg = StringAccessor.format("IRCClientGUI.nickchange", oldNick, newNick);
-				for(ChatMessageFrame f : channelFrames.values()) {
-					if(getUser(f.getChannel(), newNick) != null) { //only update that channel if the user was in it
-						f.appendInformation(msg);
-						f.setIRCUsers(bot.getUsers(f.getChannel()));
-					}
-				}
-				for(CCTCommChannel commChan : commChannelMap.values())
-					commChan.getChatFrame().CCTNickChanged(oldNick, newNick);
-				
-				if(newNick.equals(bot.getNick()))
-					serverFrame.appendInformation(msg);
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            String msg = StringAccessor.format("IRCClientGUI.nickchange", oldNick, newNick);
+            for(ChatMessageFrame f : channelFrames.values()) {
+                if(getUser(f.getChannel(), newNick) != null) { //only update that channel if the user was in it
+                    f.appendInformation(msg);
+                    f.setIRCUsers(bot.getUsers(f.getChannel()));
+                }
+            }
+            for(CCTCommChannel commChan : commChannelMap.values())
+                commChan.getChatFrame().CCTNickChanged(oldNick, newNick);
+
+            if(newNick.equals(bot.getNick()))
+                serverFrame.appendInformation(msg);
+        });
 	}
 	
 	public boolean isConnected() {
 		return bot.isConnected();
 	}
 	
+	@Override
 	public void onConnect() {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				server.commitCurrentItem(); //current server was successful, so remember it
-				//if we hadn't set a nick and namme before, we'll do so now
-				String c;
-				if((c = Configuration.getString(VariableKey.IRC_NAME, false)) == null || c.isEmpty())
-					Configuration.setString(VariableKey.IRC_NAME, nameField.getText());
-				if((c = Configuration.getString(VariableKey.IRC_NICK, false)) == null || c.isEmpty())
-					Configuration.setString(VariableKey.IRC_NICK, nickField.getText());
-				
-				login.setVisible(false);
-				desk.remove(login);
-				serverFrame.setTitle(StringAccessor.getString("IRCClientGUI.connected") + ": " + bot.getInetAddress().getHostName() + ":" + bot.getPort());
+		SwingUtilities.invokeLater(() -> {
+            server.commitCurrentItem(); //current server was successful, so remember it
+            //if we hadn't set a nick and namme before, we'll do so now
+            String c;
+            if((c = configuration.getString(VariableKey.IRC_NAME, false)) == null || c.isEmpty())
+                configuration.setString(VariableKey.IRC_NAME, nameField.getText());
+            if((c = configuration.getString(VariableKey.IRC_NICK, false)) == null || c.isEmpty())
+                configuration.setString(VariableKey.IRC_NICK, nickField.getText());
 
-				updateStatusBar();
-			}
-		});
+            login.setVisible(false);
+            desk.remove(login);
+            serverFrame.setTitle(StringAccessor.getString("IRCClientGUI.connected") + ": " + bot.getInetAddress().getHostName() + ":" + bot.getPort());
+
+            updateStatusBar();
+        });
 	}
+	@Override
 	public void onTopic(final String channel, final String topic, final String setBy, final long date, boolean changed) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				if(channelFrames.containsKey(channel))
-					channelFrames.get(channel).setTopic(topic + " - " + setBy + " (" + new Date(date) + ")");
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            if(channelFrames.containsKey(channel))
+                channelFrames.get(channel).setTopic(topic + " - " + setBy + " (" + new Date(date) + ")");
+        });
 	}
 
+	@Override
 	public void onDisconnect() {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				for(ChatMessageFrame f : channelFrames.values()) {
-					f.setConnected(false);
-					f.appendInformation(StringAccessor.getString("IRCClientGUI.disconnected"));
-				}
-				serverFrame.setTitle(StringAccessor.getString("IRCClientGUI.disconnected"));
-				setConnecting(false);
-				updateStatusBar();
-				
-				if(!login.isVisible()) { //the login may be visible if the cancel button was clicked while trying to connect to a server
-					login.setVisible(true);
-					desk.add(login);
-					login.pack();
-					// center login frame
-					login.setLocation((desk.getWidth() - login.getWidth()) / 2, (desk.getHeight() - login.getHeight()) / 2);
-					try {
-						login.setSelected(true);
-					} catch(PropertyVetoException e) {}
-				}
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            for(ChatMessageFrame f : channelFrames.values()) {
+                f.setConnected(false);
+                f.appendInformation(StringAccessor.getString("IRCClientGUI.disconnected"));
+            }
+            serverFrame.setTitle(StringAccessor.getString("IRCClientGUI.disconnected"));
+            setConnecting(false);
+            updateStatusBar();
+
+            if(!login.isVisible()) { //the login may be visible if the cancel button was clicked while trying to connect to a server
+                login.setVisible(true);
+                desk.add(login);
+                login.pack();
+                // center login frame
+                login.setLocation((desk.getWidth() - login.getWidth()) / 2, (desk.getHeight() - login.getHeight()) / 2);
+                try {
+                    login.setSelected(true);
+                } catch(PropertyVetoException e) {}
+            }
+        });
 	}
 
+	@Override
 	public void log(String line) {
 //		serverFrame.appendInformation(line);
 	}
@@ -778,18 +781,19 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		int port = -1;
 		try {
 			port = Integer.parseInt(urlAndPort[1]);
-		} catch(Exception e) {}
+		} catch(Exception ignored) {}
 		final int PORT = port;
 		serverFrame.setTitle(StringAccessor.getString("IRCClientGUI.connecting") + ": " + urlAndPort[0] + ":" + port);
 		connectThread = new Thread() {
+			@Override
 			public void run() {
 				try {
 					if(bot.isConnected()) {
 						bot.disconnect();
 						try {
 							bot.dispose();
-						} catch(NullPointerException e) {}
-						bot = new KillablePircBot(IRCClientGUI.this, FINGER_MSG);
+						} catch(NullPointerException ignored) {}
+						bot = new KillablePircBot(IRCClientGUI.this, FINGER_MSG, configuration);
 					}
 					bot.setAutoNickChange(true);
 					bot.setlogin(nameField.getText());
@@ -807,11 +811,9 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 						bot.disconnect();
 					else
 						onDisconnect();
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run() {
-							serverFrame.appendError(e.toString());
-						}
-					});
+					SwingUtilities.invokeLater(() -> {
+                        serverFrame.appendError(e.toString());
+                    });
 				}
 			}
 		};
@@ -820,24 +822,23 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 
 	/*** What follows is code to connect to a secondary channel for CCT status messages ***/
 
+	@Override
 	public void onServerResponse(int code, String response) {
 		serverFrame.appendInformation(code + " " + response);
 		if(code == ReplyConstants.ERR_CANNOTSENDTOCHAN) {
 			final String[] nick_chan_msg = response.split(" ", 3);
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					if(channelFrames.containsKey(nick_chan_msg[1])) {
-						ChatMessageFrame c = channelFrames.get(nick_chan_msg[1]);
-						c.appendError(nick_chan_msg[2]);
-					} else if(commChannelMap.containsKey(nick_chan_msg[1])) {
-						// if we've been silenced on a comm channel,
-						// we'll have to try to connect to a different channel
-						bot.partChannel(nick_chan_msg[1]);
-					} else {
-						//this must be a channel we parted from before our outgoing queue emptied
-					}
-				}
-			});
+			SwingUtilities.invokeLater(() -> {
+                if(channelFrames.containsKey(nick_chan_msg[1])) {
+                    ChatMessageFrame c = channelFrames.get(nick_chan_msg[1]);
+                    c.appendError(nick_chan_msg[2]);
+                } else if(commChannelMap.containsKey(nick_chan_msg[1])) {
+                    // if we've been silenced on a comm channel,
+                    // we'll have to try to connect to a different channel
+                    bot.partChannel(nick_chan_msg[1]);
+                } else {
+                    //this must be a channel we parted from before our outgoing queue emptied
+                }
+            });
 		}
 	}
 	
@@ -876,6 +877,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 	// TODO - if the server lag is > 10 seconds, we'll connect to many, many channels
 	// this timer will check every 10 seconds for unconnected comm channels
 	private Timer verifyCommChannels = new Timer(10000, new ActionListener() {
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			boolean alliswell = true;
 			for(ChatMessageFrame c : channelFrames.values()) {
@@ -914,19 +916,18 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		c.usersChanged();
 	}
 
+	@Override
 	public void onMode(final String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				if(channelFrames.containsKey(channel)) {
-					ChatMessageFrame c = channelFrames.get(channel);
-					c.setIRCUsers(bot.getUsers(channel));
-					updateCCTUserModes(c);
-				} else if(commChannelMap.containsKey(channel)) {
-					updateCCTUserModes(commChannelMap.get(channel).getChatFrame());
-				} else
-					assert false : channel;
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            if(channelFrames.containsKey(channel)) {
+                ChatMessageFrame c = channelFrames.get(channel);
+                c.setIRCUsers(bot.getUsers(channel));
+                updateCCTUserModes(c);
+            } else if(commChannelMap.containsKey(channel)) {
+                updateCCTUserModes(commChannelMap.get(channel).getChatFrame());
+            } else
+                assert false : channel;
+        });
 	}
 
 	private User getUser(String channel, String user) {
@@ -958,7 +959,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		statusBar.setText("<html>" + StringAccessor.getString("IRCClientGUI.status") + ": " + text + "</html>");
 	}
 
-	private CCTUser myself = new CCTUser(null, null); // prefix and nick don't matter here
+	private CCTUser myself = new CCTUser(null, null, null); // prefix and nick don't matter here
 
 	public CCTUser getMyUserstate() {
 		return myself;

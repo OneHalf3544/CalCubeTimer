@@ -1,35 +1,34 @@
 package net.gnehzr.cct.misc.customJTable;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-
-import javax.swing.Action;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JComponent;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
-
 import net.gnehzr.cct.configuration.ProfileListModel;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.ProfileDao;
 
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+
 public class ProfileEditor extends DefaultCellEditor {
 	private Profile value;
 	private ProfileListModel model;
 	private String editText;
-	public ProfileEditor(String editText, ProfileListModel model) {
+	private final ProfileDao profileDao;
+
+	public ProfileEditor(String editText, ProfileListModel model, ProfileDao profileDao) {
 		super(new JTextField());
 		this.model = model;
 		this.editText = editText;
+		this.profileDao = profileDao;
 	}
 
 	private static final String INVALID_CHARACTERS = "\\/:*?<>|\"";
+
+	@Override
 	public boolean stopCellEditing() {
 		String s = (String) super.getCellEditorValue();
-		value = ProfileDao.getProfileByName(s);
+		value = profileDao.getProfileByName(s);
 		if(!value.toString().equals(originalValue)) {
 			String error = null;
 			if(stringContainsCharacters(s, INVALID_CHARACTERS))

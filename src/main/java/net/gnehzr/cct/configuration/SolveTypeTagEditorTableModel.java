@@ -1,10 +1,10 @@
 package net.gnehzr.cct.configuration;
 
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.statistics.SolveType;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -19,9 +19,15 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 	private static final Logger LOG = Logger.getLogger(SolveTypeTagEditorTableModel.class);
 
 	private JTable parent;
-	public SolveTypeTagEditorTableModel(JTable parent) {
+	private final Configuration configuration;
+	private final StatisticsTableModel statsModel;
+
+	public SolveTypeTagEditorTableModel(JTable parent, Configuration configuration, StatisticsTableModel statsModel) {
 		this.parent = parent;
+		this.configuration = configuration;
+		this.statsModel = statsModel;
 	}
+
 	public class TypeAndName {
 		public String name;
 		public SolveType type;
@@ -65,7 +71,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 				tan.type.rename(tan.name);
 			tagNames[c] = tan.name;
 		}
-		Configuration.setStringArray(VariableKey.SOLVE_TAGS, tagNames);
+		configuration.setStringArray(VariableKey.SOLVE_TAGS, tagNames);
 		for(TypeAndName tan : deletedTags) {
 			if(tan.type != null) { //no need to attempt to remove something that never got truly created
                 SolveType.remove(tan.type);
@@ -73,10 +79,11 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 		}
 	}
 	
+	@Override
 	public void deleteRows(int[] indices) {
 		for(int c = indices.length - 1; c >= 0; c--) {
 			TypeAndName tan = tags.get(indices[c]);
-			int count = CALCubeTimer.statsModel.getCurrentSession().getPuzzleStatistics().getPuzzleDatabase().getDatabaseTypeCount(tan.type);
+			int count = statsModel.getCurrentSession().getPuzzleStatistics().getPuzzleDatabase().getDatabaseTypeCount(tan.type);
 			if(count == 0)
 				deletedTags.add(tags.remove(indices[c])); //mark this type for deletion
 			else
@@ -88,46 +95,56 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 		fireTableDataChanged();
 	}
 
+	@Override
 	public void removeRows(int[] indices) {
 		for(int c = indices.length - 1; c >= 0; c--)
 			tags.remove(indices[c]);
 		fireTableDataChanged();
 	}
 	
+	@Override
 	public String getColumnName(int column) {
 		return "Tags";
 	}
+	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return TypeAndName.class;
 	}
 
+	@Override
 	public int getColumnCount() {
 		return 1;
 	}
 
+	@Override
 	public int getRowCount() {
 		return tags == null ? 0 : tags.size();
 	}
 
+	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		return tags.get(rowIndex);
 	}
 
+	@Override
 	public void insertValueAt(Object value, int rowIndex) {
 		tags.add(rowIndex, (TypeAndName) value);
 		fireTableDataChanged();
 	}
 
+	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		SolveType t = tags.get(rowIndex).type;
 		return t == null || !t.isIndependent();
 	}
 
+	@Override
 	public boolean isRowDeletable(int rowIndex) {
 		SolveType t = tags.get(rowIndex).type;
 		return t == null || !t.isIndependent();
 	}
 	
+	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(rowIndex == tags.size())
 			tags.add(new TypeAndName((String)value, null));
@@ -143,6 +160,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 		}
 		
 		private String s;
+		@Override
 		public boolean stopCellEditing() {
 			s = (String) super.getCellEditorValue();
 			String error = null;
@@ -167,6 +185,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 		}
 
 		private String origValue;
+		@Override
 		public Component getTableCellEditorComponent(JTable table, Object value,
 				boolean isSelected, int row, int column) {
 			s = null;
@@ -177,6 +196,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 					column);
 		}
 
+		@Override
 		public Object getCellEditorValue() {
 			return s;
 		}

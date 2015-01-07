@@ -1,22 +1,29 @@
 package net.gnehzr.cct.i18n;
 
+import com.google.inject.Inject;
+import net.gnehzr.cct.configuration.Configuration;
+
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-
-import net.gnehzr.cct.configuration.Configuration;
 
 public class XMLGuiMessages implements MessageAccessor {
 	private static final String BUNDLE_NAME = "guiLayouts/"; 
 
 	private static ResourceBundle RESOURCE_BUNDLE = null;
 
-	public static final MessageAccessor XMLGUI_ACCESSOR = new XMLGuiMessages();
-	private XMLGuiMessages() {}
+	public final MessageAccessor XMLGUI_ACCESSOR;
+	private final Configuration configuration;
+
+	@Inject
+	XMLGuiMessages(Configuration configuration) {
+		this.configuration = configuration;
+		XMLGUI_ACCESSOR = this;
+	}
 	
 	private static String bundleFileName;
-	public static void reloadResources() {
+	public void reloadResources() {
 		//we need to load this xml gui's language properties file
-		String fileName = Configuration.getXMLGUILayout().getName();
+		String fileName = configuration.getXMLGUILayout().getName();
 		fileName = fileName.substring(0, fileName.lastIndexOf('.'));
 		
 		bundleFileName = BUNDLE_NAME + fileName;
@@ -28,6 +35,7 @@ public class XMLGuiMessages implements MessageAccessor {
 		}
 	}
 
+	@Override
 	public String getString(String key) {
 		if(RESOURCE_BUNDLE == null)
 			return "Could not find " + bundleFileName + ".properties!"; 

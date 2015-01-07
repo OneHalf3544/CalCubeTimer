@@ -8,6 +8,7 @@ import net.gnehzr.cct.scrambles.ScrambleVariation;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 
 public class VariableKey<H> {
@@ -40,10 +41,10 @@ public class VariableKey<H> {
 			key += "_" + custom.toString();
 		return new VariableKey<Integer>(key); 
 	}
-	public static final VariableKey<Integer> JCOMPONENT_VALUE(String componentID, boolean xmlSpecific) {
+	public static final VariableKey<Integer> JCOMPONENT_VALUE(String componentID, boolean xmlSpecific, File xmlguiLayout) {
 		String key = "GUI_xmlLayout"; 
 		if(xmlSpecific)
-			key += "_" + Configuration.getXMLGUILayout().getName(); 
+			key += "_" + xmlguiLayout.getName();
 		key += "_component"+ componentID; 
 		return new VariableKey<Integer>(key);
 	}
@@ -78,7 +79,7 @@ public class VariableKey<H> {
 	public static final VariableKey<String> XML_LAYOUT = new VariableKey<String>("GUI_xmlLayout_file"); 
 	public static final VariableKey<String> DEFAULT_SCRAMBLE_CUSTOMIZATION = new VariableKey<String>("Scramble_Default_scrambleCustomization"); 
 	public static final VariableKey<String> SCRAMBLE_GENERATOR(ScrambleCustomization sc) {
-		return new VariableKey<String>("Puzzle_ScrambleGenerator_" + sc.toString()); 
+		return new VariableKey<>("Puzzle_ScrambleGenerator_" + sc.toString());
 	}
 
 	public static final VariableKey<String[]> SOLVE_TAGS = new VariableKey<String[]>("Misc_solveTags"); 
@@ -164,7 +165,8 @@ public class VariableKey<H> {
 	public static final VariableKey<Double> MIN_SPLIT_DIFFERENCE = new VariableKey<Double>("Splits_minimumSplitDifference"); 
 
 	private final String propsName;
-	private VariableKey(String propertiesName) {
+
+	VariableKey(String propertiesName) {
 		propsName = propertiesName;
 	}
 	public String toKey() {

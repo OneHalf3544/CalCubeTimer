@@ -1,5 +1,6 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,19 +9,21 @@ import java.util.List;
 
 public class TimerState implements Comparable<TimerState> {
 
-	public static final TimerState ZERO_STATE = new TimerState(Duration.ZERO);
+	private final Configuration configuration;
 
 	private Duration time;
 
-	public TimerState() {
+	public TimerState(Configuration configuration) {
+		this.configuration = configuration;
 	}
 
-	public TimerState(@NotNull Duration time) {
+	public TimerState(Configuration configuration, @NotNull Duration time) {
+		this.configuration = configuration;
 		this.time = time;
 	}
 
 	public SolveTime toSolveTime(String scramble, List<SolveTime> splits) {
-		return new SolveTime(this, scramble, splits);
+		return new SolveTime(this, scramble, splits, configuration);
 	}
 	public Duration value() {
 		return time;

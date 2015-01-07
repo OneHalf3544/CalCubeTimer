@@ -1,47 +1,60 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import java.awt.Component;
-import java.util.ArrayList;
-
-import javax.swing.JTabbedPane;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
-public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateListener, ConfigurationChangeListener, DynamicDestroyable {
-	private ArrayList<DynamicString> tabNames = new ArrayList<DynamicString>();
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
-	public DynamicTabbedPane() {
-		Configuration.addConfigurationChangeListener(this);
-		CALCubeTimer.statsModel.addStatisticsUpdateListener(this);
+public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateListener, ConfigurationChangeListener, DynamicDestroyable {
+
+	private final StatisticsTableModel statsModel;
+	private final Configuration configuration;
+	private List<DynamicString> tabNames = new ArrayList<>();
+	private final XMLGuiMessages xmlGuiMessages;
+
+	public DynamicTabbedPane(StatisticsTableModel statsModel, Configuration configuration, XMLGuiMessages xmlGuiMessages) {
+		this.statsModel = statsModel;
+		this.configuration = configuration;
+		this.xmlGuiMessages = xmlGuiMessages;
+		this.configuration.addConfigurationChangeListener(this);
+		this.statsModel.addStatisticsUpdateListener(this);
 	}
 	
+	@Override
 	public void addTab(String title, Component component) {
-		DynamicString s = new DynamicString(title, CALCubeTimer.statsModel, XMLGuiMessages.XMLGUI_ACCESSOR);
+		DynamicString s = new DynamicString(title, statsModel, xmlGuiMessages.XMLGUI_ACCESSOR, configuration);
 		tabNames.add(s);
 		super.addTab(s.toString(), component);
 	}
 	
+	@Override
 	public void removeTabAt(int index) {
 		tabNames.remove(index);
 		super.removeTabAt(index);
 	}
 	
+	@Override
 	public void update() {
 		for(int c = 0; c < tabNames.size(); c++) {
 			setTitleAt(c, tabNames.get(c).toString());
 		}
 	}
 
-	public void configurationChanged() {
+	@Override
+	public void configurationChanged(Profile profile) {
 		update();
 	}
 
+	@Override
 	public void destroy(){
-		Configuration.removeConfigurationChangeListener(this);
-		CALCubeTimer.statsModel.removeStatisticsUpdateListener(this);
+		configuration.removeConfigurationChangeListener(this);
+		statsModel.removeStatisticsUpdateListener(this);
 	}
 }

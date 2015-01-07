@@ -1,34 +1,42 @@
 package net.gnehzr.cct.statistics;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import net.gnehzr.cct.main.CALCubeTimer;
-
 public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter {
+
 	private String customization;
 	private ProfileDatabase pd;
-	public PuzzleStatistics(String customization, ProfileDatabase pd) {
+
+	private final Configuration configuration;
+
+	public PuzzleStatistics(String customization, ProfileDatabase pd, Configuration configuration,
+							StatisticsTableModel statsModel) {
 		this.customization = customization;
 		this.pd = pd;
+		this.configuration = configuration;
 		//We need some way for each profile database to listen for updates,
 		//this seems fine to me, although nasty
-		CALCubeTimer.statsModel.addStatisticsUpdateListener(this);
+		statsModel.addStatisticsUpdateListener(this);
 	}
 	public String getCustomization() {
 		return customization;
 	}
-	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<Session>();
+	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<>();
 	public Iterable<Session> toSessionIterable() {
 		return sessions;
 	}
 	public int getSessionsCount() {
 		return sessions.size();
 	}
-	public void addSession(Session s) {
+
+	public void addSession(Session s, Profile profile) {
 		sessions.add(s);
-		s.setPuzzleStatistics(this);
+		s.setPuzzleStatistics(this, profile);
 		refreshStats();
 		pd.fireTableDataChanged();
 	}
@@ -46,6 +54,7 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 	public String toString() {
 		return customization;
 	}
+	@Override
 	public void update() {
 		refreshStats();
 		pd.fireTableDataChanged();
@@ -61,7 +70,7 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 		bestTime = SolveTime.WORST;
 		solvedCount = 0;
 		attemptCount = 0;
-		typeCounter = new HashMap<SolveType, Integer>();
+		typeCounter = new HashMap<>();
 		globalAverage = 0;
 		bestRAs = new double[Statistics.RA_SIZES_COUNT];
 		Arrays.fill(bestRAs, Double.POSITIVE_INFINITY);
@@ -80,7 +89,7 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 			
 			solvedCount += solves;
 			attemptCount += stats.getAttemptCount();
-			for(SolveType type : SolveType.getSolveTypes(false))
+			for(SolveType type : SolveType.getSolveTypes(configuration.getStringArray(VariableKey.SOLVE_TAGS, false)))
 				typeCounter.put(type, getSolveTypeCount(type) + stats.getSolveTypeCount(type));
 		}
 		if(solvedCount != 0)
@@ -99,14 +108,17 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 	public double getGlobalAverage() {
 		return globalAverage;
 	}
+	@Override
 	public int getSolveTypeCount(SolveType t) {
 		Integer c = typeCounter.get(t);
 		if(c == null) c = 0;
 		return c;
 	}
+	@Override
 	public int getSolveCount() {
 		return solvedCount;
 	}
+	@Override
 	public int getAttemptCount() {
 		return attemptCount;
 	}

@@ -1,20 +1,16 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.i18n.MessageAccessor;
+import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.statistics.*;
+import net.gnehzr.cct.statistics.Statistics.AverageType;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.i18n.MessageAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
-import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.statistics.PuzzleStatistics;
-import net.gnehzr.cct.statistics.SolveCounter;
-import net.gnehzr.cct.statistics.Statistics;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
-import net.gnehzr.cct.statistics.SolveType;
-import net.gnehzr.cct.statistics.Statistics.AverageType;
 
 public class DynamicString{
 	private static final char RAW_TEXT = 'a', I18N_TEXT = 'b', STAT = 'c';
@@ -26,10 +22,13 @@ public class DynamicString{
 	private String[] splitText;
 	private StatisticsTableModel statsModel;
 	private MessageAccessor accessor;
-	public DynamicString(String s, StatisticsTableModel statsModel, MessageAccessor accessor){
+	private final Configuration configuration;
+
+	public DynamicString(String s, StatisticsTableModel statsModel, MessageAccessor accessor, Configuration configuration){
 		rawString = s;
 		this.statsModel = statsModel;
 		this.accessor = accessor;
+		this.configuration = configuration;
 		ArrayList<String> splitUp = new ArrayList<String>();
 		splitText = s.split("\\$\\$");
 		for(int i = 0; i < splitText.length; i++){
@@ -98,8 +97,9 @@ public class DynamicString{
 			if(parens)
 				return r;
 			r = "\u221E"; //unicode for infinity
-		} else
-			r = Utils.formatTime(Math.abs(progress));
+		} else {
+			r = Utils.formatTime(Math.abs(progress), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+		}
 		r = (progress >= 0 ? "+" : "-") + r;
 		if(parens)
 			r = "(" + r + ")";
@@ -115,7 +115,7 @@ public class DynamicString{
 		if(s.startsWith(CONF.toLowerCase() + "(")) {
 			if(s.endsWith(")")) {
 				s = s.substring(CONF.length());
-				return Configuration.getValue(s.substring(1, s.length() - 1));
+				return configuration.getString(s.substring(1, s.length() - 1));
 			}
 		}
 
@@ -137,7 +137,7 @@ public class DynamicString{
 
 		if(s.equals("global")){
 			//Database queries for current scramble customization
-			PuzzleStatistics ps = CALCubeTimer.statsModel.getCurrentSession().getPuzzleStatistics();
+			PuzzleStatistics ps = statsModel.getCurrentSession().getPuzzleStatistics();
 			Pattern globalPattern = Pattern.compile("^\\s*\\.\\s*(time|ra|average|solvecount)\\s*(.*)$");
 			Matcher globalMatcher = globalPattern.matcher(m.group(2));
 			if(globalMatcher.matches()){
@@ -173,14 +173,14 @@ public class DynamicString{
 					else{
 						String avg = args[1].trim();
 						if(avg.equals("best"))
-							r = Utils.formatTime(ps.getBestRA(num));
+							r = Utils.formatTime(ps.getBestRA(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 						else{
 							r = "Unimplemented: " + avg + " : " + sorig;
 						}
 					}
 				}
 				else if(t.equals("average")){
-					r = Utils.formatTime(ps.getGlobalAverage());
+					r = Utils.formatTime(ps.getGlobalAverage(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 				}
 				else if(t.equals("solvecount")){
 					r = handleSolveCount(globalMatcher.group(2), ps);
@@ -207,7 +207,7 @@ public class DynamicString{
 				if(sessionMatcher.group(2).isEmpty()){
 					double ave = stats.getSessionAvg(); //this method returns zero if there are no solves to allow the global stats to be computed nicely
 					if(ave == 0) ave = Double.POSITIVE_INFINITY;
-					r = Utils.formatTime(ave);
+					r = Utils.formatTime(ave, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 				}
 				else{
 					Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));
@@ -221,7 +221,7 @@ public class DynamicString{
 			}
 			else if(t.equals("sd")){
 				if(sessionMatcher.group(2).isEmpty()){
-					r = Utils.formatTime(stats.getSessionSD());
+					r = Utils.formatTime(stats.getSessionSD(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 				}
 				else{
 					Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));
@@ -248,8 +248,8 @@ public class DynamicString{
 					}
 					else if(u.equals("best")) r = stats.getBestTime().toString();
 					else if(u.equals("worst")) r = stats.getWorstTime().toString();
-					else if(u.equals("recent")) r = Utils.formatTime(stats.getCurrentTime());
-					else if(u.equals("last")) r = Utils.formatTime(stats.getLastTime());
+					else if(u.equals("recent")) r = Utils.formatTime(stats.getCurrentTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+					else if(u.equals("last")) r = Utils.formatTime(stats.getLastTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 					else r = "Unimplemented: " + u + " : " + sorig;
 				}
 				else r = "Unimplemented: " + sorig;
@@ -281,8 +281,8 @@ public class DynamicString{
 					if(arg1Matcher.group(1).equals("sd")){
 						Matcher sdArgMatcher = argPattern.matcher(arg1Matcher.group(2));
 						if(sdArgMatcher.matches()){
-							if(sdArgMatcher.group(1).equals("best")) r = Utils.formatTime(stats.getBestSD(num));
-							else if(sdArgMatcher.group(1).equals("worst")) r = Utils.formatTime(stats.getWorstSD(num));
+							if(sdArgMatcher.group(1).equals("best")) r = Utils.formatTime(stats.getBestSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+							else if(sdArgMatcher.group(1).equals("worst")) r = Utils.formatTime(stats.getWorstSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 						}
 					}
 					if(arg1Matcher.group(1).equals("progress")){
@@ -310,10 +310,10 @@ public class DynamicString{
 						else r = "Unimplemented: " + avg + " : " + sorig;
 					}
 					else if(t.equals("sd")){
-						if(avg.equals("best")) r = Utils.formatTime(stats.getBestAverageSD(num));
-						else if(avg.equals("worst")) r = Utils.formatTime(stats.getWorstAverageSD(num));
-						else if(avg.equals("recent")) r = Utils.formatTime(stats.getCurrentSD(num));
-						else if(avg.equals("last")) r = Utils.formatTime(stats.getLastSD(num));
+						if(avg.equals("best")) r = Utils.formatTime(stats.getBestAverageSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+						else if(avg.equals("worst")) r = Utils.formatTime(stats.getWorstAverageSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+						else if(avg.equals("recent")) r = Utils.formatTime(stats.getCurrentSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+						else if(avg.equals("last")) r = Utils.formatTime(stats.getLastSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 						else r = "Unimplemented: " + avg + " : " + sorig;
 					}
 					else if(t.equals("time")){
@@ -349,15 +349,17 @@ public class DynamicString{
 					else r = "Unimplemented: " + t + " : " + sorig;
 				}
 				else{
-					if(avg.equals("best")) r = Utils.formatTime(stats.getBestAverage(num));
-					else if(avg.equals("worst")) r = Utils.formatTime(stats.getWorstAverage(num));
-					else if(avg.equals("recent")) r = Utils.formatTime(stats.getCurrentAverage(num));
-					else if(avg.equals("last")) r = Utils.formatTime(stats.getLastAverage(num));
+					if(avg.equals("best")) r = Utils.formatTime(stats.getBestAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+					else if(avg.equals("worst")) r = Utils.formatTime(stats.getWorstAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+					else if(avg.equals("recent")) r = Utils.formatTime(stats.getCurrentAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+					else if(avg.equals("last")) r = Utils.formatTime(stats.getLastAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 					else r = "Unimplemented: " + avg + " : " + sorig;
 				}
 			}
 		}
-		else if(s.equals("date")) r = Configuration.getDateFormat().format(new Date());
+		else if(s.equals("date")) {
+			r = configuration.getDateFormat().format(LocalDate.now());
+		}
 		else r = "Unimplemented: " + sorig;
 
 		return r;
@@ -374,14 +376,23 @@ public class DynamicString{
 			boolean percent = u.startsWith("%");
 			if(percent) u = u.substring(1);
 			int val;
-			if(u.equals("solved"))
-				val = stats.getSolveCount();
-			else if(u.equals("attempt"))
-				val = stats.getAttemptCount();
-			else
-				val = stats.getSolveTypeCount(SolveType.getSolveType(u));
-			if(percent) return Utils.format(100. * val / stats.getAttemptCount());
-			else return "" + val;
+			switch (u) {
+				case "solved":
+					val = stats.getSolveCount();
+					break;
+				case "attempt":
+					val = stats.getAttemptCount();
+					break;
+				default:
+					val = stats.getSolveTypeCount(SolveType.getSolveType(u));
+					break;
+			}
+			if(percent) {
+				return Utils.format(100. * val / stats.getAttemptCount());
+			}
+			else {
+				return "" + val;
+			}
 		}
 		else return null;
 	}

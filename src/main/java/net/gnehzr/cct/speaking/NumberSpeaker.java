@@ -1,5 +1,6 @@
 package net.gnehzr.cct.speaking;
 
+import com.google.inject.Inject;
 import javazoom.jl.decoder.JavaLayerException;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -9,19 +10,16 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class NumberSpeaker implements Comparable<NumberSpeaker> {
 
 	private static final Logger LOG = Logger.getLogger(NumberSpeaker.class);
+	private final Configuration configuration;
 
-	public static enum TalkerType {
+	public enum TalkerType {
 		TIMER_OFF("timer_off"), TIMER_RUNNING("timer_running"), TIMER_RESET("timer_reset");
 		private String desc;
 		private TalkerType(String desc) {
@@ -31,57 +29,61 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 			return desc;
 		}
 	}
-	private static final String ZIP_EXTENSION = ".zip";
-	private static HashMap<String, NumberSpeaker> numberSpeakers;
-	private static HashMap<String, NumberSpeaker> getNumberSpeakers() {
-		if(numberSpeakers == null) {
-			numberSpeakers = new HashMap<>();
-			for(File f : Configuration.voicesFolder.listFiles()) {
-				String fileName = f.getName();
-				if(fileName.endsWith(ZIP_EXTENSION) && f.isFile()) {
-					NumberSpeaker ns;
-					try {
-						String name = f.getName();
-						name = name.substring(0, name.length() - ZIP_EXTENSION.length());
-						ns = new NumberSpeaker(name, f);
-						numberSpeakers.put(name, ns);
-					} catch (IOException e) {
-						LOG.warn("ignored exception", e);
-					}
-				}
-			}
+	private final String ZIP_EXTENSION = ".zip";
+	private Map<String, NumberSpeaker> numberSpeakers;
+
+	private Map<String, NumberSpeaker> getNumberSpeakers() {
+		if (numberSpeakers != null) {
+			return numberSpeakers;
 		}
+		numberSpeakers = new HashMap<>();
+		for(File f : configuration.getVoicesFolder().listFiles()) {
+            String fileName = f.getName();
+            if(fileName.endsWith(ZIP_EXTENSION) && f.isFile()) {
+                try {
+					String name = f.getName();
+                    name = name.substring(0, name.length() - ZIP_EXTENSION.length());
+					numberSpeakers.put(name, new NumberSpeaker(name, f, configuration));
+                } catch (IOException e) {
+                    LOG.warn("ignored exception", e);
+                }
+            }
+        }
 		return numberSpeakers;
 	}
-	private static NumberSpeaker[] alphabetized;
-	public static NumberSpeaker[] getSpeakers() {
+	private NumberSpeaker[] alphabetized;
+	public NumberSpeaker[] getSpeakers() {
 		if(alphabetized == null) {
-			alphabetized = new ArrayList<NumberSpeaker>(getNumberSpeakers().values()).toArray(new NumberSpeaker[0]);
+			alphabetized = new ArrayList<>(getNumberSpeakers().values()).toArray(new NumberSpeaker[0]);
 			Arrays.sort(alphabetized);
 		}
 		return alphabetized.clone();
 	}
 	//returns null if the specified voice was not found
-	private static NumberSpeaker getSpeaker(String name) {
+	private NumberSpeaker getSpeaker(String name) {
 		return getNumberSpeakers().get(name);
 	}
-	public static NumberSpeaker getCurrentSpeaker() {
-		NumberSpeaker c = getSpeaker(Configuration.getString(VariableKey.VOICE, false));
+	public NumberSpeaker getCurrentSpeaker() {
+		NumberSpeaker c = getSpeaker(configuration.getString(VariableKey.VOICE, false));
 		if(c == null) {
 			NumberSpeaker[] speakers = getSpeakers();
 			if(speakers.length > 0)
 				c = speakers[0];
 			else
-				c = new NumberSpeaker();
+				c = new NumberSpeaker(configuration);
 		}
 		return c;
 	}
-	
-	public NumberSpeaker() {}
+
+	@Inject
+	public NumberSpeaker(Configuration configuration) {
+		this.configuration = configuration;
+	}
 	
 	private ZipFile clips;
 	private String name;
-	private NumberSpeaker(String name, File zip) throws ZipException, IOException {
+	private NumberSpeaker(String name, File zip, Configuration configuration) throws IOException {
+		this.configuration = configuration;
 		clips = new ZipFile(zip);
 		this.name = name;
 	}
@@ -130,7 +132,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     	}
     	Boolean clockFormat;
     	try {
-    		clockFormat = Configuration.getBoolean(VariableKey.CLOCK_FORMAT, false);
+    		clockFormat = configuration.getBoolean(VariableKey.CLOCK_FORMAT, false);
     	} catch(Exception e) {
     		clockFormat = true;
     	}
@@ -198,7 +200,8 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     }
 
     // test client
-    public static void main(String[] args) {
+	// todo
+    public void main(String[] args) {
     	NumberSpeaker carrie = getSpeaker("carrie");
 		for(int ch = 12000; ch < 13000; ch+=10) {
 			LOG.info("TIME: " + ch / 100.);
@@ -219,6 +222,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 		}
     	return false;
     }
+	@Override
 	public int compareTo(NumberSpeaker o) { //this is needed for sorting
 		return name.compareTo(o.name);
 	}

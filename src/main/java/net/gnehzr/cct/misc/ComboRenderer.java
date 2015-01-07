@@ -1,19 +1,16 @@
 package net.gnehzr.cct.misc;
-import java.awt.Color;
-import java.awt.Component;
-
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 
-public class ComboRenderer extends JLabel implements ListCellRenderer {
+public class ComboRenderer<T> extends JLabel implements ListCellRenderer<T> {
 	public ComboRenderer() {
 		setOpaque(true);
 		setBorder(new EmptyBorder(1, 1, 1, 1));
 	}
 
-	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus){
+	@Override
+	public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean isSelected, boolean cellHasFocus){
 		if(isSelected){
 			setBackground(list.getSelectionBackground());
 			setForeground(list.getSelectionForeground());

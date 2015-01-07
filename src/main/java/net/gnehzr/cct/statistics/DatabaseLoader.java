@@ -1,7 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -9,7 +9,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 
 /**
 * <p>
@@ -22,13 +23,20 @@ import java.text.ParseException;
 class DatabaseLoader extends DefaultHandler {
 
     private Profile profile;
+    private final Configuration configuration;
+    private final StatisticsTableModel statsModel;
+    private final ScramblePlugin scramblePlugin;
 
-    public DatabaseLoader(Profile profile) {
+    public DatabaseLoader(Profile profile, Configuration configuration, StatisticsTableModel statsModel, ScramblePlugin scramblePlugin) {
         this.profile = profile;
+        this.configuration = configuration;
+        this.statsModel = statsModel;
+        this.scramblePlugin = scramblePlugin;
     }
 
+    @Override
     public InputSource resolveEntity(String publicId, String systemId) throws IOException, SAXException {
-        return new InputSource(new FileInputStream(Configuration.databaseDTD));
+        return new InputSource(new FileInputStream(configuration.getDatabaseDTD()));
     }
 
     private int level = 0;
@@ -56,17 +64,17 @@ class DatabaseLoader extends DefaultHandler {
             if (level != 2)
                 throw new SAXException("2nd level expected for session tag.");
             try {
-                session = new Session(Configuration.getDateFormat().parse(attributes.getValue("date")));
-                profile.puzzleDB.getPuzzleStatistics(customization).addSession(session);
-            } catch (ParseException e) {
+                session = new Session(LocalDateTime.parse(attributes.getValue("date"), configuration.getDateFormat()), configuration, scramblePlugin, statsModel);
+                profile.puzzleDB.getPuzzleStatistics(customization).addSession(session, profile);
+            } catch (DateTimeParseException e) {
                 throw new SAXException(e);
             }
             if (Boolean.parseBoolean(attributes.getValue("loadonstartup")))
-                CALCubeTimer.statsModel.setSession(session);
+                statsModel.setSession(session);
         } else if (name.equalsIgnoreCase("solve")) {
             if (level != 3)
                 throw new SAXException("3rd level expected for solve tag.");
-            solve = new SolveTime();
+            solve = new SolveTime(configuration);
             seshCommentOrSolveTime = "";
         } else if (name.equalsIgnoreCase("comment")) {
             if (level == 3)

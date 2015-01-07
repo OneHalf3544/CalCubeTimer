@@ -13,6 +13,7 @@ public class CCTConsoleLogFormatter extends Formatter {
 		super();
 	}
 
+	@Override
 	public String format(LogRecord record) {
 		Object[] arguments = new Object[6];
 		arguments[0] = record.getLoggerName();

@@ -1,5 +1,8 @@
 package net.gnehzr.cct.statistics;
 
+import com.google.inject.Inject;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
@@ -19,6 +22,13 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 	@NotNull
 	private Session session;
+
+	private final Configuration configuration;
+
+	@Inject
+	public StatisticsTableModel(Configuration configuration) {
+		this.configuration = configuration;
+	}
 
 	public void setSession(@NotNull Session session) {
 		this.session = session;
@@ -49,7 +59,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		this.undoRedoListener = l;
 	}
 
-	private List<StatisticsUpdateListener> statsListeners = new ArrayList<StatisticsUpdateListener>();
+	private List<StatisticsUpdateListener> statsListeners = new ArrayList<>();
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener l) {
 		//This nastyness is to ensure that PuzzleStatistics have had a chance to see the change (see notifyListeners() in Statistics)
@@ -72,21 +82,26 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	
 	private String[] columnNames = new String[] { "StatisticsTableModel.times", "StatisticsTableModel.ra0", "StatisticsTableModel.ra1", "StatisticsTableModel.comment", "StatisticsTableModel.tags" };
 	private Class<?>[] columnClasses = new Class<?>[] { SolveTime.class, SolveTime.class, SolveTime.class, String.class, String.class };
+	@Override
 	public String getColumnName(int column) {
 		return StringAccessor.getString(columnNames[column]);
 	}
+	@Override
 	public int getColumnCount() {
 		return columnNames.length;
 	}
+	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return columnClasses[columnIndex];
 	}
 	public int getSize() {
 		return getRowCount();
 	}
+	@Override
 	public int getRowCount() {
 		return stats == null ? 0 : stats.getAttemptCount();
 	}
+	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		switch(columnIndex) {
 		case 0: //get the solvetime for this index
@@ -102,33 +117,41 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			return null;
 		}
 	}
+	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		return columnIndex == 0 || columnIndex == 3;
 	}
+	@Override
 	public boolean isRowDeletable(int rowIndex) {
 		return true;
 	}
+	@Override
 	public void insertValueAt(Object value, int rowIndex) {
 		stats.add(rowIndex, (SolveTime) value);
 		fireTableRowsInserted(rowIndex, rowIndex);
 	}
+	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(columnIndex == 0 && value instanceof SolveTime)
 			stats.set(rowIndex, (SolveTime) value);
 		else if(columnIndex == 3 && value instanceof String)
 			stats.get(rowIndex).setComment((String) value);
 	}
+	@Override
 	public void deleteRows(int[] indices) {
 		stats.remove(indices);
 	}
+	@Override
 	public void removeRows(int[] indices) {
 		deleteRows(indices);
 	}
+	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
 		String t = stats.get(rowIndex).getComment();
 		return t.isEmpty() ? null : t;
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if(source == edit) {
@@ -137,7 +160,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			if(source == discard) {
 				timesTable.deleteSelectedRows(false);
 			} else { //one of the jradio buttons
-				ArrayList<SolveType> types = new ArrayList<SolveType>();
+				ArrayList<SolveType> types = new ArrayList<>();
 				for(SolveType key : typeButtons.keySet())
 					if(typeButtons.get(key).isSelected())
 						types.add(key);
@@ -153,6 +176,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	private Component prevFocusOwner;
 	private Map<SolveType, JMenuItem> typeButtons;
 
+	@Override
 	public void showPopup(MouseEvent e, DraggableJTable timesTable, Component prevFocusOwner) {
 		this.timesTable = timesTable;
 		this.prevFocusOwner = prevFocusOwner;
@@ -164,7 +188,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		else if(selectedSolves.length == 1) {
 			SolveTime selectedSolve = stats.get(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
-					+ Utils.formatTime(selectedSolve.rawSecondsValue()));
+					+ Utils.formatTime(selectedSolve, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ));
 			rawTime.setEnabled(false);
 			jpopup.add(rawTime);
 
@@ -176,14 +200,15 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 			jpopup.addSeparator();
 			
-			typeButtons = new HashMap<SolveType, JMenuItem>();
+			typeButtons = new HashMap<>();
 			ButtonGroup independent = new ButtonGroup();
 			JMenuItem attr = new JRadioButtonMenuItem("<html><b>" + StringAccessor.getString("StatisticsTableModel.nopenalty") + "</b></html>", !selectedSolve.isPenalty());
 			attr.setEnabled(!selectedSolve.isTrueWorstTime());
 			attr.addActionListener(this);
 			jpopup.add(attr);
 			independent.add(attr);
-			Collection<SolveType> types = SolveType.getSolveTypes(false);
+			String[] solveTagsArray = configuration.getStringArray(VariableKey.SOLVE_TAGS, false);
+			Collection<SolveType> types = SolveType.getSolveTypes(solveTagsArray);
 			for(SolveType type : types) {
 				if(type.isIndependent()) {
 					attr = new JRadioButtonMenuItem("<html><b>" + type.toString() + "</b></html>", selectedSolve.isType(type));

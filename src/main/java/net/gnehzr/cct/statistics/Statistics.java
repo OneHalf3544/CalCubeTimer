@@ -1,15 +1,18 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
-public class Statistics implements ConfigurationChangeListener, SolveCounter {
+public class Statistics implements SolveCounter {
 	public static enum AverageType {
 		CURRENT {
 			public String toString() {
@@ -66,6 +69,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 				editActions.setEnabled(true);
 			}
 		}
+		@Override
 		public void undoEdit() {
 			if(row != -1) { //changed type
 				times.get(row).setTypes(oldTypes);
@@ -114,7 +118,8 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 		editActions.setUndoRedoListener(url);
 	}
 	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<>();
-	
+
+	private final Configuration configuration;
 	ArrayList<SolveTime> times;
 	private ArrayList<Double>[] averages;
 	private ArrayList<Double>[] sds;
@@ -138,13 +143,14 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 	private boolean[] curRATrimmed;
 
 	public static final int RA_SIZES_COUNT = 2;
-	private Date dateStarted;
-	public Date getStartDate() {
+	private LocalDateTime dateStarted;
+	public LocalDateTime getStartDate() {
 		return dateStarted;
 	}
-	public Statistics(Date d) {
+	public Statistics(Configuration configuration, LocalDateTime d) {
+		this.configuration = configuration;
 		dateStarted = d;
-		Configuration.addConfigurationChangeListener(this); //TODO - this makes me worry about garbage collection (sap memory analyzer, weakreference, http://www.pawlan.com/Monica/refobjs/)
+		this.configuration.addConfigurationChangeListener(this::onConfigurationChange);
 
 		//we'll initialized these arrays when our scramble customization is set
 		curRASize = new int[RA_SIZES_COUNT];
@@ -156,26 +162,33 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 		sortsds = new ArrayList[RA_SIZES_COUNT];
 		indexOfBestRA = new int[RA_SIZES_COUNT];
 
-		sessionavgs = new ArrayList<Double>();
-		sessionsds = new ArrayList<Double>();
+		sessionavgs = new ArrayList<>();
+		sessionsds = new ArrayList<>();
 		
 		for(int i = 0; i < RA_SIZES_COUNT; i++){
-			averages[i] = new ArrayList<Double>();
-			sds[i] = new ArrayList<Double>();
-			sortaverages[i] = new ArrayList<Integer>();
-			sortsds[i] = new ArrayList<Double>();
+			averages[i] = new ArrayList<>();
+			sds[i] = new ArrayList<>();
+			sortaverages[i] = new ArrayList<>();
+			sortsds[i] = new ArrayList<>();
 		}
 		
-		solveCounter = new HashMap<SolveType, Integer>();
+		solveCounter = new HashMap<>();
 		
-		times = new ArrayList<SolveTime>();
-		sorttimes = new ArrayList<SolveTime>();
+		times = new ArrayList<>();
+		sorttimes = new ArrayList<>();
 		initialize();
 	}
+
+	private void onConfigurationChange(Profile profile) {
+		if(loadRAs()) {
+			refresh();
+		}
+	}
+
 	private ScrambleCustomization customization;
 	public void setCustomization(ScrambleCustomization sc) {
 		customization = sc;
-		configurationChanged();
+		onConfigurationChange(null);
 	}
 
 	private void initialize() {
@@ -460,12 +473,9 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			seconds = -1;
 		else
 			seconds = averages[whichRA].get(RAnum);
-		return new SolveTime(seconds, whichRA);
+		return new SolveTime(seconds, whichRA, configuration);
 	}
 
-	public void configurationChanged() {
-		if(loadRAs()) refresh();
-	}
 	private boolean loadRAs() {
 		boolean refresh = false;
 		for(int c = 0; c < curRASize.length && customization != null; c++) {
@@ -486,22 +496,22 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			if(type == AverageType.SESSION)
 				average = curSessionAvg;
 			else if(type == AverageType.RA)
-				average = averages[num].get(indexOfBestRA[num]).doubleValue();
+				average = averages[num].get(indexOfBestRA[num]);
 			else if(type == AverageType.CURRENT)
-				average = averages[num].get(averages[num].size() - 1).doubleValue();
+				average = averages[num].get(averages[num].size() - 1);
 			else
-				return new SolveTime();
+				return new SolveTime(configuration);
 		} catch (IndexOutOfBoundsException e) {
-			return new SolveTime();
+			return new SolveTime(configuration);
 		}
 
 		if(average == 0)
-			return new SolveTime();
+			return new SolveTime(configuration);
 
 		if(average == Double.POSITIVE_INFINITY)
-			return new SolveTime();
+			return new SolveTime(configuration);
 
-		return new SolveTime(average, null);
+		return new SolveTime(average, null, configuration);
 	}
 
 	public boolean isValid(AverageType type, int num) {
@@ -512,16 +522,16 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			else if(type == AverageType.RA)
 				average = averages[num].get(sortaverages[num].get(0));
 			else if(type == AverageType.CURRENT)
-				average = averages[num].get(averages[num].size() - 1).doubleValue();
+				average = averages[num].get(averages[num].size() - 1);
 			else
 				return false;
 		} catch (IndexOutOfBoundsException e) {
 			return false;
 		}
 
-		if(average == 0 || average == Double.POSITIVE_INFINITY)
+		if(average == 0 || average == Double.POSITIVE_INFINITY) {
 			return false;
-
+		}
 		return true;
 	}
 
@@ -667,7 +677,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			sd = sds[num].get(indexOfBestRA[num]).doubleValue();
 		else if(type == AverageType.CURRENT)
 			sd = sds[num].get(sds[num].size() - 1).doubleValue();
-		return new SolveTime(sd, null);
+		return new SolveTime(sd, null, configuration);
 	}
 
 	private SolveTime bestTimeOfAverage(int n, int num) {
@@ -800,7 +810,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			n = averages[num].size() + n;
 
 		if(averages[num].size() == 0 || n < 0 || n >= averages[num].size())
-			return new SolveTime();
+			return new SolveTime(configuration);
 		return bestTimeOfAverage(n, num);
 	}
 
@@ -812,7 +822,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			n = averages[num].size() + n;
 
 		if(averages[num].size() == 0 || n < 0 || n >= averages[num].size())
-			return new SolveTime();
+			return new SolveTime(configuration);
 		return worstTimeOfAverage(n, num);
 	}
 
@@ -824,7 +834,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			n = sortaverages[num].size() + n;
 
 		if(sortaverages[num].size() == 0 || n < 0 || n >= sortaverages[num].size())
-			return new SolveTime();
+			return new SolveTime(configuration);
 		return bestTimeOfAverage(sortaverages[num].get(n), num);
 	}
 
@@ -836,7 +846,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 			n = sortaverages[num].size() + n;
 
 		if(sortaverages[num].size() == 0 || n < 0 || n >= sortaverages[num].size())
-			return new SolveTime();
+			return new SolveTime(configuration);
 		return worstTimeOfAverage(sortaverages[num].get(n), num);
 	}
 
@@ -921,7 +931,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 
 	public SolveTime getBestTime() {
 		SolveTime t = getSortTime(0);
-		return t == null ? new SolveTime() : t;
+		return t == null ? new SolveTime(configuration) : t;
 	}
 
 	public double getBestAverage(int num) {
@@ -941,7 +951,7 @@ public class Statistics implements ConfigurationChangeListener, SolveCounter {
 		int c = -1;
 		//look for the worst, non infinite time
 		while((t = getSortTime(c--)) != null && t.isInfiniteTime()) ;
-		return t == null ? new SolveTime() : t;
+		return t == null ? new SolveTime(configuration) : t;
 	}
 
 	public double getWorstAverage(int num) {

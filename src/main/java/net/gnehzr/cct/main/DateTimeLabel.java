@@ -1,26 +1,27 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.configuration.Configuration;
+
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
-import java.util.Date;
-
-import javax.swing.JLabel;
-import javax.swing.Timer;
-
-import net.gnehzr.cct.configuration.Configuration;
+import java.time.LocalDateTime;
 
 public class DateTimeLabel extends JLabel implements ActionListener, HierarchyListener {
 	private Timer updateTimer;
-	public DateTimeLabel() {
+	private final Configuration configuration;
+
+	public DateTimeLabel(Configuration configuration) {
+		this.configuration = configuration;
 		updateTimer = new Timer(90, this);
 		this.addHierarchyListener(this);
 		updateDisplay();
 	}
 	
 	private void updateDisplay() {
-		this.setText(Configuration.getDateFormat().format(new Date()));
+		this.setText(configuration.getDateFormat().format(LocalDateTime.now()));
 	}
 
 	public void actionPerformed(ActionEvent e) {

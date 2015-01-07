@@ -2,7 +2,8 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.apache.log4j.Logger;
@@ -15,17 +16,19 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 
 	private static final Logger LOG = Logger.getLogger(SolveTime.class);
 
-	public static final SolveTime BEST = new SolveTime(0, null) {
-		public void setTime(String toParse, boolean importing) throws Exception { throw new AssertionError(); };
+	public static final SolveTime BEST = new SolveTime(0, null, null) {
+		@Override
+		public void setTime(String toParse, boolean importing) { throw new AssertionError(); };
 	};
-	public static final SolveTime WORST = new SolveTime() {
-		public void setTime(String toParse, boolean importing) throws Exception { throw new AssertionError(); };
+	public static final SolveTime WORST = new SolveTime(null) {
+		@Override
+		public void setTime(String toParse, boolean importing) { throw new AssertionError(); };
 	};
 	public static final SolveTime NA = WORST;
 
-	private Set<SolveType> types = new HashSet<SolveType>();
+	private Set<SolveType> types = new HashSet<>();
 
-	Duration hundredths;
+	private Duration time;
 	private String scramble = null;
 	private List<SolveTime> splits = ImmutableList.of();
 
@@ -33,24 +36,29 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	//we need to know the index so we can syntax highlight it
 	private int whichRA = -1;
 
-	public SolveTime() {
-		hundredths = null;
+	private final Configuration configuration;
+
+	public SolveTime(Configuration configuration) {
+		this.configuration = configuration;
+		time = null;
 		setScramble(null);
 	}
 
-	public SolveTime(double seconds, String scramble) {
-		this.hundredths = Duration.ofMillis(10 * (long) (100 * seconds + .5));
+	public SolveTime(double seconds, String scramble, Configuration configuration) {
+		this.time = Duration.ofMillis(10 * (long) (100 * seconds + .5));
 		LOG.trace("new SolveTime " + seconds);
 		setScramble(scramble);
+		this.configuration = configuration;
 	}
-	public SolveTime(double seconds, int whichRA) {
-		this(seconds, null);
+	public SolveTime(double seconds, int whichRA, Configuration configuration) {
+		this(seconds, null, configuration);
 		this.whichRA = whichRA;
 	}
 
-	private SolveTime(TimerState time, String scramble) {
+	private SolveTime(TimerState time, String scramble, Configuration configuration) {
+		this.configuration = configuration;
 		if(time != null) {
-			hundredths = time.value();
+			this.time = time.value();
 			LOG.trace("new SolveTime " + time.getTime());
 		}
 		setScramble(scramble);
@@ -60,12 +68,13 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		return whichRA;
 	}
 
-	public SolveTime(TimerState time, String scramble, List<SolveTime> splits) {
-		this(time, scramble);
+	public SolveTime(TimerState time, String scramble, List<SolveTime> splits, Configuration configuration) {
+		this(time, scramble, configuration);
 		this.splits = splits;
 	}
 
-	public SolveTime(String time, String scramble) throws Exception {
+	public SolveTime(String time, String scramble, Configuration configuration) throws Exception {
+		this.configuration = configuration;
 		setTime(time, false);
 		setScramble(scramble);
 	}
@@ -77,14 +86,13 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	protected void setTime(String toParse, boolean importing) throws Exception {
-		hundredths = Duration.ZERO; //don't remove this
+		time = Duration.ZERO; //don't remove this
 		toParse = toParse.trim();
 		if(toParse.isEmpty()) {
 			throw new Exception(StringAccessor.getString("SolveTime.noemptytimes"));
 		}
 		
 		String[] split = toParse.split(",");
-		boolean isSolved = true;
 		int c;
 		for(c = 0; c < split.length - 1; c++) {
 			SolveType t = SolveType.getSolveType(split[c]);
@@ -95,7 +103,6 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 				t = SolveType.createSolveType(split[c]);
 			}
 			types.add(t);
-			isSolved &= t.isSolved();
 		}
 		String time = split[c];
 		if(time.equals(SolveType.DNF.toString())) { //this indicated a pure dnf (no time associated with it)
@@ -142,7 +149,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		if(seconds > 21000000) {
 			throw new Exception(StringAccessor.getString("SolveTime.toolarge"));
 		}
-		this.hundredths = Duration.ofMillis(10 * (int)(100 * seconds + .5));
+		this.time = Duration.ofMillis(10 * (int)(100 * seconds + .5));
 	}
 	static String toUSFormatting(String time) {
 		return time.replaceAll(Pattern.quote(Utils.getDecimalSeparator()), ".");
@@ -155,14 +162,21 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	public String getScramble() {
 		return scramble == null ? "" : scramble;
 	}
-	
+
+	public Duration getTime() {
+		return time;
+	}
+
 	//this is for display by CCT
 	public String toString() {
-		if(hundredths == null || hundredths.isNegative()) return "N/A";
-		for(SolveType t : types)
-			if(!t.isSolved())
-				return t.toString();
-		return Utils.formatTime(secondsValue()) + (isType(SolveType.PLUS_TWO) ? "+" : "");
+		if(time == null || time.isNegative()) {
+			return "N/A";
+		}
+		return types.stream()
+				.filter(t -> !t.isSolved())
+				.findFirst()
+				.map(Object::toString)
+				.orElseGet(() -> Utils.formatTime(this, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
 	}
 
 	//this is for use by the database, and will save the raw time if the solve was a POP or DNF
@@ -190,15 +204,11 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		this.splits = new ArrayList<>();
 		for(String s : splitsString.split(", *")) {
 			try {
-				this.splits.add(new SolveTime(s, null));
+				this.splits.add(new SolveTime(s, null, configuration));
 			} catch (Exception e) {
 				LOG.error(e.getMessage(), e);
 			}
 		}
-	}
-
-	public double rawSecondsValue() {
-		return hundredths.toMillis() / 1000.;
 	}
 
 	public double secondsValue() {
@@ -207,12 +217,13 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	private int value() {
-		return (int) (hundredths.toMillis() / 10  + (isType(SolveType.PLUS_TWO) ? 200 : 0));
+		return (int) (time.toMillis() / 10  + (isType(SolveType.PLUS_TWO) ? 200 : 0));
 	}
 
 	//the behavior of the following 3 methods is kinda contradictory,
 	//keep this in mind if you're ever going to use SolveTimes in complicated
 	//data structures that depend on these methods
+	@Override
 	public int hashCode() {
 		return this.value();
 	}
@@ -221,6 +232,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		return obj == this;
 	}
 
+	@Override
 	public int compareTo(SolveTime o) {
 		if(o == WORST)
 			return -1;
@@ -234,7 +246,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	public List<SolveType> getTypes() {
-		return new ArrayList<SolveType>(types);
+		return new ArrayList<>(types);
 	}
 
 	public boolean isType(SolveType t) {
@@ -246,7 +258,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	public void setTypes(Collection<SolveType> newTypes) {
-		types = new HashSet<SolveType>(newTypes);
+		types = new HashSet<>(newTypes);
 	}
 
 	public boolean isPenalty() {
@@ -254,12 +266,12 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	public boolean isInfiniteTime() {
-		return isType(SolveType.DNF) || hundredths == null;
+		return isType(SolveType.DNF) || time == null;
 	}
 
 	//"true" in the sense that it was manually entered as POP or DNF
 	public boolean isTrueWorstTime(){
-		return hundredths.isZero() && isInfiniteTime();
+		return time.isZero() && isInfiniteTime();
 	}
 
 	public List<SolveTime> getSplits() {

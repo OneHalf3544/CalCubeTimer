@@ -13,27 +13,34 @@ import java.util.List;
 
 public class ProfileListModel extends DraggableJTableModel {
 
-	private static final ProfileDao PROFILE_DAO = ProfileDao.INSTANCE;
+	private final ProfileDao profileDao;
 
-    private enum EditAction { ADDED, RENAMED, REMOVED }
+	public ProfileListModel(ProfileDao profileDao) {
+		this.profileDao = profileDao;
+	}
+
+	private enum EditAction { ADDED, RENAMED, REMOVED }
 
 	private static class ProfileEditAction {
+		private final ProfileDao profileDao;
 		private EditAction act;
 		private Profile profile;
-		public ProfileEditAction(EditAction act, Profile profile) {
+
+		public ProfileEditAction(ProfileDao profileDao, EditAction act, Profile profile) {
+			this.profileDao = profileDao;
 			this.act = act;
 			this.profile = profile;
 		}
 		public void executeAction() {
 			switch(act) {
 			case ADDED:
-				PROFILE_DAO.createProfileDirectory(profile);
+				profileDao.createProfileDirectory(profile);
 				break;
 			case RENAMED:
-				PROFILE_DAO.commitRename(profile);
+				profileDao.commitRename(profile);
 				break;
 			case REMOVED:
-				PROFILE_DAO.delete(profile);
+				profileDao.delete(profile);
 				break;
 			}
 		}
@@ -61,7 +68,7 @@ public class ProfileListModel extends DraggableJTableModel {
 	public void deleteRows(int[] indices) {
 		for(int i : indices) {
 			if(i >= 0 && i < contents.size())
-				actions.add(new ProfileEditAction(EditAction.REMOVED, contents.get(i)));
+				actions.add(new ProfileEditAction(profileDao, EditAction.REMOVED, contents.get(i)));
 		}
 		removeRows(indices);
 	}
@@ -86,7 +93,7 @@ public class ProfileListModel extends DraggableJTableModel {
 	}
 
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return !contents.get(rowIndex).equals(Configuration.guestProfile) && contents.get(rowIndex).isSaveable();
+        return !contents.get(rowIndex).equals(profileDao.guestProfile) && contents.get(rowIndex).isSaveable();
     }
 
 	public boolean isRowDeletable(int rowIndex) {
@@ -108,11 +115,11 @@ public class ProfileListModel extends DraggableJTableModel {
 			return;
 		Profile newProfile = (Profile)value;
 		if(rowIndex == contents.size()) {
-			actions.add(new ProfileEditAction(EditAction.ADDED, newProfile));
+			actions.add(new ProfileEditAction(profileDao, EditAction.ADDED, newProfile));
 			contents.add(newProfile);
 		} else {
 			Profile oldProfile = contents.get(rowIndex);
-			actions.add(new ProfileEditAction(EditAction.RENAMED, oldProfile));
+			actions.add(new ProfileEditAction(profileDao, EditAction.RENAMED, oldProfile));
 			oldProfile.renameTo(newProfile.getName());
 		}
 		fireTableDataChanged();

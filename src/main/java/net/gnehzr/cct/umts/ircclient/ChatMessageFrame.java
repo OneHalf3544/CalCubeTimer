@@ -1,39 +1,40 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import java.awt.BorderLayout;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.misc.customJTable.DraggableJTable;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.SolveTime;
+import net.gnehzr.cct.umts.cctbot.CCTUser;
+import org.jibble.pircbot.User;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-
-import net.gnehzr.cct.misc.customJTable.DraggableJTable;
-import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.umts.cctbot.CCTUser;
-
-import org.jibble.pircbot.User;
-
 public class ChatMessageFrame extends MessageFrame {
+	private final Configuration configuration;
 	private String channel;
 	private DraggableJTable usersTable;
 	private CCTUserTableModel usersTableModel;
 	private CCTCommChannel commChannel;
 	private HashMap<String, CCTUser> cctusers;
 
-	public ChatMessageFrame(MinimizableDesktop desk, String channel) {
-		super(desk, true, null);
+	public ChatMessageFrame(MinimizableDesktop desk, Configuration configuration, String channel, ScramblePlugin scramblePlugin, Profile profileDao) {
+		super(desk, true, null, scramblePlugin, profileDao);
+		this.configuration = configuration;
 		this.channel = channel;
 		setTitle(channel);
 		
-		cctusers = new HashMap<String, CCTUser>();
+		cctusers = new HashMap<>();
 		
 		usersTableModel = new CCTUserTableModel();
-		usersTable = new DraggableJTable(false, true);
+		usersTable = new DraggableJTable(this.configuration, false, true);
 		usersTable.setAutoCreateRowSorter(true);
 		usersTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		usersTable.setModel(usersTableModel);
-		usersTable.computePreferredSizes(new SolveTime(60, null).toString());
+		usersTable.computePreferredSizes(new SolveTime(60, null, configuration).toString());
 		usersTable.setFocusable(false);
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, msgScroller, new JScrollPane(usersTable));
 		split.setResizeWeight(.8);
@@ -66,7 +67,7 @@ public class ChatMessageFrame extends MessageFrame {
 				cct.setPrefix("");
 			return cct;
 		}
-		cct = new CCTUser(irc, nick);
+		cct = new CCTUser(configuration, irc, nick);
 		cctusers.put(cct.getNick(), cct);
 		return cct;
 	}

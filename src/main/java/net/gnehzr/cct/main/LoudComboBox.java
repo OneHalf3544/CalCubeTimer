@@ -3,9 +3,10 @@ package net.gnehzr.cct.main;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 
-public class LoudComboBox extends JComboBox {
+public class LoudComboBox<T> extends JComboBox<T> {
 	//overriden to cause selected events to be fired even if the new item
 	//is already selected (this helps simplify cct startup logic)
+	@Override
 	public void setSelectedItem(Object selectMe) {
 		super.setSelectedItem(selectMe);
 		Object selected = getSelectedItem();

@@ -1,31 +1,29 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
+import org.jvnet.lafwidget.LafWidget;
+import org.jvnet.substance.utils.combo.SubstanceComboBoxEditor;
+
+import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import javax.swing.ComboBoxModel;
-import javax.swing.JComboBox;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-
-import org.jvnet.lafwidget.LafWidget;
-import org.jvnet.substance.utils.combo.SubstanceComboBoxEditor;
 
 public class URLHistoryBox extends JComboBox implements KeyListener {
 	private VariableKey<String[]> valuesKey;
 	private String[] values;
 	private IncrementalComboBoxModel model;
 	private JTextField editor;
-	public URLHistoryBox(VariableKey<String[]> valuesKey) {
+	private final Configuration configuration;
+
+	public URLHistoryBox(VariableKey<String[]> valuesKey, Configuration configuration) {
 		this.valuesKey = valuesKey;
-		this.values = Configuration.getStringArray(valuesKey, false);
+		this.configuration = configuration;
+		this.values = configuration.getStringArray(valuesKey, false);
 		
 		setEditor(new SubstanceComboBoxEditor() {
 			public void setItem(Object anObject) {} //we set the text from IncrementalComboBoxModel instead
@@ -58,7 +56,7 @@ public class URLHistoryBox extends JComboBox implements KeyListener {
 	
 	public void commitCurrentItem() {
 		model.addElement(editor.getText());
-		Configuration.setStringArray(valuesKey, model.getItems());
+		configuration.setStringArray(valuesKey, model.getItems());
 	}
 	
 	private static class IncrementalComboBoxModel implements ComboBoxModel {

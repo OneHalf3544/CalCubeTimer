@@ -26,8 +26,11 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 	JTextField subject = null;
 	JTextAreaWithHistory body = null;
 	private JButton sendButton, doneButton = null;
-	public EmailDialog(JDialog owner, String bodyText) {
+	private final Configuration configuration;
+
+	public EmailDialog(JDialog owner, String bodyText, Configuration configuration) {
 		super(owner, true);
+		this.configuration = configuration;
 		Container pane = getContentPane();
 		pane.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -103,7 +106,7 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 		WaitingDialog waiting;
 		private Exception error;
 		public EmailWorker(JDialog owner, char[] pass, String[] receivers) {
-			smtpMailSender = new SendMailUsingAuthentication(pass);
+			smtpMailSender = new SendMailUsingAuthentication(pass, configuration);
 			this.receivers = receivers;
 
 			waiting = new WaitingDialog(owner, true, this);
@@ -112,12 +115,11 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 			waiting.setText(StringAccessor.getString("EmailDialog.sending")); 
 			waiting.setButtonText(StringAccessor.getString("EmailDialog.cancel")); 
 		}
+		@Override
 		protected Void doInBackground() {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					waiting.setVisible(true);
-				}
-			});
+			SwingUtilities.invokeLater(() -> {
+                waiting.setVisible(true);
+            });
 			try {
 //				System.out.print("Sending...");
 				smtpMailSender.postMail(receivers, subject.getText(), body.getText());
@@ -128,6 +130,7 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 			}
 			return null;
 		}
+		@Override
 		protected void done() {
 			waiting.setButtonText(StringAccessor.getString("EmailDialog.ok")); 
 			if(error == null) {
@@ -150,14 +153,12 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 			message.setLineWrap(true);
 			message.setWrapStyleWord(true);
 			button = new JButton();
-			button.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent arg0) {
-					setVisible(false);
-					//TODO - this is apparently not interrupting the call to postMail, I have
-					//no idea how to fix it though.
-					worker.cancel(true);
-				}
-			});
+			button.addActionListener(arg0 -> {
+                setVisible(false);
+                //TODO - this is apparently not interrupting the call to postMail, I have
+                //no idea how to fix it though.
+                worker.cancel(true);
+            });
 			getContentPane().add(message, BorderLayout.CENTER);
 			getContentPane().add(button, BorderLayout.PAGE_END);
 			setPreferredSize(new Dimension(200, 150));
@@ -172,13 +173,14 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 		}
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if (source == sendButton) {
-			if(Configuration.getBoolean(VariableKey.SMTP_ENABLED, false)) {
+			if(configuration.getBoolean(VariableKey.SMTP_ENABLED, false)) {
 				char[] pass = null;
-				if(Configuration.getBoolean(VariableKey.SMTP_ENABLED, false) &&
-						Configuration.getString(VariableKey.SMTP_PASSWORD, false).isEmpty()) {
+				if(configuration.getBoolean(VariableKey.SMTP_ENABLED, false) &&
+						configuration.getString(VariableKey.SMTP_PASSWORD, false).isEmpty()) {
 					PasswordPrompt prompt = new PasswordPrompt(this);
 					prompt.setVisible(true);
 					if(prompt.isCanceled()) {
@@ -196,9 +198,7 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 							"subject=" + subject.getText() + "&body=" + body.getText(),  
 							null);
 					Desktop.getDesktop().mail(mailTo);
-				} catch (URISyntaxException e1) {
-					LOG.info("unexpected exception", e1);
-				} catch (IOException e1) {
+				} catch (URISyntaxException | IOException e1) {
 					LOG.info("unexpected exception", e1);
 				}
 			}
@@ -230,6 +230,8 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 			setResizable(false);
 			setLocationRelativeTo(parent);
 		}
+
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			Object source = e.getSource();
 			if(source == ok) {
@@ -247,6 +249,7 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 			return pass.getPassword();
 		}
 	}
+	@Override
 	public void caretUpdate(CaretEvent e) {
 		setTitle(StringAccessor.getString("EmailDialog.emailto") + toAddress.getText()); 
 	}

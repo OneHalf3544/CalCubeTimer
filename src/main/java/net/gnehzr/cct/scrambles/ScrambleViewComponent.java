@@ -1,42 +1,35 @@
 package net.gnehzr.cct.scrambles;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Shape;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.image.BufferedImage;
-
-import javax.swing.JColorChooser;
-import javax.swing.JComponent;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.statistics.Profile;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
 
 public class ScrambleViewComponent extends JComponent implements ComponentListener, MouseListener, MouseMotionListener {
 	private static final int DEFAULT_GAP = 5;
 	static Integer GAP = DEFAULT_GAP;
-	static {
-		Configuration.addConfigurationChangeListener(new ConfigurationChangeListener() {
-			public void configurationChanged() {
-				GAP = Configuration.getInt(VariableKey.POPUP_GAP, false);
+	private final Configuration configuration;
+
+	public ScrambleViewComponent(Configuration configuration) {
+		configuration.addConfigurationChangeListener(new ConfigurationChangeListener() {
+			@Override
+			public void configurationChanged(Profile profile) {
+				GAP = configuration.getInt(VariableKey.POPUP_GAP, false);
 				if(GAP == null)
 					GAP = DEFAULT_GAP;
 			}
 		});
+		this.configuration = configuration;
 	}
 
 	private boolean fixedSize;
-	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks) {
+	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks, Configuration configuration) {
 		this.fixedSize = fixedSize;
 		if(!fixedSize)
 			addComponentListener(this);
@@ -44,6 +37,7 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 			addMouseListener(this);
 			addMouseMotionListener(this);
 		}
+		this.configuration = configuration;
 	}
 
 	public void syncColorScheme(boolean defaults) {
@@ -80,12 +74,14 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 	}
 	
 	private static final Dimension PREFERRED_SIZE = new Dimension(0, 0);
+	@Override
 	public Dimension getPreferredSize() {
 		if(buffer == null)
 			return PREFERRED_SIZE;
 		return new Dimension(buffer.getWidth(), buffer.getHeight());
 	}
 
+	@Override
 	public Dimension getMinimumSize() {
 		if(buffer == null)
 			return PREFERRED_SIZE;
@@ -95,10 +91,12 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 		return PREFERRED_SIZE;
 	}
 
+	@Override
 	public Dimension getMaximumSize() {
 		return getMinimumSize();
 	}
 
+	@Override
 	protected void paintComponent(Graphics g) {
 		int width = getWidth();
 		int height = getHeight();
@@ -125,9 +123,13 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 		g.dispose();
 	}
 
+	@Override
 	public void componentHidden(ComponentEvent arg0) {}
+	@Override
 	public void componentMoved(ComponentEvent arg0) {}
+	@Override
 	public void componentShown(ComponentEvent e) {}
+	@Override
 	public void componentResized(ComponentEvent e) {
 		if(currentVariation != null) {
 			currentVariation.setPuzzleUnitSize(currentPlugin.getNewUnitSize(getWidth(), getHeight(), GAP, currentVariation.getVariation()));
@@ -135,6 +137,7 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 		}
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e) {
 		if(focusedFace != -1) {
 			Color c = JColorChooser.showDialog(this,
@@ -147,14 +150,20 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 			findFocusedFace(getMousePosition());
 		}
 	}
+	@Override
 	public void mouseEntered(MouseEvent e) {}
+	@Override
 	public void mouseExited(MouseEvent e) {
 		findFocusedFace(null);
 	}
+	@Override
 	public void mousePressed(MouseEvent e) {}
+	@Override
 	public void mouseReleased(MouseEvent e) {}
 
+	@Override
 	public void mouseDragged(MouseEvent e) {}
+	@Override
 	public void mouseMoved(MouseEvent e) {
 		findFocusedFace(e.getPoint());
 	}
@@ -172,7 +181,7 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 
 	public void commitColorSchemeToConfiguration() {
 		for(int face = 0; face < colorScheme.length; face++) {
-			Configuration.setColor(VariableKey.PUZZLE_COLOR(currentPlugin, currentPlugin.FACE_NAMES_COLORS[0][face]),
+			configuration.setColor(VariableKey.PUZZLE_COLOR(currentPlugin, currentPlugin.FACE_NAMES_COLORS[0][face]),
 					colorScheme[face]);
 		}
 	}

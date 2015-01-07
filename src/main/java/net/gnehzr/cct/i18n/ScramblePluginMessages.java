@@ -25,6 +25,7 @@ public class ScramblePluginMessages implements MessageAccessor {
 		}
 	}
 
+	@Override
 	public String getString(String key) {
 		if(RESOURCE_BUNDLE == null) {
 			String error = "Could not find " + bundleFileName + ".properties!";

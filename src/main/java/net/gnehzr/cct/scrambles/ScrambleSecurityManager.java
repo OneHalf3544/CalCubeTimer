@@ -8,13 +8,15 @@ import java.security.Permission;
 public class ScrambleSecurityManager extends SecurityManager {
     private ClassLoader pluginLoader;
     private boolean enabled = true;
+    private final Configuration configuration;
 
-    public ScrambleSecurityManager(ClassLoader pluginLoader) {
+    public ScrambleSecurityManager(ClassLoader pluginLoader, Configuration configuration) {
         this.pluginLoader = pluginLoader;
+        this.configuration = configuration;
     }
 
     public void configurationChanged() {
-        enabled = Configuration.getBoolean(VariableKey.SCRAMBLE_PLUGINS_SECURE, false);
+        enabled = configuration.getBoolean(VariableKey.SCRAMBLE_PLUGINS_SECURE, false);
     }
 
     public void checkPermission(Permission perm) {

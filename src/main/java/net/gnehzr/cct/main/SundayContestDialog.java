@@ -36,8 +36,11 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 	private JTextAreaWithHistory quoteArea;
 	private JCheckBox showEmailBox;
 	private JButton submitButton, doneButton;
-	public SundayContestDialog(Window w) {
+	private final Configuration configuration;
+
+	public SundayContestDialog(Window w, Configuration configuration) {
 		super(w);
+		this.configuration = configuration;
 		setTitle(StringAccessor.getString("SundayContestDialog.submit"));
 		setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
 		
@@ -128,19 +131,20 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 		pack();
 	}
 	
+	@Override
 	public void setVisible(boolean b) {
 		setLocationRelativeTo(getOwner());
 		super.setVisible(b);
 	}
 	
 	public void syncWithStats(Statistics stats, AverageType type, int aveNum) {
-		nameField.setText(Configuration.getString(VariableKey.SUNDAY_NAME, false));
-		countryField.setText(Configuration.getString(VariableKey.SUNDAY_COUNTRY, false));
-		emailField.setText(Configuration.getString(VariableKey.SUNDAY_EMAIL_ADDRESS, false));
+		nameField.setText(configuration.getString(VariableKey.SUNDAY_NAME, false));
+		countryField.setText(configuration.getString(VariableKey.SUNDAY_COUNTRY, false));
+		emailField.setText(configuration.getString(VariableKey.SUNDAY_EMAIL_ADDRESS, false));
 		averageField.setText(stats.average(type, aveNum).toString());
 		timesField.setText(stats.toTerseString(type, aveNum, true));
-		quoteArea.setText(Configuration.getString(VariableKey.SUNDAY_QUOTE, false));
-		showEmailBox.setSelected(Configuration.getBoolean(VariableKey.SHOW_EMAIL, false));
+		quoteArea.setText(configuration.getString(VariableKey.SUNDAY_QUOTE, false));
+		showEmailBox.setSelected(configuration.getBoolean(VariableKey.SHOW_EMAIL, false));
 	}
 
 	private static class FindResultsHandler extends DefaultHandler {
@@ -149,6 +153,7 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 		private int level = 0;
 		private int resultsLevel = -1;
 		String results = "";
+		@Override
 		public void startElement(String uri, String localName, String name,
 				Attributes attributes) throws SAXException {
 			if(resultsLevel != -1)
@@ -238,7 +243,7 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 		Object source = e.getSource();
 		if(source == submitButton) {
 			try {
-				String url = Configuration.getString(VariableKey.SUNDAY_SUBMIT_URL, false);
+				String url = configuration.getString(VariableKey.SUNDAY_SUBMIT_URL, false);
 				final String[] result = submitSundayContest(url, nameField.getText(),
 						countryField.getText(),
 						emailField.getText(),

@@ -5,12 +5,14 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 
 public class ScrambleCustomization {
+	private final Configuration configuration;
 	private ScrambleVariation variation;
 	private ScramblePlugin plugin;
 	private String customization;
 	private String generator;
 
-	public ScrambleCustomization(ScrambleVariation variation, String customization) {
+	public ScrambleCustomization(Configuration configuration, ScrambleVariation variation, String customization) {
+		this.configuration = configuration;
 		this.variation = variation;
 		this.plugin = variation.getScramblePlugin();
 		this.customization = customization;
@@ -18,20 +20,20 @@ public class ScrambleCustomization {
 	}
 	
 	public void setRA(int index, int newra, boolean trimmed) {
-		Configuration.setInt(VariableKey.RA_SIZE(index, this), newra);
-		Configuration.setBoolean(VariableKey.RA_TRIMMED(index, this), trimmed);
+		configuration.setLong(VariableKey.RA_SIZE(index, this), newra);
+		configuration.setBoolean(VariableKey.RA_TRIMMED(index, this), trimmed);
 	}
 	public int getRASize(int index) {
-		Integer size = Configuration.getInt(VariableKey.RA_SIZE(index, this), false);
+		Integer size = configuration.getInt(VariableKey.RA_SIZE(index, this), false);
 		if(size == null || size <= 0)
-			size = Configuration.getInt(VariableKey.RA_SIZE(index, null), false);
+			size = configuration.getInt(VariableKey.RA_SIZE(index, null), false);
 		return size;
 	}
 	public boolean isTrimmed(int index) {
 		VariableKey<Boolean> key = VariableKey.RA_TRIMMED(index, this);
-		if(!Configuration.keyExists(key))
+		if(!configuration.props.keyExists(key))
 			key = VariableKey.RA_TRIMMED(index, null);
-		return Configuration.getBoolean(key, false);
+		return configuration.getBoolean(key, false);
 	}
 
 	public void setScrambleVariation(ScrambleVariation newVariation) {
@@ -47,14 +49,14 @@ public class ScrambleCustomization {
 	}
 	private void loadGeneratorFromConfig(boolean defaults) {
 		if(plugin.isGeneratorEnabled()) {
-			generator = Configuration.getString(VariableKey.SCRAMBLE_GENERATOR(this), defaults);
+			generator = configuration.getString(VariableKey.SCRAMBLE_GENERATOR(this), defaults);
 			if(generator == null)
 				generator = plugin.getDefaultGeneratorGroup(variation);
 		}
 	}
 	public void saveGeneratorToConfiguration() {
 		if(plugin.isGeneratorEnabled())
-			Configuration.setString(VariableKey.SCRAMBLE_GENERATOR(this), generator == null ? "" : generator);
+			configuration.setString(VariableKey.SCRAMBLE_GENERATOR(this), generator == null ? "" : generator);
 	}
 	public String getGenerator() {
 		return generator;

@@ -1,22 +1,5 @@
 package net.gnehzr.cct.main;
 
-import java.awt.GridLayout;
-import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -24,20 +7,31 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.scrambles.ScrambleViewComponent;
-
+import net.gnehzr.cct.statistics.Profile;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
 public class ScrambleFrame extends JDialog implements ConfigurationChangeListener, MouseListener, ActionListener {
+
+	private final Configuration configuration;
 	private JPanel pane;
 	private JTextArea scrambleInfoArea;
 	private JScrollPane scrambleInfoScroller;
 	private ScrambleViewComponent incrementalScrambleView, finalView;
 	private AbstractAction visibilityAction;
-	public ScrambleFrame(JFrame parent, AbstractAction visibilityAction, boolean detectColorClicks) {
+
+	public ScrambleFrame(JFrame parent, AbstractAction visibilityAction, boolean detectColorClicks, Configuration configuration) {
 		super(parent);
 		this.visibilityAction = visibilityAction;
-		incrementalScrambleView = new ScrambleViewComponent(false, detectColorClicks);
-		finalView = new ScrambleViewComponent(false, detectColorClicks);
+		this.configuration = configuration;
+		incrementalScrambleView = new ScrambleViewComponent(false, detectColorClicks, configuration);
+		finalView = new ScrambleViewComponent(false, detectColorClicks, configuration);
 		pane = new JPanel(new GridLayout(1, 0));
 		pane.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		pane.add(incrementalScrambleView);
@@ -46,31 +40,33 @@ public class ScrambleFrame extends JDialog implements ConfigurationChangeListene
 		scrambleInfoArea.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		scrambleInfoScroller.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		this.setContentPane(pane);
-		Configuration.addConfigurationChangeListener(this);
+		this.configuration.addConfigurationChangeListener(this);
 		addMouseListener(this);
-		setFinalViewVisible(Configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
+		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
 	}
 	public void refreshPopup() {
 		pack();
-		setVisible(incrementalScrambleView.scrambleHasImage() && Configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, false));
+		setVisible(incrementalScrambleView.scrambleHasImage() && configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, false));
 	}
+	@Override
 	public void setVisible(boolean c) {
 		//this is here to prevent calls to setVisible(true) when the popup is already visible
 		//if we were to allow these, then the main gui could pop up on top of our fullscreen panel
 		if(isVisible() == c)
 			return;
 		if(incrementalScrambleView.scrambleHasImage()) {
-			Configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, c);
+			configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, c);
 			visibilityAction.putValue(Action.SELECTED_KEY, c);
 		}
 		super.setVisible(c);
 	}
 
-	public void configurationChanged() {
-		setFinalViewVisible(Configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
+	@Override
+	public void configurationChanged(Profile profile) {
+		setFinalViewVisible(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
 		incrementalScrambleView.syncColorScheme(false);
 		refreshPopup();
-		Point location = Configuration.getPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, false);
+		Point location = configuration.getPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, false);
 		if(location != null)
 			setLocation(location);
 	}
@@ -88,14 +84,20 @@ public class ScrambleFrame extends JDialog implements ConfigurationChangeListene
 		}
 		refreshPopup();
 	}
+
+	@Override
 	public void mouseClicked(MouseEvent e) {
 		maybeShowPopup(e);
 	}
+	@Override
 	public void mouseEntered(MouseEvent e) {}
+	@Override
 	public void mouseExited(MouseEvent e) {}
+	@Override
 	public void mousePressed(MouseEvent e) {
 		maybeShowPopup(e);
 	}
+	@Override
 	public void mouseReleased(MouseEvent e) {
 		maybeShowPopup(e);
 	}
@@ -117,7 +119,7 @@ public class ScrambleFrame extends JDialog implements ConfigurationChangeListene
 		return finalView.getParent() == pane;
 	}
 	public void setFinalViewVisible(boolean visible) {
-		Configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, visible);
+		configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, visible);
 		if(isFinalViewVisible() == visible) return;
 		if(visible)
 			pane.add(finalView, 1);

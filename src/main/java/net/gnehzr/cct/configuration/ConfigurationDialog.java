@@ -16,6 +16,7 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.ProfileDao;
 import net.gnehzr.cct.statistics.SolveType;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
 import org.apache.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import say.swing.JFontChooser;
@@ -28,6 +29,8 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConfigurationDialog extends JDialog implements KeyListener, MouseListener, ActionListener, ItemListener, HyperlinkListener {
 
@@ -35,25 +38,39 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 
 	private static final float DISPLAY_FONT_SIZE = 20;
 	private static final String[] FONT_SIZES = { "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36" };
+	private final Configuration configuration;
+	private final ProfileDao profileDao;
+	private final ScramblePlugin scramblePlugin;
+	private final StatisticsTableModel statsModel;
+	private final NumberSpeaker numberSpeaker;
 
 	private static abstract class SyncGUIListener implements ActionListener {
-		public SyncGUIListener() {}
+		@Override
 		public final void actionPerformed(ActionEvent e) {
 			//this happens if the event was fired by a real button, which means we want to reset with the defaults
 			syncGUIWithConfig(true);
 		}
 		public abstract void syncGUIWithConfig(boolean defaults);
 	}
-	private ArrayList<SyncGUIListener> resetListeners = new ArrayList<SyncGUIListener>();
+	private ArrayList<SyncGUIListener> resetListeners = new ArrayList<>();
 	private ComboItem[] items;
 	private StackmatInterpreter stackmat;
 	private Timer tickTock;
 	JTable timesTable;
-	public ConfigurationDialog(JFrame parent, boolean modal, StackmatInterpreter stackmat, Timer tickTock, JTable timesTable) {
+
+	public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
+							   ScramblePlugin scramblePlugin, StatisticsTableModel statsModel, NumberSpeaker numberSpeaker, StackmatInterpreter stackmat, Timer tickTock, JTable timesTable) {
 		super(parent, modal);
+		this.configuration = configuration;
+		this.profileDao = profileDao;
+		this.scramblePlugin = scramblePlugin;
+		this.statsModel = statsModel;
+		this.numberSpeaker = numberSpeaker;
 		this.stackmat = stackmat;
 		this.tickTock = tickTock;
 		this.timesTable = timesTable;
+		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePlugin, profileDao);
+		profilesModel = new ProfileListModel(this.profileDao);
 		createGUI();
 		setLocationRelativeTo(parent);
 	}
@@ -91,6 +108,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		setContentPane(pane);
 
 		tabbedPane = new JTabbedPane() { // this will automatically give tabs numeric mnemonics
+			@Override
 			public void addTab(String title, Component component) {
 				int currTab = this.getTabCount();
 				super.addTab((currTab + 1) + " " + title, component);
@@ -165,6 +183,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	private JButton refreshDesktops;
 	JComboBox voices;
 	SolveTypeTagEditorTableModel tagsModel;
+
 	private JPanel makeStandardOptionsPanel1() {
 		JPanel options = new JPanel();
 		JPanel colorPanel = new JPanel(new GridLayout(0, 1, 0, 5));
@@ -194,7 +213,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		rightPanel.add(sideBySide);
 		
 		speakTimes = new JCheckBox(StringAccessor.getString("ConfigurationDialog.readtimes"));
-		voices = new JComboBox(NumberSpeaker.getSpeakers());
+		voices = new JComboBox(numberSpeaker.getSpeakers());
 		sideBySide = new JPanel();
 		sideBySide.add(speakTimes);
 		sideBySide.add(new JLabel(StringAccessor.getString("ConfigurationDialog.voicechoice")));
@@ -221,17 +240,17 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		refreshDesktops = new JButton(StringAccessor.getString("ConfigurationDialog.refresh"));
 		refreshDesktops.addActionListener(this);
 
-		DraggableJTable profilesTable = new DraggableJTable(true, false);
+		DraggableJTable profilesTable = new DraggableJTable(configuration, true, false);
 		profilesTable.refreshStrings(StringAccessor.getString("ConfigurationDialog.addprofile"));
 		profilesTable.getTableHeader().setReorderingAllowed(false);
 		profilesTable.setModel(profilesModel);
-		profilesTable.setDefaultEditor(Profile.class, new ProfileEditor(StringAccessor.getString("ConfigurationDialog.newprofile"), profilesModel));
+		profilesTable.setDefaultEditor(Profile.class, new ProfileEditor(StringAccessor.getString("ConfigurationDialog.newprofile"), profilesModel, profileDao));
 		JScrollPane profileScroller = new JScrollPane(profilesTable);
 		profileScroller.setPreferredSize(new Dimension(150, 0));
 		
-		DraggableJTable tagsTable = new DraggableJTable(true, false);
+		DraggableJTable tagsTable = new DraggableJTable(configuration, true, false);
 		tagsTable.getTableHeader().setReorderingAllowed(false);
-		tagsModel = new SolveTypeTagEditorTableModel(tagsTable);
+		tagsModel = new SolveTypeTagEditorTableModel(tagsTable, configuration, statsModel);
 		tagsTable.refreshStrings(StringAccessor.getString("ConfigurationDialog.addtag"));
 		tagsTable.setDefaultEditor(TypeAndName.class, tagsModel.editor);
 		tagsTable.setModel(tagsModel);
@@ -239,22 +258,23 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		tagScroller.setPreferredSize(new Dimension(100, 100));
 		
 		SyncGUIListener al = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeStandardOptionsPanel1
-				clockFormat.setSelected(Configuration.getBoolean(VariableKey.CLOCK_FORMAT, defaults));
-				promptForNewTime.setSelected(Configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME, defaults));
-				scramblePopup.setSelected(Configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, defaults));
-				sideBySideScramble.setSelected(Configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, defaults));
-				inspectionCountdown.setSelected(Configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, defaults));
-				speakInspection.setSelected(Configuration.getBoolean(VariableKey.SPEAK_INSPECTION, defaults));
+				clockFormat.setSelected(configuration.getBoolean(VariableKey.CLOCK_FORMAT, defaults));
+				promptForNewTime.setSelected(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME, defaults));
+				scramblePopup.setSelected(configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, defaults));
+				sideBySideScramble.setSelected(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, defaults));
+				inspectionCountdown.setSelected(configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, defaults));
+				speakInspection.setSelected(configuration.getBoolean(VariableKey.SPEAK_INSPECTION, defaults));
 				speakInspection.setEnabled(inspectionCountdown.isSelected());
-				bestRA.setBackground(Configuration.getColor(VariableKey.BEST_RA, defaults));
-				bestTime.setBackground(Configuration.getColor(VariableKey.BEST_TIME, defaults));
-				worstTime.setBackground(Configuration.getColor(VariableKey.WORST_TIME, defaults));
-				currentAverage.setBackground(Configuration.getColor(VariableKey.CURRENT_AVERAGE, defaults));
-				speakTimes.setSelected(Configuration.getBoolean(VariableKey.SPEAK_TIMES, defaults));
-				voices.setSelectedItem(NumberSpeaker.getCurrentSpeaker());
-				tagsModel.setTags(SolveType.getSolveTypes(defaults));
+				bestRA.setBackground(configuration.getColor(VariableKey.BEST_RA, defaults));
+				bestTime.setBackground(configuration.getColor(VariableKey.BEST_TIME, defaults));
+				worstTime.setBackground(configuration.getColor(VariableKey.WORST_TIME, defaults));
+				currentAverage.setBackground(configuration.getColor(VariableKey.CURRENT_AVERAGE, defaults));
+				speakTimes.setSelected(configuration.getBoolean(VariableKey.SPEAK_TIMES, defaults));
+				voices.setSelectedItem(numberSpeaker.getCurrentSpeaker());
+				tagsModel.setTags(SolveType.getSolveTypes(configuration.getStringArray(VariableKey.SOLVE_TAGS, defaults)));
 				
 				refreshDesktops();
 			}
@@ -354,38 +374,39 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		timerFontChooser.addMouseListener(this);
 		
 		SyncGUIListener al = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeStandardOptionsPanel2
-				minSplitTime.setValue(Configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, defaults));
-				splits.setSelected(Configuration.getBoolean(VariableKey.TIMING_SPLITS, defaults));
-				splitkey = Configuration.getInt(VariableKey.SPLIT_KEY, defaults);
+				minSplitTime.setValue(configuration.props.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, defaults));
+				splits.setSelected(configuration.getBoolean(VariableKey.TIMING_SPLITS, defaults));
+				splitkey = configuration.getInt(VariableKey.SPLIT_KEY, defaults);
 				splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
 				splitsKeySelector.setEnabled(splits.isSelected());
-				stackmatEmulation.setSelected(Configuration.getBoolean(VariableKey.STACKMAT_EMULATION, defaults));
-				sekey1 = Configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, defaults);
-				sekey2 = Configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, defaults);
+				stackmatEmulation.setSelected(configuration.getBoolean(VariableKey.STACKMAT_EMULATION, defaults));
+				sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, defaults);
+				sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, defaults);
 				stackmatKeySelector1.setText(KeyEvent.getKeyText(sekey1));
 				stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
 				stackmatKeySelector1.setEnabled(stackmatEmulation.isSelected());
 				stackmatKeySelector2.setEnabled(stackmatEmulation.isSelected());
-				flashyWindow.setSelected(Configuration.getBoolean(VariableKey.CHAT_WINDOW_FLASH, defaults));
-				isBackground.setSelected(Configuration.getBoolean(VariableKey.WATERMARK_ENABLED, defaults));
-				backgroundFile.setText(Configuration.getString(VariableKey.WATERMARK_FILE, defaults));
-				opacity.setValue((int) (10 * Configuration.getFloat(VariableKey.OPACITY, defaults)));
+				flashyWindow.setSelected(configuration.getBoolean(VariableKey.CHAT_WINDOW_FLASH, defaults));
+				isBackground.setSelected(configuration.getBoolean(VariableKey.WATERMARK_ENABLED, defaults));
+				backgroundFile.setText(configuration.getString(VariableKey.WATERMARK_FILE, defaults));
+				opacity.setValue((int) (10 * configuration.getFloat(VariableKey.OPACITY, defaults)));
 				backgroundFile.setEnabled(isBackground.isSelected());
 				browse.setEnabled(isBackground.isSelected());
 				opacity.setEnabled(isBackground.isSelected());
-				scrambleFontChooser.setFont(Configuration.getFont(VariableKey.SCRAMBLE_FONT, defaults));
-				timerFontChooser.setFont(Configuration.getFont(VariableKey.TIMER_FONT, defaults).deriveFont(DISPLAY_FONT_SIZE));
-				scrambleFontChooser.setBackground(Configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, defaults));
-				scrambleFontChooser.setForeground(Configuration.getColor(VariableKey.SCRAMBLE_SELECTED, defaults));
-				timerFontChooser.setBackground(Configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, defaults));
-				timerFontChooser.setForeground(Configuration.getColor(VariableKey.TIMER_FG, defaults));
+				scrambleFontChooser.setFont(configuration.getFont(VariableKey.SCRAMBLE_FONT, defaults));
+				timerFontChooser.setFont(configuration.getFont(VariableKey.TIMER_FONT, defaults).deriveFont(DISPLAY_FONT_SIZE));
+				scrambleFontChooser.setBackground(configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, defaults));
+				scrambleFontChooser.setForeground(configuration.getColor(VariableKey.SCRAMBLE_SELECTED, defaults));
+				timerFontChooser.setBackground(configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, defaults));
+				timerFontChooser.setForeground(configuration.getColor(VariableKey.TIMER_FG, defaults));
 				minSplitTime.setEnabled(splits.isSelected());
-				metronome.setSelected(Configuration.getBoolean(VariableKey.METRONOME_ENABLED, defaults));
+				metronome.setSelected(configuration.getBoolean(VariableKey.METRONOME_ENABLED, defaults));
 				metronomeDelay.setEnabled(metronome.isSelected());
-				metronomeDelay.setDelayBounds(Configuration.getInt(VariableKey.METRONOME_DELAY_MIN, defaults), Configuration.getInt(VariableKey.METRONOME_DELAY_MAX,
-						defaults), Configuration.getInt(VariableKey.METRONOME_DELAY, defaults));
+				metronomeDelay.setDelayBounds(configuration.getInt(VariableKey.METRONOME_DELAY_MIN, defaults), configuration.getInt(VariableKey.METRONOME_DELAY_MAX,
+						defaults), configuration.getInt(VariableKey.METRONOME_DELAY, defaults));
 			}
 		};
 		resetListeners.add(al);
@@ -398,12 +419,12 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		return panel;
 	}
 
-	ScrambleCustomizationListModel puzzlesModel = new ScrambleCustomizationListModel();
-	ProfileListModel profilesModel = new ProfileListModel();
+	ScrambleCustomizationListModel puzzlesModel;
+	ProfileListModel profilesModel;
 	private JPanel makeScrambleTypeOptionsPanel() {
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 
-		DraggableJTable scramTable = new DraggableJTable(true, false);
+		DraggableJTable scramTable = new DraggableJTable(configuration, true, false);
 		scramTable.refreshStrings(StringAccessor.getString("ConfigurationDialog.addpuzzle"));
 		scramTable.getTableHeader().setReorderingAllowed(false);
 		scramTable.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
@@ -419,11 +440,12 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		panel.add(jsp, BorderLayout.CENTER);
 		
 		SyncGUIListener sl = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// profile settings
-				ScramblePlugin.reloadLengthsFromConfiguration(defaults);
-				puzzlesModel.setContents(ScramblePlugin.getScrambleCustomizations(defaults));
-				profilesModel.setContents(Configuration.getProfiles());
+				scramblePlugin.reloadLengthsFromConfiguration(defaults);
+				puzzlesModel.setContents(scramblePlugin.getScrambleCustomizations(profileDao.getSelectedProfile(), defaults));
+				profilesModel.setContents(profileDao.getProfiles(configuration));
 			}
 		};
 		resetListeners.add(sl);
@@ -438,7 +460,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	JCheckBox invertedHundredths = null;
 	JCheckBox invertedSeconds = null;
 	JCheckBox invertedMinutes = null;
-	private JComboBox lines = null;
+	private JComboBox<ComboItem> lines = null;
 	private JPanel mixerPanel = null;
 	private JButton stackmatRefresh = null;
 	JSpinner stackmatSamplingRate = null;
@@ -467,7 +489,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		if(stackmat != null) {
 			items = getMixers();
 			int selected = stackmat.getSelectedMixerIndex();
-			lines = new JComboBox(items);
+			lines = new JComboBox<>(items);
 			lines.setMaximumRowCount(15);
 			lines.setRenderer(new ComboRenderer());
 			lines.addActionListener(new ComboListener(lines));
@@ -489,13 +511,14 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				sideBySide(null, new JLabel(StringAccessor.getString("ConfigurationDialog.samplingrate")), stackmatSamplingRate), reset));
 
 		SyncGUIListener sl = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeStackmatOptionsPanel
-				stackmatValue.setValue(Configuration.getInt(VariableKey.SWITCH_THRESHOLD, defaults));
-				invertedMinutes.setSelected(Configuration.getBoolean(VariableKey.INVERTED_MINUTES, defaults));
-				invertedSeconds.setSelected(Configuration.getBoolean(VariableKey.INVERTED_SECONDS, defaults));
-				invertedHundredths.setSelected(Configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS, defaults));
-				stackmatSamplingRate.setValue(Configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, defaults));
+				stackmatValue.setValue(configuration.getInt(VariableKey.SWITCH_THRESHOLD, defaults));
+				invertedMinutes.setSelected(configuration.getBoolean(VariableKey.INVERTED_MINUTES, defaults));
+				invertedSeconds.setSelected(configuration.getBoolean(VariableKey.INVERTED_SECONDS, defaults));
+				invertedHundredths.setSelected(configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS, defaults));
+				stackmatSamplingRate.setValue(configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, defaults));
 			}
 		};
 		resetListeners.add(sl);
@@ -716,24 +739,25 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		useSMTPServer.setSelected(false); // need both to ensure that an itemStateChanged event is fired
 
 		SyncGUIListener sl = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeSundaySetupPanel
-				useSMTPServer.setSelected(Configuration.getBoolean(VariableKey.SMTP_ENABLED, defaults));
-				smtpEmailAddress.setText(Configuration.getString(VariableKey.SMTP_FROM_ADDRESS, defaults));
-				name.setText(Configuration.getString(VariableKey.SUNDAY_NAME, defaults));
-				country.setText(Configuration.getString(VariableKey.SUNDAY_COUNTRY, defaults));
-				sundayQuote.setText(Configuration.getString(VariableKey.SUNDAY_QUOTE, defaults));
-				sundayEmailAddress.setText(Configuration.getString(VariableKey.SUNDAY_EMAIL_ADDRESS, defaults));
-				host.setText(Configuration.getString(VariableKey.SMTP_HOST, defaults));
-				port.setText(Configuration.getString(VariableKey.SMTP_PORT, defaults));
-				username.setText(Configuration.getString(VariableKey.SMTP_USERNAME, defaults));
-				SMTPauth.setSelected(Configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, defaults));
-				password.setText(Configuration.getString(VariableKey.SMTP_PASSWORD, defaults));
+				useSMTPServer.setSelected(configuration.getBoolean(VariableKey.SMTP_ENABLED, defaults));
+				smtpEmailAddress.setText(configuration.getString(VariableKey.SMTP_FROM_ADDRESS, defaults));
+				name.setText(configuration.getString(VariableKey.SUNDAY_NAME, defaults));
+				country.setText(configuration.getString(VariableKey.SUNDAY_COUNTRY, defaults));
+				sundayQuote.setText(configuration.getString(VariableKey.SUNDAY_QUOTE, defaults));
+				sundayEmailAddress.setText(configuration.getString(VariableKey.SUNDAY_EMAIL_ADDRESS, defaults));
+				host.setText(configuration.getString(VariableKey.SMTP_HOST, defaults));
+				port.setText(configuration.getString(VariableKey.SMTP_PORT, defaults));
+				username.setText(configuration.getString(VariableKey.SMTP_USERNAME, defaults));
+				SMTPauth.setSelected(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, defaults));
+				password.setText(configuration.getString(VariableKey.SMTP_PASSWORD, defaults));
 				password.setEnabled(SMTPauth.isSelected());
-				showEmail.setSelected(Configuration.getBoolean(VariableKey.SHOW_EMAIL, defaults));
-				ircname.setText(Configuration.getString(VariableKey.IRC_NAME, defaults));
-				ircnick.setText(Configuration.getString(VariableKey.IRC_NICK, defaults));
-				identserver.setSelected(Configuration.getBoolean(VariableKey.IDENT_SERVER, defaults));
+				showEmail.setSelected(configuration.getBoolean(VariableKey.SHOW_EMAIL, defaults));
+				ircname.setText(configuration.getString(VariableKey.IRC_NAME, defaults));
+				ircnick.setText(configuration.getString(VariableKey.IRC_NICK, defaults));
+				identserver.setSelected(configuration.getBoolean(VariableKey.IDENT_SERVER, defaults));
 			}
 		};
 		resetListeners.add(sl);
@@ -747,6 +771,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		return sideBySide(BoxLayout.PAGE_AXIS, side, emailOptions, reset);
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent e) {
 		boolean useSMTP = useSMTPServer.isSelected();
 		Object source = e.getSource();
@@ -759,28 +784,28 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			password.setEnabled(useSMTP && SMTPauth.isSelected());
 		} else if(source == inspectionCountdown) {
 			speakInspection.setEnabled(inspectionCountdown.isSelected());
-		} else if(e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(Configuration.getSelectedProfile())) {
-			int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("ConfigurationDialog.saveprofile"));
+		} else if(e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(profileDao.getSelectedProfile())) {
+			int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("configurationDialog.saveprofile"));
 			if(choice == JOptionPane.YES_OPTION) {
 				applyAndSave();
 			} else if(choice == JOptionPane.NO_OPTION) {
 			} else {
-				profiles.setSelectedItem(Configuration.getSelectedProfile());
+				profiles.setSelectedItem(profileDao.getSelectedProfile());
 				return;
 			}
 			Profile p = (Profile) profiles.getSelectedItem();
 			try {
-				ProfileDao.INSTANCE.saveDatabase(p);
+				profileDao.saveDatabase(p);
 			} catch(Exception e1) {
 				LOG.info("unexpected exception", e1);
 			}
-			Configuration.setSelectedProfile(p);
-			if(!ProfileDao.INSTANCE.loadDatabase(p)) {
+			profileDao.setSelectedProfile(p);
+			if(!profileDao.loadDatabase(p, scramblePlugin)) {
 				//the user will be notified of this in the profiles combobox
 			}
 			try {
-				Configuration.loadConfiguration(p.getConfigurationFile());
-				Configuration.apply();
+				configuration.loadConfiguration(p.getConfigurationFile());
+				configuration.apply(p);
 			} catch(IOException err) {
 				LOG.info("unexpected exception", err);
 			}
@@ -805,7 +830,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 
 	private void showDynamicStrings() {
 		try {
-			URI uri = Configuration.dynamicStringsFile.toURI();
+			URI uri = configuration.getDynamicStringsFile();
 			Desktop.getDesktop().browse(uri);
 		} catch(Exception error) {
 			Utils.showErrorDialog(this, error);
@@ -837,9 +862,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		options.add(scroller, BorderLayout.CENTER);
 
 		SyncGUIListener sl = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeSessionSetupPanel
-				sessionStats.setText(Configuration.getString(VariableKey.SESSION_STATISTICS, defaults));
+				sessionStats.setText(configuration.getString(VariableKey.SESSION_STATISTICS, defaults));
 			}
 		};
 		resetListeners.add(sl);
@@ -857,9 +883,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		options.add(scroller, BorderLayout.CENTER);
 
 		SyncGUIListener sl = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeCurrentAverageSetupPanel
-				currentAverageStats.setText(Configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, defaults));
+				currentAverageStats.setText(configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, defaults));
 			}
 		};
 		resetListeners.add(sl);
@@ -877,9 +904,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		options.add(scroller, BorderLayout.CENTER);
 
 		SyncGUIListener sl = new SyncGUIListener() {
+			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeBestRASetupPanel
-				bestRAStats.setText(Configuration.getString(VariableKey.BEST_RA_STATISTICS, defaults));
+				bestRAStats.setText(configuration.getString(VariableKey.BEST_RA_STATISTICS, defaults));
 			}
 		};
 		resetListeners.add(sl);
@@ -898,22 +926,23 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		options.add(Box.createHorizontalGlue());
 		JScrollPane scroller = new JScrollPane(options, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroller.getHorizontalScrollBar().setUnitIncrement(10);
-		ArrayList<ScramblePlugin> scramblePlugins = ScramblePlugin.getScramblePlugins();
+		List<ScramblePlugin> scramblePlugins = scramblePlugin.getScramblePlugins();
 		solvedPuzzles = new ArrayList<>();
 
 		for (ScramblePlugin plugin : scramblePlugins) {
 			if (!plugin.supportsScrambleImage())
 				continue;
-			final ScrambleViewComponent puzzle = new ScrambleViewComponent(true, true);
+			final ScrambleViewComponent puzzle = new ScrambleViewComponent(true, true, configuration);
 			solvedPuzzles.add(puzzle);
 
-			ScrambleVariation sv = new ScrambleVariation(plugin, "");
+			ScrambleVariation sv = new ScrambleVariation(plugin, "", configuration);
 			sv.setLength(0); //this will not change the length of the real ScrambleVariation instances
 			puzzle.setScramble(sv.generateScramble(), sv);
 			puzzle.setAlignmentY(Component.CENTER_ALIGNMENT);
 			puzzle.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
 			SyncGUIListener sl = new SyncGUIListener() {
+				@Override
 				public void syncGUIWithConfig(boolean defaults) {
 					puzzle.syncColorScheme(defaults);
 				}
@@ -930,6 +959,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		return scroller;
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e) {
 		Object source = e.getSource();
 		
@@ -941,17 +971,17 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				Font f;
 				Color bg, fg;
 				if(source == timerFontChooser) {
-					f = Configuration.getFont(VariableKey.TIMER_FONT, true).deriveFont(DISPLAY_FONT_SIZE);
+					f = configuration.getFont(VariableKey.TIMER_FONT, true).deriveFont(DISPLAY_FONT_SIZE);
 					toDisplay = "0123456789:.,";
-					bg = Configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, true);
-					fg = Configuration.getColor(VariableKey.TIMER_FG, true);
+					bg = configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, true);
+					fg = configuration.getColor(VariableKey.TIMER_FG, true);
 				} else { //scrambleFontChooser
-					f = Configuration.getFont(VariableKey.SCRAMBLE_FONT, true);
-					bg = Configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, true);
-					fg = Configuration.getColor(VariableKey.SCRAMBLE_SELECTED, true);
+					f = configuration.getFont(VariableKey.SCRAMBLE_FONT, true);
+					bg = configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, true);
+					fg = configuration.getColor(VariableKey.SCRAMBLE_SELECTED, true);
 				}
 
-				int maxFontSize = Configuration.getInt(VariableKey.MAX_FONTSIZE, false);
+				int maxFontSize = configuration.getInt(VariableKey.MAX_FONTSIZE, false);
 				JFontChooser font = new JFontChooser(FONT_SIZES, f, source == scrambleFontChooser, maxFontSize, toDisplay, bg, fg, source == timerFontChooser);
 				font.setSelectedFont(label.getFont());
 				font.setFontForeground(label.getForeground());
@@ -972,11 +1002,16 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			}
 		}
 	}
+	@Override
 	public void mouseEntered(MouseEvent e) {}
+	@Override
 	public void mouseExited(MouseEvent e) {}
+	@Override
 	public void mousePressed(MouseEvent e) {}
+	@Override
 	public void mouseReleased(MouseEvent e) {}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if(source == applyButton) {
@@ -997,7 +1032,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			stackmatKeySelector1.setEnabled(stackmatEmulation.isSelected());
 			stackmatKeySelector2.setEnabled(stackmatEmulation.isSelected());
 		} else if(source == browse) {
-			CCTFileChooser fc = new CCTFileChooser();
+			CCTFileChooser fc = new CCTFileChooser(configuration);
 			fc.setFileFilter(new ImageFilter());
 			fc.setAccessory(new ImagePreview(fc));
 			if(fc.showOpenDialog(this) == CCTFileChooser.APPROVE_OPTION) {
@@ -1022,7 +1057,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			metronomeDelay.setEnabled(metronome.isSelected());
 		} else if(source instanceof JRadioButton) {
 			JRadioButton jrb = (JRadioButton) source;
-			Configuration.setInt(VariableKey.FULLSCREEN_DESKTOP, Integer.parseInt(jrb.getActionCommand()));
+			configuration.setLong(VariableKey.FULLSCREEN_DESKTOP, Integer.parseInt(jrb.getActionCommand()));
 		} else if(source == refreshDesktops) {
 			refreshDesktops();
 		}
@@ -1038,7 +1073,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			GraphicsDevice gd = gs[ch];
 			DisplayMode screenSize = gd.getDisplayMode();
 			JRadioButton temp = new JRadioButton((ch+1) + ":" + screenSize.getWidth() + "x" + screenSize.getHeight() + " (" + StringAccessor.getString("ConfigurationDialog.desktopresolution") + ")");
-			if(ch == Configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false))
+			if(ch == configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false))
 				temp.setSelected(true);
 			g.add(temp);
 			temp.setActionCommand("" + ch);
@@ -1051,9 +1086,9 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	}
 	
 	public void syncGUIwithConfig(boolean defaults) {
-		setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + Configuration.getSelectedProfile().getName());
-		profiles.setModel(new DefaultComboBoxModel(Configuration.getProfiles().toArray()));
-		profiles.setSelectedItem(Configuration.getSelectedProfile());
+		setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + profileDao.getSelectedProfile().getName());
+		profiles.setModel(new DefaultComboBoxModel(profileDao.getProfiles(configuration).toArray()));
+		profiles.setSelectedItem(profileDao.getSelectedProfile());
 		for(SyncGUIListener sl : resetListeners)
 			sl.syncGUIWithConfig(defaults);
 	}
@@ -1066,100 +1101,105 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	
 	// this probably won't get used as much as apply, but it's here if you need it
 	private void cancel() {
-		ScramblePlugin.reloadLengthsFromConfiguration(false);
+		scramblePlugin.reloadLengthsFromConfiguration(false);
 		profilesModel.discardChanges();
 	}
 
 	private void applyAndSave() {
-		Configuration.setColor(VariableKey.CURRENT_AVERAGE, currentAverage.getBackground());
-		Configuration.setColor(VariableKey.BEST_RA, bestRA.getBackground());
-		Configuration.setColor(VariableKey.BEST_TIME, bestTime.getBackground());
-		Configuration.setColor(VariableKey.WORST_TIME, worstTime.getBackground());
-		Configuration.setBoolean(VariableKey.CLOCK_FORMAT, clockFormat.isSelected());
-		Configuration.setBoolean(VariableKey.PROMPT_FOR_NEW_TIME, promptForNewTime.isSelected());
-		Configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, scramblePopup.isSelected());
-		Configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, sideBySideScramble.isSelected());
-		Configuration.setBoolean(VariableKey.COMPETITION_INSPECTION, inspectionCountdown.isSelected());
-		Configuration.setBoolean(VariableKey.SPEAK_INSPECTION, speakInspection.isSelected());
-		Configuration.setBoolean(VariableKey.METRONOME_ENABLED, metronome.isSelected());
-		Configuration.setInt(VariableKey.METRONOME_DELAY, metronomeDelay.getMilliSecondsDelay());
-		Configuration.setBoolean(VariableKey.SPEAK_TIMES, speakTimes.isSelected());
+		configuration.setColor(VariableKey.CURRENT_AVERAGE, currentAverage.getBackground());
+		configuration.setColor(VariableKey.BEST_RA, bestRA.getBackground());
+		configuration.setColor(VariableKey.BEST_TIME, bestTime.getBackground());
+		configuration.setColor(VariableKey.WORST_TIME, worstTime.getBackground());
+		configuration.setBoolean(VariableKey.CLOCK_FORMAT, clockFormat.isSelected());
+		configuration.setBoolean(VariableKey.PROMPT_FOR_NEW_TIME, promptForNewTime.isSelected());
+		configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, scramblePopup.isSelected());
+		configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, sideBySideScramble.isSelected());
+		configuration.setBoolean(VariableKey.COMPETITION_INSPECTION, inspectionCountdown.isSelected());
+		configuration.setBoolean(VariableKey.SPEAK_INSPECTION, speakInspection.isSelected());
+		configuration.setBoolean(VariableKey.METRONOME_ENABLED, metronome.isSelected());
+		configuration.setLong(VariableKey.METRONOME_DELAY, metronomeDelay.getMilliSecondsDelay());
+		configuration.setBoolean(VariableKey.SPEAK_TIMES, speakTimes.isSelected());
 		Object voice = voices.getSelectedItem();
 		if(voice != null)
-			Configuration.setString(VariableKey.VOICE, voice.toString());
+			configuration.setString(VariableKey.VOICE, voice.toString());
 
-		Configuration.setInt(VariableKey.SWITCH_THRESHOLD, (Integer) stackmatValue.getValue());
-		Configuration.setBoolean(VariableKey.INVERTED_MINUTES, invertedMinutes.isSelected());
-		Configuration.setBoolean(VariableKey.INVERTED_SECONDS, invertedSeconds.isSelected());
-		Configuration.setBoolean(VariableKey.INVERTED_HUNDREDTHS, invertedHundredths.isSelected());
-		Configuration.setInt(VariableKey.MIXER_NUMBER, lines.getSelectedIndex());
-		Configuration.setInt(VariableKey.STACKMAT_SAMPLING_RATE, (Integer) stackmatSamplingRate.getValue());
+		configuration.setLong(VariableKey.SWITCH_THRESHOLD, (Integer) stackmatValue.getValue());
+		configuration.setBoolean(VariableKey.INVERTED_MINUTES, invertedMinutes.isSelected());
+		configuration.setBoolean(VariableKey.INVERTED_SECONDS, invertedSeconds.isSelected());
+		configuration.setBoolean(VariableKey.INVERTED_HUNDREDTHS, invertedHundredths.isSelected());
+		configuration.setLong(VariableKey.MIXER_NUMBER, lines.getSelectedIndex());
+		configuration.setLong(VariableKey.STACKMAT_SAMPLING_RATE, (Integer) stackmatSamplingRate.getValue());
 
-		Configuration.setBoolean(VariableKey.SHOW_EMAIL, showEmail.isSelected());
-		Configuration.setString(VariableKey.SUNDAY_NAME, name.getText());
-		Configuration.setString(VariableKey.SUNDAY_COUNTRY, country.getText());
-		Configuration.setString(VariableKey.SUNDAY_QUOTE, sundayQuote.getText());
-		Configuration.setString(VariableKey.SUNDAY_EMAIL_ADDRESS, sundayEmailAddress.getText());
-		Configuration.setString(VariableKey.SMTP_HOST, host.getText());
-		Configuration.setString(VariableKey.SMTP_PORT, port.getText());
-		Configuration.setString(VariableKey.SMTP_USERNAME, username.getText());
-		Configuration.setBoolean(VariableKey.SMTP_AUTHENTICATION, SMTPauth.isSelected());
-		Configuration.setString(VariableKey.SMTP_PASSWORD, new String(password.getPassword()));
-		Configuration.setBoolean(VariableKey.SMTP_ENABLED, useSMTPServer.isSelected());
-		Configuration.setString(VariableKey.SMTP_FROM_ADDRESS, smtpEmailAddress.getText());
+		configuration.setBoolean(VariableKey.SHOW_EMAIL, showEmail.isSelected());
+		configuration.setString(VariableKey.SUNDAY_NAME, name.getText());
+		configuration.setString(VariableKey.SUNDAY_COUNTRY, country.getText());
+		configuration.setString(VariableKey.SUNDAY_QUOTE, sundayQuote.getText());
+		configuration.setString(VariableKey.SUNDAY_EMAIL_ADDRESS, sundayEmailAddress.getText());
+		configuration.setString(VariableKey.SMTP_HOST, host.getText());
+		configuration.setString(VariableKey.SMTP_PORT, port.getText());
+		configuration.setString(VariableKey.SMTP_USERNAME, username.getText());
+		configuration.setBoolean(VariableKey.SMTP_AUTHENTICATION, SMTPauth.isSelected());
+		configuration.setString(VariableKey.SMTP_PASSWORD, new String(password.getPassword()));
+		configuration.setBoolean(VariableKey.SMTP_ENABLED, useSMTPServer.isSelected());
+		configuration.setString(VariableKey.SMTP_FROM_ADDRESS, smtpEmailAddress.getText());
 		
-		Configuration.setString(VariableKey.IRC_NAME, ircname.getText());
-		Configuration.setString(VariableKey.IRC_NICK, ircnick.getText());
-		Configuration.setBoolean(VariableKey.IDENT_SERVER, identserver.isSelected());
+		configuration.setString(VariableKey.IRC_NAME, ircname.getText());
+		configuration.setString(VariableKey.IRC_NICK, ircnick.getText());
+		configuration.setBoolean(VariableKey.IDENT_SERVER, identserver.isSelected());
 
-		Configuration.setString(VariableKey.SESSION_STATISTICS, sessionStats.getText());
-		Configuration.setString(VariableKey.CURRENT_AVERAGE_STATISTICS, currentAverageStats.getText());
-		Configuration.setString(VariableKey.BEST_RA_STATISTICS, bestRAStats.getText());
+		configuration.setString(VariableKey.SESSION_STATISTICS, sessionStats.getText());
+		configuration.setString(VariableKey.CURRENT_AVERAGE_STATISTICS, currentAverageStats.getText());
+		configuration.setString(VariableKey.BEST_RA_STATISTICS, bestRAStats.getText());
 
 		for(ScrambleViewComponent puzzle : solvedPuzzles) {
 			puzzle.commitColorSchemeToConfiguration();
 		}
 
-		Configuration.setBoolean(VariableKey.TIMING_SPLITS, splits.isSelected());
-		Configuration.setDouble(VariableKey.MIN_SPLIT_DIFFERENCE, (Double) minSplitTime.getValue());
-		Configuration.setInt(VariableKey.SPLIT_KEY, splitkey);
-		Configuration.setBoolean(VariableKey.STACKMAT_EMULATION, stackmatEmulation.isSelected());
-		Configuration.setInt(VariableKey.STACKMAT_EMULATION_KEY1, sekey1);
-		Configuration.setInt(VariableKey.STACKMAT_EMULATION_KEY2, sekey2);
+		configuration.setBoolean(VariableKey.TIMING_SPLITS, splits.isSelected());
+		configuration.setDouble(VariableKey.MIN_SPLIT_DIFFERENCE, (Double) minSplitTime.getValue());
+		configuration.setLong(VariableKey.SPLIT_KEY, splitkey);
+		configuration.setBoolean(VariableKey.STACKMAT_EMULATION, stackmatEmulation.isSelected());
+		configuration.setLong(VariableKey.STACKMAT_EMULATION_KEY1, sekey1);
+		configuration.setLong(VariableKey.STACKMAT_EMULATION_KEY2, sekey2);
 
-		Configuration.setBoolean(VariableKey.CHAT_WINDOW_FLASH, flashyWindow.isSelected());
+		configuration.setBoolean(VariableKey.CHAT_WINDOW_FLASH, flashyWindow.isSelected());
 
-		Configuration.setBoolean(VariableKey.WATERMARK_ENABLED, isBackground.isSelected());
-		Configuration.setString(VariableKey.WATERMARK_FILE, backgroundFile.getText());
-		Configuration.setFloat(VariableKey.OPACITY, (float) (opacity.getValue() / 10.));
+		configuration.setBoolean(VariableKey.WATERMARK_ENABLED, isBackground.isSelected());
+		configuration.setString(VariableKey.WATERMARK_FILE, backgroundFile.getText());
+		configuration.setFloat(VariableKey.OPACITY, (float) (opacity.getValue() / 10.));
 
-		Configuration.setFont(VariableKey.SCRAMBLE_FONT, scrambleFontChooser.getFont());
-		Configuration.setColor(VariableKey.SCRAMBLE_SELECTED, scrambleFontChooser.getForeground());
-		Configuration.setColor(VariableKey.SCRAMBLE_UNSELECTED, scrambleFontChooser.getBackground());
+		configuration.setFont(VariableKey.SCRAMBLE_FONT, scrambleFontChooser.getFont());
+		configuration.setColor(VariableKey.SCRAMBLE_SELECTED, scrambleFontChooser.getForeground());
+		configuration.setColor(VariableKey.SCRAMBLE_UNSELECTED, scrambleFontChooser.getBackground());
 		
-		Configuration.setColor(VariableKey.TIMER_BG, timerFontChooser.getBackground());
-		Configuration.setColor(VariableKey.TIMER_FG, timerFontChooser.getForeground());
-		Configuration.setFont(VariableKey.TIMER_FONT, timerFontChooser.getFont());
+		configuration.setColor(VariableKey.TIMER_BG, timerFontChooser.getBackground());
+		configuration.setColor(VariableKey.TIMER_FG, timerFontChooser.getForeground());
+		configuration.setFont(VariableKey.TIMER_FONT, timerFontChooser.getFont());
 
-		Configuration.setStringArray(VariableKey.SCRAMBLE_CUSTOMIZATIONS, puzzlesModel.getContents().toArray(new ScrambleCustomization[0]));
-		ScramblePlugin.saveLengthsToConfiguration();
+		configuration.setStringArray(
+				VariableKey.SCRAMBLE_CUSTOMIZATIONS,
+				puzzlesModel.getContents().stream()
+						.map(ScrambleCustomization::toString)
+						.collect(Collectors.toList())
+						.toArray(new String[0]));
+		scramblePlugin.saveLengthsToConfiguration();
 		for(ScrambleCustomization sc : puzzlesModel.getContents())
 			sc.saveGeneratorToConfiguration();
 
 		profilesModel.commitChanges();
-		Configuration.setProfileOrdering(profilesModel.getContents());
+		configuration.setProfileOrdering(profilesModel.getContents());
 
 		tagsModel.apply();
 		
-		Configuration.apply();
+		configuration.apply(profileDao.getSelectedProfile());
 
-		for(int i = 0; i < items.length; i++) {
-			items[i].setInUse(false);
+		for (ComboItem item : items) {
+			item.setInUse(false);
 		}
-		items[Configuration.getInt(VariableKey.MIXER_NUMBER, false)].setInUse(true);
+		items[configuration.getInt(VariableKey.MIXER_NUMBER, false)].setInUse(true);
 
 		try {
-			Configuration.saveConfigurationToFile(Configuration.getSelectedProfile().getConfigurationFile());
+			configuration.saveConfigurationToFile(profileDao.getSelectedProfile().getConfigurationFile());
 		} catch(IOException e) {
 			//this could happen when the current profile was deleted
 		}

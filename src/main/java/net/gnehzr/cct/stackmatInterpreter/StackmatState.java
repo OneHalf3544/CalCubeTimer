@@ -1,9 +1,13 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import com.google.inject.Inject;
+import net.gnehzr.cct.configuration.Configuration;
+
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.List;
 
 public class StackmatState extends TimerState {
+
 	private Boolean rightHand = false;
 	private Boolean leftHand = false;
 	private boolean running = false;
@@ -27,11 +31,14 @@ public class StackmatState extends TimerState {
 	public static boolean isInvertedHundredths() {
 		return invertedHun;
 	}
-	
-	public StackmatState() {
-    }
 
-	public StackmatState(StackmatState previous, ArrayList<Integer> periodData) {
+	@Inject
+	public StackmatState(Configuration configuration) {
+		super(configuration);
+	}
+
+	public StackmatState(StackmatState previous, List<Integer> periodData, Configuration configuration) {
+		this(configuration);
 		if(periodData.size() == 89) { //all data present
 			isValid = true;
 			Duration value = parseTime(periodData);
@@ -52,7 +59,7 @@ public class StackmatState extends TimerState {
 		}
 	}
 
-	private Duration parseTime(ArrayList<Integer> periodData){
+	private Duration parseTime(List<Integer> periodData){
 		parseHeader(periodData);
 		minutes = parseDigit(periodData, 1, invertedMin);
 		seconds = parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec);
@@ -63,7 +70,7 @@ public class StackmatState extends TimerState {
                 .plus(Duration.ofMillis(hundredths * 10));
 	}
 
-	private void parseHeader(ArrayList<Integer> periodData){
+	private void parseHeader(List<Integer> periodData){
 		int temp = 0;
 		for(int i = 1; i <= 5; i++) temp += periodData.get(i) << (5 - i);
 
@@ -73,7 +80,7 @@ public class StackmatState extends TimerState {
 		greenLight = temp == 16;
 	}
 
-	private int parseDigit(ArrayList<Integer> periodData, int pos, boolean invert){
+	private int parseDigit(List<Integer> periodData, int pos, boolean invert){
 		int temp = 0;
 		for(int i = 1; i <= 4; i++) temp += periodData.get(pos * 10 + i) << (i - 1);
 

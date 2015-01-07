@@ -1,11 +1,12 @@
 package net.gnehzr.notcct.stackapplet;
 
+import com.google.inject.Inject;
+import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
 
-import javax.swing.*;
 import java.applet.Applet;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
@@ -14,8 +15,16 @@ import java.beans.PropertyChangeListener;
 public class Stackapplet extends Applet implements PropertyChangeListener {
 	private StackmatInterpreter stackmat;
 	private JSObject jso;
+	private final Configuration configuration;
+
+	@Inject
+	public Stackapplet(Configuration configuration) {
+		this.configuration = configuration;
+	}
+
+	@Override
 	public void init() {
-		stackmat = new StackmatInterpreter(44100, -1, true, 40);
+		stackmat = new StackmatInterpreter(configuration, 44100, -1, true, 40);
 		stackmat.addPropertyChangeListener(this);
 		stackmat.execute();
 
@@ -81,9 +90,9 @@ public class Stackapplet extends Applet implements PropertyChangeListener {
 		}
 		repaint();
 	}
-	
+	/*
 	public static void main(String[] args) {
-		final Stackapplet a = new Stackapplet();
+		final Stackapplet a = new Stackapplet(configuration);
 		a.init();
 		a.setPreferredSize(new Dimension(400, 500));
 		SwingUtilities.invokeLater(new Runnable() {
@@ -97,5 +106,5 @@ public class Stackapplet extends Applet implements PropertyChangeListener {
 				f.setVisible(true);
 			}
 		});
-	}
+	}*/
 }

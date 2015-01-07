@@ -13,19 +13,13 @@ package net.gnehzr.cct.misc;
  Author : Sudhir Ancha
  */
 
-import java.util.Properties;
-
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.util.Properties;
 
 /*
  * To use this program, change values for the following three constants,
@@ -65,8 +59,11 @@ public class SendMailUsingAuthentication {
 	}*/
 
 	char[] pass = null;
-	public SendMailUsingAuthentication(char[] pass) {
+	private final Configuration configuration;
+
+	public SendMailUsingAuthentication(char[] pass, Configuration configuration) {
 		this.pass = pass;
+		this.configuration = configuration;
 	}
 
 	public void postMail(String recipients[], String subject, String message) throws MessagingException {
@@ -75,13 +72,13 @@ public class SendMailUsingAuthentication {
 		// Set the host smtp address
 		Properties props = new Properties();
 
-		props.setProperty("mail.smtp.host", Configuration.getString(VariableKey.SMTP_HOST, false));
-		props.setProperty("mail.smtp.port", Configuration.getString(VariableKey.SMTP_PORT, false));
-		props.setProperty("mail.smtp.auth", Boolean.toString(Configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, false)));
+		props.setProperty("mail.smtp.host", configuration.getString(VariableKey.SMTP_HOST, false));
+		props.setProperty("mail.smtp.port", configuration.getString(VariableKey.SMTP_PORT, false));
+		props.setProperty("mail.smtp.auth", Boolean.toString(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, false)));
 		props.put("mail.smtp.starttls.enable", "true");
 
 		Session session = null;
-		if(Configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, false)) {
+		if(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, false)) {
 			Authenticator auth = new SMTPAuthenticator();
 			session = Session.getInstance(props, auth);
 		} else {
@@ -93,7 +90,7 @@ public class SendMailUsingAuthentication {
 		Message msg = new MimeMessage(session);
 
 		// set the from and to address
-		InternetAddress addressFrom = new InternetAddress(Configuration.getString(VariableKey.SMTP_FROM_ADDRESS, false));
+		InternetAddress addressFrom = new InternetAddress(configuration.getString(VariableKey.SMTP_FROM_ADDRESS, false));
 		msg.setFrom(addressFrom);
 		InternetAddress[] addressTo = new InternetAddress[recipients.length];
 		for (int i = 0; i < recipients.length; i++) {
@@ -114,10 +111,10 @@ public class SendMailUsingAuthentication {
 	private class SMTPAuthenticator extends javax.mail.Authenticator {
 		public SMTPAuthenticator() {}
 		public PasswordAuthentication getPasswordAuthentication() {
-			String username = Configuration.getString(VariableKey.SMTP_USERNAME, false);
+			String username = configuration.getString(VariableKey.SMTP_USERNAME, false);
 			String password;
 			if(pass == null) {
-				password = Configuration.getString(VariableKey.SMTP_PASSWORD, false);
+				password = configuration.getString(VariableKey.SMTP_PASSWORD, false);
 			} else {
 				password = new String(pass);
 				for(int i = 0; i < pass.length; i++){

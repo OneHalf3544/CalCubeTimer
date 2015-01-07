@@ -1,19 +1,21 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.statistics.ProfileSerializer.RandomInputStream;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXException;
 
 import javax.xml.transform.TransformerConfigurationException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,27 +30,49 @@ public class ProfileDao {
 
     private static final Logger LOG = Logger.getLogger(ProfileDao.class);
 
-    public static final ProfileDao INSTANCE = new ProfileDao();
-
     private final static Map<String, Profile> profiles = new HashMap<>();
-    private final ProfileSerializer profileSerializer = new ProfileSerializer(this);
+    private final ProfileSerializer profileSerializer;
+    private final Configuration configuration;
+
+    public final Profile guestProfile;
 
     private Session guestSession = null; //need this so we can load the guest's last session, since it doesn't have a file
 
-    private ProfileDao() {
+    private final StatisticsTableModel statsModel;
+    private final ScramblePlugin scramblePlugin;
+
+    private static final String guestName = "Guest";
+    private CALCubeTimer calCubeTimer;
+
+    @Inject
+    public ProfileDao(ProfileSerializer profileSerializer, Configuration configuration, StatisticsTableModel statsModel,
+                      ScramblePlugin scramblePlugin) {
+        this.profileSerializer = profileSerializer;
+        this.configuration = configuration;
+        this.statsModel = statsModel;
+        this.scramblePlugin = scramblePlugin;
+        guestProfile = createGuestProfile(this.configuration);
     }
 
-    public static Profile getProfileByName(String name) {
-        return profiles.computeIfAbsent(name, Profile::new);
+    public void setCalCubeTimer(CALCubeTimer calCubeTimer) {
+        this.calCubeTimer = calCubeTimer;
     }
 
-    public static Profile loadProfile(File directory) {
+    public Profile getProfileByName(String name) {
+        return profiles.computeIfAbsent(name, (n) -> new Profile(n,
+                getDirectory(n),
+                getConfiguration(configuration.getProfilesFolder(), n),
+                getStatistics(configuration.getProfilesFolder(), n),
+                configuration, this, statsModel, scramblePlugin));
+    }
+
+    public Profile loadProfile(File directory) {
         LOG.debug("load profile from " + directory);
-        String name = directory.getAbsolutePath();
-        File configuration = getConfiguration(directory, directory.getName());
+        String name = directory.getName();
+        File configurationFile = getConfiguration(directory, directory.getName());
         File statistics = getStatistics(directory, directory.getName());
 
-        Profile profile = new Profile(name, directory, configuration, statistics);
+        Profile profile = new Profile(name, directory, configurationFile, statistics, configuration, this, statsModel, scramblePlugin);
         profiles.put(profile.getName(), profile);
         return profile;
     }
@@ -64,36 +88,34 @@ public class ProfileDao {
         profile.getConfigurationFile().delete();
         profile.getStatistics().delete();
         profile.getDirectory().delete();
-        if (Configuration.getSelectedProfile() == profile) {
-            Configuration.setSelectedProfile(null);
+        if (getSelectedProfile() == profile) {
+            setSelectedProfile(null);
         }
     }
 
-    private boolean isLoginDisabled(Profile profile) {
-        return profile.getStatisticsRandomAccessFile() == null && profile == Configuration.getSelectedProfile();
-    }
-
     // this can only be called once, until after saveDatabase() is called
-    public boolean loadDatabase(Profile profile) {
-        if (profile == Configuration.guestProfile) { // disable logging for guest
+    public boolean loadDatabase(Profile profile, ScramblePlugin scramblePlugin) {
+        if (profile == guestProfile) { // disable logging for guest
             // TODO - there is definitely a bug here where guestSession == null when switching profiles
             if (profile.getPuzzleDatabase().getRowCount() > 0) {
-                CALCubeTimer.statsModel.setSession(guestSession); //TODO - does this really need to be here?
+                statsModel.setSession(guestSession); //TODO - does this really need to be here?
             }
             return false;
         }
 
         return Utils.doWithLockedFile(profile.getStatistics(), file -> {
-            Utils.doInWaitingState(() -> {
+            Utils.doInWaitingState(calCubeTimer, () -> {
                 try {
-                    ProfileDatabase puzzleDB = new ProfileDatabase(profile); //reset the database
+                    ProfileDatabase puzzleDB = new ProfileDatabase(configuration, this, statsModel, scramblePlugin); //reset the database
                     profile.setPuzzleDatabase(puzzleDB);
                     profile.setStatisticsRandomAccessFile(file);
 
                     if (file.length() != 0) { // if the file is empty, don't bother to parse it
-                        DatabaseLoader handler = new DatabaseLoader(profile);
+                        LOG.debug("parse file");
+                        DatabaseLoader handler = new DatabaseLoader(profile, configuration, statsModel, scramblePlugin);
                         profileSerializer.parseBySaxHandler(handler, new RandomInputStream(profile.getStatisticsRandomAccessFile()));
                     }
+                    LOG.debug("file loading finished");
 
                 } catch (IOException e) {
                     throw Throwables.propagate(e);
@@ -105,8 +127,8 @@ public class ProfileDao {
     public void saveDatabase(Profile profile) throws IOException, TransformerConfigurationException, SAXException {
         LOG.debug("save database");
         profile.getPuzzleDatabase().removeEmptySessions();
-        if (profile == Configuration.guestProfile) {
-            guestSession = CALCubeTimer.statsModel.getCurrentSession();
+        if (profile == guestProfile) {
+            guestSession = statsModel.getCurrentSession();
         }
 
         if (profile.getStatisticsRandomAccessFile() == null) {
@@ -114,7 +136,7 @@ public class ProfileDao {
             return;
         }
 
-        Utils.doInWaitingState(() -> {
+        Utils.doInWaitingState(calCubeTimer, () -> {
             try {
                 profileSerializer.writeStatisticFile(profile);
 
@@ -151,17 +173,17 @@ public class ProfileDao {
     }
 
     @NotNull
-    static File getDirectory(String name) {
-        return new File(Configuration.profilesFolder, name + "/");
+    File getDirectory(String name) {
+        return new File(configuration.getProfilesFolder(), name + "/");
     }
 
     @NotNull
-    static File getConfiguration(File directory, String name) {
+    File getConfiguration(File directory, String name) {
         return new File(directory, name + ".properties");
     }
 
     @NotNull
-    static File getStatistics(File directory, String name) {
+    File getStatistics(File directory, String name) {
         return new File(directory, name + ".xml");
     }
 
@@ -182,7 +204,7 @@ public class ProfileDao {
         profile.getDirectory().renameTo(newDir);
         profile.setDirectory(newDir);
         profile.setStatistics(statistics);
-        profile.setConfiguration(configuration);
+        profile.setConfigurationFile(configuration);
 
         oldConfig.renameTo(configuration);
         oldStats.renameTo(statistics);
@@ -194,5 +216,79 @@ public class ProfileDao {
         profiles.remove(profile.getName());
         profile.setName(newName);
         profiles.put(profile.getName(), profile);
+    }
+
+    public Profile createGuestProfile(Configuration configuration) {
+        Profile temp = getProfileByName(getGuestName());
+        createProfileDirectory(temp);
+        return temp;
+    }
+
+    public List<Profile> getProfiles(Configuration configuration) {
+        String[] profDirs = configuration.getProfilesFolder().list((f, s) -> {
+            File temp = new File(f, s);
+            return !temp.isHidden() && temp.isDirectory() && !s.equalsIgnoreCase(getGuestName());
+        });
+        List<Profile> profs = new ArrayList<>();
+        profs.add(guestProfile);
+        for(String profDir : profDirs) {
+            profs.add(getProfileByName(profDir));
+        }
+        if(configuration.props != null && configuration.profileOrdering != null) {
+            String[] profiles = configuration.profileOrdering.split("\\|");
+            for(int ch = profiles.length - 1; ch >= 0; ch--) {
+                Profile temp = getProfileByName(profiles[ch]);
+                if(profs.contains(temp)) {
+                    profs.remove(temp);
+                    profs.add(0, temp);
+                }
+            }
+        }
+        if(configuration.commandLineProfile != null)
+            profs.add(0, configuration.commandLineProfile);
+        return profs;
+    }
+
+    public Profile getProfile(String profileName, Configuration configuration) {
+        return getProfiles(configuration).stream()
+                .filter(p -> p.getName().equalsIgnoreCase(profileName))
+                .findFirst()
+                .orElse(guestProfile);
+    }
+
+    private Profile profileCache;
+
+    public void setSelectedProfile(Profile p) {
+        profileCache = p;
+    }
+
+    public void saveConfigurationToFile(File f) throws IOException {
+        configuration.saveConfigurationToFile(f);
+        if(profileCache.isSaveable()) {
+            PrintWriter profileOut = new PrintWriter(new FileWriter(configuration.getStartupProfileFile()));
+            profileOut.println(profileCache.getName());
+            profileOut.println(configuration.profileOrdering);
+            profileOut.close();
+        }
+    }
+
+    //this should always be up to date with the gui
+    public Profile getSelectedProfile() {
+        if(profileCache == null) {
+            String profileName;
+            try(BufferedReader in = new BufferedReader(new FileReader(configuration.getStartupProfileFile()))) {
+                profileName = in.readLine();
+                configuration.profileOrdering = in.readLine();
+            } catch (IOException e) {
+                LOG.info("exception", e);
+                profileName = "";
+            }
+            profileCache = getProfile(profileName, configuration);
+        }
+        return profileCache;
+    }
+
+    public String getGuestName() {
+        return guestName;
     }
 }

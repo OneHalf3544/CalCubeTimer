@@ -31,11 +31,17 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 	private JEditorPane scramblePane = null;
 	private JPopupMenu success;
 	private JLabel successMsg;
-	public ScrambleArea(ScrambleFrame scramblePopup) {
+	private final Configuration configuration;
+	private final ScramblePlugin scramblePlugin;
+
+	public ScrambleArea(ScrambleFrame scramblePopup, Configuration configuration, ScramblePlugin scramblePlugin) {
 		super(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		this.scramblePopup = scramblePopup;
+		this.configuration = configuration;
+		this.scramblePlugin = scramblePlugin;
 		this.putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.FALSE);
 		scramblePane = new JEditorPane("text/html", null) { 
+			@Override
 			public void updateUI() {
 				Border t = getBorder();
 				super.updateUI();
@@ -63,6 +69,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 		updateStrings();
 	}
 	
+	@Override
 	public void mouseClicked(MouseEvent e) {
 		if(e.getClickCount() == 2) {
 	        StringSelection ss = new StringSelection(currentScramble);
@@ -76,19 +83,26 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 		successMsg.setText(StringAccessor.getString("ScrambleArea.copymessage"));
 		success.pack();
 	}
+	@Override
 	public void mousePressed(MouseEvent e) {}
+	@Override
 	public void mouseReleased(MouseEvent e) {}
+	@Override
 	public void mouseEntered(MouseEvent e) {}
+	@Override
 	public void mouseExited(MouseEvent e) {
 		success.setVisible(false);
 	}
+	@Override
 	public void mouseDragged(MouseEvent e) {
 		success.setVisible(false);
 	}
+	@Override
 	public void mouseMoved(MouseEvent e) {
 		success.setVisible(false);
 	}
 
+	@Override
 	public void updateUI() {
 		Border t = getBorder();
 		super.updateUI();
@@ -115,7 +129,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 			fullScramble = null;
 		}
 
-		Font font = Configuration.getFont(VariableKey.SCRAMBLE_FONT, false);
+		Font font = configuration.getFont(VariableKey.SCRAMBLE_FONT, false);
 		StringBuilder fontStyle = new StringBuilder(); 
 		if(font.isItalic())
 			fontStyle.append("font-style: italic; "); 
@@ -126,8 +140,8 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 		else
 			fontStyle.append("font-weight: normal; "); 
 		
-		String selected = Utils.colorToString(Configuration.getColor(VariableKey.SCRAMBLE_SELECTED, false));
-		String unselected = Utils.colorToString(Configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, false));
+		String selected = Utils.colorToString(configuration.getColor(VariableKey.SCRAMBLE_SELECTED, false));
+		String unselected = Utils.colorToString(configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, false));
 		part1 = new StringBuilder("<html><head><style type=\"text/css\">") 
 			.append("a { color: #").append(unselected).append("; text-decoration: none; }")  
 			.append("a#");
@@ -177,7 +191,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 			try {
 				s = currentCustomization.generateScramble(incrScramble);
 			} catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
-				currentCustomization = ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
+				currentCustomization = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
 				try {
 					s = currentCustomization.generateScramble(incrScramble);
 				} catch (InvalidScrambleException e1) {
@@ -211,7 +225,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 	//this will be called by the KeyboardTimer to hide scrambles when necessary
 	public void setTimerFocused(boolean focused) {
 		this.focused = focused;
-		backgroundColor = (!focused && Configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false)) ? "black" : null;
+		backgroundColor = (!focused && configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false)) ? "black" : null;
 		updateScramblePane();
 	}
 

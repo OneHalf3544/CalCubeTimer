@@ -15,10 +15,12 @@ public class KeyboardHandler extends Timer {
 	private static final int PERIOD = 90; //measured in milliseconds
 
 	private TimingListener timingListener;
+	private final Configuration configuration;
 
-	public KeyboardHandler(TimingListener timingListener) {
+	public KeyboardHandler(TimingListener timingListener, Configuration configuration) {
 		super(PERIOD, null);
 		this.timingListener = timingListener;
+		this.configuration = configuration;
 		reset();
 	}
 
@@ -29,13 +31,13 @@ public class KeyboardHandler extends Timer {
 	}
 	
 	public boolean canStartTimer() {
-		return Duration.between(current, Instant.now()).toMillis() > Configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES, false);
+		return Duration.between(current, Instant.now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES, false);
 	}
 
 	private Instant start;
 
 	public void startTimer() {
-		boolean inspectionEnabled = Configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false);
+		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false);
 		if(!canStartTimer()) {
 			return;
 		}
@@ -59,7 +61,7 @@ public class KeyboardHandler extends Timer {
 	}
 	
 	private TimerState getTimerState() {
-		return new TimerState(getElapsedTimeSeconds());
+		return new TimerState(configuration, getElapsedTimeSeconds());
 	}
 
 	private Duration getElapsedTimeSeconds() {

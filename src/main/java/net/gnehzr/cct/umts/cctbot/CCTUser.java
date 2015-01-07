@@ -1,5 +1,7 @@
 package net.gnehzr.cct.umts.cctbot;
 
+import com.google.inject.Inject;
+import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.jibble.pircbot.User;
@@ -9,10 +11,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CCTUser {
+	private final Configuration configuration;
 	private String prefix;
 	private String nick;
 
-	public CCTUser(User u, String nick) {
+	@Inject
+	public CCTUser(Configuration configuration, User u, String nick) {
+		this.configuration = configuration;
 		if(u != null) {
 			setPrefix(u.getPrefix());
 			assert u.getNick().equals(nick) : u.getNick() + "=" + nick;
@@ -43,9 +48,9 @@ public class CCTUser {
 	private static String denullify(String c) {
 		return c == null ? "" : c;
 	}
-	private static SolveTime toSolveTime(String time) {
+	private SolveTime toSolveTime(String time) {
 		try {
-			return new SolveTime(time, null);
+			return new SolveTime(time, null, configuration);
 		} catch(Exception e) {
 			return SolveTime.NA;
 		}
@@ -110,7 +115,7 @@ public class CCTUser {
 		if(!formatted)
 			return "" + netTime;
 
-		return new SolveTime(netTime / 1000., null).toString();
+		return new SolveTime(netTime / 1000., null, configuration).toString();
 	}
 
 	public void setCurrentRA(SolveTime average, String terseTimes) {
@@ -151,7 +156,7 @@ public class CCTUser {
 
 	public void setUserState(String state) {
 		try {
-			List<String> split = new ArrayList<String>(Arrays.asList(state.split(USERSTATE_DELIMETER)));
+			List<String> split = new ArrayList<>(Arrays.asList(state.split(USERSTATE_DELIMETER)));
 			lastTime = toSolveTime(split.remove(0));
 			seshAverage = toSolveTime(split.remove(0));
 			currRA = toSolveTime(split.remove(0));

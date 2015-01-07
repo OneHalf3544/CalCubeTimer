@@ -1,26 +1,5 @@
 package net.gnehzr.cct.main;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -28,8 +7,18 @@ import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 
 public class StatsDialogHandler extends JDialog implements ActionListener, ChangeListener {
 	private JButton emailButton = null;
@@ -39,9 +28,11 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
 	private JTextAreaWithHistory textArea = null;
 	private SundayContestDialog sundaySubmitter = null;
 	private JSpinner sizeSpinner = null;
+	private final Configuration configuration;
 
-	public StatsDialogHandler(JFrame owner) {
+	public StatsDialogHandler(JFrame owner, Configuration configuration) {
 		super(owner, true);
+		this.configuration = configuration;
 
 		textArea = new JTextAreaWithHistory();
 		JScrollPane textScroller = new JScrollPane(textArea);
@@ -49,7 +40,7 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
 		emailButton = new JButton(StringAccessor.getString("StatsDialogHandler.email"));
 		emailButton.addActionListener(this);
 		
-		sundaySubmitter = new SundayContestDialog(this);
+		sundaySubmitter = new SundayContestDialog(this, configuration);
 		submitButton = new JButton(StringAccessor.getString("StatsDialogHandler.sundaycontest"));
 		submitButton.addActionListener(this);
 
@@ -87,11 +78,11 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
 	
 	public void setVisible(boolean b) {
 		if(b) {
-			setSize(Configuration.getDimension(VariableKey.STATS_DIALOG_DIMENSION, false));
-			sizeSpinner.setValue(Configuration.getInt(VariableKey.STATS_DIALOG_FONT_SIZE, false).intValue());
+			setSize(configuration.getDimension(VariableKey.STATS_DIALOG_DIMENSION, false));
+			sizeSpinner.setValue(configuration.getInt(VariableKey.STATS_DIALOG_FONT_SIZE, false).intValue());
 			setLocationRelativeTo(getParent());
 		} else
-			Configuration.setDimension(VariableKey.STATS_DIALOG_DIMENSION, getSize());
+			configuration.setDimension(VariableKey.STATS_DIALOG_DIMENSION, getSize());
 		super.setVisible(b);
 	}
 
@@ -100,19 +91,19 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
 		setTitle(StringAccessor.getString("StatsDialogHandler.detailedstats") + " " + type.toString());
 		switch(type) {
 		case CURRENT:
-			textArea.setText(new DynamicString(Configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, false), statsModel, null).toString(avgNum));
+			textArea.setText(new DynamicString(configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, false), statsModel, null, configuration).toString(avgNum));
 			break;
 		case RA:
-			textArea.setText(new DynamicString(Configuration.getString(VariableKey.BEST_RA_STATISTICS, false), statsModel, null).toString(avgNum));
+			textArea.setText(new DynamicString(configuration.getString(VariableKey.BEST_RA_STATISTICS, false), statsModel, null, configuration).toString(avgNum));
 			break;
 		case SESSION:
-			textArea.setText(new DynamicString(Configuration.getString(VariableKey.SESSION_STATISTICS, false), statsModel, null).toString());
+			textArea.setText(new DynamicString(configuration.getString(VariableKey.SESSION_STATISTICS, false), statsModel, null, configuration).toString());
 			break;
 		}
 	}
 
 	public void promptToSaveStats() {
-		CCTFileChooser fc = new CCTFileChooser();
+		CCTFileChooser fc = new CCTFileChooser(configuration);
 		int choice = fc.showDialog(this, StringAccessor.getString("StatsDialogHandler.savestats"));
 		File outputFile = null;
 		if(choice == CCTFileChooser.APPROVE_OPTION) {
@@ -163,13 +154,13 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
 		} else if (source == doneButton) {
 			this.setVisible(false);
 		} else if(source == emailButton) {
-			new EmailDialog(this, textArea.getText()).setVisible(true);
+			new EmailDialog(this, textArea.getText(), configuration).setVisible(true);
 		}
 	}
 
 	public void stateChanged(ChangeEvent e) {
 		int fontSize = (Integer) sizeSpinner.getValue();
-		Configuration.setInt(VariableKey.STATS_DIALOG_FONT_SIZE, fontSize);
+		configuration.setLong(VariableKey.STATS_DIALOG_FONT_SIZE, fontSize);
 		textArea.setFont(textArea.getFont().deriveFont((float) fontSize));
 	}
 }

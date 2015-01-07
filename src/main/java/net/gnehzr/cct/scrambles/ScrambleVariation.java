@@ -17,16 +17,19 @@ public class ScrambleVariation {
 	private int length = 0;
 	private ScramblePlugin scramblePlugin;
 	private Icon image;
-	public ScrambleVariation(ScramblePlugin plugin, String variation) {
+	private final Configuration configuration;
+
+	public ScrambleVariation(ScramblePlugin plugin, String variation, Configuration configuration) {
 		this.scramblePlugin = plugin;
 		this.variation = variation;
+		this.configuration = configuration;
 		length = getScrambleLength(false);
 	}
 	
 	public Icon getImage() {
 		if(image == null) {
 			try {
-				image = new ImageIcon(new File(ScramblePlugin.scramblePluginsFolder, variation + ".png").toURI().toURL());
+				image = new ImageIcon(new File(scramblePlugin.scramblePluginsFolder, variation + ".png").toURI().toURL());
 			} catch (MalformedURLException e) {
 				LOG.info("unexpected exception", e);
 				image = new ImageIcon();
@@ -37,7 +40,7 @@ public class ScrambleVariation {
 	
 	public int getScrambleLength(boolean defaultValue) {
 		try {
-			return Configuration.getInt(VariableKey.SCRAMBLE_LENGTH(this), defaultValue);
+			return configuration.getInt(VariableKey.SCRAMBLE_LENGTH(this), defaultValue).intValue();
 		} catch(Throwable e) {} //we don't want things to break even if configuration.class doesn't exists
 		return scramblePlugin.getDefaultScrambleLength(this);
 	}
@@ -69,13 +72,13 @@ public class ScrambleVariation {
 
 	public int getPuzzleUnitSize(boolean defaults) {
 		try {
-			return Configuration.getInt(VariableKey.UNIT_SIZE(this), defaults);
+			return configuration.getInt(VariableKey.UNIT_SIZE(this), defaults).intValue();
 		} catch(Exception e) {}
 		return scramblePlugin.DEFAULT_UNIT_SIZE;
 	}
 	public void setPuzzleUnitSize(int size) {
-		if(this != ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation())
-			Configuration.setInt(VariableKey.UNIT_SIZE(this), size);
+		if(this != scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation())
+			configuration.setLong(VariableKey.UNIT_SIZE(this), size);
 	}
 	
 	public int hashCode() {

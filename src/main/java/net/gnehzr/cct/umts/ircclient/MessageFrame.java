@@ -3,6 +3,7 @@ package net.gnehzr.cct.umts.ircclient;
 import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea.CCTLink;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea.HyperlinkListener;
@@ -21,6 +22,7 @@ import java.awt.event.*;
 import java.beans.PropertyVetoException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -36,10 +38,14 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 	private JTextField chatField;
 	protected JScrollPane msgScroller;
 	private MinimizableDesktop desk;
+	private final ScramblePlugin scramblePlugin;
+	private final Profile profileDao;
 
-	public MessageFrame(MinimizableDesktop desk, boolean closeable, Icon icon) {
+	public MessageFrame(MinimizableDesktop desk, boolean closeable, Icon icon, ScramblePlugin scramblePlugin, Profile profileDao) {
 		super("", true, closeable, true, true);
 		this.desk = desk;
+		this.scramblePlugin = scramblePlugin;
+		this.profileDao = profileDao;
 		setFrameIcon(icon);
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		
@@ -302,23 +308,24 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 				Scramble s = getScrambleFromLink(c);
 				scrambles.add(s);
 			}
-			ScrambleVariation sv = ScramblePlugin.getBestMatchVariation(l.variation);
+			ScrambleVariation sv = scramblePlugin.getBestMatchVariation(l.variation);
 			if(sv == null)
-				sv = ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
+				sv = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
 
-			for(CommandListener cl : listeners)
-				cl.scramblesImported(this, sv, scrambles);
+			for(CommandListener cl : listeners) {
+				cl.scramblesImported(this, sv, scrambles, profileDao);
+			}
 		}
 	}
 	private Scramble getScrambleFromLink(CCTLink l) {
-		ScrambleVariation var = ScramblePlugin.getBestMatchVariation(l.variation);
+		ScrambleVariation var = scramblePlugin.getBestMatchVariation(l.variation);
 		if(var == null)
-			var = ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
+			var = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
 		try {
 			return var.generateScramble(l.scramble);
 		} catch(Exception e1) {
 			try {
-				var = ScramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
+				var = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
 				return var.generateScramble(l.scramble);
 			} catch(Exception e) {
 				LOG.info("unexpected exception", e);
@@ -352,7 +359,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 			return msgBuff.toString();
 		}
 	}
-	private ArrayList<AppendAction> buffer = new ArrayList<AppendAction>();
+	private ArrayList<AppendAction> buffer = new ArrayList<>();
 	private void appendMessage(String nick, String message, Color c) {
 		//this lets everyone know that we received a message and no one was looking
 		if(!isSelected())
@@ -371,6 +378,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		if(isBottom) {
 			msgScroller.revalidate(); //force the msgscroller to update by the time the next lines are executed
 			SwingUtilities.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					scrollToBottom();
 				}
@@ -379,9 +387,9 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 	}
 	
 	//this will map Nicks to a TreeMap of set numbers to a TreeMap of scramble numbers to unique link numbers recognized by HyperlinkTextArea
-	private HashMap<String, TreeMap<Integer, TreeMap<Integer, Integer>>> nickMap = new HashMap<String, TreeMap<Integer, TreeMap<Integer, Integer>>>();
+	private HashMap<String, TreeMap<Integer, TreeMap<Integer, Integer>>> nickMap = new HashMap<>();
 	//this maps link numbers to CCTLinks
-	private HashMap<Integer, CCTLink> scramblesLinkMap = new HashMap<Integer, CCTLink>();
+	private HashMap<Integer, CCTLink> scramblesLinkMap = new HashMap<>();
 	
 	private ArrayList<String> commands = new ArrayList<String>();
 	private int nthCommand = 0;
@@ -483,13 +491,18 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		scramblesLinkMap.clear();
 	}
 	
-	private ArrayList<CommandListener> listeners = new ArrayList<CommandListener>();
+	private List<CommandListener> listeners = new ArrayList<>();
+
 	public void addCommandListener(CommandListener l) {
 		listeners.add(l);
 	}
+
 	public static interface CommandListener {
+
 		public void commandEntered(MessageFrame src, String cmd);
+
 		public void windowClosed(MessageFrame src);
-		public void scramblesImported(MessageFrame src, ScrambleVariation sv, ArrayList<Scramble> scrambles);
+
+		public void scramblesImported(MessageFrame src, ScrambleVariation sv, List<Scramble> scrambles, Profile profile);
 	}
 }

@@ -7,6 +7,8 @@ import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JSpinnerWithText;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.ProfileDao;
 import org.apache.log4j.Logger;
 
 import javax.imageio.ImageIO;
@@ -24,20 +26,28 @@ import java.net.URL;
 public class ScrambleExportDialog extends JDialog implements ActionListener {
 
 	private static final Logger LOG = Logger.getLogger(ScrambleExportDialog.class);
+	private final ScramblePlugin scramblePlugin;
+	private final Configuration configuration;
+	private final Profile profile;
 
 	private JTextField urlField;
 	private JButton browse;
 	private ScrambleChooserComboBox scrambleChooser;
 	private JSpinnerWithText scrambleLength, numberOfScrambles;
 	private JButton htmlExportButton, exportButton, cancelButton;
-	public ScrambleExportDialog(JFrame owner, ScrambleVariation selected) {
-		super(owner, StringAccessor.getString("ScrambleExportDialog.exportscrambles"), true); 
+
+	public ScrambleExportDialog(JFrame owner, ScrambleVariation selected, ScramblePlugin scramblePlugin,
+								Configuration configuration, Profile profile, ProfileDao profileDao) {
+		super(owner, StringAccessor.getString("ScrambleExportDialog.exportscrambles"), true);
+		this.scramblePlugin = scramblePlugin;
+		this.configuration = configuration;
+		this.profile = profile;
 		urlField = new JTextField(40);
 		urlField.setToolTipText(StringAccessor.getString("ScrambleExportDialog.choosefile")); 
 		browse = new JButton(StringAccessor.getString("ScrambleExportDialog.browse")); 
 		browse.addActionListener(this);
 
-		scrambleChooser = new ScrambleChooserComboBox(false, false);
+		scrambleChooser = new ScrambleChooserComboBox(false, false, this.scramblePlugin, this.configuration, profileDao);
 		scrambleChooser.setSelectedItem(selected);
 		scrambleChooser.addActionListener(this);
 
@@ -53,7 +63,7 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 		subPanel.add(scrambleChooser);
 
 		scrambleLength = new JSpinnerWithText(selected.getLength(), 1, StringAccessor.getString("ScrambleExportDialog.lengthscrambles")); 
-		numberOfScrambles = new JSpinnerWithText(ScramblePlugin.getCustomizationFromVariation(selected).getRASize(0), 1, StringAccessor.getString("ScrambleExportDialog.numberscrambles")); 
+		numberOfScrambles = new JSpinnerWithText(scramblePlugin.getCustomizationFromVariation(selected, profile).getRASize(0), 1, StringAccessor.getString("ScrambleExportDialog.numberscrambles"));
 		subPanel.add(scrambleLength);
 		subPanel.add(numberOfScrambles);
 		
@@ -76,10 +86,11 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 		setVisible(true);
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if(source == browse) {
-			CCTFileChooser fc = new CCTFileChooser(); 
+			CCTFileChooser fc = new CCTFileChooser(configuration);
 			if(fc.showDialog(this, StringAccessor.getString("ScrambleExportDialog.save")) == CCTFileChooser.APPROVE_OPTION) { 
 				File selectedFile = fc.getSelectedFile();
 				urlField.setText(selectedFile.toURI().toString());
@@ -87,7 +98,7 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 		} else if(source == scrambleChooser && scrambleLength != null) {
 			ScrambleVariation curr = (ScrambleVariation) scrambleChooser.getSelectedItem();
 			scrambleLength.setValue(curr.getLength());
-			numberOfScrambles.setValue(ScramblePlugin.getCustomizationFromVariation(curr).getRASize(0));
+			numberOfScrambles.setValue(scramblePlugin.getCustomizationFromVariation(curr, profile).getRASize(0));
 		} else if(source == htmlExportButton) {
 			URL file = null;
 			try {
@@ -127,8 +138,8 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 	private boolean exportScrambles(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
 		try {
 			PrintWriter out = new PrintWriter(new FileWriter(new File(outputFile.toURI())));
-			ScrambleList generatedScrambles = new ScrambleList();
-			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(scrambleVariation, null));
+			ScrambleList generatedScrambles = new ScrambleList(scramblePlugin);
+			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(configuration, scrambleVariation, null));
 			for(int ch = 0; ch < numberOfScrambles; ch++, generatedScrambles.getNext()) {
 				out.println(generatedScrambles.getCurrent().getScramble());
 			}
@@ -166,13 +177,13 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 		try {
 			PrintWriter out = new PrintWriter(new FileWriter(new File(outputFile.toURI())));
 			out.println("<html><head><title>Exported Scrambles</title></head><body><table>");
-			ScrambleList generatedScrambles = new ScrambleList();
-			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(scrambleVariation, null));
+			ScrambleList generatedScrambles = new ScrambleList(scramblePlugin);
+			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(configuration, scrambleVariation, null));
 
 			for(int ch = 0; ch < numberOfScrambles; ch++, generatedScrambles.getNext()) {
 				Scramble s = scrambleVariation.generateScramble(generatedScrambles.getCurrent().getScramble());
 				String str = s.toString();
-				BufferedImage image = sp.getScrambleImage(s, Configuration.getInt(VariableKey.POPUP_GAP, false).intValue(), sp.getDefaultUnitSize(), sp.getColorScheme(false));
+				BufferedImage image = sp.getScrambleImage(s, configuration.getInt(VariableKey.POPUP_GAP, false).intValue(), sp.getDefaultUnitSize(), sp.getColorScheme(false));
 
 				File file = new File(imageDir, "scramble" + ch + ".png");
 				ImageIO.write(image, "png", file);

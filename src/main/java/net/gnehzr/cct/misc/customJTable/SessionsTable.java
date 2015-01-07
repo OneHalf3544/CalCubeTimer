@@ -1,10 +1,11 @@
 package net.gnehzr.cct.misc.customJTable;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.main.ScrambleChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.statistics.ProfileDao;
 import net.gnehzr.cct.statistics.ProfileDatabase;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
@@ -14,30 +15,33 @@ import javax.swing.event.TableModelEvent;
 import java.awt.*;
 
 public class SessionsTable extends DraggableJTable implements SelectionListener {
-	private StatisticsTableModel statsModel;
-	public SessionsTable(StatisticsTableModel statsModel) {
-		super(false, true);
+	private final StatisticsTableModel statsModel;
+	private final Configuration configuration;
+	private final ProfileDao profileDao;
+
+	public SessionsTable(StatisticsTableModel statsModel, Configuration configuration, ScramblePlugin scramblePlugin, ProfileDao profileDao) {
+		super(configuration, false, true);
 		this.statsModel = statsModel;
+		this.configuration = configuration;
+		this.profileDao = profileDao;
 		this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		//for some reason, the default preferred size is huge
 		this.setPreferredScrollableViewportSize(new Dimension(0, 0));
 		this.setAutoCreateRowSorter(true);
-		SessionRenderer r = new SessionRenderer();
+		SessionRenderer r = new SessionRenderer(statsModel);
 		this.setDefaultRenderer(Object.class, r);
 		this.setDefaultRenderer(Integer.class, r); //for some reason, Object.class is not capturing the Solve count row
 		
-		this.setDefaultEditor(ScrambleCustomization.class, new DefaultCellEditor(new ScrambleChooserComboBox(false, true)));
-		this.setDefaultRenderer(ScrambleCustomization.class, new ScrambleChooserComboBox(false, true));
-		this.setRowHeight(new ScrambleChooserComboBox(false, true).getPreferredSize().height);
+		this.setDefaultEditor(ScrambleCustomization.class, new DefaultCellEditor(
+				new ScrambleChooserComboBox(false, true, scramblePlugin, configuration, profileDao)));
+		this.setDefaultRenderer(ScrambleCustomization.class, new ScrambleChooserComboBox(false, true, scramblePlugin, configuration, profileDao));
+		this.setRowHeight(new ScrambleChooserComboBox(false, true, scramblePlugin, configuration, profileDao).getPreferredSize().height);
 		super.setSelectionListener(this);
-		Configuration.addConfigurationChangeListener(new ConfigurationChangeListener() {
-			public void configurationChanged() {
-				refreshModel();
-			}
-		});
+		configuration.addConfigurationChangeListener((p) -> { refreshModel(); });
 		super.sortByColumn(-1); //this will sort column 0 in descending order
 		refreshModel();
 	}
+	@Override
 	public void rowSelected(int row) {
 		Session selected = (Session) getValueAt(row, convertColumnIndexToView(0));
 		if(statsModel.getCurrentSession() != selected) {  //we don't want to reload the current session
@@ -46,10 +50,11 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 	}
 	
 	private ProfileDatabase pd;
+
 	public void refreshModel() {
 		if(pd != null)
 			pd.setSessionListener(null);
-		pd = Configuration.getSelectedProfile().getPuzzleDatabase();
+		pd = profileDao.getSelectedProfile().getPuzzleDatabase();
 		pd.setSessionListener(l);
 		super.setModel(pd);
 	}

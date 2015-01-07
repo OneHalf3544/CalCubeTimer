@@ -1,16 +1,19 @@
 package net.gnehzr.cct.i18n;
 
-import java.awt.Component;
-import java.awt.Font;
-
-import javax.swing.Icon;
-import javax.swing.JList;
-
 import net.gnehzr.cct.configuration.Configuration;
-
 import org.jvnet.substance.api.renderers.SubstanceDefaultListCellRenderer;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class LocaleRenderer extends SubstanceDefaultListCellRenderer {
+	private final Configuration configuration;
+
+	public LocaleRenderer(Configuration configuration) {
+		this.configuration = configuration;
+	}
+
+	@Override
 	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 		Icon i = null;
 		String val = null;
@@ -19,7 +22,7 @@ public class LocaleRenderer extends SubstanceDefaultListCellRenderer {
 			LocaleAndIcon l = (LocaleAndIcon) value;
 			i = l.getFlag();
 			val = l.toString();
-			f = Configuration.getFontForLocale(l);
+			f = configuration.getFontForLocale(l);
 		}
 		Component c = super.getListCellRendererComponent(list, val, index, isSelected, cellHasFocus);
 		setIcon(i);

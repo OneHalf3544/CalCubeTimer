@@ -1,30 +1,31 @@
 package net.gnehzr.cct.misc.customJTable;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-
-import javax.swing.Action;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JComponent;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
-
+import com.google.inject.Inject;
+import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.SolveTime;
 
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+
 public class SolveTimeEditor extends DefaultCellEditor {
+	private final Configuration configuration;
 	private SolveTime value;
-	public SolveTimeEditor() {
+
+	@Inject
+	public SolveTimeEditor(Configuration configuration) {
 		super(new JTextField());
+		this.configuration = configuration;
 	}
 	
 	//TODO - http://www.pushing-pixels.org/?p=69 ?
+	@Override
 	public boolean stopCellEditing() {
 		String s = (String) super.getCellEditorValue();
 		try {
-			value = new SolveTime(s, null);
+			value = new SolveTime(s, null, configuration);
 		} catch (Exception e) {
 			JComponent component = (JComponent) getComponent();
 			component.setBorder(new LineBorder(Color.RED));
@@ -40,6 +41,7 @@ public class SolveTimeEditor extends DefaultCellEditor {
 		return super.stopCellEditing();
 	}
 
+	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value,
 			boolean isSelected, int row, int column) {
 		this.value = null;
@@ -49,6 +51,7 @@ public class SolveTimeEditor extends DefaultCellEditor {
 				column);
 	}
 
+	@Override
 	public Object getCellEditorValue() {
 		return value;
 	}

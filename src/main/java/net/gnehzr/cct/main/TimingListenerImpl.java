@@ -20,8 +20,11 @@ class TimingListenerImpl implements TimingListener {
 
     private CALCubeTimer calCubeTimer;
 
-    public TimingListenerImpl(CALCubeTimer calCubeTimer) {
+    private final Configuration configuration;
+
+    public TimingListenerImpl(CALCubeTimer calCubeTimer, Configuration configuration) {
         this.calCubeTimer = calCubeTimer;
+        this.configuration = configuration;
     }
 
     private void updateTime(TimerState newTime) {
@@ -37,44 +40,50 @@ class TimingListenerImpl implements TimingListener {
     }
 
     //I guess we could add an option to prompt the user to see if they want to keep this time
+    @Override
     public void timerAccidentlyReset(TimerState lastTimeRead) {
         calCubeTimer.penalty = null;
         calCubeTimer.timing = false;
         calCubeTimer.sendUserstate();
     }
 
+    @Override
     public void refreshDisplay(TimerState currTime) {
         updateTime(currTime);
     }
 
+    @Override
     public void timerSplit(TimerState newSplit) {
         calCubeTimer.addSplit(newSplit);
     }
 
+    @Override
     public void timerStarted() {
         calCubeTimer.timing = true;
         calCubeTimer.stopInspection();
-        if(Configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)) {
+        if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)) {
 			calCubeTimer.setFullScreen(true);
 		}
-        if(Configuration.getBoolean(VariableKey.METRONOME_ENABLED, false)) {
+        if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false)) {
 			calCubeTimer.startMetronome();
 		}
         calCubeTimer.sendUserstate();
     }
 
+    @Override
     public void timerStopped(TimerState newTime) {
         calCubeTimer.timing = false;
         calCubeTimer.addTime(newTime);
-        if(Configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false))
+        if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false))
             calCubeTimer.setFullScreen(false);
-        if(Configuration.getBoolean(VariableKey.METRONOME_ENABLED, false))
+        if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false))
             calCubeTimer.stopMetronome();
         calCubeTimer.sendUserstate();
     }
 
+    @Override
     public void stackmatChanged() {
-        if(!Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+        if(!configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
 			calCubeTimer.onLabel.setText("");
 		}
         else {
@@ -88,6 +97,7 @@ class TimingListenerImpl implements TimingListener {
         }
     }
 
+    @Override
     public void inspectionStarted() {
         calCubeTimer.inspectionStart = Instant.now();
         calCubeTimer.updateInspectionTimer.start();

@@ -1,6 +1,9 @@
 package net.gnehzr.cct.statistics;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -9,31 +12,43 @@ import java.io.RandomAccessFile;
 public class Profile {
 
     private static final Logger LOG = Logger.getLogger(Profile.class);
+    private final ScramblePlugin scramblePlugin;
 
     private RandomAccessFile statisticsRandomAccessFile = null;
 
     private String name;
     private File directory;
-    private File configuration;
+    private File configurationFile;
     private File statistics;
-
-    //constructors are private because we want only 1 instance of a profile
-    //pointing to a given database
-    Profile(String name) {
-        this.name = name;
-        directory = ProfileDao.getDirectory(name);
-        configuration = ProfileDao.getConfiguration(directory, name);
-        statistics = ProfileDao.getStatistics(directory, name);
-    }
 
     private boolean saveable = true;
 
-    //I assume that this will only get called once for a given directory
-    public Profile(String name, File directory, File configuration, File statistics) {
-        saveable = false;
-        this.directory = directory;
+    private final Configuration configuration;
+
+    //constructors are private because we want only 1 instance of a profile
+    //pointing to a given database
+    Profile(ProfileDao profileDao, String name, Configuration configuration, StatisticsTableModel statsModel, ScramblePlugin scramblePlugin) {
+        this.name = name;
         this.configuration = configuration;
+        this.scramblePlugin = scramblePlugin;
+        directory = profileDao.getDirectory(name);
+        configurationFile = profileDao.getConfiguration(directory, name);
+        statistics = profileDao.getStatistics(directory, name);
+        puzzleDB = new ProfileDatabase(this.configuration, profileDao, statsModel, this.scramblePlugin);
+    }
+
+    //I assume that this will only get called once for a given directory
+    public Profile(String name, File directory, File configurationFile, File statistics,
+                   Configuration configuration, ProfileDao profileDao, StatisticsTableModel statsModel,
+                   ScramblePlugin scramblePlugin) {
+        this.name = name;
+        this.configuration = configuration;
+        this.setDirectory(directory);
+        this.scramblePlugin = scramblePlugin;
+        saveable = false;
+        this.configurationFile = configurationFile;
         this.statistics = statistics;
+        puzzleDB = new ProfileDatabase(this.configuration, profileDao, statsModel, this.scramblePlugin);
     }
 
     public boolean isSaveable() {
@@ -45,7 +60,7 @@ public class Profile {
     }
 
     public File getConfigurationFile() {
-        return configuration;
+        return configurationFile;
     }
 
     private String newName;
@@ -79,6 +94,7 @@ public class Profile {
         this.newName = newName;
     }
 
+    @NotNull
     File getDirectory() {
         return directory;
     }
@@ -90,10 +106,9 @@ public class Profile {
     public void setName(String newName) {
         this.name = newName;
     }
-
     //Database stuff
     //this maps from ScrambleVariations to PuzzleStatistics
-    ProfileDatabase puzzleDB = new ProfileDatabase(this);
+    ProfileDatabase puzzleDB;
 
     public ProfileDatabase getPuzzleDatabase() {
         return puzzleDB;
@@ -123,7 +138,7 @@ public class Profile {
         this.statistics = statistics;
     }
 
-    public void setConfiguration(File configuration) {
-        this.configuration = configuration;
+    public void setConfigurationFile(File configurationFile) {
+        this.configurationFile = configurationFile;
     }
 }

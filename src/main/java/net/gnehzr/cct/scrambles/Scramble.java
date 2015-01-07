@@ -1,19 +1,22 @@
 package net.gnehzr.cct.scrambles;
 
+import net.gnehzr.cct.i18n.StringAccessor;
+
 import java.util.Random;
 import java.util.Vector;
-
-import net.gnehzr.cct.i18n.StringAccessor;
 
 public class Scramble {
 	public static class JavascriptArray<H> extends Vector<H> {
 		public JavascriptArray() {
 			
 		}
+
+		@SafeVarargs
 		public JavascriptArray(H... init) {
 			for(H h : init)
 				add(h);
 		}
+		@Override
 		public H set(int index, H element) {
 			if(index >= super.size())
 				super.setSize(index + 1);
@@ -45,11 +48,11 @@ public class Scramble {
 	}
 
 	private static final Random r = new Random();
-	protected static final int random(int choices) {
+	protected static int random(int choices) {
 		return r.nextInt(choices);
 	}
 	//assumes m > 0
-	protected static final int modulo(int x, int m) {
+	protected static int modulo(int x, int m) {
 		int y = x % m;
 		if(y >= 0) return y;
 		return y + m;

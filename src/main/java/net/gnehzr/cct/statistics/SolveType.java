@@ -1,12 +1,11 @@
 package net.gnehzr.cct.statistics;
 
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
 * <p>
@@ -17,22 +16,27 @@ import java.util.HashMap;
 * @author OneHalf
 */
 public class SolveType {
-    private static final HashMap<String, SolveType> SOLVE_TYPES = new HashMap<String, SolveType>();
+
+    private static final Map<String, SolveType> SOLVE_TYPES = new HashMap<>();
+
     public static SolveType createSolveType(String desc) throws Exception {
-        if(desc.isEmpty() || desc.indexOf(',') != -1)
+        if(desc.isEmpty() || desc.indexOf(',') != -1) {
             throw new Exception(StringAccessor.getString("SolveTime.invalidtype"));
-        if(SOLVE_TYPES.containsKey(desc.toLowerCase()))
+        }
+        if(SOLVE_TYPES.containsKey(desc.toLowerCase())) {
             return SOLVE_TYPES.get(desc);
+        }
         return new SolveType(desc);
     }
+
     public static SolveType getSolveType(String name) {
         return SOLVE_TYPES.get(name.toLowerCase());
     }
-    public static Collection<SolveType> getSolveTypes(boolean defaults) {
-        ArrayList<SolveType> types = new ArrayList<SolveType>(SOLVE_TYPES.values());
-        String[] tags = Configuration.getStringArray(VariableKey.SOLVE_TAGS, defaults);
-        for(int c = tags.length - 1; c >= 0; c--) {
-            String tag = tags[c];
+
+    public static Collection<SolveType> getSolveTypes(String[] solveTags) {
+        ArrayList<SolveType> types = new ArrayList<>(SOLVE_TYPES.values());
+        for(int c = solveTags.length - 1; c >= 0; c--) {
+            String tag = solveTags[c];
             int ch;
             for(ch = 0; ch < types.size(); ch++) {
                 if(types.get(ch).desc.equalsIgnoreCase(tag)) {
@@ -54,6 +58,7 @@ public class SolveType {
     public static final SolveType DNF = new SolveType("DNF");
     public static final SolveType PLUS_TWO = new SolveType("+2");
     private String desc;
+
     private SolveType(String desc) {
         this.desc = desc;
         SOLVE_TYPES.put(desc.toLowerCase(), this);

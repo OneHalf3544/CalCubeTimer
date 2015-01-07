@@ -1,19 +1,23 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import javax.swing.JMenu;
-
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
+import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
+import javax.swing.*;
+
 public class DynamicMenu extends JMenu implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+	private final Configuration configuration;
 	private DynamicString s = null;
 
-	public DynamicMenu(){
-		Configuration.addConfigurationChangeListener(this);
+	public DynamicMenu(Configuration configuration){
+		this.configuration = configuration;
+		this.configuration.addConfigurationChangeListener(this);
 	}
 
-	public DynamicMenu(DynamicString s){
+	public DynamicMenu(DynamicString s, Configuration configuration){
+		this.configuration = configuration;
 		setDynamicString(s);
 	}
 
@@ -32,12 +36,13 @@ public class DynamicMenu extends JMenu implements StatisticsUpdateListener, Dyna
 		if(s != null) setText(s.toString());
 	}
 
-	public void configurationChanged(){
+	@Override
+	public void configurationChanged(Profile profile){
 		update();
 	}
 
 	public void destroy(){
 		setDynamicString(null);
-		Configuration.removeConfigurationChangeListener(this);
+		configuration.removeConfigurationChangeListener(this);
 	}
 }
