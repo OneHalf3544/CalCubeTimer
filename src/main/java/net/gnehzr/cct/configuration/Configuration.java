@@ -1,6 +1,7 @@
 package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.log4j.Logger;
@@ -15,17 +16,15 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class Configuration {
+public class Configuration {
 
 	private static final Logger LOG = Logger.getLogger(Configuration.class);
 
@@ -44,9 +43,8 @@ public final class Configuration {
 	@Deprecated
 	private final File languagesFolder;
 	@Deprecated
-	private final File flagsFolder;
-	@Deprecated
 	private final File startupProfileFile;
+	private final File flagsFolder;
 
 	private final LocaleAndIcon jvmDefaultLocale;
 
@@ -98,9 +96,11 @@ public final class Configuration {
 	private CopyOnWriteArrayList<ConfigurationChangeListener> listeners = new CopyOnWriteArrayList<>();
 
 	public void addConfigurationChangeListener(ConfigurationChangeListener listener) {
+		LOG.debug("register listener: " + listener);
 		listeners.add(listener);
 	}
 	public void removeConfigurationChangeListener(ConfigurationChangeListener listener) {
+		LOG.debug("remove listener: " + listener);
 		listeners.remove(listener);
 	}
 
@@ -249,7 +249,7 @@ public final class Configuration {
 		return props.getString(new VariableKey<>(substring), false);
 	}
 
-	public String[] getStringArray(VariableKey<String[]> solveTags, boolean defaultValue) {
+	public List<String> getStringArray(VariableKey<List<String>> solveTags, boolean defaultValue) {
 		return props.getStringArray(solveTags, defaultValue);
 	}
 
@@ -294,7 +294,7 @@ public final class Configuration {
 		props.setPoint(ircFrameLocation, location);
 	}
 
-	public void setStringArray(VariableKey<String[]> valuesKey, String[] items) {
+	public void setStringArray(VariableKey<List<String>> valuesKey, List<?> items) {
 		props.setStringArray(valuesKey, items);
 	}
 
@@ -388,51 +388,49 @@ public final class Configuration {
 	private List<LocaleAndIcon> locales;
 
 	public List<LocaleAndIcon> getAvailableLocales() {
-		if(locales == null) {
+		if (locales == null) {
 			locales = new ArrayList<>();
-			Locale l;
-			for(File lang : checkNotNull(languagesFolder.listFiles())) {
-				Matcher m = languageFile.matcher(lang.getName());
-				if(m.matches()) {
-					String[] language_region = m.group(1).split("_");
-					if(language_region.length == 1)
-						l = new Locale(language_region[0]);
-					else if(language_region.length == 2)
-						l = new Locale(language_region[0], language_region[1]);
-					else
-						continue;
-					String i18nName = null;
-					BufferedReader in = null;
-					try {
-						in = new BufferedReader(new FileReader(lang));
-						i18nName = in.readLine();
-						//What follows is a hack to escape any characters within this file as with all
-						//the other properties files. Apparently Java doesn't provide this functionality
-						//for us. See http://forums.sun.com/thread.jspa?threadID=733734&messageID=4219038
-						Properties prop = new Properties();
-						prop.load(new FileInputStream(lang));
-						i18nName = prop.getProperty("language");
-					} catch(Exception e) {
-						LOG.info("unexpected exception", e);
-					} finally {
-						if(in != null) {
-							try {
-								in.close();
-							} catch(IOException e) {
-								LOG.info("unexpected exception", e);
-							}
-						}
-					}
-					if(i18nName == null)
-						i18nName = m.group(1);
-					LocaleAndIcon li = new LocaleAndIcon(flagsFolder, l, i18nName);
-					if(!locales.contains(li)) {
-						locales.add(li);
-					}
+
+			for(File langFile : checkNotNull(languagesFolder.listFiles())) {
+				Matcher m = languageFile.matcher(langFile.getName());
+				if (!m.matches()) {
+					continue;
 				}
+
+				Optional<Locale> locale = parseLocale(m.group(1));
+				if (!locale.isPresent()) {
+                    continue;
+                }
+
+				LocaleAndIcon li = new LocaleAndIcon(flagsFolder, locale.get(), getLanguageName(langFile));
+				if(!locales.contains(li)) {
+                    locales.add(li);
+                }
 			}
 		}
 		return locales;
+	}
+
+	private String getLanguageName(File lang) {
+		try (InputStream in = new FileInputStream(lang)) {
+			Properties prop = new Properties();
+			prop.load(in);
+			return prop.getProperty("language");
+		} catch (IOException e) {
+			throw Throwables.propagate(e);
+		}
+	}
+
+	private Optional<Locale> parseLocale(String locale) {
+		String[] language_region = locale.split("_");
+		Locale l;
+		if (language_region.length == 1) {
+			return Optional.of(new Locale(language_region[0]));
+		}
+		else if(language_region.length == 2) {
+			return Optional.of(new Locale(language_region[0], language_region[1]));
+		}
+		return Optional.empty();
 	}
 
 	//********* End of specialized methods ***************//

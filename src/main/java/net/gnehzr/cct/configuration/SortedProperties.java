@@ -2,6 +2,7 @@ package net.gnehzr.cct.configuration;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.gnehzr.cct.main.CALCubeTimer;
 import net.gnehzr.cct.misc.Utils;
@@ -10,6 +11,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.List;
 import java.util.Properties;
 
 public class SortedProperties {
@@ -158,14 +160,14 @@ public class SortedProperties {
 	}
 
 	//special characters are for now just ';'
-	public String[] getStringArray(VariableKey<String[]> key, boolean defaultValue) {
+	public List<String> getStringArray(VariableKey<List<String>> key, boolean defaultValue) {
 		try {
-			return getValue(key, defaultValue).split("\n");
+			return Lists.newArrayList(getValue(key, defaultValue).split("\n"));
 		} catch(NullPointerException e) {
 			return null;
 		}
 	}
-	public void setStringArray(VariableKey<String[]> key, Object[] arr) {
+	public void setStringArray(VariableKey<List<String>> key, List<?> arr) {
 		String mashed = "";
 		for(Object o : arr) {
 			mashed += o.toString() + "\n";

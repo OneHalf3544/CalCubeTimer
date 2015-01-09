@@ -1,5 +1,6 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
 
 import com.google.inject.Inject;
@@ -14,9 +15,6 @@ public class StackmatState extends TimerState {
 	private Boolean leftHand = false;
 	private boolean running = false;
 	private boolean reset = true;
-	private int minutes = 0;
-	private int seconds = 0;
-	private int hundredths = 0;
 	private boolean isValid = false;
 	private boolean greenLight = false;
 
@@ -47,7 +45,7 @@ public class StackmatState extends TimerState {
 
 	public StackmatState(StackmatState previous, List<Integer> periodData, Configuration configuration) {
 		this(configuration);
-		if(periodData.size() == 89) { //all data present
+		if (periodData.size() == 89) { //all data present
 			isValid = true;
 			Duration value = parseTime(periodData);
 			setTime(value);
@@ -58,9 +56,6 @@ public class StackmatState extends TimerState {
 			this.leftHand = previous.leftHand;
 			this.running = previous.running;
 			this.reset = previous.reset;
-			this.minutes = previous.minutes;
-			this.seconds = previous.seconds;
-			this.hundredths = previous.hundredths;
 			this.isValid = previous.isValid;
 			this.greenLight = previous.greenLight;
 			setTime(previous.getTime());
@@ -69,35 +64,36 @@ public class StackmatState extends TimerState {
 
 	private Duration parseTime(List<Integer> periodData){
 		parseHeader(periodData);
-		minutes = parseDigit(periodData, 1, invertedMin);
-		seconds = parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec);
-		hundredths = parseDigit(periodData, 4, invertedHun) * 10 + parseDigit(periodData, 5, invertedHun);
 		return Duration
-                .ofMinutes(minutes)
-                .plus(Duration.ofSeconds(seconds))
-                .plus(Duration.ofMillis(hundredths * 10));
+                .ofMinutes(parseDigit(periodData, 1, invertedMin))
+                .plus(Duration.ofSeconds(parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec)))
+                .plus(Duration.ofMillis((parseDigit(periodData, 4, invertedHun) * 10 + parseDigit(periodData, 5, invertedHun)) * 10));
 	}
 
 	private void parseHeader(List<Integer> periodData){
 		int temp = 0;
-		for(int i = 1; i <= 5; i++) temp += periodData.get(i) << (5 - i);
+		for(int i = 1; i <= 5; i++) {
+			temp += periodData.get(i) << (5 - i);
+		}
 
-		leftHand = temp == 6;
-		rightHand = temp == 9;
-		if(temp == 24 || temp == 16) rightHand = leftHand = true;
+		leftHand = (temp == 6);
+		rightHand = (temp == 9);
+		if(temp == 24 || temp == 16) {
+			leftHand = true;
+			rightHand = true;
+		}
 		greenLight = temp == 16;
 	}
 
-	private int parseDigit(List<Integer> periodData, int pos, boolean invert){
+	private int parseDigit(List<Integer> periodData, int position, boolean invert){
 		int temp = 0;
 		for(int i = 1; i <= 4; i++) {
-			temp += periodData.get(pos * 10 + i) << (i - 1);
+			temp += periodData.get(position * 10 + i) << (i - 1);
 		}
-
 		return invert ? 15 - temp : temp;
 	}
 	public boolean oneHand() {
-		return rightHand^leftHand;
+		return rightHand ^ leftHand;
 	}
 	public boolean bothHands() {
 		return rightHand && leftHand;
@@ -133,6 +129,6 @@ public class StackmatState extends TimerState {
 	}
 
 	public String toString() {
-		return Utils.formatTime(getTime().toMillis() / 1000.0);
+		return Utils.formatTime(getTime().toMillis() / 1000.0, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 	}
 }

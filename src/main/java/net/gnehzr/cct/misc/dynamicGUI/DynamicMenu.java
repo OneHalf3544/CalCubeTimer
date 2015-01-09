@@ -7,20 +7,29 @@ import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
 
-public class DynamicMenu extends JMenu implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+public class DynamicMenu extends JMenu implements StatisticsUpdateListener, DynamicStringSettable, DynamicDestroyable{
+
 	private final Configuration configuration;
+
+	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
+		@Override
+		public void configurationChanged(Profile currentProfile) {
+			update();
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getEnclosingClass().getSimpleName() + ": " + getText();
+		}
+	};
 	private DynamicString s = null;
 
 	public DynamicMenu(Configuration configuration){
 		this.configuration = configuration;
-		this.configuration.addConfigurationChangeListener(this);
+		this.configuration.addConfigurationChangeListener(changeListener);
 	}
 
-	public DynamicMenu(DynamicString s, Configuration configuration){
-		this.configuration = configuration;
-		setDynamicString(s);
-	}
-
+	@Override
 	public void setDynamicString(DynamicString s){
 		if(this.s != null) {
 			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
@@ -32,17 +41,16 @@ public class DynamicMenu extends JMenu implements StatisticsUpdateListener, Dyna
 		}
 	}
 
+	@Override
 	public void update(){
-		if(s != null) setText(s.toString());
+		if(s != null) {
+			setText(s.toString());
+		}
 	}
 
 	@Override
-	public void configurationChanged(Profile profile){
-		update();
-	}
-
 	public void destroy(){
 		setDynamicString(null);
-		configuration.removeConfigurationChangeListener(this);
+		configuration.removeConfigurationChangeListener(changeListener);
 	}
 }

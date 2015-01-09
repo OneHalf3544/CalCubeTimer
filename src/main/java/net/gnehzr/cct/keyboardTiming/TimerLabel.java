@@ -55,7 +55,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if(Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) return;
+				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) return;
 				int code = e.getKeyCode();
 				if (e.getWhen() - getTime(code) < 10) {
 					timeup.put(code, (long) 0);
@@ -68,7 +68,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 			@Override
 			public void keyReleased(final KeyEvent e) {
-				if(Configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
 					return;
 				}
 				int code = e.getKeyCode();
@@ -309,31 +309,35 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	}
 
 	private int stackmatKeysDownCount(){
-		return (isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false).intValue()) ? 1 : 0) +
-			(isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false).intValue()) ? 1 : 0);
+		return (isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false)) ? 1 : 0) +
+			(isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false)) ? 1 : 0);
 	}
 
 	private boolean stackmatKeysDown(){
-		return isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false).intValue()) &&
-			isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false).intValue());
+		return isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false)) &&
+			isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false));
 	}
 
 	//called when a key is physically pressed
 	private void keyReallyPressed(KeyEvent e) {
-		boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION, false);
 		int key = e.getKeyCode();
-		if(key == 0) { //ignore unrecognized keys, such as media buttons
-		} else if(keyHandler.isRunning() && !keyHandler.isInspecting()) {
-			if(configuration.getBoolean(VariableKey.TIMING_SPLITS, false) && key == configuration.getInt(VariableKey.SPLIT_KEY, false)) {
-				keyHandler.split();
-			} else if(!stackmatEmulation || stackmatEmulation && stackmatKeysDown()){
-				keyHandler.stop();
+
+		if (key != 0) {
+			boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION, false);
+		 	//ignore unrecognized keys, such as media buttons
+			if(keyHandler.isRunning() && !keyHandler.isInspecting()) {
+				if(configuration.getBoolean(VariableKey.TIMING_SPLITS, false)
+						&& key == configuration.getInt(VariableKey.SPLIT_KEY, false)) {
+					keyHandler.split();
+				} else if(!stackmatEmulation || stackmatKeysDown()){
+					keyHandler.stop();
+					keysDown = true;
+				}
+			} else if(key == KeyEvent.VK_ESCAPE) {
+				releaseAllKeys();
+			} else if(!stackmatEmulation) {
 				keysDown = true;
 			}
-		} else if(key == KeyEvent.VK_ESCAPE) {
-			releaseAllKeys();
-		} else if(!stackmatEmulation) {
-			keysDown = true;
 		}
 	}
 	
@@ -347,8 +351,8 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	//called when a key is physically released
 	void keyReallyReleased(KeyEvent e) {
 		boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION, false);
-		int sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false).intValue();
-		int sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false).intValue();
+		int sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false);
+		int sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false);
 
 		if(stackmatEmulation && stackmatKeysDownCount() == 1 && (e.getKeyCode() == sekey1 || e.getKeyCode() == sekey2) || !stackmatEmulation && atMostKeysDown(0)){
 			keysDown = false;

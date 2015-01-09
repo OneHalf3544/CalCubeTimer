@@ -23,17 +23,14 @@ public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpd
 		this.configuration.addConfigurationChangeListener(this);
 	}
 	
+	@Override
 	public void updateUI() {
 		Border b = getBorder();
 		super.updateUI();
 		setBorder(b);
 	}
 
-	public DynamicSelectableLabel(DynamicString s, Configuration configuration){
-		this(configuration);
-		setDynamicString(s);
-	}
-
+	@Override
 	public void setDynamicString(DynamicString s){
 		if(this.s != null) {
 			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
@@ -45,6 +42,7 @@ public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpd
 		}
 	}
 
+	@Override
 	public void update(){
 		if(s != null) setText(s.toString());
 	}
@@ -54,6 +52,7 @@ public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpd
 		update();
 	}
 
+	@Override
 	public void destroy(){
 		setDynamicString(null);
 		configuration.removeConfigurationChangeListener(this);

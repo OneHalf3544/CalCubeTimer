@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
@@ -47,8 +48,10 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			return name.toLowerCase().hashCode();
 		}
 	}
-	private ArrayList<TypeAndName> tags;
-	private ArrayList<TypeAndName> deletedTags;
+
+	private List<TypeAndName> tags;
+	private List<TypeAndName> deletedTags;
+
 	public void setTags(Collection<SolveType> tagTypes) {
 		tags = new ArrayList<>();
 		deletedTags = new ArrayList<>();
@@ -56,8 +59,9 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			tags.add(new TypeAndName(t.toString(), t));
 		fireTableDataChanged();
 	}
+
 	public void apply() {
-		String[] tagNames = new String[tags.size()];
+		List<String> tagNames = new ArrayList<>(tags.size());
 		for(int c = 0; c < tags.size(); c++) {
 			TypeAndName tan = tags.get(c);
 			if(tan.type == null) { //this indicates that the type was created
@@ -67,16 +71,17 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 					LOG.info("unexpected exception", e);
 					continue;
 				}
-			} else
+			} else {
 				tan.type.rename(tan.name);
-			tagNames[c] = tan.name;
+			}
+			tagNames.set(c, tan.name);
 		}
 		configuration.setStringArray(VariableKey.SOLVE_TAGS, tagNames);
-		for(TypeAndName tan : deletedTags) {
-			if(tan.type != null) { //no need to attempt to remove something that never got truly created
-                SolveType.remove(tan.type);
-            }
-		}
+
+		//no need to attempt to remove something that never got truly created
+		deletedTags.stream()
+				.filter(tan -> tan.type != null)
+				.forEach(tan -> SolveType.remove(tan.type));
 	}
 	
 	@Override
@@ -106,6 +111,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 	public String getColumnName(int column) {
 		return "Tags";
 	}
+
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return TypeAndName.class;

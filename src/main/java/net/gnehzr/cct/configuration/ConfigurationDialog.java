@@ -102,7 +102,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	private JButton applyButton, saveButton = null;
 	private JButton cancelButton = null;
 	private JButton resetAllButton = null;
-	private JComboBox profiles = null;
+	private JComboBox<Profile> profiles = null;
 	private void createGUI() {
 		JPanel pane = new JPanel(new BorderLayout());
 		setContentPane(pane);
@@ -155,7 +155,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		resetAllButton.setMnemonic(KeyEvent.VK_R);
 		resetAllButton.addActionListener(this);
 		
-		profiles = new JComboBox();
+		profiles = new JComboBox<>();
 		profiles.addItemListener(this);
 
 		pane.add(sideBySide(BoxLayout.LINE_AXIS, profiles, Box.createHorizontalGlue(), resetAllButton, Box.createRigidArea(new Dimension(30, 0)), applyButton,
@@ -174,7 +174,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	JCheckBox splits;
 	JCheckBox metronome;
 	JSpinner minSplitTime;
-	public TickerSlider metronomeDelay = null;
+	TickerSlider metronomeDelay = null;
 	JColorComponent bestRA;
 	JColorComponent currentAverage;
 	JColorComponent bestTime;
@@ -213,7 +213,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		rightPanel.add(sideBySide);
 		
 		speakTimes = new JCheckBox(StringAccessor.getString("ConfigurationDialog.readtimes"));
-		voices = new JComboBox(numberSpeaker.getSpeakers());
+		voices = new JComboBox<>(numberSpeaker.getSpeakers());
 		sideBySide = new JPanel();
 		sideBySide.add(speakTimes);
 		sideBySide.add(new JLabel(StringAccessor.getString("ConfigurationDialog.voicechoice")));
@@ -491,7 +491,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			int selected = stackmat.getSelectedMixerIndex();
 			lines = new JComboBox<>(items);
 			lines.setMaximumRowCount(15);
-			lines.setRenderer(new ComboRenderer());
+			lines.setRenderer(new ComboRenderer<>());
 			lines.addActionListener(new ComboListener(lines));
 			lines.setSelectedIndex(selected);
 			mixerPanel.add(lines);
@@ -786,12 +786,15 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			speakInspection.setEnabled(inspectionCountdown.isSelected());
 		} else if(e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(profileDao.getSelectedProfile())) {
 			int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("configurationDialog.saveprofile"));
-			if(choice == JOptionPane.YES_OPTION) {
-				applyAndSave();
-			} else if(choice == JOptionPane.NO_OPTION) {
-			} else {
-				profiles.setSelectedItem(profileDao.getSelectedProfile());
-				return;
+			switch (choice) {
+				case JOptionPane.YES_OPTION:
+					applyAndSave();
+					break;
+				case JOptionPane.NO_OPTION:
+					break;
+				default:
+					profiles.setSelectedItem(profileDao.getSelectedProfile());
+					return;
 			}
 			Profile p = (Profile) profiles.getSelectedItem();
 			try {
@@ -800,9 +803,8 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				LOG.info("unexpected exception", e1);
 			}
 			profileDao.setSelectedProfile(p);
-			if(!profileDao.loadDatabase(p, scramblePlugin)) {
-				//the user will be notified of this in the profiles combobox
-			}
+			profileDao.loadDatabase(p, scramblePlugin);
+
 			try {
 				configuration.loadConfiguration(p.getConfigurationFile());
 				configuration.apply(p);
@@ -823,6 +825,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		pane.addHyperlinkListener(this);
 		return pane;
 	}
+	@Override
 	public void hyperlinkUpdate(HyperlinkEvent e) {
 		if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
 			showDynamicStrings();
@@ -1046,9 +1049,9 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			items = getMixers();
 			int selected = stackmat.getSelectedMixerIndex();
 			mixerPanel.remove(lines);
-			lines = new JComboBox(items);
+			lines = new JComboBox<>(items);
 			lines.setMaximumRowCount(15);
-			lines.setRenderer(new ComboRenderer());
+			lines.setRenderer(new ComboRenderer<>());
 			lines.addActionListener(new ComboListener(lines));
 			lines.setSelectedIndex(selected);
 			mixerPanel.add(lines, 0);
@@ -1087,16 +1090,18 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	
 	public void syncGUIwithConfig(boolean defaults) {
 		setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + profileDao.getSelectedProfile().getName());
-		profiles.setModel(new DefaultComboBoxModel(profileDao.getProfiles(configuration).toArray()));
+		profiles.setModel(new DefaultComboBoxModel<>(profileDao.getProfiles(configuration).toArray(new Profile[0])));
 		profiles.setSelectedItem(profileDao.getSelectedProfile());
 		for(SyncGUIListener sl : resetListeners)
 			sl.syncGUIWithConfig(defaults);
 	}
 
-	public void setVisible(boolean b) {
-		if(!b)
+	@Override
+	public void setVisible(boolean newVisibleState) {
+		if(!newVisibleState) {
 			cancel();
-		super.setVisible(b);
+		}
+		super.setVisible(newVisibleState);
 	}
 	
 	// this probably won't get used as much as apply, but it's here if you need it
@@ -1180,8 +1185,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				VariableKey.SCRAMBLE_CUSTOMIZATIONS,
 				puzzlesModel.getContents().stream()
 						.map(ScrambleCustomization::toString)
-						.collect(Collectors.toList())
-						.toArray(new String[0]));
+						.collect(Collectors.<String>toList()));
 		scramblePlugin.saveLengthsToConfiguration();
 		for(ScrambleCustomization sc : puzzlesModel.getContents())
 			sc.saveGeneratorToConfiguration();
@@ -1205,6 +1209,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		}
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e) {
 		if(!TimerLabel.ignoreKey(e, false, false, 0, 0)) {
 			if(e.getSource() == splitsKeySelector){
@@ -1219,6 +1224,8 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			}
 		}
 	}
+	@Override
 	public void keyReleased(KeyEvent e) {}
+	@Override
 	public void keyTyped(KeyEvent e) {}
 }

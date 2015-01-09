@@ -7,21 +7,29 @@ import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
 
-public class DynamicLabel extends JLabel implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+public class DynamicLabel extends JLabel implements StatisticsUpdateListener, DynamicStringSettable, DynamicDestroyable {
+
+	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
+		@Override
+		public void configurationChanged(Profile currentProfile) {
+			DynamicLabel.this.update();
+		}
+
+		@Override
+		public String toString() {
+			return "DynamicLabel: " + getText();
+		}
+	};
 
 	private final Configuration configuration;
 	private DynamicString s = null;
 
 	public DynamicLabel(Configuration configuration){
 		this.configuration = configuration;
-		configuration.addConfigurationChangeListener(this);
+		configuration.addConfigurationChangeListener(changeListener);
 	}
 
-	public DynamicLabel(DynamicString s, Configuration configuration){
-		this.configuration = configuration;
-		setDynamicString(s);
-	}
-
+	@Override
 	public void setDynamicString(DynamicString s){
 		if(this.s != null) {
 			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
@@ -33,18 +41,16 @@ public class DynamicLabel extends JLabel implements StatisticsUpdateListener, Dy
 		}
 	}
 
-	public void update(){
-		if(s != null) setText(s.toString());
-	}
-
 	@Override
-	public void configurationChanged(Profile profile){
-		update();
+	public void update(){
+		if(s != null) {
+			setText(s.toString());
+		}
 	}
 
 	@Override
 	public void destroy(){
 		setDynamicString(null);
-		configuration.removeConfigurationChangeListener(this);
+		configuration.removeConfigurationChangeListener(changeListener);
 	}
 }

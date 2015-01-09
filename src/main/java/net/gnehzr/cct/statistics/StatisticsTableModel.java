@@ -20,7 +20,6 @@ import java.util.List;
 public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
 	Statistics stats;
 
-	@NotNull
 	private Session session;
 
 	private final Configuration configuration;
@@ -31,7 +30,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	}
 
 	public void setSession(@NotNull Session session) {
-		this.session = session;
+		this.session = Objects.requireNonNull(session);;
 		if(stats != null) {
 			stats.setUndoRedoListener(null);
 			stats.setTableListener(null);
@@ -75,8 +74,8 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 	//this is needed to update the i18n text
 	public void fireStringUpdates() {
-		for(StatisticsUpdateListener sul : statsListeners)
-			sul.update();
+		statsListeners
+				.forEach(StatisticsUpdateListener::update);
 		undoRedoListener.refresh();
 	}
 	
@@ -207,7 +206,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			attr.addActionListener(this);
 			jpopup.add(attr);
 			independent.add(attr);
-			String[] solveTagsArray = configuration.getStringArray(VariableKey.SOLVE_TAGS, false);
+			List<String> solveTagsArray = configuration.getStringArray(VariableKey.SOLVE_TAGS, false);
 			Collection<SolveType> types = SolveType.getSolveTypes(solveTagsArray);
 			for(SolveType type : types) {
 				if(type.isIndependent()) {

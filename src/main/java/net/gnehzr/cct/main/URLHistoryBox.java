@@ -11,16 +11,16 @@ import javax.swing.event.ListDataListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 public class URLHistoryBox extends JComboBox implements KeyListener {
-	private VariableKey<String[]> valuesKey;
-	private String[] values;
+	private VariableKey<List<String>> valuesKey;
+	private List<String> values;
 	private IncrementalComboBoxModel model;
 	private JTextField editor;
 	private final Configuration configuration;
 
-	public URLHistoryBox(VariableKey<String[]> valuesKey, Configuration configuration) {
+	public URLHistoryBox(VariableKey<List<String>> valuesKey, Configuration configuration) {
 		this.valuesKey = valuesKey;
 		this.configuration = configuration;
 		this.values = configuration.getStringArray(valuesKey, false);
@@ -64,14 +64,14 @@ public class URLHistoryBox extends JComboBox implements KeyListener {
 		private String prefix;
 		private ArrayList<String> filtered;
 		private JTextField editor;
-		public IncrementalComboBoxModel(String[] values, JTextField editor) {
+		public IncrementalComboBoxModel(List<String> values, JTextField editor) {
 			this.editor = editor;
-			this.values = new ArrayList<String>(Arrays.asList(values));
-			filtered = new ArrayList<String>();
+			this.values = new ArrayList<>(values);
+			filtered = new ArrayList<>();
 			setPrefix("");
 		}
-		public String[] getItems() {
-			return values.toArray(new String[0]);
+		public List<String> getItems() {
+			return values;
 		}
 		public void setPrefix(String prefix) {
 			this.prefix = prefix;

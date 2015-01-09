@@ -5,8 +5,9 @@ import org.apache.log4j.Logger;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Representation of the cube on the coordinate level
+/**
+ * Representation of the cube on the coordinate level
+ */
 class CoordCube {
 
     private static final Logger LOG = Logger.getLogger(CoordCube.class);
@@ -65,38 +66,6 @@ class CoordCube {
 			URtoDF = MergeURtoULandUBtoDF[URtoUL][UBtoDF];
 	}
 
-	private static boolean loadTable(String tableName, short[][] table) {
-		//apparently it's faster to simply regenerate the transition tables
-		return false;
-//		tableName = "2phase." + tableName;
-//		LOG.info("Attempting to load " + tableName);
-//		try {
-//			ObjectInputStream in = new ObjectInputStream(new FileInputStream(tableName));
-//			short[][] tabl = (short[][]) in.readObject();
-//			for(int i = 0; i < table.length; i++) {
-//				for(int j = 0; j < table[i].length; j++) {
-//					table[i][j] = tabl[i][j];
-//				}
-//			}
-//			in.close();
-//			return true;
-//		} catch (Exception e) {
-//			LOG.info("unexpected exception", e);
-//			return false;
-//		}
-	}
-	private static void writeTable(String tableName, short[][] table) {
-		//apparently it's faster to simply regenerate the transition tables
-//		tableName = "2phase." + tableName;
-//		try {
-//			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(tableName));
-//			out.writeObject(table);
-//			out.close();
-//		} catch(Exception e) {
-//			LOG.info("unexpected exception", e);
-//		}
-	}
-	
 	private static boolean loadTable(String tableName, byte[] table) {
 		tableName = "2phase." + tableName;
 		LOG.info("Attempting to load " + tableName);
@@ -128,20 +97,18 @@ class CoordCube {
 	// twist = 0 in phase 2.
 	static short[][] twistMove = new short[N_TWIST][N_MOVE];
 	static {
-		if(!loadTable("twistMove", twistMove)) {
-			CubieCube a = new CubieCube();
-			for (short i = 0; i < N_TWIST; i++) {
-				a.setTwist(i);
-				for (int j = 0; j < 6; j++) {
-					for (int k = 0; k < 3; k++) {
-						a.cornerMultiply(CubieCube.moveCube[j]);
-						twistMove[i][3 * j + k] = a.getTwist();
-					}
-					a.cornerMultiply(CubieCube.moveCube[j]);// 4. faceturn restores a
-				}
-			}
-			writeTable("twistMove", twistMove);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		CubieCube a = new CubieCube();
+		for (short i = 0; i < N_TWIST; i++) {
+            a.setTwist(i);
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    a.cornerMultiply(CubieCube.moveCube[j]);
+                    twistMove[i][3 * j + k] = a.getTwist();
+                }
+                a.cornerMultiply(CubieCube.moveCube[j]);// 4. faceturn restores a
+            }
+        }
 	}
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -150,21 +117,19 @@ class CoordCube {
 	// flip = 0 in phase 2.
 	static short[][] flipMove = new short[N_FLIP][N_MOVE];
 	static {
-		if(!loadTable("flipMove", flipMove)) {
-			CubieCube a = new CubieCube();
-			for (short i = 0; i < N_FLIP; i++) {
-				a.setFlip(i);
-				for (int j = 0; j < 6; j++) {
-					for (int k = 0; k < 3; k++) {
-						a.edgeMultiply(CubieCube.moveCube[j]);
-						flipMove[i][3 * j + k] = a.getFlip();
-					}
-					a.edgeMultiply(CubieCube.moveCube[j]);
-					// a
-				}
-			}
-			writeTable("flipMove", flipMove);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		CubieCube a = new CubieCube();
+		for (short i = 0; i < N_FLIP; i++) {
+            a.setFlip(i);
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    a.edgeMultiply(CubieCube.moveCube[j]);
+                    flipMove[i][3 * j + k] = a.getFlip();
+                }
+                a.edgeMultiply(CubieCube.moveCube[j]);
+                // a
+            }
+        }
 	}
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -182,20 +147,18 @@ class CoordCube {
 	// FRtoBRMove = 0 for solved cube
 	static short[][] FRtoBR_Move = new short[N_FRtoBR][N_MOVE];
 	static {
-		if(!loadTable("FRtoBR_Move", FRtoBR_Move)) {
-			CubieCube a = new CubieCube();
-			for (short i = 0; i < N_FRtoBR; i++) {
-				a.setFRtoBR(i);
-				for (int j = 0; j < 6; j++) {
-					for (int k = 0; k < 3; k++) {
-						a.edgeMultiply(CubieCube.moveCube[j]);
-						FRtoBR_Move[i][3 * j + k] = a.getFRtoBR();
-					}
-					a.edgeMultiply(CubieCube.moveCube[j]);
-				}
-			}
-			writeTable("FRtoBR_Move", FRtoBR_Move);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		CubieCube a = new CubieCube();
+		for (short i = 0; i < N_FRtoBR; i++) {
+            a.setFRtoBR(i);
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    a.edgeMultiply(CubieCube.moveCube[j]);
+                    FRtoBR_Move[i][3 * j + k] = a.getFRtoBR();
+                }
+                a.edgeMultiply(CubieCube.moveCube[j]);
+            }
+        }
 	}
 
 	// *******************************************Phase 1 and 2 movetable************************************************
@@ -207,20 +170,18 @@ class CoordCube {
 	// URFtoDLF = 0 for solved cube.
 	static short[][] URFtoDLF_Move = new short[N_URFtoDLF][N_MOVE];
 	static {
-		if(!loadTable("URFtoDLF_Move", URFtoDLF_Move)) {
-			CubieCube a = new CubieCube();
-			for (short i = 0; i < N_URFtoDLF; i++) {
-				a.setURFtoDLF(i);
-				for (int j = 0; j < 6; j++) {
-					for (int k = 0; k < 3; k++) {
-						a.cornerMultiply(CubieCube.moveCube[j]);
-						URFtoDLF_Move[i][3 * j + k] = a.getURFtoDLF();
-					}
-					a.cornerMultiply(CubieCube.moveCube[j]);
-				}
-			}
-			writeTable("URFtoDLF_Move", URFtoDLF_Move);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		CubieCube a = new CubieCube();
+		for (short i = 0; i < N_URFtoDLF; i++) {
+            a.setURFtoDLF(i);
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    a.cornerMultiply(CubieCube.moveCube[j]);
+                    URFtoDLF_Move[i][3 * j + k] = a.getURFtoDLF();
+                }
+                a.cornerMultiply(CubieCube.moveCube[j]);
+            }
+        }
 	}
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -231,22 +192,20 @@ class CoordCube {
 	// URtoDF = 0 for solved cube.
 	static short[][] URtoDF_Move = new short[N_URtoDF][N_MOVE];
 	static {
-		if(!loadTable("URtoDF_Move", URtoDF_Move)) {
-			CubieCube a = new CubieCube();
-			for (short i = 0; i < N_URtoDF; i++) {
-				a.setURtoDF(i);
-				for (int j = 0; j < 6; j++) {
-					for (int k = 0; k < 3; k++) {
-						a.edgeMultiply(CubieCube.moveCube[j]);
-						URtoDF_Move[i][3 * j + k] = (short) a.getURtoDF();
-						// Table values are only valid for phase 2 moves!
-						// For phase 1 moves, casting to short is not possible.
-					}
-					a.edgeMultiply(CubieCube.moveCube[j]);
-				}
-			}
-			writeTable("URtoDF_Move", URtoDF_Move);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		CubieCube a = new CubieCube();
+		for (short i = 0; i < N_URtoDF; i++) {
+            a.setURtoDF(i);
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    a.edgeMultiply(CubieCube.moveCube[j]);
+                    URtoDF_Move[i][3 * j + k] = (short) a.getURtoDF();
+                    // Table values are only valid for phase 2 moves!
+                    // For phase 1 moves, casting to short is not possible.
+                }
+                a.edgeMultiply(CubieCube.moveCube[j]);
+            }
+        }
 	}
 
 	// **************************helper move tables to compute URtoDF for the beginning of phase2************************
@@ -255,56 +214,50 @@ class CoordCube {
 	// Move table for the three edges UR,UF and UL in phase1.
 	static short[][] URtoUL_Move = new short[N_URtoUL][N_MOVE];
 	static {
-		if(!loadTable("URtoUL_Move", URtoUL_Move)) {
-			CubieCube a = new CubieCube();
-			for (short i = 0; i < N_URtoUL; i++) {
-				a.setURtoUL(i);
-				for (int j = 0; j < 6; j++) {
-					for (int k = 0; k < 3; k++) {
-						a.edgeMultiply(CubieCube.moveCube[j]);
-						URtoUL_Move[i][3 * j + k] = a.getURtoUL();
-					}
-					a.edgeMultiply(CubieCube.moveCube[j]);
-				}
-			}
-			writeTable("URtoUL_Move", URtoUL_Move);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		CubieCube a = new CubieCube();
+		for (short i = 0; i < N_URtoUL; i++) {
+            a.setURtoUL(i);
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    a.edgeMultiply(CubieCube.moveCube[j]);
+                    URtoUL_Move[i][3 * j + k] = a.getURtoUL();
+                }
+                a.edgeMultiply(CubieCube.moveCube[j]);
+            }
+        }
 	}
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Move table for the three edges UB,DR and DF in phase1.
 	static short[][] UBtoDF_Move = new short[N_UBtoDF][N_MOVE];
 	static {
-		if(!loadTable("UBtoDF_Move", UBtoDF_Move)) {
-			CubieCube a = new CubieCube();
-			for (short i = 0; i < N_UBtoDF; i++) {
-				a.setUBtoDF(i);
-				for (int j = 0; j < 6; j++) {
-					for (int k = 0; k < 3; k++) {
-						a.edgeMultiply(CubieCube.moveCube[j]);
-						UBtoDF_Move[i][3 * j + k] = a.getUBtoDF();
-					}
-					a.edgeMultiply(CubieCube.moveCube[j]);
-				}
-			}
-			writeTable("UBtoDF_Move", UBtoDF_Move);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		CubieCube a = new CubieCube();
+		for (short i = 0; i < N_UBtoDF; i++) {
+            a.setUBtoDF(i);
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 3; k++) {
+                    a.edgeMultiply(CubieCube.moveCube[j]);
+                    UBtoDF_Move[i][3 * j + k] = a.getUBtoDF();
+                }
+                a.edgeMultiply(CubieCube.moveCube[j]);
+            }
+        }
 	}
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Table to merge the coordinates of the UR,UF,UL and UB,DR,DF edges at the beginning of phase2
 	static short[][] MergeURtoULandUBtoDF = new short[336][336];
 	static {
-		if(!loadTable("MergeURtoULandUBtoDF", MergeURtoULandUBtoDF)) {
-			// for i, j <336 the six edges UR,UF,UL,UB,DR,DF are not in the
-			// UD-slice and the index is <20160
-			for (short uRtoUL = 0; uRtoUL < 336; uRtoUL++) {
-				for (short uBtoDF = 0; uBtoDF < 336; uBtoDF++) {
-					MergeURtoULandUBtoDF[uRtoUL][uBtoDF] = (short) CubieCube.getURtoDF(uRtoUL, uBtoDF);
-				}
-			}
-			writeTable("MergeURtoULandUBtoDF", MergeURtoULandUBtoDF);
-		}
+		// apparently it's faster to simply regenerate the transition tables
+		// for i, j <336 the six edges UR,UF,UL,UB,DR,DF are not in the
+		// UD-slice and the index is <20160
+		for (short uRtoUL = 0; uRtoUL < 336; uRtoUL++) {
+            for (short uBtoDF = 0; uBtoDF < 336; uBtoDF++) {
+                MergeURtoULandUBtoDF[uRtoUL][uBtoDF] = (short) CubieCube.getURtoDF(uRtoUL, uBtoDF);
+            }
+        }
 	}
 
 	// ****************************************Pruning tables for the search*********************************************

@@ -7,19 +7,26 @@ import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
 
-public class DynamicButton extends JButton implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+public class DynamicButton extends JButton implements StatisticsUpdateListener, DynamicStringSettable, DynamicDestroyable{
+
+	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
+        @Override
+        public void configurationChanged(Profile currentProfile) {
+            update();
+        }
+
+		@Override
+		public String toString() {
+			return getClass().getEnclosingClass().getSimpleName() + ": " + getText();
+		}
+	};
 
 	private DynamicString s = null;
 	private final Configuration configuration;
 
 	public DynamicButton(Configuration configuration){
 		this.configuration = configuration;
-		this.configuration.addConfigurationChangeListener(this);
-	}
-
-	public DynamicButton(DynamicString s, Configuration configuration){
-		this.configuration = configuration;
-		setDynamicString(s);
+		this.configuration.addConfigurationChangeListener(changeListener);
 	}
 
 	@Override
@@ -34,18 +41,16 @@ public class DynamicButton extends JButton implements StatisticsUpdateListener, 
 		}
 	}
 
-	public void update(){
-		if(s != null) setText(s.toString());
-	}
-
 	@Override
-	public void configurationChanged(Profile profile){
-		update();
+	public void update(){
+		if(s != null) {
+			setText(s.toString());
+		}
 	}
 
 	@Override
 	public void destroy(){
 		setDynamicString(null);
-		configuration.removeConfigurationChangeListener(this);
+		configuration.removeConfigurationChangeListener(changeListener);
 	}
 }

@@ -2,10 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.i18n.StringAccessor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
 * <p>
@@ -33,10 +30,10 @@ public class SolveType {
         return SOLVE_TYPES.get(name.toLowerCase());
     }
 
-    public static Collection<SolveType> getSolveTypes(String[] solveTags) {
+    public static Collection<SolveType> getSolveTypes(List<String> solveTags) {
         ArrayList<SolveType> types = new ArrayList<>(SOLVE_TYPES.values());
-        for(int c = solveTags.length - 1; c >= 0; c--) {
-            String tag = solveTags[c];
+        for(int c = solveTags.size() - 1; c >= 0; c--) {
+            String tag = solveTags.get(c);
             int ch;
             for(ch = 0; ch < types.size(); ch++) {
                 if(types.get(ch).desc.equalsIgnoreCase(tag)) {

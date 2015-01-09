@@ -9,7 +9,7 @@ import java.util.List;
 
 public class TimerState implements Comparable<TimerState> {
 
-	private final Configuration configuration;
+	protected final Configuration configuration;
 
 	private Duration time;
 

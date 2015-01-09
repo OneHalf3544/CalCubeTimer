@@ -1,5 +1,6 @@
 package net.gnehzr.cct.scrambles;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -146,10 +147,12 @@ public class ScramblePlugin {
 		ArrayList<ScrambleCustomization> scrambleCustomizations = new ArrayList<>();
 		for(ScrambleVariation t : getScrambleVariations())
 			scrambleCustomizations.add(new ScrambleCustomization(configuration, t, null));
-		String[] customNames = configuration.getStringArray(VariableKey.SCRAMBLE_CUSTOMIZATIONS, defaults);
-		if(customNames == null)	customNames = new String[0];
+		List<String> customNames = configuration.getStringArray(VariableKey.SCRAMBLE_CUSTOMIZATIONS, defaults);
+		if(customNames == null) {
+			customNames = Lists.newArrayList();
+		}
 		Iterator<String> databaseCustoms = selectedProfile.getPuzzleDatabase().getCustomizations().iterator();
-		int ch = customNames.length - 1;
+		int ch = customNames.size() - 1;
 		while(true) {
 			String name;
 			if(databaseCustoms.hasNext()) {
@@ -157,7 +160,7 @@ public class ScramblePlugin {
 			} else {
 				if(ch < 0)
 					break;
-				name = customNames[ch--];
+				name = customNames.get(ch--);
 			}
 			int delimeter = name.indexOf(':');
 			String customizationName;
@@ -183,7 +186,7 @@ public class ScramblePlugin {
 				sc = new ScrambleCustomization(configuration, new ScrambleVariation(new ScramblePlugin(configuration, variationName), variationName, configuration), customizationName);
 			if(!variationName.isEmpty()) {
 				if(scrambleCustomizations.contains(sc)) {
-					if(ch == customNames.length - 1) //we don't want to move this customization to the front of the list if it's from the database
+					if(ch == customNames.size() - 1) //we don't want to move this customization to the front of the list if it's from the database
 						continue;
 					scrambleCustomizations.remove(sc);
 				}
@@ -196,7 +199,7 @@ public class ScramblePlugin {
 	public String[] getAvailablePuzzleAttributes() {
 		return ATTRIBUTES;
 	}
-	public String[] getEnabledPuzzleAttributes() {
+	public List<String> getEnabledPuzzleAttributes() {
 		if(attributes == null) {
 			try {
 				attributes = configuration.getStringArray(VariableKey.PUZZLE_ATTRIBUTES(this), false);
@@ -207,8 +210,8 @@ public class ScramblePlugin {
 		}
 		return attributes;
 	}
-	private String[] attributes;
-	public void setEnabledPuzzleAttributes(String[] attributes) {
+	private List<String> attributes;
+	public void setEnabledPuzzleAttributes(List<String> attributes) {
 		this.attributes = attributes;
 	}
 
@@ -231,7 +234,7 @@ public class ScramblePlugin {
 	protected int[] DEFAULT_LENGTHS;
 	protected String[] VARIATIONS;
 	protected String[] ATTRIBUTES;
-	protected String[] DEFAULT_ATTRIBUTES;
+	protected List<String> DEFAULT_ATTRIBUTES;
 	protected String[] DEFAULT_GENERATORS;
 	protected Pattern TOKEN_REGEX;
 
@@ -248,7 +251,7 @@ public class ScramblePlugin {
 		DEFAULT_UNIT_SIZE = 0;
 		VARIATIONS = new String[0];
 		ATTRIBUTES = new String[0];
-		DEFAULT_ATTRIBUTES = new String[0];
+		DEFAULT_ATTRIBUTES = Lists.newArrayList();
 		NULL_SCRAMBLE_CUSTOMIZATION = new ScrambleCustomization(
 				configuration, new ScrambleVariation(this, "", this.configuration), null);
 	}
@@ -406,7 +409,7 @@ public class ScramblePlugin {
 
 			try {
 				f = getPrivateStaticField(pluginClass, "DEFAULT_ATTRIBUTES");
-				DEFAULT_ATTRIBUTES = (String[]) f.get(null);
+				DEFAULT_ATTRIBUTES = Lists.newArrayList((String[]) f.get(null));
 				if(DEFAULT_ATTRIBUTES == null)
 					throw new NullPointerException("DEFAULT_ATTRIBUTES may not be null!");
 				for(String c : DEFAULT_ATTRIBUTES) {
@@ -420,7 +423,7 @@ public class ScramblePlugin {
 						throw new IllegalArgumentException("Default attribute (" + c + ") not found in ATTRIBUTES!");
 				}
 			} catch(NoSuchFieldException e) {
-				DEFAULT_ATTRIBUTES = new String[0];
+				DEFAULT_ATTRIBUTES = Lists.newArrayList();
 			}
 			
 			try {
@@ -474,12 +477,14 @@ public class ScramblePlugin {
 		return pluginClassName;
 	}
 
-	public Scramble newScramble(final String variation, final int length, final String generatorGroup, final String[] attributes) {
+	public Scramble newScramble(final String variation, final int length, final String generatorGroup,
+								final List<String> attributes) {
         if (newScrambleConstructor == null) {
             return new Scramble("");
         }
         try {
-            return TimeoutJob.doWork(() -> newScrambleConstructor.newInstance(variation, length, generatorGroup, attributes), configuration);
+            return TimeoutJob.doWork(() -> newScrambleConstructor.newInstance(
+					variation, length, generatorGroup, attributes.toArray(new String[0])), configuration);
 
         } catch (InvocationTargetException e) {
             e.getCause().printStackTrace();
@@ -493,10 +498,12 @@ public class ScramblePlugin {
         }
 	}
 	
-	public Scramble importScramble(final String variation, final String scramble, final String generatorGroup, final String[] attributes) throws InvalidScrambleException {
+	public Scramble importScramble(final String variation, final String scramble, final String generatorGroup,
+								   final List<String> attributes) throws InvalidScrambleException {
 		if(importScrambleConstructor != null) {
 			try {
-				return TimeoutJob.doWork(() -> importScrambleConstructor.newInstance(variation, scramble, generatorGroup, attributes), configuration);
+				return TimeoutJob.doWork(() -> importScrambleConstructor.newInstance(
+						variation, scramble, generatorGroup, attributes.toArray(new String[0])), configuration);
 			} catch (InvocationTargetException e) {
 				if(e.getCause() instanceof InvalidScrambleException) {
 					throw (InvalidScrambleException) e.getCause();
@@ -591,12 +598,8 @@ public class ScramblePlugin {
 	public Dimension getImageSize(final int gap, final int unitSize, final String variation) {
 		if(getImageSize != null) {
 			try {
-				return TimeoutJob.doWork(new Callable<Dimension>() {
-					@Override
-					public Dimension call() throws Exception {
-						return (Dimension) getImageSize.invoke(null, gap, unitSize, variation);
-					}
-				}, configuration);
+				return TimeoutJob.doWork(
+						() -> (Dimension) getImageSize.invoke(null, gap, unitSize, variation), configuration);
 			} catch (InvocationTargetException e) {
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {
@@ -609,12 +612,8 @@ public class ScramblePlugin {
 	public Shape[] getFaces(final int gap, final int unitSize, final String variation) {
 		if(getFaces != null) {
 			try {
-				return TimeoutJob.doWork(new Callable<Shape[]>() {
-					@Override
-					public Shape[] call() throws Exception {
-						return (Shape[]) getFaces.invoke(null, gap, unitSize, variation);
-					}
-				}, configuration);
+				return TimeoutJob.doWork(
+						() -> (Shape[]) getFaces.invoke(null, gap, unitSize, variation), configuration);
 			} catch (InvocationTargetException e) {
 				e.getCause().printStackTrace();
 			} catch (Throwable e) {

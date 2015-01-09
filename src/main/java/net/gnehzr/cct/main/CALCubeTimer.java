@@ -5,7 +5,6 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.ConfigurationDialog;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.help.AboutScrollFrame;
 import net.gnehzr.cct.i18n.*;
 import net.gnehzr.cct.keyboardTiming.KeyboardHandler;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
@@ -58,12 +57,17 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CALCubeTimer extends JFrame implements ActionListener, TableModelListener, ChangeListener, ConfigurationChangeListener, ItemListener, SessionListener {
 
 	private static final Logger LOG = Logger.getLogger(CALCubeTimer.class);
 
 	public static final String CCT_VERSION = CALCubeTimer.class.getPackage().getImplementationVersion();
+
+	private final ExecutorService threadPool = Executors.newFixedThreadPool(5);
+
 	public static final ImageIcon cubeIcon = new ImageIcon(CALCubeTimer.class.getResource("cube.png"));
 
 	public final StatisticsTableModel statsModel; //used in ProfileDatabase
@@ -73,7 +77,6 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	DraggableJTable timesTable = null;
 	private JScrollPane timesScroller = null;
 	private SessionsTable sessionsTable = null;
-	private JScrollPane sessionsScroller = null;
 	ScrambleArea scrambleArea = null;
 	ScrambleChooserComboBox scrambleChooser;
 	private JPanel scrambleAttributes = null;
@@ -134,207 +137,6 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	private ActionMap createActions(){
 		ActionMap actionMap = new ActionMap(this);
 
-		public void put(String s, AbstractAction a){
-			actionMap.put(s.toLowerCase(), a);
-		}
-
-		public AbstractAction get(String s){
-			s = s.toLowerCase();
-			AbstractAction a = actionMap.get(s);
-			if(a == null){
-				a = initialize(s);
-				actionMap.put(s, a);
-			}
-			return a;
-		}
-
-		public AbstractAction getRawAction(String s){
-			return actionMap.get(s.toLowerCase());
-		}
-
-		private AbstractAction initialize(String s){
-			AbstractAction a = null;
-			switch (s) {
-				case "keyboardtiming":
-					a = new KeyboardTimingAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_K);
-					a.putValue(Action.SHORT_DESCRIPTION, StringAccessor.getString("CALCubeTimer.stackmatnote"));
-					break;
-				case "addtime":
-					a = new AddTimeAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
-					a.putValue(Action.ACCELERATOR_KEY,
-							KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
-					break;
-				case "reset":
-					a = new ResetAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
-					break;
-				case "currentaverage0":
-					a = new StatisticsAction(cct, statsModel, AverageType.CURRENT, 0);
-					break;
-				case "bestaverage0":
-					a = new StatisticsAction(cct, statsModel, AverageType.RA, 0);
-					break;
-				case "currentaverage1":
-					a = new StatisticsAction(cct, statsModel, AverageType.CURRENT, 1);
-					break;
-				case "bestaverage1":
-					a = new StatisticsAction(cct, statsModel, AverageType.RA, 1);
-					break;
-				case "sessionaverage":
-					a = new StatisticsAction(cct, statsModel, AverageType.SESSION, 0);
-					break;
-				case "togglefullscreen":
-					a = new AbstractAction() {
-						{
-							putValue(Action.NAME, "+");
-						}
-
-						public void actionPerformed(ActionEvent e) {
-							setFullScreen(!isFullscreen);
-						}
-					};
-					break;
-				case "importscrambles":
-					a = new AbstractAction() {
-						{
-							putValue(Action.MNEMONIC_KEY, KeyEvent.VK_I);
-							putValue(Action.ACCELERATOR_KEY,
-									KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
-						}
-
-						public void actionPerformed(ActionEvent e) {
-							new ScrambleImportDialog(cct, scramblesList.getScrambleCustomization());
-						}
-					};
-					break;
-				case "exportscrambles":
-					a = new ExportScramblesAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_E);
-					a.putValue(Action.ACCELERATOR_KEY,
-							KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
-					break;
-				case "connecttoserver":
-					a = new AbstractAction() {
-						{
-							putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
-							putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
-						}
-
-						public void actionPerformed(ActionEvent e) {
-							if (e == null) { //this means that the client gui was disposed
-								this.setEnabled(true);
-							} else {
-								if (client == null) {
-									client = new IRCClientGUI(cct, this);
-									syncUserStateNOW();
-								}
-								client.setVisible(true);
-								this.setEnabled(false);
-							}
-						}
-					};
-					break;
-				case "showconfiguration":
-					a = new ShowConfigurationDialogAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
-					a.putValue(Action.ACCELERATOR_KEY,
-							KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
-					break;
-				case "exit":
-					a = new ExitAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_X);
-					a.putValue(Action.ACCELERATOR_KEY,
-							KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
-					break;
-				case "togglestatuslight":
-					a = new StatusLightAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_L);
-					break;
-				case "togglehidescrambles":
-					a = new HideScramblesAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_H);
-					break;
-				case "togglespacebarstartstimer":
-					a = new SpacebarOptionAction();
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_S);
-					break;
-				case "togglefullscreentiming":
-					a = new FullScreenTimingAction();
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);
-					break;
-				case "togglescramblepopup":
-					a = new AbstractAction() {
-						public void actionPerformed(ActionEvent e) {
-							Configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, ((AbstractButton) e.getSource()).isSelected());
-							scramblePopup.refreshPopup();
-						}
-					};
-					break;
-				case "undo":
-					a = new AbstractAction() {
-						public void actionPerformed(ActionEvent e) {
-							if (timesTable.isEditing())
-								return;
-							if (statsModel.getCurrentStatistics().undo()) { //should decrement 1 from scramblenumber if possible
-								Object prev = scrambleNumber.getPreviousValue();
-								if (prev != null) {
-									scrambleNumber.setValue(prev);
-								}
-							}
-						}
-					};
-					a.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
-					break;
-				case "redo":
-					a = new AbstractAction() {
-						public void actionPerformed(ActionEvent e) {
-							if (timesTable.isEditing())
-								return;
-							statsModel.getCurrentStatistics().redo();
-						}
-					};
-					a.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
-					break;
-				case "submitsundaycontest":
-					final SundayContestDialog submitter = new SundayContestDialog(cct);
-					a = new AbstractAction() {
-						public void actionPerformed(ActionEvent e) {
-							submitter.syncWithStats(statsModel.getCurrentStatistics(), AverageType.CURRENT, 0);
-							submitter.setVisible(true);
-						}
-					};
-					break;
-				case "newsession":
-					a = new AbstractAction() {
-						public void actionPerformed(ActionEvent arg0) {
-							if (statsModel.getRowCount() > 0) { //only create a new session if we've added any times to the current one
-								statsModel.setSession(createNewSession(Configuration.getSelectedProfile(), scramblesList.getScrambleCustomization().toString()));
-								timeLabel.reset();
-								scramblesList.clear();
-								updateScramble();
-							}
-						}
-					};
-					break;
-				case "showdocumentation":
-					a = new DocumentationAction(cct);
-					break;
-				case "showabout":
-					a = new AboutAction();
-					break;
-				case "requestscramble":
-					a = new RequestScrambleAction(cct);
-					a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
-					break;
-			}
-			return a;
-		}
-	}
-	private void createActions(){
-		actionMap = new ActionMap(this);
-
 		statsModel.setUndoRedoListener(new UndoRedoListener() {
 			private int undoable, redoable;
 			@Override
@@ -345,10 +147,10 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 			}
 			@Override
 			public void refresh() {
-				actionMap.get("undo").setEnabled(undoable != 0);
-				actionMap.get("redo").setEnabled(redoable != 0);
-				actionMap.get("undo").putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.undo") + undoable);
-				actionMap.get("redo").putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.redo") + redoable);
+				actionMap.getAction("undo").setEnabled(undoable != 0);
+				actionMap.getAction("redo").setEnabled(redoable != 0);
+				actionMap.getAction("undo").putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.undo") + undoable);
+				actionMap.getAction("redo").putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.redo") + redoable);
 			}
 		});
 		return actionMap;
@@ -364,7 +166,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 				for (DynamicCheckBox attr : attributes)
 					if (attr.isSelected())
 						attrs.add(attr.getDynamicString().getRawText());
-				String[] attributes = attrs.toArray(new String[attrs.size()]);
+				List<String> attributes = attrs;
 				scramblesList.getScrambleCustomization().getScramblePlugin().setEnabledPuzzleAttributes(attributes);
 				updateScramble();
 				break;
@@ -437,7 +239,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		scrambleAttributes = new JPanel();
 		generator = new GeneratorTextField();
 
-		scramblePopup = new ScrambleFrame(this, actionMap.get("togglescramblepopup"), false, configuration);
+		scramblePopup = new ScrambleFrame(this, actionMap.getAction("togglescramblepopup"), false, configuration);
 		scramblePopup.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 		scramblePopup.setIconImage(cubeIcon.getImage());
 		scramblePopup.setFocusableWindowState(false);
@@ -452,7 +254,6 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		};
 
 		timesTable = new DraggableJTable(configuration, false, true);
-//		timesTable.setFocusable(false); //Man, this is almost perfect for us
 		timesTable.setName("timesTable");
 		timesTable.setDefaultEditor(SolveTime.class, solveTimeEditor);
 		timesTable.setDefaultRenderer(SolveTime.class, new SolveTimeRenderer(statsModel, configuration));
@@ -466,7 +267,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		sessionsTable.setName("sessionsTable");
 		//TODO - this wastes space, probably not easy to fix...
 		sessionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		sessionsScroller = new JScrollPane(sessionsTable);
+		JScrollPane sessionsScroller = new JScrollPane(sessionsTable);
 		sessionsTable.setSessionListener(this);
 
 		scrambleArea = new ScrambleArea(scramblePopup, configuration, scramblePlugin);
@@ -489,7 +290,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		bigTimersDisplay.setKeyboardHandler(keyHandler);
 
 		fullscreenPanel = new JLayeredPane();
-		final JButton fullScreenButton = new JButton(actionMap.get("togglefullscreen"));
+		final JButton fullScreenButton = new JButton(actionMap.getAction("togglefullscreen"));
 
 		fullscreenPanel.add(bigTimersDisplay, new Integer(0));
 		fullscreenPanel.add(fullScreenButton, new Integer(1));
@@ -911,15 +712,26 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	List<JSplitPane> splitPanes = new ArrayList<>();
 	List<DynamicDestroyable> dynamicStringComponents = new ArrayList<>();
 
+	/**
+	 * Обновыление статистики
+	 */
 	private void repaintTimes() {
 		Statistics stats = statsModel.getCurrentStatistics();
 		sendUserstate();
 		AbstractAction a;
-		if((a = actionMap.getRawAction("currentaverage0")) != null) a.setEnabled(stats.isValid(AverageType.CURRENT, 0));
-		if((a = actionMap.getRawAction("bestaverage0")) != null) a.setEnabled(stats.isValid(AverageType.RA, 0));
-		if((a = actionMap.getRawAction("currentaverage1")) != null) a.setEnabled(stats.isValid(AverageType.CURRENT, 1));
-		if((a = actionMap.getRawAction("bestaverage1")) != null) a.setEnabled(stats.isValid(AverageType.RA, 1));
-		if((a = actionMap.getRawAction("sessionaverage")) != null) a.setEnabled(stats.isValid(AverageType.SESSION, 0));
+
+		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT);
+		updateActionStatus(stats, "bestaverage0", AverageType.RA);
+		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT);
+		updateActionStatus(stats, "bestaverage1", AverageType.RA);
+		updateActionStatus(stats, "sessionaverage", AverageType.SESSION);
+	}
+
+	private void updateActionStatus(Statistics stats, String actionName, AverageType statType) {
+		AbstractAction action = actionMap.getRawAction(actionName);
+		if (action != null) {
+			action.setEnabled(stats.isValid(statType, 0));
+		}
 	}
 
 	//this happens in windows when alt+f4 is pressed
@@ -937,6 +749,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		}
 		updateWatermark();
 	}
+
 	private void updateWatermark() {
 		SubstanceWatermark sw;
 		if(configuration.getBoolean(VariableKey.WATERMARK_ENABLED, false)) {
@@ -960,16 +773,20 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		}
 	}
 
+	@Deprecated // WTF??
 	private void safeSetValue(JSpinner test, Object val) {
 		test.removeChangeListener(this);
 		test.setValue(val);
 		test.addChangeListener(this);
 	}
+
+	@Deprecated
 	private void safeSelectItem(JComboBox test, Object item) {
 		test.removeItemListener(this);
 		test.setSelectedItem(item);
 		test.addItemListener(this);
 	}
+	@Deprecated
 	private void safeSetScrambleNumberMax(int max) {
 		scrambleNumber.removeChangeListener(this);
 		((SpinnerNumberModel) scrambleNumber.getModel()).setMaximum(max);
@@ -1106,10 +923,12 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
             Component focusedComponent = CALCubeTimer.this.getFocusOwner();
             parseXML_GUI(configuration.getXMLGUILayout());
             Dimension size = configuration.getDimension(VariableKey.MAIN_FRAME_DIMENSION, false);
-            if(size == null)
-                CALCubeTimer.this.pack();
-            else
-                CALCubeTimer.this.setSize(size);
+            if(size == null) {
+				CALCubeTimer.this.pack();
+			}
+            else {
+				CALCubeTimer.this.setSize(size);
+			}
             Point location = configuration.getPoint(VariableKey.MAIN_FRAME_LOCATION, false);
             if(location == null)
                 CALCubeTimer.this.setLocationRelativeTo(null);
@@ -1129,8 +948,9 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
             timeLabel.componentResized(null);
 
             //dispose the old fullscreen frame, and create a new one
-            if(fullscreenFrame != null)
-                fullscreenFrame.dispose();
+            if(fullscreenFrame != null) {
+				fullscreenFrame.dispose();
+			}
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             GraphicsDevice[] gs = ge.getScreenDevices();
             GraphicsDevice gd = gs[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
@@ -1152,11 +972,21 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	private void refreshActions(){
 		boolean stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
 		AbstractAction a;
-		if((a = actionMap.getRawAction("keyboardtiming")) != null) a.putValue(Action.SELECTED_KEY, !stackmatEnabled);
-		if((a = actionMap.getRawAction("togglestatuslight")) != null) a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false));
-		if((a = actionMap.getRawAction("togglehidescrambles")) != null) a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false));
-		if((a = actionMap.getRawAction("togglespacebarstartstimer")) != null) a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false));
-		if((a = actionMap.getRawAction("togglefullscreen")) != null) a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false));
+		if((a = actionMap.getRawAction("keyboardtiming")) != null) {
+			a.putValue(Action.SELECTED_KEY, !stackmatEnabled);
+		}
+		if((a = actionMap.getRawAction("togglestatuslight")) != null) {
+			a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false));
+		}
+		if((a = actionMap.getRawAction("togglehidescrambles")) != null) {
+			a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false));
+		}
+		if((a = actionMap.getRawAction("togglespacebarstartstimer")) != null) {
+			a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false));
+		}
+		if((a = actionMap.getRawAction("togglefullscreen")) != null) {
+			a.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false));
+		}
 	}
 
 	@Override
@@ -1179,7 +1009,8 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		
 		//we need to notify the stackmatinterpreter package because it has been rewritten to
 		//avoid configuration entirely (which makes it easier to separate & use as a library)
-		StackmatState.setInverted(configuration.getBoolean(VariableKey.INVERTED_MINUTES, false),
+		StackmatState.setInverted(
+				configuration.getBoolean(VariableKey.INVERTED_MINUTES, false),
 				configuration.getBoolean(VariableKey.INVERTED_SECONDS, false),
 				configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS, false));
 
@@ -1254,7 +1085,7 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	}
 
 	public void keyboardTimingAction() {
-		boolean selected = (Boolean)actionMap.get("keyboardtiming").getValue(Action.SELECTED_KEY);
+		boolean selected = (Boolean)actionMap.getAction("keyboardtiming").getValue(Action.SELECTED_KEY);
 		configuration.setBoolean(VariableKey.STACKMAT_ENABLED, !selected);
 		timeLabel.configurationChanged(profileDao.getSelectedProfile());
 		bigTimersDisplay.configurationChanged(profileDao.getSelectedProfile());
@@ -1278,12 +1109,12 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 	}
 
 	public void statusLightAction(){
-		configuration.setBoolean(VariableKey.LESS_ANNOYING_DISPLAY, (Boolean) actionMap.get("togglestatuslight").getValue(Action.SELECTED_KEY));
+		configuration.setBoolean(VariableKey.LESS_ANNOYING_DISPLAY, (Boolean) actionMap.getAction("togglestatuslight").getValue(Action.SELECTED_KEY));
 		timeLabel.repaint();
 	}
 
 	public void hideScramblesAction(){
-		configuration.setBoolean(VariableKey.HIDE_SCRAMBLES, (Boolean) actionMap.get("togglehidescrambles").getValue(Action.SELECTED_KEY));
+		configuration.setBoolean(VariableKey.HIDE_SCRAMBLES, (Boolean) actionMap.getAction("togglehidescrambles").getValue(Action.SELECTED_KEY));
 		scrambleArea.refresh();
 	}
 
@@ -1299,7 +1130,8 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		if((currentTime - lastSplit) / 1000. > configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, false)) {
 			String hands = "";
 			if(state instanceof StackmatState) {
-				hands += ((StackmatState) state).leftHand() ? StringAccessor.getString("CALCubeTimer.lefthand") : StringAccessor.getString("CALCubeTimer.righthand");
+				hands += ((StackmatState) state).leftHand() ? StringAccessor.getString("CALCubeTimer.lefthand")
+														    : StringAccessor.getString("CALCubeTimer.righthand");
 			}
 			splits.add(state.toSolveTime(hands, null));
 			lastSplit = currentTime;
@@ -1321,10 +1153,12 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 
 	boolean addTime(TimerState addMe) {
 		SolveTime protect = addMe.toSolveTime(null, splits);
-		if(penalty == null)
+		if(penalty == null) {
 			protect.clearType();
-		else
+		}
+		else {
 			protect.setTypes(Arrays.asList(penalty));
+		}
 		penalty = null;
 		splits = new ArrayList<>();
 		boolean sameAsLast = addMe.compareTo(lastAccepted) == 0;
@@ -1363,32 +1197,34 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 		return true;
 	}
 
-	private static final long INSPECTION_TIME = 15;
-	private static final long FIRST_WARNING = 8;
-	private static final long FINAL_WARNING = 12;
+	private static final Duration INSPECTION_TIME = Duration.ofSeconds(15);
+	private static final Duration FIRST_WARNING = Duration.ofSeconds(8);
+	private static final Duration FINAL_WARNING = Duration.ofSeconds(12);
+
 	private long previousInpection = -1;
+
 	//this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
 	public long getInpectionValue() {
 		long inspectionDone = Duration.between(inspectionStart, Instant.now()).getSeconds();
 		if(inspectionDone != previousInpection && configuration.getBoolean(VariableKey.SPEAK_INSPECTION, false)) {
 			previousInpection = inspectionDone;
-			if(inspectionDone == FIRST_WARNING) {
+			if(inspectionDone == FIRST_WARNING.getSeconds()) {
 				sayInspectionWarning(FIRST_WARNING);
-			} else if(inspectionDone == FINAL_WARNING) {
+			} else if(inspectionDone == FINAL_WARNING.getSeconds()) {
 				sayInspectionWarning(FINAL_WARNING);
 			}
 		}
-		return INSPECTION_TIME - inspectionDone;
+		return INSPECTION_TIME.getSeconds() - inspectionDone;
 	}
 
-	private void sayInspectionWarning(long seconds) {
-		new Thread(() -> {
-			try {
-				numberSpeaker.getCurrentSpeaker().speak(false, seconds * 100);
-			} catch (Exception e) {
-				LOG.info("unexpected exception", e);
-			}
-		}).start();
+	private void sayInspectionWarning(Duration seconds) {
+		threadPool.submit(() -> {
+            try {
+                numberSpeaker.getCurrentSpeaker().speak(false, seconds.getSeconds() * 100);
+            } catch (Exception e) {
+                LOG.info(e);
+            }
+        });
 	}
 
 	Instant inspectionStart = null;
@@ -1422,180 +1258,3 @@ public class CALCubeTimer extends JFrame implements ActionListener, TableModelLi
 
 }
 
-class StatisticsAction extends AbstractAction{
-	private StatsDialogHandler statsHandler;
-	private StatisticsTableModel model;
-	private AverageType type;
-	private int num;
-	public StatisticsAction(CALCubeTimer cct, StatisticsTableModel model, AverageType type, int num,
-							Configuration configuration){
-		statsHandler = new StatsDialogHandler(cct, configuration);
-		this.model = model;
-		this.type = type;
-		this.num = num;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		statsHandler.syncWithStats(model, type, num);
-		statsHandler.setVisible(true);
-	}
-}
-class AddTimeAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public AddTimeAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.addTimeAction();
-	}
-}
-class ResetAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public ResetAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.resetAction();
-	}
-}
-class ExportScramblesAction extends AbstractAction{
-	private CALCubeTimer cct;
-	private final ProfileDao profileDao;
-
-	public ExportScramblesAction(CALCubeTimer cct, ProfileDao profileDao){
-		this.cct = cct;
-		this.profileDao = profileDao;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.exportScramblesAction(profileDao.getSelectedProfile());
-	}
-}
-class ExitAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public ExitAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.dispose();
-	}
-}
-class AboutAction extends AbstractAction {
-	private static final Logger LOG = Logger.getLogger(AboutAction.class);
-	private AboutScrollFrame makeMeVisible;
-	public AboutAction() {
-		try {
-			makeMeVisible = new AboutScrollFrame(CALCubeTimer.class.getResource("about.html"), CALCubeTimer.cubeIcon.getImage());
-			setEnabled(true);
-		} catch (Exception e1) {
-			LOG.info("unexpected exception", e1);
-			setEnabled(false);
-		}
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		makeMeVisible.setTitle(StringAccessor.getString("CALCubeTimer.about") + CALCubeTimer.CCT_VERSION);
-		makeMeVisible.setVisible(true);
-	}
-}
-class DocumentationAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public DocumentationAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.showDocumentation();
-	}
-}
-
-class ShowConfigurationDialogAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public ShowConfigurationDialogAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.showConfigurationDialog();
-	}
-}
-
-class KeyboardTimingAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public KeyboardTimingAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.keyboardTimingAction();
-	}
-}
-class SpacebarOptionAction extends AbstractAction{
-	private final net.gnehzr.cct.configuration.Configuration configuration;
-
-	public SpacebarOptionAction(Configuration configuration){
-		this.configuration = configuration;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		configuration.setBoolean(VariableKey.SPACEBAR_ONLY, ((AbstractButton)e.getSource()).isSelected());
-	}
-}
-class FullScreenTimingAction extends AbstractAction{
-	private final Configuration configuration;
-
-	public FullScreenTimingAction(Configuration configuration){
-		this.configuration = configuration;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		configuration.setBoolean(VariableKey.FULLSCREEN_TIMING, ((AbstractButton)e.getSource()).isSelected());
-	}
-}
-class HideScramblesAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public HideScramblesAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.hideScramblesAction();
-	}
-}
-class StatusLightAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public StatusLightAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.statusLightAction();
-	}
-}
-class RequestScrambleAction extends AbstractAction{
-	private CALCubeTimer cct;
-	public RequestScrambleAction(CALCubeTimer cct){
-		this.cct = cct;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e){
-		cct.requestScrambleAction();
-	}
-}

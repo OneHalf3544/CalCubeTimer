@@ -7,12 +7,25 @@ import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
 
-public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListener, DynamicStringSettable, DynamicDestroyable{
+
 	private DynamicString s = null;
 	private final Configuration configuration;
 
+	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
+		@Override
+		public void configurationChanged(Profile currentProfile) {
+			update();
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getEnclosingClass().getSimpleName() + ": " + getText();
+		}
+	};
+
 	public DynamicCheckBox(Configuration configuration){
-		configuration.addConfigurationChangeListener(this);
+		configuration.addConfigurationChangeListener(changeListener);
 		this.configuration = configuration;
 	}
 
@@ -39,17 +52,14 @@ public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListen
 
 	@Override
 	public void update(){
-		if(s != null) setText(s.toString());
-	}
-
-	@Override
-	public void configurationChanged(Profile profile){
-		update();
+		if(s != null) {
+			setText(s.toString());
+		}
 	}
 
 	@Override
 	public void destroy(){
 		setDynamicString(null);
-		configuration.removeConfigurationChangeListener(this);
+		configuration.removeConfigurationChangeListener(changeListener);
 	}
 }

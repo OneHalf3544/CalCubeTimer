@@ -38,7 +38,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 	}
 
     public void initialize(int samplingRate, int mixerNum, boolean enabled, int switchThreshold) {
-        if (this.samplingRate == samplingRate && getSelectedMixerIndex() == mixerNum) return;
+		if(this.samplingRate == samplingRate && getSelectedMixerIndex() == mixerNum) return;
         this.samplingRate = samplingRate;
         this.enabled = enabled;
         this.switchThreshold = switchThreshold;
@@ -119,66 +119,39 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
             cleanup();
         }
 
-	//otherwise returns true if the stackmat is on
-	public Boolean isOn() {
-		return on;
+		synchronized(this){
+			notify();
+	    }
 	}
-	
-	private boolean on;
-	@Override
-	public Void doInBackground() {
-		int timeSinceLastFlip = 0;
-		int lastSample = 0;
-		int currentSample = 0;
-		int lastBit = 0;
-		byte[] buffer = new byte[BYTES_PER_SAMPLE*FRAMES];
 
-		ArrayList<Integer> currentPeriod = new ArrayList<Integer>(100);
-		StackmatState old = new StackmatState(configuration);
-		boolean previousWasSplit = false;
-		while(!isCancelled()) {
-			if(!enabled || line == null) {
-				on = false;
-				firePropertyChange("Off", null, null);
-				try {
-					synchronized(this){
-						wait();
-					}
-				} catch(InterruptedException e) {}
-				continue;
-			}
+	public void enableStackmat(boolean enable){
+		if(!enabled && enable){
+			enabled = true;
+            synchronized(this){
+				notify();
+            }
+        }
+		else {
+            enabled = enable;
+        }
+    }
 
-			if(line.read(buffer, 0, buffer.length) > 0) {
-				for(int c = 0; c < buffer.length / BYTES_PER_SAMPLE; c+=2) { //we increment by 2 to mask out 1 channel
-					//little-endian encoding, bytes are in increasing order
-					currentSample = 0;
-					int j;
-					for(j = 0; j < BYTES_PER_SAMPLE - 1; j++) {
-						currentSample |= (255 & buffer[BYTES_PER_SAMPLE*c+j]) << (j * 8);
-					}
-					currentSample |= buffer[BYTES_PER_SAMPLE*c+j] << (j * 8); //we don't mask with 255 so we don't lost the sign
-					if(timeSinceLastFlip < newPeriod * 4) timeSinceLastFlip++;
-					else if(timeSinceLastFlip == newPeriod * 4){
-						state = new StackmatState(configuration);
-						timeSinceLastFlip++;
-						on = false;
-						firePropertyChange("Off", null, null);
+	public String[] getMixerChoices(String mixer, String desc, String nomixer) {
+		String[] items = new String[aInfos.length+1];
+		for(int i = 0; i < aInfos.length; i++)
+			items[i] = mixer + i + ": " + aInfos[i].getName() + desc + aInfos[i].getDescription();
+		items[items.length-1] = nomixer;
+		return items;
 					}
 
     public boolean isMixerEnabled(int index) {
         return index >= aInfos.length || AudioSystem.getMixer(aInfos[index]).isLineSupported(info);
     }
 
-//							LOG.info(state.isReset() + " " + state.isRunning() + " ");
-//							LOG.info(currentPeriod.size());
-							StackmatState newState = new StackmatState(state, currentPeriod, configuration);
-							if(state != null && state.isRunning() && newState.isReset()) { //this is indicative of an "accidental reset"
-								firePropertyChange("Accident Reset", state, newState);
-							}
-							state = newState;
-							//This is to be able to identify new times when they are "equal"
-							//to the last time
-							if(state.isReset() || state.isRunning()) old = new StackmatState(configuration);
+	//otherwise returns true if the stackmat is on
+	public Boolean isOn() {
+		return on;
+    }
 
     private boolean on;
 
@@ -186,12 +159,12 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
     public Void doInBackground() {
         int timeSinceLastFlip = 0;
         int lastSample = 0;
-        int currentSample = 0;
+        int currentSample;
         int lastBit = 0;
         byte[] buffer = new byte[BYTES_PER_SAMPLE * FRAMES];
 
         ArrayList<Integer> currentPeriod = new ArrayList<>(100);
-        StackmatState old = new StackmatState();
+		StackmatState old = new StackmatState(configuration);
         boolean previousWasSplit = false;
         while (!isCancelled()) {
             if (!enabled || line == null) {
@@ -201,8 +174,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                     synchronized (this) {
                         wait();
                     }
-                } catch (InterruptedException e) {
-                }
+                } catch (InterruptedException ignore) { }
                 continue;
             }
 
@@ -219,7 +191,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                         timeSinceLastFlip++;
                     }
                     else if (timeSinceLastFlip == newPeriod * 4) {
-                        state = new StackmatState();
+                        state = new StackmatState(configuration);
                         timeSinceLastFlip++;
                         on = false;
                         firePropertyChange("Off", null, null);
@@ -233,13 +205,13 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                                 continue;
                             }
 
-                            StackmatState newState = new StackmatState(state, currentPeriod);
+                            StackmatState newState = new StackmatState(state, currentPeriod, configuration);
                             if (state != null && state.isRunning() && newState.isReset()) { //this is indicative of an "accidental reset"
                                 firePropertyChange("Accident Reset", state, newState);
                             }
                             state = newState;
                             //This is to be able to identify new times when they are "equal" to the last time
-                            if (state.isReset() || state.isRunning()) old = new StackmatState();
+							if(state.isReset() || state.isRunning()) old = new StackmatState(configuration);
 
                             boolean thisIsSplit = state.isRunning() && state.oneHand();
                             if (thisIsSplit && !previousWasSplit) {
@@ -281,7 +253,4 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
         return switchThreshold;
     }
 
-    public void setStackmatValue(int value) {
-        this.switchThreshold = value;
-    }
 }

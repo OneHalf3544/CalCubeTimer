@@ -16,6 +16,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
 * <p>
@@ -27,7 +28,7 @@ import java.util.HashMap;
 */
 class ActionMap {
 
-    private HashMap<String, AbstractAction> actionMap;
+    private Map<String, AbstractAction> actionMap;
 	@Inject
 	private Configuration configuration;
 	@Inject
@@ -45,25 +46,15 @@ class ActionMap {
         this.actionMap = new HashMap<>();
     }
 
-    public void put(String s, AbstractAction a){
-        actionMap.put(s.toLowerCase(), a);
-    }
-
-    public AbstractAction get(String s){
-        s = s.toLowerCase();
-        AbstractAction a = actionMap.get(s);
-        if(a == null){
-            a = initialize(s);
-            actionMap.put(s, a);
-        }
-        return a;
+    public AbstractAction getAction(String s) {
+        return actionMap.computeIfAbsent(s.toLowerCase(), this::initializeAction);
     }
 
     public AbstractAction getRawAction(String s){
         return actionMap.get(s.toLowerCase());
     }
 
-    private AbstractAction initialize(String s){
+    private AbstractAction initializeAction(String s){
         AbstractAction a = null;
         switch (s) {
             case "keyboardtiming":

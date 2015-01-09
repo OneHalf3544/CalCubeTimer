@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class VariableKey<H> {
 	public static final VariableKey<Integer> SCRAMBLE_PLUGIN_TIMEOUT = new VariableKey<Integer>("Scramble_Plugins_timeout"); 
@@ -82,12 +83,12 @@ public class VariableKey<H> {
 		return new VariableKey<>("Puzzle_ScrambleGenerator_" + sc.toString());
 	}
 
-	public static final VariableKey<String[]> SOLVE_TAGS = new VariableKey<String[]>("Misc_solveTags"); 
-	public static final VariableKey<String[]> IMPORT_URLS = new VariableKey<String[]>("Misc_scrambleURLs"); 
-	public static final VariableKey<String[]> IRC_SERVERS = new VariableKey<String[]>("IRC_Client_serverURLs"); 
-	public static final VariableKey<String[]> SCRAMBLE_CUSTOMIZATIONS = new VariableKey<String[]>("Scramble_customizations"); 
-	public static final VariableKey<String[]> PUZZLE_ATTRIBUTES(ScramblePlugin plugin) {
-		return new VariableKey<String[]>("Puzzle_Attributes_" + plugin.getPuzzleName()); 
+	public static final VariableKey<List<String>> SOLVE_TAGS = new VariableKey<>("Misc_solveTags");
+	public static final VariableKey<List<String>> IMPORT_URLS = new VariableKey<>("Misc_scrambleURLs");
+	public static final VariableKey<List<String>> IRC_SERVERS = new VariableKey<>("IRC_Client_serverURLs");
+	public static final VariableKey<List<String>> SCRAMBLE_CUSTOMIZATIONS = new VariableKey<>("Scramble_customizations");
+	public static final VariableKey<List<String>> PUZZLE_ATTRIBUTES(ScramblePlugin plugin) {
+		return new VariableKey<>("Puzzle_Attributes_" + plugin.getPuzzleName());
 	}
 
 	static {
@@ -99,20 +100,20 @@ public class VariableKey<H> {
 			throw Throwables.propagate(e);
 		}
     }
-	public static final VariableKey<Font> TIMER_FONT = new VariableKey<Font>("Timer_font"); 
-	public static final VariableKey<Font> SCRAMBLE_FONT = new VariableKey<Font>("Scramble_font"); 
+	public static final VariableKey<Font> TIMER_FONT = new VariableKey<>("Timer_font");
+	public static final VariableKey<Font> SCRAMBLE_FONT = new VariableKey<>("Scramble_font");
 
-	public static final VariableKey<Boolean> IDENT_SERVER = new VariableKey<Boolean>("IRC_identserver"); 
-	public static final VariableKey<Boolean> SIDE_BY_SIDE_SCRAMBLE = new VariableKey<Boolean>("GUI_ScrambleView_sideBySide"); 
-	public static final VariableKey<Boolean> SCRAMBLE_PLUGINS_SECURE = new VariableKey<Boolean>("Scramble_Plugins_secure"); 
-	public static final VariableKey<Boolean> SPEAK_INSPECTION = new VariableKey<Boolean>("Misc_Voices_readInspection"); 
-	public static final VariableKey<Boolean> SPEAK_TIMES = new VariableKey<Boolean>("Misc_Voices_readTimes"); 
-	public static final VariableKey<Boolean> COMPETITION_INSPECTION = new VariableKey<Boolean>("GUI_Timer_competitionInspection"); 
-	public static final VariableKey<Boolean> FOCUSABLE_BUTTONS = new VariableKey<Boolean>("GUI_focusableButtons"); 
-	public static final VariableKey<Boolean> CLOCK_FORMAT = new VariableKey<Boolean>("Misc_isClockFormat"); 
-	public static final VariableKey<Boolean> INVERTED_HUNDREDTHS = new VariableKey<Boolean>("Stackmat_isInvertedHundredths"); 
-	public static final VariableKey<Boolean> INVERTED_SECONDS = new VariableKey<Boolean>("Stackmat_isInvertedSeconds"); 
-	public static final VariableKey<Boolean> INVERTED_MINUTES = new VariableKey<Boolean>("Stackmat_isInvertedMinutes"); 
+	public static final VariableKey<Boolean> IDENT_SERVER = new VariableKey<>("IRC_identserver");
+	public static final VariableKey<Boolean> SIDE_BY_SIDE_SCRAMBLE = new VariableKey<>("GUI_ScrambleView_sideBySide");
+	public static final VariableKey<Boolean> SCRAMBLE_PLUGINS_SECURE = new VariableKey<>("Scramble_Plugins_secure");
+	public static final VariableKey<Boolean> SPEAK_INSPECTION = new VariableKey<>("Misc_Voices_readInspection");
+	public static final VariableKey<Boolean> SPEAK_TIMES = new VariableKey<>("Misc_Voices_readTimes");
+	public static final VariableKey<Boolean> COMPETITION_INSPECTION = new VariableKey<>("GUI_Timer_competitionInspection");
+	public static final VariableKey<Boolean> FOCUSABLE_BUTTONS = new VariableKey<>("GUI_focusableButtons");
+	public static final VariableKey<Boolean> CLOCK_FORMAT = new VariableKey<>("Misc_isClockFormat");
+	public static final VariableKey<Boolean> INVERTED_HUNDREDTHS = new VariableKey<>("Stackmat_isInvertedHundredths");
+	public static final VariableKey<Boolean> INVERTED_SECONDS = new VariableKey<>("Stackmat_isInvertedSeconds");
+	public static final VariableKey<Boolean> INVERTED_MINUTES = new VariableKey<>("Stackmat_isInvertedMinutes");
 	public static final VariableKey<Boolean> SHOW_EMAIL = new VariableKey<Boolean>("Sunday_isShowAddress"); 
 	public static final VariableKey<Boolean> PROMPT_FOR_NEW_TIME = new VariableKey<Boolean>("Misc_isPromptForNewTime"); 
 	public static final VariableKey<Boolean> SMTP_ENABLED = new VariableKey<Boolean>("SMTP_isEnabled"); 

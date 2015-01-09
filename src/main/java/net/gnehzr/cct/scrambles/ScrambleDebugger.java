@@ -53,7 +53,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 		LOG.info("Default unit size: " + super.DEFAULT_UNIT_SIZE);
 		LOG.info("Scramble variations: " + Arrays.toString(super.VARIATIONS));
 		LOG.info("Available scramble attributes: " + Arrays.toString(super.ATTRIBUTES));
-		LOG.info("Default attributes: " + Arrays.toString(super.DEFAULT_ATTRIBUTES));
+		LOG.info("Default attributes: " + super.DEFAULT_ATTRIBUTES);
 
 		if(length == -1)
 			length = super.getDefaultScrambleLength(new ScrambleVariation(this, "", configuration));
@@ -145,8 +145,7 @@ public class ScrambleDebugger extends ScramblePlugin implements ActionListener {
 			for(JCheckBox attr : attributes)
 				if(attr.isSelected())
 					attrs.add(attr.getName());
-			String[] attributes = attrs.toArray(new String[attrs.size()]);
-			sc.getScramblePlugin().setEnabledPuzzleAttributes(attributes);
+			sc.getScramblePlugin().setEnabledPuzzleAttributes(attrs);
 		} else if(e.getSource() == newScramble) {
 			TOKEN_REGEX = Pattern.compile(unitTokenField.getText());
 			Scramble s = super.newScramble(sc.getScrambleVariation().getVariation(), (Integer) scrambleLength.getValue(), generatorField.getText(), super.DEFAULT_ATTRIBUTES);

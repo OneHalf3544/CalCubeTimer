@@ -12,10 +12,21 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateListener, ConfigurationChangeListener, DynamicDestroyable {
+public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateListener, DynamicDestroyable {
 
 	private final StatisticsTableModel statsModel;
 	private final Configuration configuration;
+	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
+        @Override
+        public void configurationChanged(Profile currentProfile) {
+            update();
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getEnclosingClass().getSimpleName() + ": " + tabNames;
+        }
+    };
 	private List<DynamicString> tabNames = new ArrayList<>();
 	private final XMLGuiMessages xmlGuiMessages;
 
@@ -23,7 +34,7 @@ public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateLi
 		this.statsModel = statsModel;
 		this.configuration = configuration;
 		this.xmlGuiMessages = xmlGuiMessages;
-		this.configuration.addConfigurationChangeListener(this);
+		this.configuration.addConfigurationChangeListener(changeListener);
 		this.statsModel.addStatisticsUpdateListener(this);
 	}
 	
@@ -48,13 +59,8 @@ public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateLi
 	}
 
 	@Override
-	public void configurationChanged(Profile profile) {
-		update();
-	}
-
-	@Override
 	public void destroy(){
-		configuration.removeConfigurationChangeListener(this);
+		configuration.removeConfigurationChangeListener(changeListener);
 		statsModel.removeStatisticsUpdateListener(this);
 	}
 }

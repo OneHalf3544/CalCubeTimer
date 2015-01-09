@@ -157,7 +157,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     	hundredths %= 100;
     	long tenths = hundredths / 10;
     	hundredths %= 10;
-    	LinkedList<String> temp = new LinkedList<String>();
+    	LinkedList<String> temp = new LinkedList<>();
     	if(largest != 0) {
     		if(clockFormat) {
     			long minTens = largest / 10;
