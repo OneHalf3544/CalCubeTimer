@@ -232,7 +232,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		this.scramblePluginManager = scramblePluginManager;
 		this.actionMap = actionMap;
 		ircClient.setCalCubeTimer(this);
-		profileDao.setCalCubeTimerFrame(this);
 		this.profileDao = profileDao;
 		this.dynamicBorderSetter = dynamicBorderSetter;
 		this.xmlGuiMessages = xmlGuiMessages;

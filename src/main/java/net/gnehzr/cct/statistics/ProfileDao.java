@@ -48,15 +48,12 @@ public class ProfileDao {
 
     @Inject
     public ProfileDao(ProfileSerializer profileSerializer, Configuration configuration, StatisticsTableModel statsModel,
-                      ScramblePluginManager scramblePluginManager) {
+                      ScramblePluginManager scramblePluginManager, CalCubeTimerGui calCubeTimerFrame) {
         this.profileSerializer = profileSerializer;
         this.configuration = configuration;
         this.statsModel = statsModel;
         this.scramblePluginManager = scramblePluginManager;
         guestProfile = createGuestProfile(this.configuration);
-    }
-
-    public void setCalCubeTimerFrame(CalCubeTimerGui calCubeTimerFrame) {
         this.calCubeTimerFrame = calCubeTimerFrame;
     }
 

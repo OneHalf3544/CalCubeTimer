@@ -3,6 +3,7 @@ package net.gnehzr.cct.main;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 
 public interface TimingListener {
+	public void initializeDisplay();
 	public void refreshDisplay(TimerState currTime);
 	public void timerStarted();
 	public void inspectionStarted();

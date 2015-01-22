@@ -15,13 +15,17 @@ import java.time.Instant;
 @Singleton
 public class KeyboardHandler extends Timer {
 
-	private static final int PERIOD = 90; //measured in milliseconds
+	private static final Duration PERIOD = Duration.ofMillis(90);
 
 	private TimingListener timingListener;
 	private final Configuration configuration;
 
 	private boolean reset;
 	private boolean inspecting;
+
+	private Instant start;
+	private Instant current;
+
 	public boolean isReset() {
 		return reset;
 	}
@@ -31,7 +35,7 @@ public class KeyboardHandler extends Timer {
 
 	@Inject
 	public KeyboardHandler(TimingListener timingListener, Configuration configuration) {
-		super(PERIOD, null);
+		super((int)PERIOD.toMillis(), null);
 		this.timingListener = timingListener;
 		this.configuration = configuration;
 	}
@@ -40,19 +44,19 @@ public class KeyboardHandler extends Timer {
 	void initialize() {
 		reset = true;
 		inspecting = false;
+		current = Instant.now();
+		timingListener.initializeDisplay();
 	}
 
 	public void reset() {
 		reset = true;
 		inspecting = false;
-		this.stop();
+		stop();
 	}
 	
 	public boolean canStartTimer() {
 		return Duration.between(current, Instant.now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES, false);
 	}
-
-	private Instant start;
 
 	public void startTimer() {
 		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false);
@@ -70,8 +74,6 @@ public class KeyboardHandler extends Timer {
 			timingListener.inspectionStarted();
 		}
 	}
-	
-	private Instant current;
 
 	@Override
 	protected void fireActionPerformed(ActionEvent e) {

@@ -109,7 +109,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     void initialize() {
-        profileDao.setCalCubeTimerFrame(calCubeTimerGui);
         updateInspectionTimer = new Timer(90, e -> calCubeTimerGui.updateInspection());
     }
 

@@ -10,6 +10,7 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.umts.ircclient.IRCClient;
 
+import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -42,14 +43,30 @@ class TimingListenerImpl implements TimingListener {
     }
 
     private void updateTime(TimerState newTime) {
+        updateHandsState(newTime);
+        if(!model.isInspecting()) {
+            setTimeLabels(newTime);
+        }
+    }
+
+    @Override
+    // todo move to TimerLabel?
+    public void initializeDisplay() {
+        TimerState zeroTimerState = new TimerState(configuration, Duration.ZERO);
+        updateHandsState(zeroTimerState);
+        setTimeLabels(zeroTimerState);
+    }
+
+    private void setTimeLabels(TimerState newTime) {
+        timeLabel.setTime(newTime);
+        bigTimersDisplay.setTime(newTime);
+    }
+
+    private void updateHandsState(TimerState newTime) {
         if(newTime instanceof StackmatState) {
             StackmatState newState = (StackmatState) newTime;
             timeLabel.setHands(newState.leftHand(), newState.rightHand());
             timeLabel.setStackmatGreenLight(newState.isGreenLight());
-        }
-        if(!model.isInspecting()) {
-            timeLabel.setTime(newTime);
-            bigTimersDisplay.setTime(newTime);
         }
     }
 
