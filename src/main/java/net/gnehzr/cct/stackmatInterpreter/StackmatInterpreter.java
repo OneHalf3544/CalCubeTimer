@@ -1,23 +1,30 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
 import org.apache.log4j.Logger;
 
 import javax.sound.sampled.*;
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
+@Singleton
 public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 
     private static final Logger LOG = Logger.getLogger(StackmatInterpreter.class);
 
 	private static final int BYTES_PER_SAMPLE = 2;
 	private static final int FRAMES = 64;
-	private final Configuration configuration;
+
+    private final Configuration configuration;
 
     private int samplingRate = 0;
     private int noiseSpikeThreshold;
-    private int newPeriod, switchThreshold;
+    private int newPeriod;
+    private int switchThreshold;
     private double signalLengthPerBit;
 
     private AudioFormat format;
@@ -31,9 +38,13 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 
     private static Mixer.Info[] aInfos = AudioSystem.getMixerInfo();
 
-	public StackmatInterpreter(Configuration configuration, int samplingRate, int mixerNumber,
-							   boolean stackmat, int switchThreshold) {
+    @Inject
+	public StackmatInterpreter(Configuration configuration) {
 		this.configuration = configuration;
+        int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, false);
+        int mixerNumber = configuration.getInt(VariableKey.MIXER_NUMBER, false);
+        boolean stackmat = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
+        int switchThreshold = configuration.getInt(VariableKey.SWITCH_THRESHOLD, false);
 		initialize(samplingRate, mixerNumber, stackmat, switchThreshold);
 	}
 
@@ -60,11 +71,11 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                 synchronized (this) {
                     notify();
                 }
+            } catch (IllegalArgumentException e) {
+                //This is thrown when there is no configuration file
             } catch (LineUnavailableException e) {
                 LOG.info("unexpected exception", e);
                 cleanup();
-            } catch (IllegalArgumentException e) {
-                //This is thrown when there is no configuration file
             }
         }
     }
@@ -163,9 +174,11 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
         int lastBit = 0;
         byte[] buffer = new byte[BYTES_PER_SAMPLE * FRAMES];
 
-        ArrayList<Integer> currentPeriod = new ArrayList<>(100);
+        List<Integer> currentPeriod = new ArrayList<>(100);
 		StackmatState old = new StackmatState(configuration);
         boolean previousWasSplit = false;
+        StackmatValue stackmatValue = new StackmatValue(timeSinceLastFlip, lastSample, lastBit, buffer, currentPeriod, old, false);
+
         while (!isCancelled()) {
             if (!enabled || line == null) {
                 on = false;
@@ -178,79 +191,160 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                 continue;
             }
 
-            if (line.read(buffer, 0, buffer.length) > 0) {
-                for (int c = 0; c < buffer.length / BYTES_PER_SAMPLE; c += 2) { //we increment by 2 to mask out 1 channel
-                    //little-endian encoding, bytes are in increasing order
-                    currentSample = 0;
-                    int j;
-                    for (j = 0; j < BYTES_PER_SAMPLE - 1; j++) {
-                        currentSample |= (255 & buffer[BYTES_PER_SAMPLE * c + j]) << (j * 8);
-                    }
-                    currentSample |= buffer[BYTES_PER_SAMPLE * c + j] << (j * 8); //we don't mask with 255 so we don't lost the sign
-                    if (timeSinceLastFlip < newPeriod * 4) {
-                        timeSinceLastFlip++;
-                    }
-                    else if (timeSinceLastFlip == newPeriod * 4) {
-                        state = new StackmatState(configuration);
-                        timeSinceLastFlip++;
-                        on = false;
-                        firePropertyChange("Off", null, null);
-                    }
-
-                    if (Math.abs(lastSample - currentSample) > switchThreshold << (BYTES_PER_SAMPLE * 4) && timeSinceLastFlip > noiseSpikeThreshold) {
-                        if (timeSinceLastFlip > newPeriod) {
-                            if (currentPeriod.size() < 1) {
-                                lastBit = bitValue(currentSample - lastSample);
-                                timeSinceLastFlip = 0;
-                                continue;
-                            }
-
-                            StackmatState newState = new StackmatState(state, currentPeriod, configuration);
-                            if (state != null && state.isRunning() && newState.isReset()) { //this is indicative of an "accidental reset"
-                                firePropertyChange("Accident Reset", state, newState);
-                            }
-                            state = newState;
-                            //This is to be able to identify new times when they are "equal" to the last time
-							if(state.isReset() || state.isRunning()) old = new StackmatState(configuration);
-
-                            boolean thisIsSplit = state.isRunning() && state.oneHand();
-                            if (thisIsSplit && !previousWasSplit) {
-                                firePropertyChange("Split", null, state);
-                            }
-                            previousWasSplit = thisIsSplit;
-                            if (state.isReset())
-                                firePropertyChange("Reset", null, state);
-                            else if (state.isRunning())
-                                firePropertyChange("TimeChange", null, state);
-                            else if (state.compareTo(old) != 0) {
-                                old = state;
-                                firePropertyChange("New Time", null, state);
-                            } else { //So we can always get the current time
-                                firePropertyChange("Current Display", null, state);
-                            }
-                            on = true;
-                            currentPeriod = new ArrayList<>(100);
-                        } else {
-                            for (int i = 0; i < Math.round(timeSinceLastFlip / signalLengthPerBit); i++) {
-                                currentPeriod.add(lastBit);
-                            }
-                        }
-                        lastBit = bitValue(currentSample - lastSample);
-                        timeSinceLastFlip = 0;
-                    }
-                    lastSample = currentSample;
-                }
-            }
+            updateStackmatValue(stackmatValue, stackmatValue.buffer);
         }
         return null;
     }
 
-    private static int bitValue(int x) {
-        return (x > 0) ? 1 : 0;
+    public void updateStackmatValue(StackmatValue stackmatValue, byte[] buffer) {
+        if (line.read(buffer, 0, buffer.length) <= 0) {
+            return;
+        }
+
+        int currentSample;
+        for (int c = 0; c < buffer.length / BYTES_PER_SAMPLE; c += 2) {
+            //we increment by 2 to mask out 1 channel
+            //little-endian encoding, bytes are in increasing order
+            currentSample = 0;
+            int j;
+            for (j = 0; j < BYTES_PER_SAMPLE - 1; j++) {
+                currentSample |= (255 & buffer[BYTES_PER_SAMPLE * c + j]) << (j * 8);
+            }
+            currentSample |= buffer[BYTES_PER_SAMPLE * c + j] << (j * 8); //we don't mask with 255 so we don't lost the sign
+            if (stackmatValue.timeSinceLastFlip < newPeriod * 4) {
+                stackmatValue.timeSinceLastFlip++;
+            }
+            else if (stackmatValue.timeSinceLastFlip == newPeriod * 4) {
+                state = new StackmatState(configuration);
+                stackmatValue.timeSinceLastFlip++;
+                on = false;
+                firePropertyChange("Off", null, null);
+            }
+
+            if (Math.abs(stackmatValue.lastSample - currentSample) > switchThreshold << (BYTES_PER_SAMPLE * 4) && stackmatValue.timeSinceLastFlip > noiseSpikeThreshold) {
+                if (stackmatValue.timeSinceLastFlip > newPeriod) {
+                    if (stackmatValue.currentPeriod.size() < 1) {
+                        stackmatValue.lastBit = stackmatValue.bitValue(currentSample - stackmatValue.lastSample);
+                        stackmatValue.timeSinceLastFlip = 0;
+                        continue;
+                    }
+
+                    StackmatState newState = new StackmatState(state, stackmatValue.currentPeriod, configuration);
+                    if (state != null && state.isRunning() && newState.isReset()) { //this is indicative of an "accidental reset"
+                        firePropertyChange("Accident Reset", state, newState);
+                    }
+                    state = newState;
+                    //This is to be able to identify new times when they are "equal" to the last time
+                    if(state.isReset() || state.isRunning()) stackmatValue.old = new StackmatState(configuration);
+
+                    boolean thisIsSplit = state.isRunning() && state.oneHand();
+                    if (thisIsSplit && !stackmatValue.previousWasSplit) {
+                        firePropertyChange("Split", null, state);
+                    }
+                    stackmatValue.previousWasSplit = thisIsSplit;
+                    if (state.isReset())
+                        firePropertyChange("Reset", null, state);
+                    else if (state.isRunning())
+                        firePropertyChange("TimeChange", null, state);
+                    else if (state.compareTo(stackmatValue.old) != 0) {
+                        stackmatValue.old = state;
+                        firePropertyChange("New Time", null, state);
+                    } else { //So we can always get the current time
+                        firePropertyChange("Current Display", null, state);
+                    }
+                    on = true;
+                    stackmatValue.currentPeriod = new ArrayList<>(100);
+                } else {
+                    for (int i = 0; i < Math.round(stackmatValue.timeSinceLastFlip / signalLengthPerBit); i++) {
+                        stackmatValue.currentPeriod.add(stackmatValue.lastBit);
+                    }
+                }
+                stackmatValue.lastBit = stackmatValue.bitValue(currentSample - stackmatValue.lastSample);
+                stackmatValue.timeSinceLastFlip = 0;
+            }
+            stackmatValue.lastSample = currentSample;
+        }
     }
 
     public int getStackmatValue() {
         return switchThreshold;
     }
 
+    private class StackmatValue {
+
+        private int timeSinceLastFlip;
+        private int lastSample;
+        private int lastBit;
+        private byte[] buffer;
+        private List<Integer> currentPeriod;
+        private StackmatState old;
+        private boolean previousWasSplit;
+
+        public StackmatValue(int timeSinceLastFlip, int lastSample, int lastBit, byte[] buffer, List<Integer> currentPeriod, StackmatState old, boolean previousWasSplit) {
+            this.timeSinceLastFlip = timeSinceLastFlip;
+            this.lastSample = lastSample;
+            this.lastBit = lastBit;
+            this.buffer = buffer;
+            this.currentPeriod = currentPeriod;
+            this.old = old;
+            this.previousWasSplit = previousWasSplit;
+        }
+
+        public void setTimeSinceLastFlip(int timeSinceLastFlip) {
+            this.timeSinceLastFlip = timeSinceLastFlip;
+        }
+
+        public void setLastSample(int lastSample) {
+            this.lastSample = lastSample;
+        }
+
+        public void setLastBit(int lastBit) {
+            this.lastBit = lastBit;
+        }
+
+        public void setBuffer(byte[] buffer) {
+            this.buffer = buffer;
+        }
+
+        public void setCurrentPeriod(List<Integer> currentPeriod) {
+            this.currentPeriod = currentPeriod;
+        }
+
+        public void setOld(StackmatState old) {
+            this.old = old;
+        }
+
+        public void setPreviousWasSplit(boolean previousWasSplit) {
+            this.previousWasSplit = previousWasSplit;
+        }
+
+        private int bitValue(int x) {
+            return (x > 0) ? 1 : 0;
+        }
+
+        public int getTimeSinceLastFlip() {
+            return timeSinceLastFlip;
+        }
+
+        public int getLastSample() {
+            return lastSample;
+        }
+
+        public int getLastBit() {
+            return lastBit;
+        }
+
+        public List<Integer> getCurrentPeriod() {
+            return currentPeriod;
+        }
+
+        public StackmatState getOld() {
+            return old;
+        }
+
+        public boolean isPreviousWasSplit() {
+            return previousWasSplit;
+        }
+
+    }
 }

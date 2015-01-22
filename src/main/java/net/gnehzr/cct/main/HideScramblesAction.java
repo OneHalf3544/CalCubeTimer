@@ -12,8 +12,8 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class HideScramblesAction extends AbstractAction {
-	private CALCubeTimer cct;
-	public HideScramblesAction(CALCubeTimer cct){
+	private CALCubeTimerFrame cct;
+	public HideScramblesAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}
 

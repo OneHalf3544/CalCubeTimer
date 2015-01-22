@@ -1,6 +1,7 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.misc.Utils;
@@ -11,6 +12,7 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 
+@Singleton
 public class DynamicBorderSetter {
 
 	private final StatisticsTableModel statsModel;

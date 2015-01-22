@@ -2,7 +2,7 @@ package net.gnehzr.cct.umts.ircclient;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
@@ -21,8 +21,8 @@ public class ChatMessageFrame extends MessageFrame {
 	private CCTCommChannel commChannel;
 	private HashMap<String, CCTUser> cctusers;
 
-	public ChatMessageFrame(MinimizableDesktop desk, Configuration configuration, String channel, ScramblePlugin scramblePlugin, Profile profileDao) {
-		super(desk, true, null, scramblePlugin, profileDao);
+	public ChatMessageFrame(MinimizableDesktop desk, Configuration configuration, String channel, ScramblePluginManager scramblePluginManager, Profile profileDao) {
+		super(desk, true, null, scramblePluginManager, profileDao);
 		this.configuration = configuration;
 		this.channel = channel;
 		setTitle(channel);

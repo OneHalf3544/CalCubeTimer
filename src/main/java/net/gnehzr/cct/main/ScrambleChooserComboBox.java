@@ -3,7 +3,7 @@ package net.gnehzr.cct.main;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.ProfileDao;
 
@@ -11,15 +11,15 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-public class ScrambleChooserComboBox<T> extends LoudComboBox<T> implements TableCellRenderer, ConfigurationChangeListener {
+public class ScrambleChooserComboBox<T> extends JComboBox<T> implements TableCellRenderer, ConfigurationChangeListener {
 	private boolean customizations;
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 	private final Configuration configuration;
 
-	public ScrambleChooserComboBox(boolean icons, boolean customizations, ScramblePlugin scramblePlugin,
+	public ScrambleChooserComboBox(boolean icons, boolean customizations, ScramblePluginManager scramblePluginManager,
 								   Configuration configuration, ProfileDao profileDao) {
 		this.customizations = customizations;
-		this.scramblePlugin = scramblePlugin;
+		this.scramblePluginManager = scramblePluginManager;
 		this.configuration = configuration;
 		this.setRenderer(new PuzzleCustomizationCellRenderer(icons));
 		configuration.addConfigurationChangeListener(this);
@@ -45,10 +45,10 @@ public class ScrambleChooserComboBox<T> extends LoudComboBox<T> implements Table
 	public void configurationChanged(Profile profile) {
 		Object[] model;
 		if(customizations)
-			model = scramblePlugin.getScrambleCustomizations(profile, false).toArray();
+			model = scramblePluginManager.getScrambleCustomizations(profile, false).toArray();
 		else
-			model = scramblePlugin.getScrambleVariations();
-		this.setModel(new DefaultComboBoxModel<T>((T[])model));
+			model = scramblePluginManager.getScrambleVariations();
+		this.setModel(new DefaultComboBoxModel<>((T[])model));
 		this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS, false));
 	}
 }

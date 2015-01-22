@@ -7,7 +7,7 @@ import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
@@ -34,14 +34,14 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
 	private final StatisticsTableModel statsModel;
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 
 	public ProfileDatabase(Configuration configuration, ProfileDao profileDao,
-						   StatisticsTableModel statsModel, ScramblePlugin scramblePlugin) {
+						   StatisticsTableModel statsModel, ScramblePluginManager scramblePluginManager) {
 		this.configuration = configuration;
 		this.profileDao = profileDao;
 		this.statsModel = statsModel;
-		this.scramblePlugin = scramblePlugin;
+		this.scramblePluginManager = scramblePluginManager;
 	}
 
 	public Collection<PuzzleStatistics> getPuzzlesStatistics() {
@@ -251,7 +251,7 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 	public void actionPerformed(ActionEvent e) {
 		if(e.getActionCommand().startsWith(SEND_TO_PROFILE)) {
 			Profile to = profileDao.getProfileByName(((JMenuItem) e.getSource()).getText());
-			profileDao.loadDatabase(to, scramblePlugin);
+			profileDao.loadDatabase(to, scramblePluginManager);
 			
 			String[] rows = e.getActionCommand().substring(SEND_TO_PROFILE.length()).split(",");
 			Session[] seshs = new Session[rows.length];

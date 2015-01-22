@@ -2,10 +2,11 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.ProfileSerializer.RandomInputStream;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import java.util.Map;
  *
  * @author OneHalf
  */
+@Singleton
 public class ProfileDao {
 
     private static final Logger LOG = Logger.getLogger(ProfileDao.class);
@@ -39,23 +41,23 @@ public class ProfileDao {
     private Session guestSession = null; //need this so we can load the guest's last session, since it doesn't have a file
 
     private final StatisticsTableModel statsModel;
-    private final ScramblePlugin scramblePlugin;
+    private final ScramblePluginManager scramblePluginManager;
 
     private static final String guestName = "Guest";
-    private CALCubeTimer calCubeTimer;
+    private CalCubeTimerGui calCubeTimerFrame;
 
     @Inject
     public ProfileDao(ProfileSerializer profileSerializer, Configuration configuration, StatisticsTableModel statsModel,
-                      ScramblePlugin scramblePlugin) {
+                      ScramblePluginManager scramblePluginManager) {
         this.profileSerializer = profileSerializer;
         this.configuration = configuration;
         this.statsModel = statsModel;
-        this.scramblePlugin = scramblePlugin;
+        this.scramblePluginManager = scramblePluginManager;
         guestProfile = createGuestProfile(this.configuration);
     }
 
-    public void setCalCubeTimer(CALCubeTimer calCubeTimer) {
-        this.calCubeTimer = calCubeTimer;
+    public void setCalCubeTimerFrame(CalCubeTimerGui calCubeTimerFrame) {
+        this.calCubeTimerFrame = calCubeTimerFrame;
     }
 
     public Profile getProfileByName(String name) {
@@ -63,7 +65,7 @@ public class ProfileDao {
                 getDirectory(n),
                 getConfiguration(configuration.getProfilesFolder(), n),
                 getStatistics(configuration.getProfilesFolder(), n),
-                configuration, this, statsModel, scramblePlugin));
+                configuration, this, statsModel, scramblePluginManager));
     }
 
     public Profile loadProfile(File directory) {
@@ -72,7 +74,7 @@ public class ProfileDao {
         File configurationFile = getConfiguration(directory, directory.getName());
         File statistics = getStatistics(directory, directory.getName());
 
-        Profile profile = new Profile(name, directory, configurationFile, statistics, configuration, this, statsModel, scramblePlugin);
+        Profile profile = new Profile(name, directory, configurationFile, statistics, configuration, this, statsModel, scramblePluginManager);
         profiles.put(profile.getName(), profile);
         return profile;
     }
@@ -94,7 +96,7 @@ public class ProfileDao {
     }
 
     // this can only be called once, until after saveDatabase() is called
-    public boolean loadDatabase(Profile profile, ScramblePlugin scramblePlugin) {
+    public boolean loadDatabase(Profile profile, ScramblePluginManager scramblePluginManager) {
         if (profile == guestProfile) { // disable logging for guest
             // TODO - there is definitely a bug here where guestSession == null when switching profiles
             if (profile.getPuzzleDatabase().getRowCount() > 0) {
@@ -104,15 +106,17 @@ public class ProfileDao {
         }
 
         return Utils.doWithLockedFile(profile.getStatistics(), file -> {
-            Utils.doInWaitingState(calCubeTimer, () -> {
+            Utils.doInWaitingState(calCubeTimerFrame, () -> {
                 try {
-                    ProfileDatabase puzzleDB = new ProfileDatabase(configuration, this, statsModel, scramblePlugin); //reset the database
+                    ProfileDatabase puzzleDB = new ProfileDatabase(configuration, this, statsModel, scramblePluginManager); //reset the database
                     profile.setPuzzleDatabase(puzzleDB);
                     profile.setStatisticsRandomAccessFile(file);
 
-                    if (file.length() != 0) { // if the file is empty, don't bother to parse it
+                    if (file.length() == 0) {
+                        LOG.debug("file is empty. skip parsing");
+                    } else { // if the file is empty, don't bother to parse it
                         LOG.debug("parse file");
-                        DatabaseLoader handler = new DatabaseLoader(profile, configuration, statsModel, scramblePlugin);
+                        DatabaseLoader handler = new DatabaseLoader(profile, configuration, statsModel, scramblePluginManager);
                         profileSerializer.parseBySaxHandler(handler, new RandomInputStream(profile.getStatisticsRandomAccessFile()));
                     }
                     LOG.debug("file loading finished");
@@ -136,7 +140,7 @@ public class ProfileDao {
             return;
         }
 
-        Utils.doInWaitingState(calCubeTimer, () -> {
+        Utils.doInWaitingState(calCubeTimerFrame, () -> {
             try {
                 profileSerializer.writeStatisticFile(profile);
 

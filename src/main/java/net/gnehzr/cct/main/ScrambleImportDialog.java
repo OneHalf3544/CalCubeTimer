@@ -9,7 +9,7 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.ProfileDao;
 import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
@@ -32,21 +32,23 @@ import java.util.ArrayList;
 public class ScrambleImportDialog extends JDialog implements ActionListener, DocumentListener {
 
 	private static final Logger LOG = Logger.getLogger(ScrambleImportDialog.class);
-	private final ScramblePlugin scramblePlugin;
 	private URLHistoryBox urlField;
 
 	private final Configuration configuration;
 	private JButton browse, addToArea;
 	private JTextAreaWithHistory scrambles;
 	private JEditorPane qualityControl;
-	private ScrambleChooserComboBox scrambleChooser;
+	private ScrambleChooserComboBox<ScrambleCustomization> scrambleChooser;
 	private JButton importButton, cancelButton;
-	private CALCubeTimer cct;
+	private final CALCubeTimerFrame calCubeTimerFrameFrame;
+	private ScrambleImporter scrambleImporter;
 
-	public ScrambleImportDialog(ProfileDao profileDao, CALCubeTimer cct, ScrambleCustomization sc, ScramblePlugin scramblePlugin, Configuration configuration) {
-		super(cct, StringAccessor.getString("ScrambleImportDialog.importscrambles"), true); 
-		this.cct = cct;
-		this.scramblePlugin = scramblePlugin;
+	public ScrambleImportDialog(ProfileDao profileDao, CALCubeTimerFrame calCubeTimerFrameFrame, ScrambleImporter scrambleImporter,
+								ScrambleCustomization sc,
+								ScramblePluginManager scramblePluginManager, Configuration configuration) {
+		super(calCubeTimerFrameFrame, StringAccessor.getString("ScrambleImportDialog.importscrambles"), true);
+		this.calCubeTimerFrameFrame = calCubeTimerFrameFrame;
+		this.scrambleImporter = scrambleImporter;
 		this.configuration = configuration;
 
 		JPanel contentPane = new JPanel(new BorderLayout());
@@ -69,8 +71,8 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 		sideBySide.add(addToArea);
 		topBot.add(sideBySide);
 
-		scrambleChooser = new ScrambleChooserComboBox(false, true, this.scramblePlugin, this.configuration, profileDao);
-		scrambleChooser.addItem(this.scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION);
+		scrambleChooser = new ScrambleChooserComboBox<>(false, true, scramblePluginManager, configuration, profileDao);
+		scrambleChooser.addItem(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION);
 		scrambleChooser.setSelectedItem(sc);
 		scrambleChooser.addActionListener(this);
 		topBot.add(scrambleChooser);
@@ -104,7 +106,7 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 		validateScrambles();
 		setMinimumSize(new Dimension(450, 250));
 		pack();
-		setLocationRelativeTo(cct);
+		setLocationRelativeTo(calCubeTimerFrameFrame);
 		setVisible(true);
 	}
 
@@ -147,7 +149,7 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 				Utils.showErrorDialog(this, ee);
 			}
 		} else if(source == importButton) {
-			cct.importScrambles(getSelectedCustomization(), scrams);
+			scrambleImporter.importScrambles(getSelectedCustomization(), scrams, calCubeTimerFrameFrame);
 			setVisible(false);
 		} else if(source == cancelButton) {
 			setVisible(false);
@@ -162,15 +164,19 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 
 	@Override
 	public void changedUpdate(DocumentEvent e) {}
+
 	@Override
 	public void insertUpdate(DocumentEvent e) {
 		validateScrambles();
 	}
+
 	@Override
 	public void removeUpdate(DocumentEvent e) {
 		validateScrambles();
 	}
+
 	private ArrayList<Scramble> scrams = new ArrayList<>();
+
 	private void validateScrambles() {
 		ScrambleCustomization sc = getSelectedCustomization();
 		

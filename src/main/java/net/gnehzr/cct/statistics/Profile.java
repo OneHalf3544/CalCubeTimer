@@ -1,7 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +12,7 @@ import java.io.RandomAccessFile;
 public class Profile {
 
     private static final Logger LOG = Logger.getLogger(Profile.class);
-    private final ScramblePlugin scramblePlugin;
+    private final ScramblePluginManager scramblePluginManager;
 
     private RandomAccessFile statisticsRandomAccessFile = null;
 
@@ -27,28 +27,28 @@ public class Profile {
 
     //constructors are private because we want only 1 instance of a profile
     //pointing to a given database
-    Profile(ProfileDao profileDao, String name, Configuration configuration, StatisticsTableModel statsModel, ScramblePlugin scramblePlugin) {
+    Profile(ProfileDao profileDao, String name, Configuration configuration, StatisticsTableModel statsModel, ScramblePluginManager scramblePluginManager) {
         this.name = name;
         this.configuration = configuration;
-        this.scramblePlugin = scramblePlugin;
+        this.scramblePluginManager = scramblePluginManager;
         directory = profileDao.getDirectory(name);
         configurationFile = profileDao.getConfiguration(directory, name);
         statistics = profileDao.getStatistics(directory, name);
-        puzzleDB = new ProfileDatabase(this.configuration, profileDao, statsModel, this.scramblePlugin);
+        puzzleDB = new ProfileDatabase(this.configuration, profileDao, statsModel, this.scramblePluginManager);
     }
 
     //I assume that this will only get called once for a given directory
     public Profile(String name, File directory, File configurationFile, File statistics,
                    Configuration configuration, ProfileDao profileDao, StatisticsTableModel statsModel,
-                   ScramblePlugin scramblePlugin) {
+                   ScramblePluginManager scramblePluginManager) {
         this.name = name;
         this.configuration = configuration;
         this.setDirectory(directory);
-        this.scramblePlugin = scramblePlugin;
+        this.scramblePluginManager = scramblePluginManager;
         saveable = false;
         this.configurationFile = configurationFile;
         this.statistics = statistics;
-        puzzleDB = new ProfileDatabase(this.configuration, profileDao, statsModel, this.scramblePlugin);
+        puzzleDB = new ProfileDatabase(this.configuration, profileDao, statsModel, this.scramblePluginManager);
     }
 
     public boolean isSaveable() {

@@ -12,11 +12,15 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
 public class ScrambleViewComponent extends JComponent implements ComponentListener, MouseListener, MouseMotionListener {
+
 	private static final int DEFAULT_GAP = 5;
 	static Integer GAP = DEFAULT_GAP;
 	private final Configuration configuration;
+	private final ScramblePluginManager scramblePluginManager;
+	private boolean fixedSize;
 
-	public ScrambleViewComponent(Configuration configuration) {
+	public ScrambleViewComponent(Configuration configuration, ScramblePluginManager scramblePluginManager) {
+		this.scramblePluginManager = scramblePluginManager;
 		configuration.addConfigurationChangeListener(new ConfigurationChangeListener() {
 			@Override
 			public void configurationChanged(Profile profile) {
@@ -28,9 +32,9 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 		this.configuration = configuration;
 	}
 
-	private boolean fixedSize;
-	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks, Configuration configuration) {
+	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks, Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		this.fixedSize = fixedSize;
+		this.scramblePluginManager = scramblePluginManager;
 		if(!fixedSize)
 			addComponentListener(this);
 		if(detectColorClicks) {
@@ -42,7 +46,7 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 
 	public void syncColorScheme(boolean defaults) {
 		if(currentPlugin != null) {
-			colorScheme = currentPlugin.getColorScheme(defaults);
+			colorScheme = scramblePluginManager.getColorScheme(currentPlugin, defaults);
 			redo();
 		}
 	}
@@ -52,19 +56,19 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 	}
 	private BufferedImage buffer;
 	private Scramble currentScram = null;
-	private ScramblePlugin currentPlugin = null;
+	private Scramble currentPlugin = null;
 	private ScrambleVariation currentVariation = null;
 	private Color[] colorScheme = null;
 	private Shape[] faces = null;
 	public void setScramble(Scramble scramble, ScrambleVariation variation) {
 		currentScram = scramble;
 		currentVariation = variation;
-		if(colorScheme == null || currentVariation.getScramblePlugin() != currentPlugin) { 
-			currentPlugin = currentVariation.getScramblePlugin();
-			colorScheme = currentPlugin.getColorScheme(false);
+		if(colorScheme == null || currentVariation.getPlugin() != currentPlugin) {
+			currentPlugin = currentVariation.getPlugin();
+			colorScheme = scramblePluginManager.getColorScheme(currentPlugin, false);
 		}
 		faces = currentPlugin.getFaces(GAP, getUnitSize(false), currentVariation.getVariation());
-		buffer = currentPlugin.getScrambleImage(currentScram, GAP, getUnitSize(false), colorScheme);
+		buffer = scramblePluginManager.getScrambleImage(currentScram, GAP, getUnitSize(false), colorScheme);
 		repaint();	//this will cause the scramble to be drawn
 		invalidate(); //this forces the component to fit itself to its layout properly
 	}
@@ -141,7 +145,7 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 	public void mouseClicked(MouseEvent e) {
 		if(focusedFace != -1) {
 			Color c = JColorChooser.showDialog(this,
-					StringAccessor.getString("ScrambleViewComponent.choosecolor") + ": " + currentPlugin.FACE_NAMES_COLORS[0][focusedFace],
+					StringAccessor.getString("ScrambleViewComponent.choosecolor") + ": " + currentPlugin.getFaceNamesColors()[0][focusedFace],
 					colorScheme[focusedFace]);
 			if(c != null) {
 				colorScheme[focusedFace] = c;
@@ -181,14 +185,14 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 
 	public void commitColorSchemeToConfiguration() {
 		for(int face = 0; face < colorScheme.length; face++) {
-			configuration.setColor(VariableKey.PUZZLE_COLOR(currentPlugin, currentPlugin.FACE_NAMES_COLORS[0][face]),
+			configuration.setColor(VariableKey.PUZZLE_COLOR(currentPlugin, currentPlugin.getFaceNamesColors()[0][face]),
 					colorScheme[face]);
 		}
 	}
 
 	private int getUnitSize(boolean defaults) {
 		if(fixedSize)
-			return currentPlugin.DEFAULT_UNIT_SIZE;
+			return currentPlugin.getDefaultUnitSize();
 		return currentVariation.getPuzzleUnitSize(defaults);
 	}
 }

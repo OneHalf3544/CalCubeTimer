@@ -1,10 +1,14 @@
 package net.gnehzr.cct.main;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import net.gnehzr.cct.umts.ircclient.IRCClient;
 
 import java.time.Instant;
 
@@ -18,33 +22,43 @@ import java.time.Instant;
 */
 class TimingListenerImpl implements TimingListener {
 
-    private CALCubeTimer calCubeTimer;
+    @Inject
+    private CalCubeTimerModel model;
+    @Inject
+    private CalCubeTimerGui calCubeTimerFrame;
 
     private final Configuration configuration;
 
-    public TimingListenerImpl(CALCubeTimer calCubeTimer, Configuration configuration) {
-        this.calCubeTimer = calCubeTimer;
+    @Inject
+    private IRCClient ircClient;
+    @Inject @Named("timeLabel")
+    private TimerLabel timeLabel = null;
+    @Inject @Named("bigTimersDisplay")
+    private TimerLabel bigTimersDisplay = null;
+
+    @Inject
+    public TimingListenerImpl(Configuration configuration) {
         this.configuration = configuration;
     }
 
     private void updateTime(TimerState newTime) {
         if(newTime instanceof StackmatState) {
             StackmatState newState = (StackmatState) newTime;
-            calCubeTimer.timeLabel.setHands(newState.leftHand(), newState.rightHand());
-            calCubeTimer.timeLabel.setStackmatGreenLight(newState.isGreenLight());
+            timeLabel.setHands(newState.leftHand(), newState.rightHand());
+            timeLabel.setStackmatGreenLight(newState.isGreenLight());
         }
-        if(!calCubeTimer.isInspecting()) {
-            calCubeTimer.timeLabel.setTime(newTime);
-            calCubeTimer.bigTimersDisplay.setTime(newTime);
+        if(!model.isInspecting()) {
+            timeLabel.setTime(newTime);
+            bigTimersDisplay.setTime(newTime);
         }
     }
 
     //I guess we could add an option to prompt the user to see if they want to keep this time
     @Override
     public void timerAccidentlyReset(TimerState lastTimeRead) {
-        calCubeTimer.penalty = null;
-        calCubeTimer.timing = false;
-        calCubeTimer.sendUserstate();
+        model.setPenalty(null);
+        model.setTiming(false);
+        ircClient.sendUserstate();
     }
 
     @Override
@@ -54,53 +68,53 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerSplit(TimerState newSplit) {
-        calCubeTimer.addSplit(newSplit);
+        calCubeTimerFrame.addSplit(newSplit);
     }
 
     @Override
     public void timerStarted() {
-        calCubeTimer.timing = true;
-        calCubeTimer.stopInspection();
+        model.setTiming(true);
+        model.stopInspection();
         if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)) {
-			calCubeTimer.setFullScreen(true);
+			calCubeTimerFrame.setFullScreen(true);
 		}
         if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false)) {
-			calCubeTimer.startMetronome();
+			model.startMetronome();
 		}
-        calCubeTimer.sendUserstate();
+        ircClient.sendUserstate();
     }
 
     @Override
     public void timerStopped(TimerState newTime) {
-        calCubeTimer.timing = false;
-        calCubeTimer.addTime(newTime);
+        model.setTiming(false);
+        model.addTime(newTime);
         if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false))
-            calCubeTimer.setFullScreen(false);
+            calCubeTimerFrame.setFullScreen(false);
         if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false))
-            calCubeTimer.stopMetronome();
-        calCubeTimer.sendUserstate();
+            model.stopMetronome();
+        ircClient.sendUserstate();
     }
 
     @Override
     public void stackmatChanged() {
         if(!configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
-			calCubeTimer.onLabel.setText("");
+			calCubeTimerFrame.getOnLabel().setText("");
 		}
         else {
-            boolean on = calCubeTimer.stackmatTimer.isOn();
-            calCubeTimer.timeLabel.setStackmatOn(on);
+            boolean on = model.getStackmatInterpreter().isOn();
+            timeLabel.setStackmatOn(on);
             if(on) {
-                calCubeTimer.onLabel.setText(StringAccessor.getString("CALCubeTimer.timerON"));
+                calCubeTimerFrame.getOnLabel().setText(StringAccessor.getString("CALCubeTimer.timerON"));
             } else {
-                calCubeTimer.onLabel.setText(StringAccessor.getString("CALCubeTimer.timerOFF"));
+                calCubeTimerFrame.getOnLabel().setText(StringAccessor.getString("CALCubeTimer.timerOFF"));
             }
         }
     }
 
     @Override
     public void inspectionStarted() {
-        calCubeTimer.inspectionStart = Instant.now();
-        calCubeTimer.updateInspectionTimer.start();
-        calCubeTimer.sendUserstate();
+        model.setInspectionStart(Instant.now());
+        model.startUpdateInspectionTimer();
+        ircClient.sendUserstate();
     }
 }

@@ -1,17 +1,18 @@
 package net.gnehzr.cct.umts.ircclient;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
-import net.gnehzr.cct.main.URLHistoryBox;
+import net.gnehzr.cct.main.ActionMap;
+import net.gnehzr.cct.main.*;
 import net.gnehzr.cct.scrambles.Scramble;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
-import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDao;
-import net.gnehzr.cct.umts.IRCListener;
+import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.umts.IRCUtils;
 import net.gnehzr.cct.umts.KillablePircBot;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
@@ -22,6 +23,7 @@ import org.jibble.pircbot.User;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.InternalFrameAdapter;
@@ -31,20 +33,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.sql.Date;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.time.Duration;
+import java.util.*;
 import java.util.List;
-import java.util.TreeSet;
 
-public class IRCClientGUI implements CommandListener, ActionListener, ConfigurationChangeListener, DocumentListener, IRCListener {
+@Singleton
+public class IRCClientGUI implements CommandListener, DocumentListener, IRCClient {
 
 	private static final Logger LOG = Logger.getLogger(IRCClientGUI.class);
 
-	public static final Boolean WATERMARK = false;
 	private static final String VERSION = IRCClientGUI.class.getPackage().getImplementationVersion();
 	private static final String FINGER_MSG = "This is the cct/irc client " + VERSION;
+	public static final Boolean WATERMARK = false;
 	private static final Image IRC_IMAGE = new ImageIcon(IRCClientGUI.class.getResource("cube-irc.png")).getImage();
-	private final ScramblePlugin scramblePlugin;
+	public static final Duration SYNC_STATE_TIMEOUT = Duration.ofSeconds(1);
+	private final ScramblePluginManager scramblePluginManager;
+	private final ScrambleImporter scrambleImporter;
 
 	// TODO - disable ctrl(+shift)+tab for swing components
 	// TODO - how to save state of the user tables for each message frame? synchronize them somehow?
@@ -54,22 +58,63 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 	private MessageFrame serverFrame;
 	private JFrame clientFrame;
 	private JLabel statusBar;
-	private CALCubeTimer cct;
 	private KillablePircBot bot;
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
+	private CALCubeTimerFrame calCubeTimer;
+	@Inject
+	private StatisticsTableModel statsModel;
+	@Inject
+	private CalCubeTimerModel calCubeTimerModel;
 
-	public IRCClientGUI(CALCubeTimer cct, final ActionListener closeListener, ScramblePlugin scramblePlugin,
-						Configuration configuration, ProfileDao profileDao) {
-		this.cct = cct;
-		this.scramblePlugin = scramblePlugin;
+
+	JTextField nameField;
+	JTextField nickField;
+	URLHistoryBox server;
+	JButton connectButton;
+	JLabel nameLabel, nickLabel, serverLabel;
+
+
+	//This is going to just stay in English
+
+	private static final String CMD_JOIN = "/join";
+	private static final String CMD_QUIT = "/quit";
+	private static final String CMD_PART = "/part";
+	private static final String CMD_CONNECT = "/connect";
+	private static final String CMD_MESSAGE = "/msg";
+	private static final String CMD_NICK = "/nick";
+	private static final String CMD_CLEAR = "/clear";
+	private static final String CMD_WHOIS = "/whois";
+	private static final String CMD_ME = "/me";
+	private static final String CMD_CHANNELS = "/channels";
+	private static final String CMD_CCTSTATS = "/cctstats";
+	private static final String CMD_HELP = "/help";
+
+
+	private HashMap<String, PMMessageFrame> pmFrames = new HashMap<>();
+	private HashMap<String, ChatMessageFrame> channelFrames = new HashMap<>();
+	private HashMap<String, CCTCommChannel> commChannelMap = new HashMap<>();
+
+	private Thread connectThread;
+
+	private CCTUser myself = new CCTUser(null, null, null); // prefix and nick don't matter here
+	private final Timer sendStateTimer;
+
+
+	@Inject
+	public IRCClientGUI(ActionMap actionMap, ScramblePluginManager scramblePluginManager,
+						Configuration configuration, ProfileDao profileDao, ScrambleImporter scrambleImporter) {
+		this.configuration = configuration;
+		this.scramblePluginManager = scramblePluginManager;
+		this.scrambleImporter = scrambleImporter;
 		bot = new KillablePircBot(this, FINGER_MSG, configuration);
 
 		login = new JInternalFrame("", false, false, false, true) {
 			@Override
 			public void setVisible(boolean visible) {
-				if(visible)
+				if(visible) {
 					setConnectDefault();
+				}
 				super.setVisible(visible);
 			}
 		};
@@ -98,13 +143,14 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		clientFrame = new JFrame() {
 			@Override
 			public void dispose() {
-				if(connecting)
+				if(connecting) {
 					cancelConnecting();
-				if(isConnected())
+				}
+				if(isConnected()) {
 					forkDisconnect();
-				if(IRCClientGUI.this.cct == null)
-					System.exit(0);
-				closeListener.actionPerformed(null);
+				}
+
+				actionMap.getActionIfExist(ActionMap.CONNECT_TO_SERVER_ACTION).get().actionPerformed(null);
 				super.dispose();
 			}
 		};
@@ -113,7 +159,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		clientFrame.setPreferredSize(new Dimension(500, 450));
 		clientFrame.setContentPane(pane);
 
-		serverFrame = new MessageFrame(desk, false, null, this.scramblePlugin, profileDao.getSelectedProfile());
+		serverFrame = new MessageFrame(desk, false, null, this.scramblePluginManager, profileDao.getSelectedProfile());
 		serverFrame.addCommandListener(this);
 		serverFrame.pack();
 		desk.add(serverFrame);
@@ -123,10 +169,17 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		configuration.addConfigurationChangeListener(this);
 		configurationChanged(profileDao.getSelectedProfile());
 		updateStrings();
-		this.configuration = configuration;
 		this.profileDao = profileDao;
+		sendStateTimer = new Timer((int)SYNC_STATE_TIMEOUT.toMillis(), new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                syncUserStateNOW(calCubeTimer, getMyUserstate());
+                broadcastUserstate();
+                sendStateTimer.stop();
+            }
+        });
 	}
-	
+
 	public void updateStrings() {
 		login.setTitle(StringAccessor.getString("IRCClientGUI.connect"));
 		nameLabel.setText(StringAccessor.getString("IRCClientGUI.name"));
@@ -137,11 +190,9 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		
 		clientFrame.setTitle(StringAccessor.getString("IRCClientGUI.title") + " " + IRCClientGUI.class.getPackage().getImplementationVersion());
 		updateStatusBar();
-		
-		for(PMMessageFrame f : pmFrames.values())
-			f.updateTitle();
-		for(ChatMessageFrame f : channelFrames.values())
-			f.updateStrings();
+
+		pmFrames.values().forEach(PMMessageFrame::updateTitle);
+		channelFrames.values().forEach(ChatMessageFrame::updateStrings);
 	}
 
 	@Override
@@ -169,12 +220,6 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 			} catch(PropertyVetoException ignored) {}
 		}
 	}
-
-	JTextField nameField;
-	JTextField nickField;
-	URLHistoryBox server;
-	JButton connectButton;
-	JLabel nameLabel, nickLabel, serverLabel;
 
 	private JPanel getLoginPanel() {
 		JPanel login = new JPanel(new GridBagLayout());
@@ -215,7 +260,18 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		c.weightx = 1;
 		c.gridwidth = 2;
 		login.add(connectButton = new JButton(), c);
-		connectButton.addActionListener(this);
+		connectButton.addActionListener(e -> {
+            Object src = e.getSource();
+            if(src == connectButton) {
+                if (!connecting) {
+                    setConnecting(true);
+                    serverFrame.setVisible(true);
+                    String url = (String) server.getSelectedItem();
+
+                    forkConnect(url);
+                }
+            }
+        });
 		
 		nickField.getDocument().addDocumentListener(this);
 		nameField.getDocument().addDocumentListener(this);
@@ -257,22 +313,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 			}
 		}.start();
 	}
-	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Object src = e.getSource();
-		if(src == connectButton) {
-			if(connecting) {
-			} else {
-				setConnecting(true);
-				serverFrame.setVisible(true);
-				String url = (String) server.getSelectedItem();
-				
-				forkConnect(url);
-			}
-		}
-	}
-	
+
 	private void cancelConnecting() {
 		connectThread.stop();
 		setConnecting(false);
@@ -294,62 +335,6 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 			}
 			updateStatusBar();
 		}
-	}
-
-	//This is going to just stay in English
-	public static final HashMap<String, String> cmdHelp = new HashMap<String, String>();
-	private static final String CMD_JOIN = "/join";
-	{
-		cmdHelp.put(CMD_JOIN, "/join (#CHANNEL)" + "\nJoins #CHANNEL (optional if you're typing " +
-				"the command from the channel you wish to join). The # sign is optional.");
-	}
-	private static final String CMD_QUIT = "/quit";
-	{
-		cmdHelp.put(CMD_QUIT, "/quit (REASON)");
-	}
-	private static final String CMD_CONNECT = "/connect";
-	{
-		cmdHelp.put(CMD_CONNECT, "/server (SERVER)");
-	}
-	private static final String CMD_MESSAGE = "/msg";
-	{
-		cmdHelp.put(CMD_MESSAGE, "/msg NICK MESSAGE");
-	}
-	private static final String CMD_PART = "/part";
-	{
-		cmdHelp.put(CMD_PART, "/part (#CHANNEL) (REASON)" + "\nLeaves #CHANNEL (optional if you're typing " +
-				"the command from the channel you wish to part). The # sign is required. You may also " +
-				"specify a REASON for people to see when you leave." );
-	}
-	private static final String CMD_NICK = "/nick";
-	{
-		cmdHelp.put(CMD_NICK, "/nick NEWNICK");
-	}
-	private static final String CMD_CLEAR = "/clear";
-	{
-		cmdHelp.put(CMD_CLEAR, "/clear");
-	}
-	private static final String CMD_WHOIS = "/whois";
-	{
-		cmdHelp.put(CMD_WHOIS, "/whois NICK");
-	}
-	private static final String CMD_ME = "/me";
-	{
-		cmdHelp.put(CMD_ME, "/me ACTION");
-	}
-	private static final String CMD_CHANNELS = "/channels";
-	{
-		cmdHelp.put(CMD_CHANNELS, "/channels");
-	}
-	private static final String CMD_CCTSTATS = "/cctstats";
-	{
-		cmdHelp.put(CMD_CCTSTATS, "/cctstats #COMMCHANNEL" + "\n" + "Sets the channel used for communication of CCT status between CCT users. "
-				+ "Only use this if the default channel isn't working, perhaps because everyone else is connected to a different channel. "
-				+ "You must type this command from a channel which you want to display everyone's CCT status.");
-	}
-	private static final String CMD_HELP = "/help";
-	{
-		cmdHelp.put(CMD_HELP, "/help (COMMAND)");
 	}
 
 	@Override
@@ -480,29 +465,42 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		}
 	}
 
+	public static final Map<String, String> cmdHelp = ImmutableMap.<String, String>builder()
+			.put(CMD_JOIN, "/join (#CHANNEL)" + "\nJoins #CHANNEL (optional if you're typing " +
+					"the command from the channel you wish to join). The # sign is optional.")
+			.put(CMD_QUIT, "/quit (REASON)")
+			.put(CMD_CONNECT, "/server (SERVER)")
+			.put(CMD_MESSAGE, "/msg NICK MESSAGE")
+			.put(CMD_PART, "/part (#CHANNEL) (REASON)" + "\nLeaves #CHANNEL (optional if you're typing " +
+				"the command from the channel you wish to part). The # sign is required. You may also " +
+				"specify a REASON for people to see when you leave." )
+			.put(CMD_NICK, "/nick NEWNICK")
+			.put(CMD_CLEAR, "/clear")
+			.put(CMD_WHOIS, "/whois NICK")
+			.put(CMD_ME, "/me ACTION")
+			.put(CMD_CHANNELS, "/channels")
+			.put(CMD_CCTSTATS, "/cctstats #COMMCHANNEL" + "\n" + "Sets the channel used for communication of CCT status between CCT users. "
+					+ "Only use this if the default channel isn't working, perhaps because everyone else is connected to a different channel. "
+					+ "You must type this command from a channel which you want to display everyone's CCT status.")
+			.put(CMD_HELP, "/help (COMMAND)")
+			.build();
+
 	@Override
 	public void scramblesImported(final MessageFrame src, ScrambleVariation sv, List<Scramble> scrambles, Profile profile) {
-		if(cct == null) {
-			LOG.info(scrambles);
-			return;
-		}
-		cct.importScrambles(sv, scrambles, profile);
-		SwingUtilities.invokeLater(() -> {
-            clientFrame.toFront(); // this is to keep the scramble frame from stealing focus
-        });
+		scrambleImporter.importScrambles(sv, scrambles, profile, /*todo scramblesList*/null);
+		// this is to keep the scramble frame from stealing focus
+		SwingUtilities.invokeLater(clientFrame::toFront);
 	}
 
 	private void messageReceived(final String nick, final String msg, final String channel) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				if(channelFrames.containsKey(channel))
-					channelFrames.get(channel).appendMessage(nick, msg);
-				else if(commChannelMap.containsKey(channel))
-					cctStatusUpdate(nick, msg, commChannelMap.get(channel));
-				else
-					assert false : channel; //channel must be either a chat or comm channel!
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            if(channelFrames.containsKey(channel))
+                channelFrames.get(channel).appendMessage(nick, msg);
+            else if(commChannelMap.containsKey(channel))
+                cctStatusUpdate(nick, msg, commChannelMap.get(channel));
+            else
+                assert false : channel; //channel must be either a chat or comm channel!
+        });
 	}
 
 	private void privateMessage(String nick, String msg) {
@@ -511,36 +509,31 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		bot.sendMessage(nick, msg);
 	}
 
+	@Override
 	public void onPrivateMessage(final String sender, String login, String hostname, final String message) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				JInternalFrame old = desk.getSelectedFrame();
-				MessageFrame f = getPMFrame(sender);
-				desk.add(f);
-				f.setVisible(true);
-				if(old != null) {
-					try {
-						old.setSelected(true);
-					} catch(PropertyVetoException e) {}
-				}
-				f.appendMessage(sender, message);
-			}
-		});
+		SwingUtilities.invokeLater(() -> {
+            JInternalFrame old = desk.getSelectedFrame();
+            MessageFrame f = getPMFrame(sender);
+            desk.add(f);
+            f.setVisible(true);
+            if(old != null) {
+                try {
+                    old.setSelected(true);
+                } catch(PropertyVetoException e) {}
+            }
+            f.appendMessage(sender, message);
+        });
 	}
 	
 	private PMMessageFrame getPMFrame(String nick) {
 		PMMessageFrame f = pmFrames.get(nick);
 		if(f == null) {
-			f = new PMMessageFrame(desk, nick, scramblePlugin, profileDao.getSelectedProfile());
+			f = new PMMessageFrame(desk, nick, scramblePluginManager, profileDao.getSelectedProfile());
 			f.addCommandListener(this);
 			pmFrames.put(nick, f);
 		}
 		return f;
 	}
-
-	private HashMap<String, PMMessageFrame> pmFrames = new HashMap<String, PMMessageFrame>();
-	private HashMap<String, ChatMessageFrame> channelFrames = new HashMap<String, ChatMessageFrame>();
-	private HashMap<String, CCTCommChannel> commChannelMap = new HashMap<>();
 
 	@Override
 	public void onMessage(String channel, String sender, String login, String hostname, String message) {
@@ -549,9 +542,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 
 	@Override
 	public void onAction(final String sender, String login, String hostname, String target, final String action) {
-		SwingUtilities.invokeLater(() -> {
-            _onAction(sender, action);
-        });
+		SwingUtilities.invokeLater(() -> _onAction(sender, action));
 	}
 	//must be invoked from EDT!
 	private void _onAction(String sender, String action) {
@@ -559,9 +550,11 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 			f.appendInformation("* " + sender + " " + action);
 			f.setIRCUsers(bot.getUsers(f.getChannel()));
 		}
-		for(PMMessageFrame f : pmFrames.values())
-			if(f.getBuddyNick().equals(sender))
+		for(PMMessageFrame f : pmFrames.values()) {
+			if (f.getBuddyNick().equals(sender)) {
 				f.appendInformation("* " + sender + " " + action);
+			}
+		}
 	}
 	
 	@Override
@@ -578,7 +571,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
                 if(weJoined) {
                     String commChannel;
                     if(f == null) {
-                        f = new ChatMessageFrame(desk, configuration, channel, scramblePlugin, profileDao.getSelectedProfile());
+                        f = new ChatMessageFrame(desk, configuration, channel, scramblePluginManager, profileDao.getSelectedProfile());
                         channelFrames.put(channel, f);
 
                         desk.add(f);
@@ -715,6 +708,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
         });
 	}
 	
+	@Override
 	public boolean isConnected() {
 		return bot.isConnected();
 	}
@@ -737,6 +731,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
             updateStatusBar();
         });
 	}
+
 	@Override
 	public void onTopic(final String channel, final String topic, final String setBy, final long date, boolean changed) {
 		SwingUtilities.invokeLater(() -> {
@@ -773,8 +768,6 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 	public void log(String line) {
 //		serverFrame.appendInformation(line);
 	}
-	
-	private Thread connectThread;
 
 	private void forkConnect(String hostname) {
 		final String[] urlAndPort = hostname.split(":");
@@ -811,9 +804,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 						bot.disconnect();
 					else
 						onDisconnect();
-					SwingUtilities.invokeLater(() -> {
-                        serverFrame.appendError(e.toString());
-                    });
+					SwingUtilities.invokeLater(() -> serverFrame.appendError(e.toString()));
 				}
 			}
 		};
@@ -959,8 +950,7 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		statusBar.setText("<html>" + StringAccessor.getString("IRCClientGUI.status") + ": " + text + "</html>");
 	}
 
-	private CCTUser myself = new CCTUser(null, null, null); // prefix and nick don't matter here
-
+	@Override
 	public CCTUser getMyUserstate() {
 		return myself;
 	}
@@ -972,9 +962,50 @@ public class IRCClientGUI implements CommandListener, ActionListener, Configurat
 		cctStatusUpdate(bot.getNick(), msg, c);
 	}
 
+	@Override
 	public void broadcastUserstate() {
 		String msg = IRCUtils.createMessage(IRCUtils.CLIENT_USERSTATE, myself.getUserState());
-		for(CCTCommChannel c : commChannelMap.values())
+		for(CCTCommChannel c : commChannelMap.values()) {
 			sendUserstate(c, msg);
+		}
+	}
+
+	//this will start a timer to transmit the cct state every one second, if there's new information
+	@Override
+	public void sendUserstate() {
+		if(!isConnected()) {
+			sendStateTimer.stop();
+			return;
+		}
+		if(!sendStateTimer.isRunning()) {
+			sendStateTimer.start();
+		}
+	}
+
+
+	//this will sync the cct state with the client, but will not transmit the data to other users
+	void syncUserStateNOW(CALCubeTimerFrame calCubeTimerFrame, CCTUser myself) {
+		myself.setCustomization(calCubeTimerFrame.getScrambleCustomizationComboBox().getSelectedItem().toString());
+
+		myself.setLatestTime(statsModel.getCurrentStatistics().get(-1));
+
+		TimerState state = calCubeTimerFrame.getTimeLabel().getTimerState();
+		if(!calCubeTimerModel.isTiming()) {
+			state = null;
+		}
+		myself.setTimingState(calCubeTimerModel.isInspecting(), state);
+
+		Statistics stats = statsModel.getCurrentStatistics();
+		myself.setCurrentRA(stats.average(Statistics.AverageType.CURRENT, 0), stats.toTerseString(Statistics.AverageType.CURRENT, 0, true));
+		myself.setBestRA(stats.average(Statistics.AverageType.RA, 0), stats.toTerseString(Statistics.AverageType.RA, 0, false));
+		myself.setSessionAverage(new SolveTime(stats.getSessionAvg(), null, configuration));
+
+		myself.setSolvesAttempts(stats.getSolveCount(), stats.getAttemptCount());
+
+		myself.setRASize(stats.getRASize(0));
+	}
+
+	public void setCalCubeTimer(CALCubeTimerFrame calCubeTimer) {
+		this.calCubeTimer = calCubeTimer;
 	}
 }

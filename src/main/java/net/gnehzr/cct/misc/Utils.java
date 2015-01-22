@@ -2,7 +2,7 @@ package net.gnehzr.cct.misc;
 
 import com.google.common.base.Throwables;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -190,13 +190,13 @@ public class Utils {
 				null, yesNo, yesNo[0]);
 	}
 
-	public static void doInWaitingState(CALCubeTimer calCubeTimer, Runnable runnable) {
+	public static void doInWaitingState(CalCubeTimerGui calCubeTimerFrame, Runnable runnable) {
         try {
-            calCubeTimer.setWaiting(true);
+            calCubeTimerFrame.setWaiting(true);
             runnable.run();
 
         } finally {
-            calCubeTimer.setWaiting(false);
+            calCubeTimerFrame.setWaiting(false);
         }
     }
 

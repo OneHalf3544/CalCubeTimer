@@ -1,7 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -25,13 +25,13 @@ class DatabaseLoader extends DefaultHandler {
     private Profile profile;
     private final Configuration configuration;
     private final StatisticsTableModel statsModel;
-    private final ScramblePlugin scramblePlugin;
+    private final ScramblePluginManager scramblePluginManager;
 
-    public DatabaseLoader(Profile profile, Configuration configuration, StatisticsTableModel statsModel, ScramblePlugin scramblePlugin) {
+    public DatabaseLoader(Profile profile, Configuration configuration, StatisticsTableModel statsModel, ScramblePluginManager scramblePluginManager) {
         this.profile = profile;
         this.configuration = configuration;
         this.statsModel = statsModel;
-        this.scramblePlugin = scramblePlugin;
+        this.scramblePluginManager = scramblePluginManager;
     }
 
     @Override
@@ -64,7 +64,7 @@ class DatabaseLoader extends DefaultHandler {
             if (level != 2)
                 throw new SAXException("2nd level expected for session tag.");
             try {
-                session = new Session(LocalDateTime.parse(attributes.getValue("date"), configuration.getDateFormat()), configuration, scramblePlugin, statsModel);
+                session = new Session(LocalDateTime.parse(attributes.getValue("date"), configuration.getDateFormat()), configuration, scramblePluginManager, statsModel);
                 profile.puzzleDB.getPuzzleStatistics(customization).addSession(session, profile);
             } catch (DateTimeParseException e) {
                 throw new SAXException(e);

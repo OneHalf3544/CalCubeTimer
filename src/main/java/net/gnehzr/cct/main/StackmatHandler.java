@@ -1,5 +1,7 @@
 package net.gnehzr.cct.main;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -8,10 +10,12 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+@Singleton
 public class StackmatHandler implements PropertyChangeListener {
 	private TimingListener tl;
 	private final Configuration configuration;
 
+	@Inject
 	public StackmatHandler(TimingListener timingListener, StackmatInterpreter si, Configuration configuration) {
 		this.tl = timingListener;
 		this.configuration = configuration;

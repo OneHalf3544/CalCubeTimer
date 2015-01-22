@@ -7,10 +7,7 @@ import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.ProfileEditor;
 import net.gnehzr.cct.misc.dynamicGUI.AABorder;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
-import net.gnehzr.cct.scrambles.ScrambleViewComponent;
+import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
@@ -29,7 +26,7 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class ConfigurationDialog extends JDialog implements KeyListener, MouseListener, ActionListener, ItemListener, HyperlinkListener {
@@ -40,7 +37,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	private static final String[] FONT_SIZES = { "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36" };
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 	private final StatisticsTableModel statsModel;
 	private final NumberSpeaker numberSpeaker;
 
@@ -59,17 +56,17 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	JTable timesTable;
 
 	public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
-							   ScramblePlugin scramblePlugin, StatisticsTableModel statsModel, NumberSpeaker numberSpeaker, StackmatInterpreter stackmat, Timer tickTock, JTable timesTable) {
+							   ScramblePluginManager scramblePluginManager, StatisticsTableModel statsModel, NumberSpeaker numberSpeaker, StackmatInterpreter stackmat, Timer tickTock, JTable timesTable) {
 		super(parent, modal);
 		this.configuration = configuration;
 		this.profileDao = profileDao;
-		this.scramblePlugin = scramblePlugin;
+		this.scramblePluginManager = scramblePluginManager;
 		this.statsModel = statsModel;
 		this.numberSpeaker = numberSpeaker;
 		this.stackmat = stackmat;
 		this.tickTock = tickTock;
 		this.timesTable = timesTable;
-		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePlugin, profileDao);
+		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePluginManager, profileDao);
 		profilesModel = new ProfileListModel(this.profileDao);
 		createGUI();
 		setLocationRelativeTo(parent);
@@ -443,8 +440,8 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// profile settings
-				scramblePlugin.reloadLengthsFromConfiguration(defaults);
-				puzzlesModel.setContents(scramblePlugin.getScrambleCustomizations(profileDao.getSelectedProfile(), defaults));
+				scramblePluginManager.reloadLengthsFromConfiguration(defaults);
+				puzzlesModel.setContents(scramblePluginManager.getScrambleCustomizations(profileDao.getSelectedProfile(), defaults));
 				profilesModel.setContents(profileDao.getProfiles(configuration));
 			}
 		};
@@ -803,7 +800,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				LOG.info("unexpected exception", e1);
 			}
 			profileDao.setSelectedProfile(p);
-			profileDao.loadDatabase(p, scramblePlugin);
+			profileDao.loadDatabase(p, scramblePluginManager);
 
 			try {
 				configuration.loadConfiguration(p.getConfigurationFile());
@@ -929,16 +926,17 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		options.add(Box.createHorizontalGlue());
 		JScrollPane scroller = new JScrollPane(options, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroller.getHorizontalScrollBar().setUnitIncrement(10);
-		List<ScramblePlugin> scramblePlugins = scramblePlugin.getScramblePlugins();
+		Collection<Scramble> scramblePlugins = scramblePluginManager.getScramblePlugins();
 		solvedPuzzles = new ArrayList<>();
 
-		for (ScramblePlugin plugin : scramblePlugins) {
-			if (!plugin.supportsScrambleImage())
+		for (Scramble plugin : scramblePlugins) {
+			if (!plugin.supportsScrambleImage()) {
 				continue;
-			final ScrambleViewComponent puzzle = new ScrambleViewComponent(true, true, configuration);
+			}
+			final ScrambleViewComponent puzzle = new ScrambleViewComponent(true, true, configuration, scramblePluginManager);
 			solvedPuzzles.add(puzzle);
 
-			ScrambleVariation sv = new ScrambleVariation(plugin, "", configuration);
+			ScrambleVariation sv = new ScrambleVariation(plugin, "", configuration, scramblePluginManager);
 			sv.setLength(0); //this will not change the length of the real ScrambleVariation instances
 			puzzle.setScramble(sv.generateScramble(), sv);
 			puzzle.setAlignmentY(Component.CENTER_ALIGNMENT);
@@ -1106,7 +1104,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	
 	// this probably won't get used as much as apply, but it's here if you need it
 	private void cancel() {
-		scramblePlugin.reloadLengthsFromConfiguration(false);
+		scramblePluginManager.reloadLengthsFromConfiguration(false);
 		profilesModel.discardChanges();
 	}
 
@@ -1186,7 +1184,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				puzzlesModel.getContents().stream()
 						.map(ScrambleCustomization::toString)
 						.collect(Collectors.<String>toList()));
-		scramblePlugin.saveLengthsToConfiguration();
+		scramblePluginManager.saveLengthsToConfiguration();
 		for(ScrambleCustomization sc : puzzlesModel.getContents())
 			sc.saveGeneratorToConfiguration();
 

@@ -16,7 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -36,7 +36,7 @@ public class DialogWithDetails extends JDialog implements ActionListener {
 		JPanel pane = new JPanel(new BorderLayout());
 		setContentPane(pane);
 		
-		JTextArea detailsArea = new JTextArea("CCT " + CALCubeTimer.CCT_VERSION + " " + new Date() + "\n" + details, 15, 30);
+		JTextArea detailsArea = new JTextArea("CCT " + CALCubeTimerFrame.CCT_VERSION + " " + new Date() + "\n" + details, 15, 30);
 		detailsArea.putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.FALSE);
 		detailsArea.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 //		detailsArea.setLineWrap(true);

@@ -1,11 +1,13 @@
 package net.gnehzr.cct.i18n;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+@Singleton
 public class XMLGuiMessages implements MessageAccessor {
 	private static final String BUNDLE_NAME = "guiLayouts/"; 
 

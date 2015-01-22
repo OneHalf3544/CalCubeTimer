@@ -1,5 +1,6 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
 
@@ -9,6 +10,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import java.time.Duration;
 import java.util.List;
 
+@Singleton
 public class StackmatState extends TimerState {
 
 	private Boolean rightHand = false;
@@ -26,16 +28,6 @@ public class StackmatState extends TimerState {
 		invertedMin = minutes;
 		invertedSec = seconds;
 		invertedHun = hundredths;
-	}
-
-	public static boolean isInvertedMinutes() {
-		return invertedMin;
-	}
-	public static boolean isInvertedSeconds() {
-		return invertedSec;
-	}
-	public static boolean isInvertedHundredths() {
-		return invertedHun;
 	}
 
 	@Inject
@@ -78,6 +70,7 @@ public class StackmatState extends TimerState {
 
 		leftHand = (temp == 6);
 		rightHand = (temp == 9);
+
 		if(temp == 24 || temp == 16) {
 			leftHand = true;
 			rightHand = true;

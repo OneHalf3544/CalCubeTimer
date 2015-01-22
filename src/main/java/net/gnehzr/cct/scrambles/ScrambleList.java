@@ -1,44 +1,25 @@
 package net.gnehzr.cct.scrambles;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 public class ScrambleList {
 
-	public ScrambleList(ScramblePlugin scramblePlugin) {
-		this.scramblePlugin = scramblePlugin;
-		this.scrambleCustomisation = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
-	}
-
-	public static class ScrambleString {
-		private String scramble;
-		private boolean imported;
-		private int length;
-		public ScrambleString(String scramble, boolean imported, int length) {
-			this.scramble = scramble;
-			this.imported = imported;
-			this.length = length;
-		}
-		public String getScramble() {
-			return scramble;
-		}
-		public boolean isImported() {
-			return imported;
-		}
-		public int getLength() {
-			return length;
-		}
-		public String toString() {
-			return scramble;
-		}
-	}
-
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 	private List<ScrambleString> scrambles = new ArrayList<>();
 	private ScrambleCustomization scrambleCustomisation;
 	private int scrambleNumber = 0;
+
+	@Inject
+	public ScrambleList(ScramblePluginManager scramblePluginManager) {
+		this.scramblePluginManager = scramblePluginManager;
+		this.scrambleCustomisation = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
+	}
 
 	@NotNull
 	public ScrambleCustomization getScrambleCustomization() {
@@ -47,12 +28,12 @@ public class ScrambleList {
 	//this should only be called if we're on the last scramble in this list
 	public void setScrambleCustomization(ScrambleCustomization scrambleCustomization) {
 		if(scrambleCustomization == null) {
-			scrambleCustomization = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
+			scrambleCustomization = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
 		}
 		if(scrambleCustomisation == null || !scrambleCustomization.getScrambleVariation().equals(scrambleCustomisation.getScrambleVariation())) {
 			removeLatestAndFutureScrambles();
 		}
-		if(!scrambleCustomization.equals(scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION)) {
+		if(!scrambleCustomization.equals(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION)) {
 			scrambleCustomisation = scrambleCustomization;
 		}
 	}

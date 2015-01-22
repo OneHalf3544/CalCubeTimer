@@ -1,14 +1,11 @@
 package net.gnehzr.cct.main;
 
-import java.awt.Component;
-
-import javax.swing.Icon;
-import javax.swing.JList;
-
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
-
 import org.jvnet.substance.api.renderers.SubstanceDefaultListCellRenderer;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRenderer {
 	private boolean icons;
@@ -33,7 +30,7 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 				i = sv.getImage();
 			String bolded = sv.getVariation();
 			if(bolded.isEmpty())
-				bolded = sv.getScramblePlugin().getPuzzleName();
+				bolded = sv.getPlugin().getPuzzleName();
 			val = "<html><b>" + bolded + "</b>";  
 			if(customization != null && customization.getCustomization() != null)
 				val += ":" + customization.getCustomization(); 

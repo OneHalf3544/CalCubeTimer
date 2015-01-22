@@ -2,7 +2,7 @@ package net.gnehzr.cct.umts.cctbot;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.logging.CCTLog;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.statistics.ProfileDao;
 import net.gnehzr.cct.umts.IRCListener;
@@ -28,11 +28,11 @@ public class CCTBot implements IRCListener {
 	private HashMap<String, Integer> scrambleMaxMap = new HashMap<String, Integer>();
 	private String cctCommChannel = null;
 	private KillablePircBot bot;
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 	private final Configuration configuration;
 
-	public CCTBot(ScramblePlugin scramblePlugin, Configuration configuration) {
-		this.scramblePlugin = scramblePlugin;
+	public CCTBot(ScramblePluginManager scramblePluginManager, Configuration configuration) {
+		this.scramblePluginManager = scramblePluginManager;
 		this.configuration = configuration;
 		bot = getKillableBot();
 	}
@@ -67,7 +67,7 @@ public class CCTBot implements IRCListener {
 					} catch(NumberFormatException e) {}
 				}
 
-				ScrambleVariation sv = scramblePlugin.getBestMatchVariation(varAndCount[0]);
+				ScrambleVariation sv = scramblePluginManager.getBestMatchVariation(varAndCount[0]);
 				if(sv != null) {
 					while(count-- > 0) {
 						//TODO - add generator support
@@ -157,7 +157,7 @@ public class CCTBot implements IRCListener {
 	}
 
 	private String getAvailableVariations() {
-		return "Available variations: " + Arrays.toString(scramblePlugin.getScrambleVariations());
+		return "Available variations: " + Arrays.toString(scramblePluginManager.getScrambleVariations());
 	}
 
 	private static void printUsage() {
@@ -175,7 +175,7 @@ public class CCTBot implements IRCListener {
 	}
 	
 	static Logger logger = CCTLog.getLogger("net.gnehzr.cct.umts.cctbot.CCTBot");
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException {
 		
 		logger.info("CCTBot " + CCTBot.class.getPackage().getImplementationVersion());
 		logger.info("Arguments " + Arrays.toString(args));
@@ -220,13 +220,10 @@ public class CCTBot implements IRCListener {
 				printUsage();
 				return;
 			}
-				//TODO - fix this! and compile w/ cube explorer jar file
-//		logger.info("Setting security manager");
-//		System.setSecurityManager(new ScrambleSecurityManager(TimeoutJob.PLUGIN_LOADER));
 
 		Configuration configuration = new Configuration(Configuration.getRootDirectory());
 		ProfileDao profileDao = new ProfileDao(null, configuration, null, null);
-		CCTBot cctbot = new CCTBot(new ScramblePlugin(configuration, "lsdjflksd"), configuration);
+		CCTBot cctbot = new CCTBot(new ScramblePluginManager(configuration), configuration);
 
 		if(argMap.containsKey("p"))
 			if(argMap.get("p").length() == 1)
@@ -342,7 +339,7 @@ public class CCTBot implements IRCListener {
 				continue;
 			} else if(command.equalsIgnoreCase(CMD_RELOAD)) {
 				logger.info("Reloading scramble plugins...");
-				scramblePlugin.clearScramblePlugins();
+				scramblePluginManager.clearScramblePlugins();
 				logger.info(getAvailableVariations());
 				continue;
 			} else if(command.equalsIgnoreCase(CMD_CHANNELS)) {

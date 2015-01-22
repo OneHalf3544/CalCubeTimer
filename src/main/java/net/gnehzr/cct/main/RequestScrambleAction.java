@@ -12,8 +12,8 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class RequestScrambleAction extends AbstractAction {
-	private CALCubeTimer cct;
-	public RequestScrambleAction(CALCubeTimer cct){
+	private CALCubeTimerFrame cct;
+	public RequestScrambleAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}
 

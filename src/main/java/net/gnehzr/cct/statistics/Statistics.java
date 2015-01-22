@@ -53,6 +53,7 @@ public class Statistics implements SolveCounter {
 			this.oldTypes = oldTypes;
 			this.newTypes = newTypes;
 		}
+		@Override
 		public void doEdit() {
 			if(row != -1) { //changed type
 				times.get(row).setTypes(newTypes);

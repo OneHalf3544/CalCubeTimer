@@ -1,5 +1,7 @@
 package net.gnehzr.cct.main;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -7,7 +9,7 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 
@@ -23,22 +25,24 @@ import java.awt.event.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Singleton
 public class ScrambleArea extends JScrollPane implements ComponentListener, HyperlinkListener, MouseListener, MouseMotionListener {
 
 	private static final Logger LOG = Logger.getLogger(ScrambleArea.class);
 
-	private ScrambleFrame scramblePopup;
+	private ScramblePopupFrame scramblePopup;
 	private JEditorPane scramblePane = null;
 	private JPopupMenu success;
 	private JLabel successMsg;
 	private final Configuration configuration;
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 
-	public ScrambleArea(ScrambleFrame scramblePopup, Configuration configuration, ScramblePlugin scramblePlugin) {
+	@Inject
+	public ScrambleArea(ScramblePopupFrame scramblePopup, Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		super(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		this.scramblePopup = scramblePopup;
 		this.configuration = configuration;
-		this.scramblePlugin = scramblePlugin;
+		this.scramblePluginManager = scramblePluginManager;
 		this.putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.FALSE);
 		scramblePane = new JEditorPane("text/html", null) { 
 			@Override
@@ -161,7 +165,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 		while((m = regex.matcher(s)).matches()){
 			String str = m.group(1).trim();
 			plainScramble.append(" ").append(str);
-			part3.append("<a id='").append(num).append("' href=\"").append(num).append(plainScramble).append("\"><span>").append(currentCustomization.getScramblePlugin().htmlify(" " + str)).append("</span></a>");     
+			part3.append("<a id='").append(num).append("' href=\"").append(num).append(plainScramble).append("\"><span>").append(currentCustomization.getScramblePlugin().htmlify(" " + str)).append("</span></a>");
 			s = m.group(2).trim();
 			num++;
 		}
@@ -175,6 +179,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 			par.validate();
 	}
 
+	@Override
 	public void hyperlinkUpdate(HyperlinkEvent e) {
 		if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
 			incrScramble = e.getDescription();
@@ -191,7 +196,7 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 			try {
 				s = currentCustomization.generateScramble(incrScramble);
 			} catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
-				currentCustomization = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION;
+				currentCustomization = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
 				try {
 					s = currentCustomization.generateScramble(incrScramble);
 				} catch (InvalidScrambleException e1) {

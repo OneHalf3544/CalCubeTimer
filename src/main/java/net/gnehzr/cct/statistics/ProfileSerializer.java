@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 
+@Singleton
 public class ProfileSerializer {
 
     private static final Logger LOG = Logger.getLogger(ProfileSerializer.class);

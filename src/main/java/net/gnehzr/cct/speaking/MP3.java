@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.util.Objects;
 
 public class MP3 {
 
@@ -32,43 +33,34 @@ public class MP3 {
 
 	private Player player;
 
-    // constructor that takes the name of an MP3 file
-    public MP3(InputStream fis) throws Exception {
-    	if(fis == null) {
-    		throw new Exception("File not found!");
-    	}
+    public MP3(InputStream fis) {
+		Objects.requireNonNull(fis, "File not found!");
+
     	try {
 	        BufferedInputStream bis = new BufferedInputStream(fis);
 		    player = new Player(bis);
-	    } catch (Exception e) {
-	    	throw new Exception("Problem playing file: " + e.getLocalizedMessage());
+	    } catch (JavaLayerException e) {
+	    	throw new RuntimeException("Problem playing file: " + e.getLocalizedMessage(), e);
 	    }
     }
-    
-    public MP3(String file) throws Exception {
-//    	this(new FileInputStream(file));
+
+    // constructor that takes the name of an MP3 file
+    public MP3(String file) {
     	this(MP3.class.getResourceAsStream(file));
     }
 
-    public void close() { if (player != null) player.close(); }
+    public void close() {
+		if (player != null) {
+			player.close();
+		}
+	}
 
     // play the MP3 file to the sound card
     public void play() throws JavaLayerException {
-    	if(player == null)
-    		throw new JavaLayerException();
+    	if(player == null) {
+			throw new JavaLayerException();
+		}
     	player.play();
     }
 
-
-    // test client
-    public static void main(String[] args) {
-		for(int ch = 0; ch < 20; ch++) {
-			try {
-				MP3 mp3 = new MP3(ch + ".mp3");
-				mp3.play();
-			} catch (Exception e) {
-				LOG.info("unexpected exception", e);
-			}
-		}
-    }
 }

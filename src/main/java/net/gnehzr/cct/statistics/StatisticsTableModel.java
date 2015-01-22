@@ -1,12 +1,14 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,12 +19,27 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
+@Singleton
 public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
+
+	private static final Logger LOG = Logger.getLogger(StatisticsTableModel.class);
+
 	Statistics stats;
 
 	private Session session;
 
 	private final Configuration configuration;
+
+	private UndoRedoListener undoRedoListener;
+
+	private String[] columnNames = new String[] { "StatisticsTableModel.times", "StatisticsTableModel.ra0", "StatisticsTableModel.ra1", "StatisticsTableModel.comment", "StatisticsTableModel.tags" };
+	private Class<?>[] columnClasses = new Class<?>[] { SolveTime.class, SolveTime.class, SolveTime.class, String.class, String.class };
+
+	private JMenuItem edit, discard;
+	private DraggableJTable timesTable;
+	private Component prevFocusOwner;
+	private Map<SolveType, JMenuItem> typeButtons;
+	private List<StatisticsUpdateListener> statsListeners = new ArrayList<>();
 
 	@Inject
 	public StatisticsTableModel(Configuration configuration) {
@@ -52,13 +69,9 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		return stats;
 	}
 
-	private UndoRedoListener undoRedoListener;
-
-	public void setUndoRedoListener(UndoRedoListener l) {
-		this.undoRedoListener = l;
+	public void setUndoRedoListener(@NotNull UndoRedoListener l) {
+		this.undoRedoListener = Objects.requireNonNull(l);
 	}
-
-	private List<StatisticsUpdateListener> statsListeners = new ArrayList<>();
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener l) {
 		//This nastyness is to ensure that PuzzleStatistics have had a chance to see the change (see notifyListeners() in Statistics)
@@ -68,38 +81,42 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		else
 			statsListeners.add(l);
 	}
+
 	public void removeStatisticsUpdateListener(StatisticsUpdateListener l) {
 		statsListeners.remove(l);
 	}
 
 	//this is needed to update the i18n text
 	public void fireStringUpdates() {
+		LOG.debug("StatisticsTableModel.fireStringUpdates()");
 		statsListeners
 				.forEach(StatisticsUpdateListener::update);
 		undoRedoListener.refresh();
 	}
-	
-	private String[] columnNames = new String[] { "StatisticsTableModel.times", "StatisticsTableModel.ra0", "StatisticsTableModel.ra1", "StatisticsTableModel.comment", "StatisticsTableModel.tags" };
-	private Class<?>[] columnClasses = new Class<?>[] { SolveTime.class, SolveTime.class, SolveTime.class, String.class, String.class };
 	@Override
 	public String getColumnName(int column) {
 		return StringAccessor.getString(columnNames[column]);
 	}
+
 	@Override
 	public int getColumnCount() {
 		return columnNames.length;
 	}
+
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return columnClasses[columnIndex];
 	}
+
 	public int getSize() {
 		return getRowCount();
 	}
+
 	@Override
 	public int getRowCount() {
 		return stats == null ? 0 : stats.getAttemptCount();
 	}
+
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		switch(columnIndex) {
@@ -169,11 +186,6 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		if(prevFocusOwner != null)
 			prevFocusOwner.requestFocusInWindow();
 	}
-
-	private JMenuItem edit, discard;
-	private DraggableJTable timesTable;
-	private Component prevFocusOwner;
-	private Map<SolveType, JMenuItem> typeButtons;
 
 	@Override
 	public void showPopup(MouseEvent e, DraggableJTable timesTable, Component prevFocusOwner) {

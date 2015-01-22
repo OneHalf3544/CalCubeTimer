@@ -1,6 +1,7 @@
 package net.gnehzr.cct.umts.cctbot;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.SolveTime;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Singleton
 public class CCTUser {
 	private final Configuration configuration;
 	private String prefix;

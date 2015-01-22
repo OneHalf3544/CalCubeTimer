@@ -4,7 +4,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.main.ScrambleChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.ProfileDao;
 import net.gnehzr.cct.statistics.ProfileDatabase;
 import net.gnehzr.cct.statistics.Session;
@@ -19,7 +19,7 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
 
-	public SessionsTable(StatisticsTableModel statsModel, Configuration configuration, ScramblePlugin scramblePlugin, ProfileDao profileDao) {
+	public SessionsTable(StatisticsTableModel statsModel, Configuration configuration, ScramblePluginManager scramblePluginManager, ProfileDao profileDao) {
 		super(configuration, false, true);
 		this.statsModel = statsModel;
 		this.configuration = configuration;
@@ -33,9 +33,9 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		this.setDefaultRenderer(Integer.class, r); //for some reason, Object.class is not capturing the Solve count row
 		
 		this.setDefaultEditor(ScrambleCustomization.class, new DefaultCellEditor(
-				new ScrambleChooserComboBox(false, true, scramblePlugin, configuration, profileDao)));
-		this.setDefaultRenderer(ScrambleCustomization.class, new ScrambleChooserComboBox(false, true, scramblePlugin, configuration, profileDao));
-		this.setRowHeight(new ScrambleChooserComboBox(false, true, scramblePlugin, configuration, profileDao).getPreferredSize().height);
+				new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao)));
+		this.setDefaultRenderer(ScrambleCustomization.class, new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao));
+		this.setRowHeight(new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao).getPreferredSize().height);
 		super.setSelectionListener(this);
 		configuration.addConfigurationChangeListener((p) -> { refreshModel(); });
 		super.sortByColumn(-1); //this will sort column 0 in descending order

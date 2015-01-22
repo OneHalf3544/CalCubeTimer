@@ -12,8 +12,8 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class KeyboardTimingAction extends AbstractAction {
-	private CALCubeTimer cct;
-	public KeyboardTimingAction(CALCubeTimer cct){
+	private CALCubeTimerFrame cct;
+	public KeyboardTimingAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}
 

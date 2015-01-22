@@ -1,27 +1,26 @@
 package scramblePlugins;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+import net.gnehzr.cct.scrambles.Scramble;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.gnehzr.cct.scrambles.Scramble;
-
-@SuppressWarnings("unused")
 public class SquareOneScramble extends Scramble {
+
 	private static final String[][] FACE_NAMES_COLORS =
 	{ { "L",	  "B", 		"R", 	  "F",		"U",	  "D" },
 	  { "ffff00", "ff0000", "0000ff", "ffc800", "ffffff", "00ff00" } };
+
 	private static final String PUZZLE_NAME = "Square-1";
 	private static final int[] DEFAULT_LENGTHS = { 40 };
 	private static final int DEFAULT_UNIT_SIZE = 32;
@@ -33,24 +32,89 @@ public class SquareOneScramble extends Scramble {
 	private int[] state, turns;
 	private boolean slashes;
 
-	public SquareOneScramble(String variation, int length, String generatorGroup, String... attrs) {
-		this(length, generatorGroup, attrs);
+	public SquareOneScramble() {
+		this(0, null, Collections.<String>emptyList());
 	}
 
-	private SquareOneScramble(int length, String generatorGroup, String... attrs) {
+	private SquareOneScramble(int length, String generatorGroup, List<String> attrs) {
+		super(PUZZLE_NAME);
 		this.length = length;
 		setGenerator(generatorGroup);
 		setAttributes(attrs);
 	}
 
-	public SquareOneScramble(String variation, String s, String generatorGroup, String... attrs) throws InvalidScrambleException {
+	public SquareOneScramble(String s, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
 		super(s);
 		setGenerator(generatorGroup);
 		if(!setAttributes(attrs))
 			throw new InvalidScrambleException(s);
 	}
 
-	private boolean setAttributes(String... attributes) {
+	@Override
+	public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+		return new SquareOneScramble(scramble, generatorGroup, attributes);
+	}
+
+	@Override
+	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
+		return new SquareOneScramble(length, generatorGroup, attributes);
+	}
+
+	@Override
+	public boolean supportsScrambleImage() {
+		return false;
+	}
+
+	@Override
+	public String htmlify(String formatMe) {
+		return formatMe;
+	}
+
+	@Override
+	protected String[][] getFaceNamesColors() {
+		return FACE_NAMES_COLORS;
+	}
+
+	@Override
+	public int getDefaultUnitSize() {
+		return DEFAULT_UNIT_SIZE;
+	}
+
+	@NotNull
+	@Override
+	public String[] getVariations() {
+		return NULL_SCRAMBLE.getVariations();
+	}
+
+	@NotNull
+	@Override
+	protected int[] getDefaultLengths() {
+		return DEFAULT_LENGTHS;
+	}
+
+	@NotNull
+	@Override
+	public List<String> getAttributes() {
+		return Arrays.asList(ATTRIBUTES);
+	}
+
+	@NotNull
+	@Override
+	public List<String> getDefaultAttributes() {
+		return NULL_SCRAMBLE.getDefaultAttributes();
+	}
+
+	@Override
+	public Pattern getTokenRegex() {
+		return TOKEN_REGEX;
+	}
+
+	@Override
+	public String[] getDefaultGenerators() {
+		return DEFAULT_GENERATORS;
+	}
+
+	private boolean setAttributes(List<String> attributes) {
 		slashes = false;
 		for(String attr : attributes)
 			if(attr.equals(ATTRIBUTES[0]))
@@ -217,6 +281,7 @@ public class SquareOneScramble extends Scramble {
 		return true;
 	}
 
+	@Override
 	public BufferedImage getScrambleImage(int gap, int radius, Color[] colorScheme) {
 		Dimension dim = getImageSize(gap, radius, null);
 		int width = dim.width;
@@ -362,7 +427,7 @@ public class SquareOneScramble extends Scramble {
 		return new GeneralPath[]{ p, side1, side2 };
 	}
 
-	public static Dimension getImageSize(int gap, int radius, String variation) {
+	public Dimension getImageSize(int gap, int radius, String variation) {
 		return new Dimension(getWidth(gap, radius), getHeight(gap, radius));
 	}
 	private static final double RADIUS_MULTIPLIER = Math.sqrt(2) * Math.cos(Math.toRadians(15));
@@ -372,12 +437,12 @@ public class SquareOneScramble extends Scramble {
 	private static int getHeight(int gap, int radius) {
 		return (int) (4 * RADIUS_MULTIPLIER * multiplier * radius);
 	}
-	public static int getNewUnitSize(int width, int height, int gap, String variation) {
+	public int getNewUnitSize(int width, int height, int gap, String variation) {
 		return (int) Math.round(Math.min(width / (2 * RADIUS_MULTIPLIER * multiplier), height / (4 * RADIUS_MULTIPLIER * multiplier)));
 	}
 
 	//***NOTE*** this works only for the simple case where the puzzle is a cube
-	public static Shape[] getFaces(int gap, int radius, String variation) {
+	public Shape[] getFaces(int gap, int radius, String variation) {
 		int width = getWidth(gap, radius);
 		int height = getHeight(gap, radius);
 		double half_width = (radius * RADIUS_MULTIPLIER) / Math.sqrt(2);

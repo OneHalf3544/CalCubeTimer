@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.misc.Utils;
 
 import java.awt.*;
@@ -42,7 +42,7 @@ public class SortedProperties {
 		try (FileOutputStream propsOut = new FileOutputStream(f)) {
 			Properties properties = new Properties();
 			properties.putAll(this.properties);
-			properties.store(propsOut, "CCT " + CALCubeTimer.CCT_VERSION + " Properties File");
+			properties.store(propsOut, "CCT " + CALCubeTimerFrame.CCT_VERSION + " Properties File");
 		}
 	}
 

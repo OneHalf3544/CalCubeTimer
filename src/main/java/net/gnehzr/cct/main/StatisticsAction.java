@@ -20,7 +20,7 @@ class StatisticsAction extends AbstractAction {
 	private StatisticsTableModel model;
 	private Statistics.AverageType type;
 	private int num;
-	public StatisticsAction(CALCubeTimer cct, StatisticsTableModel model, Statistics.AverageType type, int num,
+	public StatisticsAction(CALCubeTimerFrame cct, StatisticsTableModel model, Statistics.AverageType type, int num,
 							Configuration configuration){
 		statsHandler = new StatsDialogHandler(cct, configuration);
 		this.model = model;

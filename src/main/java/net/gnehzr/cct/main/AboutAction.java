@@ -20,7 +20,7 @@ class AboutAction extends AbstractAction {
 	private AboutScrollFrame makeMeVisible;
 	public AboutAction() {
 		try {
-			makeMeVisible = new AboutScrollFrame(CALCubeTimer.class.getResource("about.html"), CALCubeTimer.cubeIcon.getImage());
+			makeMeVisible = new AboutScrollFrame(CALCubeTimerFrame.class.getResource("about.html"), CALCubeTimerFrame.CUBE_ICON.getImage());
 			setEnabled(true);
 		} catch (Exception e1) {
 			LOG.info("unexpected exception", e1);
@@ -30,7 +30,7 @@ class AboutAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		makeMeVisible.setTitle(StringAccessor.getString("CALCubeTimer.about") + CALCubeTimer.CCT_VERSION);
+		makeMeVisible.setTitle(StringAccessor.getString("CALCubeTimer.about") + CALCubeTimerFrame.CCT_VERSION);
 		makeMeVisible.setVisible(true);
 	}
 }

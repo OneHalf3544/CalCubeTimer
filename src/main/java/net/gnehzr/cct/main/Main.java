@@ -1,18 +1,24 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.*;
+import com.google.inject.Binder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.name.Names;
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScrambleSecurityManager;
-import net.gnehzr.cct.scrambles.TimeoutJob;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.umts.ircclient.IRCClient;
+import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
 import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.lafwidget.utils.LafConstants;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
 import javax.swing.*;
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
 
@@ -28,15 +34,31 @@ public class Main implements Module {
 
     private static final Logger LOG = Logger.getLogger(Main.class);
 
-    static ScrambleSecurityManager SCRAMBLE_SECURITY_MANAGER;
-
     @Override
     public void configure(Binder binder) {
+        binder.bind(CalCubeTimerModel.class).to(CalCubeTimerModelImpl.class).asEagerSingleton();
+        binder.bind(StackmatHandler.class).asEagerSingleton();
+        binder.bind(IRCClient.class).to(IRCClientGUI.class);
+
+        binder.bind(CalCubeTimerGui.class).to(CALCubeTimerFrame.class).asEagerSingleton();
+
+        binder.bind(NewSessionAction.class).asEagerSingleton();
+        binder.bind(ToggleScramblePopupAction.class).asEagerSingleton();
+        binder.bind(ConnectToIRCServerAction.class).asEagerSingleton();
+        binder.bind(ExportScramblesAction.class).asEagerSingleton();
+        binder.bind(ImportScramblesAction.class).asEagerSingleton();
+
+        binder.bind(TimingListener.class).to(TimingListenerImpl.class);
+        binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class);
+        binder.bind(TimerLabel.class).annotatedWith(Names.named("bigTimersDisplay")).to(TimerLabel.class);
     }
 
     public static void main(String[] args) {
         LOG.info("start CalCubeTimer");
         DefaultUncaughtExceptionHandler.initialize();
+
+        JDialog.setDefaultLookAndFeelDecorated(false);
+        JFrame.setDefaultLookAndFeelDecorated(false);
 
         Injector injector = Guice.createInjector(new Main());
 
@@ -49,8 +71,10 @@ public class Main implements Module {
         }
 
         Configuration configuration = injector.getInstance(Configuration.class);
+
         ProfileDao profileDao = injector.getInstance(ProfileDao.class);
-        CALCubeTimer calCubeTimer = injector.getInstance(CALCubeTimer.class);
+        CALCubeTimerFrame calCubeTimerFrame = injector.getInstance(CALCubeTimerFrame.class);
+        CalCubeTimerModelImpl calCubeTimerModel = injector.getInstance(CalCubeTimerModelImpl.class);
 
         if(args.length == 1) {
             File startupProfileDir = new File(args[0]);
@@ -63,9 +87,6 @@ public class Main implements Module {
                 profileDao.setSelectedProfile(commandedProfile);
             }
         }
-
-        SCRAMBLE_SECURITY_MANAGER = new ScrambleSecurityManager(TimeoutJob.PLUGIN_LOADER, configuration);
-        System.setSecurityManager(SCRAMBLE_SECURITY_MANAGER);
 
         SwingUtilities.invokeLater(() -> {
             String errors = configuration.getStartupErrors();
@@ -81,21 +102,28 @@ public class Main implements Module {
 
             JDialog.setDefaultLookAndFeelDecorated(true);
             JFrame.setDefaultLookAndFeelDecorated(true);
-            calCubeTimer.setLookAndFeel();
+            calCubeTimerFrame.setLookAndFeel();
 
             UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
             UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
             UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
             UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
 
-            calCubeTimer.setTitle("CCT " + CALCubeTimer.CCT_VERSION);
-            calCubeTimer.setIconImage(CALCubeTimer.cubeIcon.getImage());
-            calCubeTimer.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            calCubeTimer.setSelectedProfile(profileDao.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
+            calCubeTimerFrame.setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
+            calCubeTimerFrame.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
+            calCubeTimerFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            calCubeTimerFrame.setSelectedProfile(profileDao.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
 
-            calCubeTimer.setVisible(true);
+            calCubeTimerFrame.setVisible(true);
 
-            Runtime.getRuntime().addShutdownHook(new Thread(calCubeTimer::prepareForProfileSwitch));
+            Runtime.getRuntime().addShutdownHook(new Thread(calCubeTimerModel::prepareForProfileSwitch));
+
+
+            calCubeTimerFrame.languagesComboboxListener.itemStateChanged(
+                            new ItemEvent(calCubeTimerFrame.languages, 0, configuration.getDefaultLocale(), ItemEvent.SELECTED));
+
+            calCubeTimerFrame.profileComboboxListener.itemStateChanged(
+                            new ItemEvent(calCubeTimerFrame.profilesComboBox, 0, profileDao.getSelectedProfile(), ItemEvent.SELECTED));
         });
     }
 

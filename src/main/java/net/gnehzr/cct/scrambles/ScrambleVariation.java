@@ -6,8 +6,7 @@ import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
-import java.io.File;
-import java.net.MalformedURLException;
+import java.net.URL;
 
 public class ScrambleVariation {
 
@@ -15,69 +14,69 @@ public class ScrambleVariation {
 
 	private String variation;
 	private int length = 0;
-	private ScramblePlugin scramblePlugin;
-	private Icon image;
+	private Scramble scramblePlugin;
+	private final Icon image;
 	private final Configuration configuration;
+	private final ScramblePluginManager scramblePluginManager;
 
-	public ScrambleVariation(ScramblePlugin plugin, String variation, Configuration configuration) {
+	public ScrambleVariation(Scramble plugin, String variation, Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		this.scramblePlugin = plugin;
 		this.variation = variation;
 		this.configuration = configuration;
+		this.scramblePluginManager = scramblePluginManager;
 		length = getScrambleLength(false);
+		image = getImageIcon(variation);
 	}
-	
+
+	private ImageIcon getImageIcon(String variation) {
+		URL resource = scramblePlugin.getClass().getResource(Scramble.class.getSimpleName() + "_" + variation + ".png");
+		return resource == null ? new ImageIcon() : new ImageIcon(resource);
+	}
+
 	public Icon getImage() {
-		if(image == null) {
-			try {
-				image = new ImageIcon(new File(scramblePlugin.scramblePluginsFolder, variation + ".png").toURI().toURL());
-			} catch (MalformedURLException e) {
-				LOG.info("unexpected exception", e);
-				image = new ImageIcon();
-			}
-		}
 		return image;
 	}
 	
 	public int getScrambleLength(boolean defaultValue) {
-		try {
-			return configuration.getInt(VariableKey.SCRAMBLE_LENGTH(this), defaultValue).intValue();
-		} catch(Throwable e) {} //we don't want things to break even if configuration.class doesn't exists
-		return scramblePlugin.getDefaultScrambleLength(this);
+		if (scramblePlugin == Scramble.NULL_SCRAMBLE) {
+			return 0;
+		}
+		Integer length = configuration.getInt(VariableKey.SCRAMBLE_LENGTH(this), defaultValue);
+		// TODO use correct default value instead first
+		return length == null ? scramblePlugin.getDefaultLengths()[0] : length;
 	}
 
-	public ScramblePlugin getScramblePlugin() {
-		return scramblePlugin;
-	}
 	public String getVariation() {
 		return variation;
 	}
-	public void setLength(int l) {
-		length = l;
+	public void setLength(int length) {
+		this.length = length;
 	}
 	public int getLength() {
 		return length;
 	}
 
 	public Scramble generateScramble() {
-		return scramblePlugin.newScramble(variation, length, scramblePlugin.getDefaultGeneratorGroup(this), scramblePlugin.getEnabledPuzzleAttributes());
+		return scramblePlugin.newScramble(variation, length, scramblePluginManager.getDefaultGeneratorGroup(this), getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 	
 	public Scramble generateScrambleFromGroup(String generatorGroup) {
-		return scramblePlugin.newScramble(variation, length, generatorGroup, scramblePlugin.getEnabledPuzzleAttributes());
+		return scramblePlugin.newScramble(variation, length, generatorGroup, getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 
 	public Scramble generateScramble(String scramble) throws InvalidScrambleException {
-		return scramblePlugin.importScramble(variation, scramble, scramblePlugin.getDefaultGeneratorGroup(this), scramblePlugin.getEnabledPuzzleAttributes());
+		return scramblePlugin.importScramble(variation, scramble, scramblePluginManager.getDefaultGeneratorGroup(this), getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 
 	public int getPuzzleUnitSize(boolean defaults) {
 		try {
-			return configuration.getInt(VariableKey.UNIT_SIZE(this), defaults).intValue();
-		} catch(Exception e) {}
-		return scramblePlugin.DEFAULT_UNIT_SIZE;
+			return configuration.getInt(VariableKey.UNIT_SIZE(this), defaults);
+		} catch(Exception e) {
+			return scramblePlugin.getDefaultUnitSize();
+		}
 	}
 	public void setPuzzleUnitSize(int size) {
-		if(this != scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation())
+		if(this != scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation())
 			configuration.setLong(VariableKey.UNIT_SIZE(this), size);
 	}
 	
@@ -94,5 +93,9 @@ public class ScrambleVariation {
 	}
 	public String toString() {
 		return variation.isEmpty() ? scramblePlugin.getPuzzleName() : variation;
+	}
+
+	public Scramble getPlugin() {
+		return scramblePlugin;
 	}
 }

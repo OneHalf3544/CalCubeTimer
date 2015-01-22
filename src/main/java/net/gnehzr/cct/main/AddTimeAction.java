@@ -12,8 +12,8 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class AddTimeAction extends AbstractAction {
-	private CALCubeTimer cct;
-	public AddTimeAction(CALCubeTimer cct){
+	private CALCubeTimerFrame cct;
+	public AddTimeAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}
 

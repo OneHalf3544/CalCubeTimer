@@ -2,6 +2,7 @@ package scramblePlugins;
 
 import net.gnehzr.cct.scrambles.Scramble;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -9,6 +10,8 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class MegaminxScramble extends Scramble {
 
@@ -19,6 +22,7 @@ public class MegaminxScramble extends Scramble {
 	private static final String[][] FACE_NAMES_COLORS =
 	{ { "A", 	 "B",	   "C",		 "D",	   "E",		 "F",	   "a",		 "b",	   "f",		 "e",	   "d",		 "c" },
 	  { "ffffff", "336633", "66ffff", "996633", "3333ff", "993366", "ffff00", "66ff66", "ff9933", "ff0000", "000099", "ff66ff" } };
+
 	private static final String[] VARIATIONS = { "Megaminx", "Pochmann Megaminx" };
 	private static final int[] DEFAULT_LENGTHS = { 77, 77 };
 
@@ -27,19 +31,90 @@ public class MegaminxScramble extends Scramble {
 	private boolean pochmann = false;
 	private int[][] image;
 
-	public MegaminxScramble(String variation, String s, String generatorGroup, String... attrs) throws InvalidScrambleException {
-		super(s);
-		pochmann = variation.equals(VARIATIONS[1]);
-		if(!setAttributes(attrs)) throw new InvalidScrambleException(s);
+	@Override
+	public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+		return new MegaminxScramble(variation, scramble);
 	}
 
-	public MegaminxScramble(String variation, int length, String generatorGroup, String... attrs) {
+	@Override
+	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
+		return new MegaminxScramble(variation, length);
+	}
+
+	@Override
+	public boolean supportsScrambleImage() {
+		return false;
+	}
+
+	@Override
+	public String htmlify(String formatMe) {
+		return formatMe;
+	}
+
+	@Override
+	protected String[][] getFaceNamesColors() {
+		return FACE_NAMES_COLORS;
+	}
+
+	@Override
+	public int getDefaultUnitSize() {
+		return 0;
+	}
+
+	@NotNull
+	@Override
+	public String[] getVariations() {
+		return VARIATIONS;
+	}
+
+	@NotNull
+	@Override
+	protected int[] getDefaultLengths() {
+		return DEFAULT_LENGTHS;
+	}
+
+	@NotNull
+	@Override
+	public List<String> getAttributes() {
+		return NULL_SCRAMBLE.getAttributes();
+	}
+
+	@NotNull
+	@Override
+	public List<String> getDefaultAttributes() {
+		return NULL_SCRAMBLE.getDefaultAttributes();
+	}
+
+	@Override
+	public Pattern getTokenRegex() {
+		return null;
+	}
+
+	@Override
+	public String[] getDefaultGenerators() {
+		return NULL_SCRAMBLE.getDefaultGenerators();
+	}
+
+	public MegaminxScramble() {
+		super(PUZZLE_NAME);
+	}
+
+	public MegaminxScramble(String variation, String scramble) throws InvalidScrambleException {
+		super(PUZZLE_NAME, scramble);
+		pochmann = variation.equals(VARIATIONS[1]);
+		if(!setAttributes()) {
+			throw new InvalidScrambleException(scramble);
+		}
+	}
+
+	public MegaminxScramble(String variation, int length) {
+		super(PUZZLE_NAME);
 		this.length = length;
 		pochmann = variation.equals(VARIATIONS[1]);
-		setAttributes(attrs);
+		setAttributes();
 	}
 
-	private boolean setAttributes(String... attributes){
+	private boolean setAttributes(){
 		initializeImage();
 		if(scramble != null) {
 			return validateScramble();
@@ -57,48 +132,44 @@ public class MegaminxScramble extends Scramble {
 		}
 	}
 
-	private static String regexp = "^[A-Fa-f][234]?$";
-	private static String regexp1 = "^(?:[RDY]([+-])\\1|U'?)$";
+	private static final String regexp = "^[A-Fa-f][234]?$";
+	private static final String regexp1 = "^(?:[RDY]([+-])\\1|U'?)$";
 	private boolean validateScramble() {
 		String[] strs = scramble.split("\\s+");
 		length = strs.length;
 
-		for(int i = 0; i < strs.length; i++){
-			if(!strs[i].matches(regexp1) && !strs[i].matches(regexp)) return false;
+		for (String str : strs) {
+			if (!str.matches(regexp1) && !str.matches(regexp)) return false;
 		}
 
 		try{
-			for(int i = 0; i < strs.length; i++){
-				if(strs[i].matches(regexp1)){
-					if(strs[i].charAt(0) == 'U'){
+			for (String str : strs) {
+				if (str.matches(regexp1)) {
+					if (str.charAt(0) == 'U') {
 						int dir = 1;
-						if(strs[i].length() > 1) dir = 4;
+						if (str.length() > 1) dir = 4;
 						turn(0, dir);
-					}
-					else{
-						int dir = strs[i].charAt(1) == '+' ? 2 : 3;
-						if(strs[i].charAt(0) == 'R'){
+					} else {
+						int dir = str.charAt(1) == '+' ? 2 : 3;
+						if (str.charAt(0) == 'R') {
 							bigTurn(0, dir);
-						}
-						else if(strs[i].charAt(0) == 'D'){
+						} else if (str.charAt(0) == 'D') {
 							bigTurn(1, dir);
-						}
-						else{
+						} else {
 							bigTurn(1, dir);
-							turn(0, (-dir+5)%5);
+							turn(0, (-dir + 5) % 5);
 						}
 					}
-				}
-				else{
+				} else {
 					int face = -1;
-					for(int ch = 0; ch < FACE_NAMES_COLORS[0].length; ch++) {
-						if(FACE_NAMES_COLORS[0][ch].equals(""+strs[i].charAt(0))) {
+					for (int ch = 0; ch < FACE_NAMES_COLORS[0].length; ch++) {
+						if (FACE_NAMES_COLORS[0][ch].equals("" + str.charAt(0))) {
 							face = ch;
 							break;
 						}
 					}
-					if(face == -1) return false;
-					int dir = (strs[i].length() == 1 ? 1 : Integer.parseInt(strs[i].substring(1)));
+					if (face == -1) return false;
+					int dir = (str.length() == 1 ? 1 : Integer.parseInt(str.substring(1)));
 					turn(face, dir);
 				}
 			}
@@ -265,13 +336,15 @@ public class MegaminxScramble extends Scramble {
 		swapCenters(f1, f2, f3, f4, f5);
 	}
 
+	@Override
 	public BufferedImage getScrambleImage(int gap, int minxRad, Color[] colorScheme) {
 		Dimension dim = getImageSize(gap, minxRad, null);
 		BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
 		drawMinx(buffer.createGraphics(), gap, minxRad, colorScheme);
 		return buffer;
 	}
-	public static Dimension getImageSize(int gap, int minxRad, String variation) {
+	@Override
+	public Dimension getImageSize(int gap, int minxRad, String variation) {
 		return new Dimension(getMegaminxViewWidth(gap, minxRad), getMegaminxViewHeight(gap, minxRad));
 	}
 
@@ -401,12 +474,14 @@ public class MegaminxScramble extends Scramble {
 	private static int getMegaminxViewHeight(int gap, int minxRad) {
 		return (int)(UNFOLDHEIGHT * minxRad + 2 * gap);
 	}
-	public static int getNewUnitSize(int width, int height, int gap, String variation) {
+	@Override
+	public int getNewUnitSize(int width, int height, int gap, String variation) {
 		return (int) Math.round(Math.min((width - 3*gap) / (UNFOLDWIDTH * 2),
 				(height - 2*gap) / UNFOLDHEIGHT));
 	}
 
-	public static Shape[] getFaces(int gap, int minxRad, String variation) {
+	@Override
+	public Shape[] getFaces(int gap, int minxRad, String variation) {
 		double xx = minxRad*Math.sqrt(2*(1-Math.cos(.6*Math.PI)));
 		double a = minxRad*Math.cos(.1*Math.PI);
 		double b = xx*Math.cos(.1*Math.PI);

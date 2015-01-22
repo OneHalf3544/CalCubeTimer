@@ -2,7 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
@@ -14,14 +14,14 @@ public class Session extends Commentable implements Comparable<Session> {
 	private PuzzleStatistics puzzStats;
 
 	private final Configuration configuration;
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 	private final StatisticsTableModel statsModel;
 
 	//adds itself to the puzzlestatistics to which it belongs
 	public Session(LocalDateTime d, Configuration configuration,
-				   ScramblePlugin scramblePlugin, StatisticsTableModel statsModel) {
+				   ScramblePluginManager scramblePluginManager, StatisticsTableModel statsModel) {
 		this.configuration = configuration;
-		this.scramblePlugin = scramblePlugin;
+		this.scramblePluginManager = scramblePluginManager;
 		this.statsModel = statsModel;
 		s = new Statistics(configuration, d);
 	}
@@ -34,7 +34,7 @@ public class Session extends Commentable implements Comparable<Session> {
 
 	//this should only be called by PuzzleStatistics
 	public void setPuzzleStatistics(PuzzleStatistics puzzStats, Profile profile) {
-		sc = scramblePlugin.getCustomizationFromString(profile, puzzStats.getCustomization());
+		sc = scramblePluginManager.getCustomizationFromString(profile, puzzStats.getCustomization());
 		s.setCustomization(sc);
 		this.puzzStats = puzzStats;
 	}
@@ -76,9 +76,9 @@ public class Session extends Commentable implements Comparable<Session> {
 			puzzStats.removeSession(this);
 			puzzStats = puzzStats.getPuzzleDatabase().getPuzzleStatistics(customization);
 			puzzStats.addSession(this, profile);
-			sc = scramblePlugin.getCustomizationFromString(profile, puzzStats.getCustomization());
+			sc = scramblePluginManager.getCustomizationFromString(profile, puzzStats.getCustomization());
 			s.setCustomization(sc);
-//			s.notifyListeners(false); //If we're changing an unselected session to the current sessions customization, we won't see the global stats updates if we just do this
+
 			statsModel.fireStringUpdates();
 		}
 	}

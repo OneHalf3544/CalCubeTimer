@@ -1,22 +1,21 @@
 package net.gnehzr.cct.main;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import net.gnehzr.cct.statistics.ProfileDao;
-import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.statistics.Statistics;
-import net.gnehzr.cct.umts.cctbot.CCTUser;
-import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
 * <p>
@@ -26,244 +25,178 @@ import java.util.Map;
 *
 * @author OneHalf
 */
-class ActionMap {
+@Singleton
+public class ActionMap {
+
+    private static final Logger LOG = Logger.getLogger(ActionMap.class);
+
+    public static final String NEWSESSION_ACTION = "newsession";
+    public static final String CONNECT_TO_SERVER_ACTION = "connecttoserver";
+    public static final String TOGGLE_SCRAMBLE_POPUP_ACTION = "togglescramblepopup";
 
     private Map<String, AbstractAction> actionMap;
-	@Inject
-	private Configuration configuration;
-	@Inject
-	private CALCubeTimer calCubeTimer;
-	@Inject
-	private ProfileDao profileDao;
-	@Inject
-	private ScramblePlugin scramblePlugin;
-	@Inject
-	private IRCClientGUI client;
 
-	@Inject
-	public ActionMap(CALCubeTimer calCubeTimer){
-        this.calCubeTimer = calCubeTimer;
+    @Inject
+	private Configuration configuration;
+    @Inject
+    private StatisticsTableModel statsModel;
+
+    @Inject
+	public ActionMap() {
         this.actionMap = new HashMap<>();
     }
 
-    public AbstractAction getAction(String s) {
-        return actionMap.computeIfAbsent(s.toLowerCase(), this::initializeAction);
+    void registerAction(String actionName, AbstractAction abstractAction) {
+        LOG.debug("register action " + actionName);
+        actionMap.put(actionName, abstractAction);
     }
 
-    public AbstractAction getRawAction(String s){
-        return actionMap.get(s.toLowerCase());
+    public AbstractAction getAction(String s, CALCubeTimerFrame calCubeTimerFrame, CalCubeTimerModel calCubeTimerModel) {
+        return actionMap.computeIfAbsent(s.toLowerCase(), (k) -> initializeAction(k, calCubeTimerFrame, calCubeTimerModel));
     }
 
-    private AbstractAction initializeAction(String s){
-        AbstractAction a = null;
+    public Optional<AbstractAction> getActionIfExist(String s){
+        return Optional.ofNullable(actionMap.get(s.toLowerCase()));
+    }
+
+    private AbstractAction initializeAction(String s, final CALCubeTimerFrame calCubeTimerFrame, CalCubeTimerModel cubeTimerModel){
         switch (s) {
-            case "keyboardtiming":
-                a = new KeyboardTimingAction(calCubeTimer);
+            case "keyboardtiming": {
+                AbstractAction a = new KeyboardTimingAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_K);
                 a.putValue(Action.SHORT_DESCRIPTION, StringAccessor.getString("CALCubeTimer.stackmatnote"));
-                break;
-            case "addtime":
-                a = new AddTimeAction(calCubeTimer);
+                return a;
+            }
+            case "addtime": {
+                AbstractAction a = new AddTimeAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
                 a.putValue(Action.ACCELERATOR_KEY,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
-                break;
-            case "reset":
-                a = new ResetAction(calCubeTimer);
+                        KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK));
+                return a;
+            }
+            case "reset": {
+                AbstractAction a = new ResetAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
-                break;
+                return a;
+            }
             case "currentaverage0":
-                a = new StatisticsAction(calCubeTimer, calCubeTimer.statsModel, Statistics.AverageType.CURRENT, 0, configuration);
-                break;
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT, 0, configuration);
             case "bestaverage0":
-                a = new StatisticsAction(calCubeTimer, calCubeTimer.statsModel, Statistics.AverageType.RA, 0, configuration);
-                break;
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.RA, 0, configuration);
             case "currentaverage1":
-                a = new StatisticsAction(calCubeTimer, calCubeTimer.statsModel, Statistics.AverageType.CURRENT, 1, configuration);
-                break;
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT, 1, configuration);
             case "bestaverage1":
-                a = new StatisticsAction(calCubeTimer, calCubeTimer.statsModel, Statistics.AverageType.RA, 1, configuration);
-                break;
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.RA, 1, configuration);
             case "sessionaverage":
-                a = new StatisticsAction(calCubeTimer, calCubeTimer.statsModel, Statistics.AverageType.SESSION, 0, configuration);
-                break;
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION, 0, configuration);
             case "togglefullscreen":
-                a = new AbstractAction() {
+                return new AbstractAction() {
                     {
                         putValue(Action.NAME, "+");
                     }
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        calCubeTimer.setFullScreen(!calCubeTimer.isFullscreen);
+                        calCubeTimerFrame.setFullScreen(!cubeTimerModel.isFullscreen());
                     }
                 };
-                break;
-            case "importscrambles":
-                a = new AbstractAction() {
-                    {
-                        putValue(Action.MNEMONIC_KEY, KeyEvent.VK_I);
-                        putValue(Action.ACCELERATOR_KEY,
-                                KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
-                    }
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        new ScrambleImportDialog(profileDao, calCubeTimer, calCubeTimer.scramblesList.getScrambleCustomization(), scramblePlugin, configuration);
-                    }
-                };
-                break;
-            case "exportscrambles":
-                a = new ExportScramblesAction(calCubeTimer, profileDao);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_E);
-                a.putValue(Action.ACCELERATOR_KEY,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
-                break;
-            case "connecttoserver":
-                a = new AbstractAction() {
-                    {
-                        putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
-                        putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
-                    }
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (e == null) { //this means that the client gui was disposed
-                            this.setEnabled(true);
-                        } else {
-                            if (calCubeTimer.client == null) {
-                                calCubeTimer.client = new IRCClientGUI(calCubeTimer, this, scramblePlugin, configuration, profileDao);
-                                syncUserStateNOW();
-                            }
-                            calCubeTimer.client.setVisible(true);
-                            this.setEnabled(false);
-                        }
-                    }
-                };
-                break;
-            case "showconfiguration":
-                a = new ShowConfigurationDialogAction(calCubeTimer);
+            case "showconfiguration": {
+                AbstractAction a = new ShowConfigurationDialogAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
                 a.putValue(Action.ACCELERATOR_KEY,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
-                break;
-            case "exit":
-                a = new ExitAction(calCubeTimer);
+                        KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK));
+                return a;
+            }
+            case "exit": {
+                AbstractAction a = new ExitAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_X);
                 a.putValue(Action.ACCELERATOR_KEY,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
-                break;
-            case "togglestatuslight":
-                a = new StatusLightAction(calCubeTimer);
+                        KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_MASK));
+                return a;
+            }
+            case "togglestatuslight": {
+                AbstractAction a = new StatusLightAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_L);
-                break;
-            case "togglehidescrambles":
-                a = new HideScramblesAction(calCubeTimer);
+                return a;
+            }
+            case "togglehidescrambles": {
+                AbstractAction a = new HideScramblesAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_H);
-                break;
-            case "togglespacebarstartstimer":
-                a = new SpacebarOptionAction(configuration);
+                return a;
+            }
+            case "togglespacebarstartstimer": {
+                AbstractAction a = new SpacebarOptionAction(configuration);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_S);
-                break;
-            case "togglefullscreentiming":
-                a = new FullScreenTimingAction(configuration);
+                return a;
+            }
+            case "togglefullscreentiming": {
+                AbstractAction a = new FullScreenTimingAction(configuration);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);
-                break;
-            case "togglescramblepopup":
-                a = new AbstractAction() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, ((AbstractButton) e.getSource()).isSelected());
-                        calCubeTimer.scramblePopup.refreshPopup();
-                    }
-                };
-                break;
+                return a;
+            }
             case "undo":
-                a = new AbstractAction() {
+                return new AbstractAction() {
+                    {
+                        putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+                    }
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        if (calCubeTimer.timesTable.isEditing())
+                        if (calCubeTimerFrame.timesTable.isEditing())
                             return;
-                        if (calCubeTimer.statsModel.getCurrentStatistics().undo()) { //should decrement 1 from scramblenumber if possible
-                            Object prev = calCubeTimer.scrambleNumber.getPreviousValue();
+                        if (statsModel.getCurrentStatistics().undo()) { //should decrement 1 from scramblenumber if possible
+                            Object prev = calCubeTimerFrame.scrambleNumber.getPreviousValue();
                             if (prev != null) {
-                                calCubeTimer.scrambleNumber.setValue(prev);
+                                calCubeTimerFrame.scrambleNumber.setValue(prev);
                             }
                         }
                     }
                 };
-                a.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
-                break;
             case "redo":
-                a = new AbstractAction() {
+                return new AbstractAction() {
+                    {
+                        putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
+                    }
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        if (calCubeTimer.timesTable.isEditing())
+                        if (calCubeTimerFrame.timesTable.isEditing())
                             return;
-                        calCubeTimer.statsModel.getCurrentStatistics().redo();
+                        statsModel.getCurrentStatistics().redo();
                     }
                 };
-                a.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
-                break;
             case "submitsundaycontest":
-                final SundayContestDialog submitter = new SundayContestDialog(calCubeTimer, configuration);
-                a = new AbstractAction() {
+                final SundayContestDialog submitter = new SundayContestDialog(calCubeTimerFrame, configuration);
+                return new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        submitter.syncWithStats(calCubeTimer.statsModel.getCurrentStatistics(), Statistics.AverageType.CURRENT, 0);
+                        submitter.syncWithStats(statsModel.getCurrentStatistics(), Statistics.AverageType.CURRENT, 0);
                         submitter.setVisible(true);
                     }
                 };
-                break;
-            case "newsession":
-                a = new AbstractAction() {
-                    @Override
-                    public void actionPerformed(ActionEvent arg0) {
-                        if (calCubeTimer.statsModel.getRowCount() > 0) { //only create a new session if we've added any times to the current one
-                            calCubeTimer.statsModel.setSession(calCubeTimer.createNewSession(profileDao.getSelectedProfile(), calCubeTimer.scramblesList.getScrambleCustomization().toString()));
-                            calCubeTimer.timeLabel.reset();
-                            calCubeTimer.scramblesList.clear();
-                            calCubeTimer.updateScramble();
-                        }
-                    }
-                };
-                break;
             case "showdocumentation":
-                a = new DocumentationAction(calCubeTimer);
-                break;
+                return new DocumentationAction(calCubeTimerFrame);
             case "showabout":
-                a = new AboutAction();
-                break;
-            case "requestscramble":
-                a = new RequestScrambleAction(calCubeTimer);
+                return new AboutAction();
+            case "requestscramble": {
+                AbstractAction a = new RequestScrambleAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
-                break;
+                return a;
+            }
+            default:
+                throw new IllegalArgumentException("unknown action: " + s);
         }
-        return a;
     }
 
-
-	//this will sync the cct state with the client, but will not transmit the data to other users
-	void syncUserStateNOW() {
-		CCTUser myself = client.getMyUserstate();
-		myself.setCustomization(calCubeTimer.scrambleChooser.getSelectedItem().toString());
-
-		myself.setLatestTime(calCubeTimer.statsModel.getCurrentStatistics().get(-1));
-
-		TimerState state = calCubeTimer.timeLabel.getTimerState();
-		if(!calCubeTimer.timing) {
-			state = null;
-		}
-		myself.setTimingState(calCubeTimer.isInspecting(), state);
-
-		Statistics stats = calCubeTimer.statsModel.getCurrentStatistics();
-		myself.setCurrentRA(stats.average(Statistics.AverageType.CURRENT, 0), stats.toTerseString(Statistics.AverageType.CURRENT, 0, true));
-		myself.setBestRA(stats.average(Statistics.AverageType.RA, 0), stats.toTerseString(Statistics.AverageType.RA, 0, false));
-		myself.setSessionAverage(new SolveTime(stats.getSessionAvg(), null, configuration));
-
-		myself.setSolvesAttempts(stats.getSolveCount(), stats.getAttemptCount());
-
-		myself.setRASize(stats.getRASize(0));
-	}
+    void refreshActions(){
+        getActionIfExist("keyboardtiming")
+                .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, !configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)));
+        getActionIfExist("togglestatuslight")
+                .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false)));
+        getActionIfExist("togglehidescrambles")
+                .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false)));
+        getActionIfExist("togglespacebarstartstimer")
+                .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false)));
+        getActionIfExist("togglefullscreen")
+                .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)));
+    }
 
 }

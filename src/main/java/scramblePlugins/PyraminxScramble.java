@@ -2,6 +2,7 @@ package scramblePlugins;
 
 import net.gnehzr.cct.scrambles.Scramble;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -9,35 +10,102 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.regex.Pattern;
+import java.util.List;
 
-@SuppressWarnings("unused")
 public class PyraminxScramble extends Scramble {
 
 	private static final Logger LOG = Logger.getLogger(PyraminxScramble.class);
 
-	private static final String[][] FACE_NAMES_COLORS =
-	{ { "F", "D", "L", "R" },
-	  { "ff0000", "0000ff", "00ff00", "ffff00" } };
-	private static final String PUZZLE_NAME = "Pyraminx";
-	private static final String[] VARIATIONS = { "Pyraminx" };
-	private static final int[] DEFAULT_LENGTHS = { 25 };
-	private static final int DEFAULT_UNIT_SIZE = 30;
-	private static final Pattern TOKEN_REGEX = Pattern.compile("^([ULRBulrb]'?)(.*)$");
-	
-	private int[][] image;
-
-	public PyraminxScramble(String variation, String s, String generatorGroup, String... attrs) throws InvalidScrambleException {
-		super(s);
-		if(!setAttributes(attrs)) throw new InvalidScrambleException(s);
+	public PyraminxScramble() throws InvalidScrambleException {
+		this(0, Collections.<String>emptyList());
 	}
 
-	public PyraminxScramble(String variation, int length, String generatorGroup, String... attrs) {
+	public PyraminxScramble(String s, List<String> attrs) throws InvalidScrambleException {
+		super("Pyraminx", s);
+		if(!setAttributes(attrs)) {
+			throw new InvalidScrambleException(s);
+		}
+	}
+
+	public PyraminxScramble(int length, List<String> attrs) {
+		super("Pyraminx");
 		this.length = length;
 		setAttributes(attrs);
 	}
 
-	private boolean setAttributes(String... attributes){
+	@Override
+	public final String[][] getFaceNamesColors() {
+		return new String[][] {
+				{ "F", "D", "L", "R" },
+	  			{ "ff0000", "0000ff", "00ff00", "ffff00" }
+		};
+	}
+
+	@Override
+	public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+		return new PyraminxScramble(scramble, attributes);
+	}
+
+	@Override
+	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
+		return new PyraminxScramble(length, attributes);
+	}
+
+	@Override
+	public boolean supportsScrambleImage() {
+		return false;
+	}
+
+	@Override
+	public String htmlify(String formatMe) {
+		return formatMe;
+	}
+
+	@NotNull
+	@Override
+	public List<String> getAttributes() {
+		return NULL_SCRAMBLE.getAttributes();
+	}
+
+	@NotNull
+	@Override
+	public List<String> getDefaultAttributes() {
+		return NULL_SCRAMBLE.getDefaultAttributes();
+	}
+
+	@Override
+	public String[] getDefaultGenerators() {
+		return NULL_SCRAMBLE.getDefaultGenerators();
+	}
+
+	@NotNull
+	@Override
+	public final String[] getVariations() {
+		return new String[]{"Pyraminx"};
+	}
+
+	@NotNull
+	@Override
+	public final int[] getDefaultLengths() {
+		return new int[]{25};
+	}
+
+	@Override
+	public final int getDefaultUnitSize() {
+		return 30;
+	}
+
+	@Override
+	public final Pattern getTokenRegex() {
+		return Pattern.compile("^([ULRBulrb]'?)(.*)$");
+	}
+	
+	private int[][] image;
+
+	private boolean setAttributes(List<String> attributes){
 		initializeImage();
 		
 		if(scramble != null) {
@@ -49,12 +117,6 @@ public class PyraminxScramble extends Scramble {
 			scramble = scramble();
 		}
 		return validateScramble();
-		
-//		if(scramble != null) {
-//			return validateScramble();
-//		}
-//		generateScramble();
-//		return true;
 	}
 
 	private void initializeImage() {
@@ -71,8 +133,8 @@ public class PyraminxScramble extends Scramble {
 		String[] strs = scramble.split("\\s+");
 		length = strs.length;
 
-		for(int i = 0; i < strs.length; i++){
-			if(!strs[i].matches(regexp)) return false;
+		for (String str : strs) {
+			if (!str.matches(regexp)) return false;
 		}
 
 		try{
@@ -91,22 +153,22 @@ public class PyraminxScramble extends Scramble {
 		return true;
 	}
 
-	JavascriptArray<String> b = new JavascriptArray<String>();
-	static JavascriptArray<Integer> g = new JavascriptArray<Integer>();
-	static JavascriptArray<Integer> f = new JavascriptArray<Integer>();
-	JavascriptArray<Integer> k = new JavascriptArray<Integer>();
-	JavascriptArray<Integer> h = new JavascriptArray<Integer>();
-	JavascriptArray<Integer> i = new JavascriptArray<Integer>();
-	static JavascriptArray<JavascriptArray<Integer>> d = new JavascriptArray<JavascriptArray<Integer>>();
-	static JavascriptArray<JavascriptArray<Integer>> e = new JavascriptArray<JavascriptArray<Integer>>();
+	List<String> b = new ArrayList<>();
+	static List<Integer> g = new ArrayList<>();
+	static List<Integer> f = new ArrayList<>();
+	List<Integer> k = new ArrayList<>();
+	List<Integer> h = new ArrayList<>();
+	List<Integer> i = new ArrayList<>();
+	static List<List<Integer>> d = new ArrayList<>();
+	static List<List<Integer>> e = new ArrayList<>();
 
 	static {
 		int c, p, q, l, m;
 		for (p = 0; p < 720; p++) {
-			g.set(p, -1);
-			d.set(p, new JavascriptArray<Integer>());
+			g.add(-1);
+			d.add(p, new ArrayList<>());
 			for (m = 0; m < 4; m++)
-				d.get(p).set(m, w(p, m));
+				d.get(p).add(m, w(p, m));
 		}
 		g.set(0, 0);
 		for (l = 0; l <= 6; l++)
@@ -121,10 +183,10 @@ public class PyraminxScramble extends Scramble {
 						}
 					}
 		for (p = 0; p < 2592; p++) {
-			f.set(p, -1);
-			e.set(p, new JavascriptArray<Integer>());
+			f.add(-1);
+			e.add(new ArrayList<>());
 			for (m = 0; m < 4; m++)
-				e.get(p).set(m, x(p, m));
+				e.get(p).add(x(p, m));
 		}
 		f.set(0, 0);
 		for (l = 0; l <= 5; l++)
@@ -141,9 +203,9 @@ public class PyraminxScramble extends Scramble {
 	}
 
 	private String scramble() {
-		k = new JavascriptArray<Integer>();
+		k = new ArrayList<>();
 		int t = 0, s = 0, q = 0, m, l, p;
-		h = new JavascriptArray<Integer>();
+		h = new ArrayList<>();
 		h.add(0);
 		h.add(1);
 		h.add(2);
@@ -164,7 +226,7 @@ public class PyraminxScramble extends Scramble {
 			h.set(5, l);
 		}
 		s = 0;
-		i = new JavascriptArray<Integer>();
+		i = new ArrayList<>();
 		for (m = 0; m < 5; m++) {
 
 			i.set(m, n(2));
@@ -224,7 +286,7 @@ public class PyraminxScramble extends Scramble {
 						k.set(k.size(), m + 8 * a);
 						if (v(p, s, l - 1, m))
 							return true;
-						k.setSize(k.size() - 1);
+						k.remove(k.size() - 1);
 					}
 				}
 		}
@@ -233,13 +295,15 @@ public class PyraminxScramble extends Scramble {
 
 	private static int w(int p, int m) {
 		int a, l, c, q = p;
-		JavascriptArray<Integer> s = new JavascriptArray<Integer>();
+		List<Integer> s = new ArrayList<>();
+		s.add(null); s.add(null); s.add(null); s.add(null); s.add(null); s.add(null); s.add(null);
+
 		for (a = 1; a <= 6; a++) {
 			c = (int) Math.floor(q / a);
 			l = q - a * c;
 			q = c;
 			for (c = a - 1; c >= l; c--) {
-				int val = c < s.size() ? s.get(c) : 0;
+				int val = (c < s.size() && s.get(c) != null) ? s.get(c) : 0;
 				s.set(c + 1, val);
 			}
 			s.set(l, 6 - a);
@@ -268,18 +332,18 @@ public class PyraminxScramble extends Scramble {
 
 	private static int x(int p, int m) {
 		int a, l, c, t = 0, q = p;
-		JavascriptArray<Integer> s = new JavascriptArray<Integer>();
+		List<Integer> s = new ArrayList<>();
 		for (a = 0; a <= 4; a++) {
-			s.set(a, q & 1);
+			s.add(q & 1);
 			q >>= 1;
 			t ^= s.get(a);
 		}
-		s.set(5, t);
+		s.add(t);
 		for (a = 6; a <= 9; a++) {
 			c = (int) Math.floor(q / 3);
 			l = q - 3 * c;
 			q = c;
-			s.set(a, l);
+			s.add(l);
 		}
 		if (m == 0) {
 			s.set(6, s.get(6) + 1);
@@ -321,7 +385,7 @@ public class PyraminxScramble extends Scramble {
 		return q;
 	}
 	 
-	private static void y(JavascriptArray<Integer> p, int a, int c, int t) {
+	private static void y(List<Integer> p, int a, int c, int t) {
 	 int s = p.get(a);
 	 p.set(a, p.get(c));
 	 p.set(c, p.get(t));
@@ -330,39 +394,6 @@ public class PyraminxScramble extends Scramble {
 	 
 	private static int n(int c) {
 	 return (int) Math.floor(Math.random()*c);
-	}
-
-	private void generateScramble(){
-
-		
-//		scramble = "";
-//		StringBuilder scram = new StringBuilder();
-//		int t = 0;
-//		for(int i = 0; i < 4 && t < length; i++){
-//			int dir = random(3);
-//			if(dir != 0){
-//				t++;
-//				scram.append(" ").append("ulrb".charAt(i));
-//				if(dir == 2) scram.append("'");
-//
-//				turnTip(i, dir);
-//			}
-//		}
-//		int last = -1;
-//		for(int i = t; i < length; i++){
-//			int side;
-//			do{
-//				side = random(4);
-//			} while(side == last);
-//			last = side;
-//			int dir = random(2) + 1;
-//			scram.append(" ").append("ULRB".charAt(side));
-//			if(dir == 2) scram.append("'");
-//
-//			turn(side, dir);
-//		}
-//		if(scram.length() > 0)
-//			scramble = scram.substring(1);
 	}
 
 	private void turn(int side, int dir){
@@ -434,7 +465,8 @@ public class PyraminxScramble extends Scramble {
 		return buffer;
 	}
 
-	public static Dimension getImageSize(int gap, int pieceSize, String variation) {
+	@Override
+	public Dimension getImageSize(int gap, int pieceSize, String variation) {
 		return new Dimension(getPyraminxViewWidth(gap, pieceSize), getPyraminxViewHeight(gap, pieceSize));
 	}
 
@@ -544,12 +576,12 @@ public class PyraminxScramble extends Scramble {
 	private static int getPyraminxViewHeight(int gap, int pieceSize) {
 		return (int)(2 * 1.5 * Math.sqrt(3) * pieceSize + 3 * gap);
 	}
-	public static int getNewUnitSize(int width, int height, int gap, String variation) {
+	public int getNewUnitSize(int width, int height, int gap, String variation) {
 		return (int) Math.round(Math.min((width - 4*gap) / (3 * 2),
 				(height - 3*gap) / (3 * Math.sqrt(3))));
 	}
 
-	public static Shape[] getFaces(int gap, int pieceSize, String variation) {
+	public Shape[] getFaces(int gap, int pieceSize, String variation) {
 		return new Shape[] {
 			getTriangle(2*gap+3*pieceSize, gap+Math.sqrt(3)*pieceSize, pieceSize, true),
 			getTriangle(2*gap+3*pieceSize, 2*gap+2*Math.sqrt(3)*pieceSize, pieceSize, false),

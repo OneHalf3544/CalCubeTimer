@@ -17,7 +17,7 @@ public class SolveType {
     private static final Map<String, SolveType> SOLVE_TYPES = new HashMap<>();
 
     public static SolveType createSolveType(String desc) throws Exception {
-        if(desc.isEmpty() || desc.indexOf(',') != -1) {
+        if(desc.isEmpty() || desc.contains(",")) {
             throw new Exception(StringAccessor.getString("SolveTime.invalidtype"));
         }
         if(SOLVE_TYPES.containsKey(desc.toLowerCase())) {

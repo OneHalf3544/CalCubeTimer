@@ -1,6 +1,7 @@
 package net.gnehzr.cct.misc.customJTable;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.SolveTime;
@@ -10,6 +11,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+@Singleton
 public class SolveTimeEditor extends DefaultCellEditor {
 	private final Configuration configuration;
 	private SolveTime value;

@@ -1,7 +1,7 @@
 package net.gnehzr.cct.umts.ircclient;
 
 import net.gnehzr.cct.scrambles.Scramble;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea;
@@ -38,13 +38,13 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 	private JTextField chatField;
 	protected JScrollPane msgScroller;
 	private MinimizableDesktop desk;
-	private final ScramblePlugin scramblePlugin;
+	private final ScramblePluginManager scramblePluginManager;
 	private final Profile profileDao;
 
-	public MessageFrame(MinimizableDesktop desk, boolean closeable, Icon icon, ScramblePlugin scramblePlugin, Profile profileDao) {
+	public MessageFrame(MinimizableDesktop desk, boolean closeable, Icon icon, ScramblePluginManager scramblePluginManager, Profile profileDao) {
 		super("", true, closeable, true, true);
 		this.desk = desk;
-		this.scramblePlugin = scramblePlugin;
+		this.scramblePluginManager = scramblePluginManager;
 		this.profileDao = profileDao;
 		setFrameIcon(icon);
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -83,9 +83,10 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		
 		try {
 			setIcon(true);
-		} catch(PropertyVetoException e) {}
+		} catch(PropertyVetoException ignored) {}
 		setPreferredSize(new Dimension(450, 300));
 		this.addInternalFrameListener(new InternalFrameAdapter() {
+			@Override
 			public void internalFrameActivated(InternalFrameEvent e) {
 				chatField.requestFocusInWindow();
 			}
@@ -93,12 +94,14 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		pack();
 	}
 	
+	@Override
 	public void setVisible(boolean visible) {
 		super.setVisible(visible);
 		if(visible)
 			chatField.requestFocusInWindow();
 	}
 	
+	@Override
 	public void keyPressed(KeyEvent e) {
 		switch(e.getKeyCode()) {
 			case KeyEvent.VK_P:
@@ -166,13 +169,11 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 					final int modifiers = e.getModifiersEx();
 					//we need to invoke this later because swing will select all the text after this,
 					//ctrl+a is normally select all
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run() {
-							chatField.dispatchEvent(new KeyEvent(chatField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), modifiers & InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_HOME,
-									KeyEvent.CHAR_UNDEFINED,
-									KeyEvent.KEY_LOCATION_STANDARD));
-						}
-					});
+					SwingUtilities.invokeLater(() -> {
+                        chatField.dispatchEvent(new KeyEvent(chatField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), modifiers & InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_HOME,
+                                KeyEvent.CHAR_UNDEFINED,
+                                KeyEvent.KEY_LOCATION_STANDARD));
+                    });
 				}
 				break;
 			case KeyEvent.VK_E:
@@ -234,20 +235,24 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		}
 	}
 	private boolean ignoreUpdate = false;
+
+	@Override
 	public void changedUpdate(DocumentEvent e) {}
 
+	@Override
 	public void insertUpdate(DocumentEvent e) {
 		if(!ignoreUpdate)
 			incomplete = null;
 	}
 
+	@Override
 	public void removeUpdate(DocumentEvent e) {
 		if(!ignoreUpdate)
 			incomplete = null;
 	}
 	private String incomplete;
 	
-	private TreeSet<String> autoStrings = new TreeSet<String>(IRCClientGUI.cmdHelp.keySet());
+	private TreeSet<String> autoStrings = new TreeSet<>(IRCClientGUI.cmdHelp.keySet());
 	//this will be used by ChatMessageFrame to provide nickname autocompletion
 	public void addAutocompleteStrings(ArrayList<String> auto) {
 		autoStrings.clear();
@@ -258,8 +263,8 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		if(incomplete == null)
 			incomplete = chatField.getText().toLowerCase();
 		
-		ArrayList<String> optionsLower = new ArrayList<String>();
-		ArrayList<String> options = new ArrayList<String>();
+		ArrayList<String> optionsLower = new ArrayList<>();
+		ArrayList<String> options = new ArrayList<>();
 		for(String cmd : autoStrings)
 			if(cmd.toLowerCase().startsWith(incomplete)) {
 				optionsLower.add(cmd.toLowerCase());
@@ -279,12 +284,15 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 	private void synchChatField() {
 		chatField.setText(nthCommand < commands.size() ? commands.get(nthCommand) : "");
 	}
+	@Override
 	public void keyReleased(KeyEvent e) {}
+	@Override
 	public void keyTyped(KeyEvent e) {}
 
 	private static String[] splitURL(String url) {
 		return url.split("://", 2);
 	}
+	@Override
 	public void hyperlinkUpdate(HyperlinkTextArea source, String url, int linkNum) {
 		String[] desc = splitURL(url);
 		if(desc[0].equals("http")) {
@@ -301,16 +309,18 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 			TreeMap<Integer, Integer> scramblesMap = nickMap.get(l.nick).get(l.set);
 			int scramCount = scramblesMap.lastKey();
 
-			ArrayList<Scramble> scrambles = new ArrayList<Scramble>();
+			List<Scramble> scrambles = new ArrayList<>();
 			for(int ch = scramCount; ch >= 0; ch--) {
 				CCTLink c = scramblesLinkMap.get(scramblesMap.get(ch));
-				if(c == null)	break;
+				if(c == null) {
+					break;
+				}
 				Scramble s = getScrambleFromLink(c);
 				scrambles.add(s);
 			}
-			ScrambleVariation sv = scramblePlugin.getBestMatchVariation(l.variation);
+			ScrambleVariation sv = scramblePluginManager.getBestMatchVariation(l.variation);
 			if(sv == null)
-				sv = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
+				sv = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
 
 			for(CommandListener cl : listeners) {
 				cl.scramblesImported(this, sv, scrambles, profileDao);
@@ -318,14 +328,14 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		}
 	}
 	private Scramble getScrambleFromLink(CCTLink l) {
-		ScrambleVariation var = scramblePlugin.getBestMatchVariation(l.variation);
+		ScrambleVariation var = scramblePluginManager.getBestMatchVariation(l.variation);
 		if(var == null)
-			var = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
+			var = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
 		try {
 			return var.generateScramble(l.scramble);
 		} catch(Exception e1) {
 			try {
-				var = scramblePlugin.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
+				var = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
 				return var.generateScramble(l.scramble);
 			} catch(Exception e) {
 				LOG.info("unexpected exception", e);
@@ -359,7 +369,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 			return msgBuff.toString();
 		}
 	}
-	private ArrayList<AppendAction> buffer = new ArrayList<>();
+	private List<AppendAction> buffer = new ArrayList<>();
 	private void appendMessage(String nick, String message, Color c) {
 		//this lets everyone know that we received a message and no one was looking
 		if(!isSelected())
@@ -372,17 +382,13 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 	}
 
 	//this will leave the scrollbar fully scrolled if approriate when resizing
+	@Override
 	public void reshape(int x, int y, int width, int height) {
 		final boolean isBottom = isAtBottom();
 		super.reshape(x, y, width, height);
 		if(isBottom) {
 			msgScroller.revalidate(); //force the msgscroller to update by the time the next lines are executed
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					scrollToBottom();
-				}
-			});
+			SwingUtilities.invokeLater(this::scrollToBottom);
 		}
 	}
 	
@@ -391,8 +397,9 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 	//this maps link numbers to CCTLinks
 	private HashMap<Integer, CCTLink> scramblesLinkMap = new HashMap<>();
 	
-	private ArrayList<String> commands = new ArrayList<String>();
+	private List<String> commands = new ArrayList<>();
 	private int nthCommand = 0;
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == messageAppender) {
 			final int vertVal = msgScroller.getVerticalScrollBar().getValue();
@@ -408,7 +415,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 					CCTLink l = links.get(link);
 					TreeMap<Integer, TreeMap<Integer, Integer>> setMap = nickMap.get(l.nick);
 					if(setMap == null) {
-						setMap = new TreeMap<Integer, TreeMap<Integer, Integer>>();
+						setMap = new TreeMap<>();
 						nickMap.put(l.nick, setMap);
 					}
 					Integer setNum = null;
@@ -418,7 +425,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 						setNum = setMap.lastKey();
 						scrambleMap = setMap.get(setNum);
 						scrambleNum = scrambleMap.firstKey();
-					} catch(Exception exc) {}
+					} catch(Exception ignored) {}
 					l.fragmentation &= scrambleNum != null && scrambleNum == l.number;
 					if(l.fragmentation) {
 						int linkNum = scrambleMap.get(scrambleNum);
@@ -430,11 +437,11 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 							int line = messageArea.getLineOfLink(link);
 							int start = messageArea.getLineStartOffset(line);
 							messageArea.getDocument().remove(start, messageArea.getLineEndOffset(line) - start);
-						} catch(Exception err) {}
+						} catch(Exception ignored) {}
 					} else {
 						if(scrambleNum == null || scrambleNum - 1 != l.number) {
 							setNum = setNum == null ? 0 : setNum + 1;
-							scrambleMap = new TreeMap<Integer, Integer>();
+							scrambleMap = new TreeMap<>();
 							setMap.put(setNum, scrambleMap);
 						}
 						scrambleNum = l.number;
@@ -443,18 +450,16 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 					l.set = setNum;
 				}
 				if(!messageArea.isSelectingText()) {
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run() {
-							JScrollBar horScroller = msgScroller.getHorizontalScrollBar();
-							if(atBottom) {
-								scrollToBottom();
-								horScroller.setValue(0);
-							} else {
-								msgScroller.getVerticalScrollBar().setValue(vertVal);
-								horScroller.setValue(horVal);
-							}
-						}
-					});
+					SwingUtilities.invokeLater(() -> {
+                        JScrollBar horScroller = msgScroller.getHorizontalScrollBar();
+                        if(atBottom) {
+                            scrollToBottom();
+                            horScroller.setValue(0);
+                        } else {
+                            msgScroller.getVerticalScrollBar().setValue(vertVal);
+                            horScroller.setValue(horVal);
+                        }
+                    });
 				}
 			}
 		} else if(e.getSource() == chatField) {
@@ -467,6 +472,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 				l.commandEntered(this, e.getActionCommand());
 		}
 	}
+	@Override
 	public void dispose() {
 		for(CommandListener l : listeners)
 			l.windowClosed(this);

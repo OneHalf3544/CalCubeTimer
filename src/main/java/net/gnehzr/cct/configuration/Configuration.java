@@ -2,6 +2,7 @@ package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.log4j.Logger;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Singleton
 public class Configuration {
 
 	private static final Logger LOG = Logger.getLogger(Configuration.class);
@@ -96,11 +98,11 @@ public class Configuration {
 	private CopyOnWriteArrayList<ConfigurationChangeListener> listeners = new CopyOnWriteArrayList<>();
 
 	public void addConfigurationChangeListener(ConfigurationChangeListener listener) {
-		LOG.debug("register listener: " + listener);
+		LOG.trace("register listener: " + listener);
 		listeners.add(listener);
 	}
 	public void removeConfigurationChangeListener(ConfigurationChangeListener listener) {
-		LOG.debug("remove listener: " + listener);
+		LOG.trace("remove listener: " + listener);
 		listeners.remove(listener);
 	}
 

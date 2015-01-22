@@ -12,8 +12,8 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class ResetAction extends AbstractAction {
-	private CALCubeTimer cct;
-	public ResetAction(CALCubeTimer cct){
+	private CALCubeTimerFrame cct;
+	public ResetAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}
 

@@ -1,11 +1,13 @@
 package net.gnehzr.cct.keyboardTiming;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.JColorComponent;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.main.ScrambleArea;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+@Singleton
 public class TimerLabel extends JColorComponent implements ComponentListener, ConfigurationChangeListener {
 
 	private static final Logger LOG = Logger.getLogger(TimerLabel.class);
@@ -35,6 +38,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	private ScrambleArea scrambleArea;
 	private final Configuration configuration;
 
+	@Inject
 	public TimerLabel(ScrambleArea scrambleArea, Configuration configuration) {
 		super("");
 		this.scrambleArea = scrambleArea;
@@ -190,16 +194,17 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	private static BufferedImage curr, red, green;
 	static {
 		try { //can't use TimerLabel.class because the class hasn't been loaded yet
-			red = ImageIO.read(CALCubeTimer.class.getResourceAsStream("red-button.png"));
-			green = ImageIO.read(CALCubeTimer.class.getResourceAsStream("green-button.png"));
+			red = ImageIO.read(CALCubeTimerFrame.class.getResourceAsStream("red-button.png"));
+			green = ImageIO.read(CALCubeTimerFrame.class.getResourceAsStream("green-button.png"));
 		} catch (IOException e) {
 			LOG.info("unexpected exception", e);
 		}
 	}
 	@Override
 	public void paintComponent(Graphics g) {
-		if(configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false))
+		if(configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false)) {
 			g.drawImage(curr, 10, 20, null);
+		}
 		g.drawImage(getImageForHand(leftHand), 10, getHeight() - 50, null);
 		g.drawImage(getImageForHand(rightHand), getWidth() - 50, getHeight() - 50, null);
 		super.paintComponent(g);
@@ -372,8 +377,9 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		if(stackmatEmulation){
 			return key != sekey1 && key != sekey2;
 		}
-		if(spaceBarOnly)
+		if(spaceBarOnly) {
 			return key != KeyEvent.VK_SPACE;
+		}
 		return key != KeyEvent.VK_ENTER && (key > 123 || key < 23 || e.isAltDown() || e.isControlDown() || key == KeyEvent.VK_ESCAPE);
 	}
 }

@@ -1,5 +1,7 @@
 package net.gnehzr.cct.keyboardTiming;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.TimingListener;
@@ -10,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.time.Duration;
 import java.time.Instant;
 
+@Singleton
 public class KeyboardHandler extends Timer {
 
 	private static final int PERIOD = 90; //measured in milliseconds
@@ -17,11 +20,26 @@ public class KeyboardHandler extends Timer {
 	private TimingListener timingListener;
 	private final Configuration configuration;
 
+	private boolean reset;
+	private boolean inspecting;
+	public boolean isReset() {
+		return reset;
+	}
+	public boolean isInspecting() {
+		return inspecting;
+	}
+
+	@Inject
 	public KeyboardHandler(TimingListener timingListener, Configuration configuration) {
 		super(PERIOD, null);
 		this.timingListener = timingListener;
 		this.configuration = configuration;
-		reset();
+	}
+
+	@Inject
+	void initialize() {
+		reset = true;
+		inspecting = false;
 	}
 
 	public void reset() {
@@ -54,6 +72,7 @@ public class KeyboardHandler extends Timer {
 	}
 	
 	private Instant current;
+
 	@Override
 	protected void fireActionPerformed(ActionEvent e) {
 		current = Instant.now();
@@ -69,15 +88,6 @@ public class KeyboardHandler extends Timer {
 			return Duration.ZERO;
 		}
 		return Duration.between(start, current);
-	}
-
-	private boolean reset;
-	private boolean inspecting;
-	public boolean isReset() {
-		return reset;
-	}
-	public boolean isInspecting() {
-		return inspecting;
 	}
 
 	public void split() {

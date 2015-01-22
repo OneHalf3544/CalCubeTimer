@@ -1,13 +1,13 @@
 package net.gnehzr.cct.umts.ircclient;
 
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 
 public class PMMessageFrame extends MessageFrame {
 	private String nick;
-	public PMMessageFrame(MinimizableDesktop desk, String nick, ScramblePlugin scramblePlugin, Profile profileDao) {
-		super(desk, true, null, scramblePlugin, profileDao);
+	public PMMessageFrame(MinimizableDesktop desk, String nick, ScramblePluginManager scramblePluginManager, Profile profileDao) {
+		super(desk, true, null, scramblePluginManager, profileDao);
 		this.nick = nick;
 		updateTitle();
 	}

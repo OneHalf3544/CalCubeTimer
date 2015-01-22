@@ -23,12 +23,16 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 	private final Configuration configuration;
 	private final StatisticsTableModel statsModel;
 
+	private List<TypeAndName> tags;
+	private List<TypeAndName> deletedTags;
+
+	private String origValue;
+
 	public SolveTypeTagEditorTableModel(JTable parent, Configuration configuration, StatisticsTableModel statsModel) {
 		this.parent = parent;
 		this.configuration = configuration;
 		this.statsModel = statsModel;
 	}
-
 	public class TypeAndName {
 		public String name;
 		public SolveType type;
@@ -36,21 +40,24 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			this.name = name;
 			this.type = type;
 		}
+		@Override
 		public String toString() {
 			if(type != null && type.isIndependent())
 				return "<html><b>" + name + "</b></html>";
 			return name;
 		}
+
+		@Override
 		public boolean equals(Object o) {
             return o instanceof TypeAndName && name.equalsIgnoreCase(((TypeAndName) o).name);
         }
+
+		@Override
 		public int hashCode() {
 			return name.toLowerCase().hashCode();
 		}
-	}
 
-	private List<TypeAndName> tags;
-	private List<TypeAndName> deletedTags;
+	}
 
 	public void setTags(Collection<SolveType> tagTypes) {
 		tags = new ArrayList<>();
@@ -83,7 +90,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 				.filter(tan -> tan.type != null)
 				.forEach(tan -> SolveType.remove(tan.type));
 	}
-	
+
 	@Override
 	public void deleteRows(int[] indices) {
 		for(int c = indices.length - 1; c >= 0; c--) {
@@ -93,7 +100,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 				deletedTags.add(tags.remove(indices[c])); //mark this type for deletion
 			else
 				Utils.showConfirmDialog(parent, StringAccessor.getString("SolveTypeTagEditorTableModel.deletefail") + "\n"
-						+ tan.name + "/" + count + 
+						+ tan.name + "/" + count +
 						" (" + StringAccessor.getString("SolveTypeTagEditorTableModel.tag") + "/" +
 						StringAccessor.getString("SolveTypeTagEditorTableModel.instances") + ")");
 		}
@@ -106,7 +113,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			tags.remove(indices[c]);
 		fireTableDataChanged();
 	}
-	
+
 	@Override
 	public String getColumnName(int column) {
 		return "Tags";
@@ -149,7 +156,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 		SolveType t = tags.get(rowIndex).type;
 		return t == null || !t.isIndependent();
 	}
-	
+
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(rowIndex == tags.size())
@@ -158,14 +165,14 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			tags.get(rowIndex).name = (String) value;
 		fireTableDataChanged();
 	}
-	
 	public TagEditor editor = new TagEditor();
 	public class TagEditor extends DefaultCellEditor {
+
 		public TagEditor() {
 			super(new JTextField());
 		}
-		
 		private String s;
+
 		@Override
 		public boolean stopCellEditing() {
 			s = (String) super.getCellEditorValue();
@@ -180,17 +187,15 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 				JComponent component = (JComponent) getComponent();
 				component.setBorder(new LineBorder(Color.RED));
 				component.setToolTipText(error);
-				Action toolTipAction = component.getActionMap().get("postTip"); 
+				Action toolTipAction = component.getActionMap().get("postTip");
 				if (toolTipAction != null) {
-					ActionEvent postTip = new ActionEvent(component, ActionEvent.ACTION_PERFORMED, ""); 
+					ActionEvent postTip = new ActionEvent(component, ActionEvent.ACTION_PERFORMED, "");
 					toolTipAction.actionPerformed(postTip);
 				}
 				return false;
 			}
 			return super.stopCellEditing();
 		}
-
-		private String origValue;
 		@Override
 		public Component getTableCellEditorComponent(JTable table, Object value,
 				boolean isSelected, int row, int column) {
@@ -198,8 +203,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			((JComponent) getComponent()).setBorder(new LineBorder(Color.BLACK));
 			((JComponent) getComponent()).setToolTipText(StringAccessor.getString("SolveTypeTagEditorTableModel.addtooltip"));
 			origValue = value.toString();
-			return super.getTableCellEditorComponent(table, value, isSelected, row,
-					column);
+			return super.getTableCellEditorComponent(table, value, isSelected, row, column);
 		}
 
 		@Override

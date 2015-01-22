@@ -12,9 +12,9 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class StatusLightAction extends AbstractAction {
-	private CALCubeTimer cct;
+	private CALCubeTimerFrame cct;
 
-	public StatusLightAction(CALCubeTimer cct){
+	public StatusLightAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}
 

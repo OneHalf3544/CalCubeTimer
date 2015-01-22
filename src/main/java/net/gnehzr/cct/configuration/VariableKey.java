@@ -1,9 +1,9 @@
 package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Throwables;
-import net.gnehzr.cct.main.CALCubeTimer;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 
 import javax.swing.*;
@@ -11,6 +11,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class VariableKey<H> {
 	public static final VariableKey<Integer> SCRAMBLE_PLUGIN_TIMEOUT = new VariableKey<Integer>("Scramble_Plugins_timeout"); 
@@ -30,19 +32,22 @@ public class VariableKey<H> {
 	public static final VariableKey<Integer> MAX_FONTSIZE = new VariableKey<Integer>("Scramble_fontMaxSize"); 
 	public static final VariableKey<Integer> SCRAMBLE_COMBOBOX_ROWS = new VariableKey<Integer>("Scramble_comboboxRows"); 
 	public static final VariableKey<Integer> FULLSCREEN_DESKTOP = new VariableKey<Integer>("Misc_fullscreenDesktop"); 
-	public static final VariableKey<Integer> UNIT_SIZE(ScrambleVariation variation) {
-		return new VariableKey<Integer>("Scramble_Popup_unitSize_" + variation.toString());
+	public static VariableKey<Integer> UNIT_SIZE(ScrambleVariation variation) {
+		return new VariableKey<>("Scramble_Popup_unitSize_" + variation.toString());
 	}
-	public static final VariableKey<Integer> SCRAMBLE_LENGTH(ScrambleVariation var) {
-		return new VariableKey<Integer>("Puzzle_ScrambleLength_" + var.toString()); 
+	public static VariableKey<Integer> SCRAMBLE_LENGTH(ScrambleVariation var) {
+		checkArgument(var.getPlugin() != Scramble.NULL_SCRAMBLE);
+		return new VariableKey<>("Puzzle_ScrambleLength_" + var.toString());
 	}
-	public static final VariableKey<Integer> RA_SIZE(int index, ScrambleCustomization custom) {
+
+	public static VariableKey<Integer> RA_SIZE(int index, ScrambleCustomization custom) {
 		String key = "Puzzle_RA" + index + "Size";
 		if(custom != null)
 			key += "_" + custom.toString();
-		return new VariableKey<Integer>(key); 
+		return new VariableKey<>(key);
 	}
-	public static final VariableKey<Integer> JCOMPONENT_VALUE(String componentID, boolean xmlSpecific, File xmlguiLayout) {
+
+	public static VariableKey<Integer> JCOMPONENT_VALUE(String componentID, boolean xmlSpecific, File xmlguiLayout) {
 		String key = "GUI_xmlLayout"; 
 		if(xmlSpecific)
 			key += "_" + xmlguiLayout.getName();
@@ -50,7 +55,7 @@ public class VariableKey<H> {
 		return new VariableKey<Integer>(key);
 	}
 
-	public static final VariableKey<Integer[]> JTABLE_COLUMN_ORDERING(String componentID) {
+	public static VariableKey<Integer[]> JTABLE_COLUMN_ORDERING(String componentID) {
 		return new VariableKey<Integer[]>("GUI_xmlLayout_" + componentID + "_columns");  
 	}
 	
@@ -87,14 +92,14 @@ public class VariableKey<H> {
 	public static final VariableKey<List<String>> IMPORT_URLS = new VariableKey<>("Misc_scrambleURLs");
 	public static final VariableKey<List<String>> IRC_SERVERS = new VariableKey<>("IRC_Client_serverURLs");
 	public static final VariableKey<List<String>> SCRAMBLE_CUSTOMIZATIONS = new VariableKey<>("Scramble_customizations");
-	public static final VariableKey<List<String>> PUZZLE_ATTRIBUTES(ScramblePlugin plugin) {
+	public static VariableKey<List<String>> PUZZLE_ATTRIBUTES(Scramble plugin) {
 		return new VariableKey<>("Puzzle_Attributes_" + plugin.getPuzzleName());
 	}
 
 	static {
 		try {
 			Font lcdFont = Font.createFont(Font.TRUETYPE_FONT,
-					CALCubeTimer.class.getResourceAsStream("Digiface Regular.ttf")); 
+					CALCubeTimerFrame.class.getResourceAsStream("Digiface Regular.ttf"));
 			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(lcdFont);
 		} catch (FontFormatException | IOException e) {
 			throw Throwables.propagate(e);
@@ -152,13 +157,12 @@ public class VariableKey<H> {
 	public static final VariableKey<Color> TIMER_FG = new VariableKey<Color>("GUI_Timer_Color_foreground"); 
 	public static final VariableKey<Color> SCRAMBLE_UNSELECTED = new VariableKey<Color>("Scramble_Color_unselected"); 
 	public static final VariableKey<Color> SCRAMBLE_SELECTED = new VariableKey<Color>("Scramble_Color_selected"); 
-//	public static final VariableKey<Color> BEST_AND_CURRENT = new VariableKey<Color>("Statistics_Color_bestAndCurrentAverage"); 
-	public static final VariableKey<Color> BEST_RA = new VariableKey<Color>("Statistics_Color_bestRA"); 
+	public static final VariableKey<Color> BEST_RA = new VariableKey<Color>("Statistics_Color_bestRA");
 	public static final VariableKey<Color> BEST_TIME = new VariableKey<Color>("Statistics_Color_bestTime"); 
 	public static final VariableKey<Color> CURRENT_AVERAGE = new VariableKey<Color>("Statistics_Color_currentAverage"); 
 	public static final VariableKey<Color> WORST_TIME = new VariableKey<Color>("Statistics_Color_worstTime"); 
-	public static final VariableKey<Color> PUZZLE_COLOR(ScramblePlugin plugin, String faceName) {
-		return new VariableKey<Color>("Puzzle_Color_" + plugin.getPuzzleName() + "_face" + faceName);  
+	public static VariableKey<Color> PUZZLE_COLOR(Scramble plugin, String faceName) {
+		return new VariableKey<>("Puzzle_Color_" + plugin.getPuzzleName() + "_face" + faceName);
 	}
 
 	public static final VariableKey<Float> OPACITY = new VariableKey<Float>("Watermark_opacity"); 

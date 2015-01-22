@@ -1,10 +1,13 @@
 package net.gnehzr.cct.main;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.scrambles.ScrambleViewComponent;
 import net.gnehzr.cct.statistics.Profile;
@@ -17,21 +20,25 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-public class ScrambleFrame extends JDialog implements ConfigurationChangeListener, MouseListener, ActionListener {
+@Singleton
+public class ScramblePopupFrame extends JDialog implements ConfigurationChangeListener, MouseListener, ActionListener {
 
 	private final Configuration configuration;
 	private JPanel pane;
 	private JTextArea scrambleInfoArea;
 	private JScrollPane scrambleInfoScroller;
 	private ScrambleViewComponent incrementalScrambleView, finalView;
-	private AbstractAction visibilityAction;
 
-	public ScrambleFrame(JFrame parent, AbstractAction visibilityAction, boolean detectColorClicks, Configuration configuration) {
-		super(parent);
-		this.visibilityAction = visibilityAction;
+	@Inject
+	private ToggleScramblePopupAction visibilityAction;
+
+	@Inject
+	public ScramblePopupFrame(/*CALCubeTimerFrame parent, */
+							  Configuration configuration, ScramblePluginManager scramblePluginManager) {
+		super((JFrame)null/*todo parent*/);
 		this.configuration = configuration;
-		incrementalScrambleView = new ScrambleViewComponent(false, detectColorClicks, configuration);
-		finalView = new ScrambleViewComponent(false, detectColorClicks, configuration);
+		incrementalScrambleView = new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
+		finalView = new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
 		pane = new JPanel(new GridLayout(1, 0));
 		pane.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		pane.add(incrementalScrambleView);
@@ -44,6 +51,15 @@ public class ScrambleFrame extends JDialog implements ConfigurationChangeListene
 		addMouseListener(this);
 		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
 	}
+
+	@Inject
+	void initialize() {
+		this.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+		this.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
+		this.setFocusableWindowState(false);
+
+	}
+
 	public void refreshPopup() {
 		pack();
 		setVisible(incrementalScrambleView.scrambleHasImage() && configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, false));
@@ -110,6 +126,7 @@ public class ScrambleFrame extends JDialog implements ConfigurationChangeListene
 			popup.show(this, e.getX(), e.getY());
 		}
 	}
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		JCheckBoxMenuItem src = (JCheckBoxMenuItem) e.getSource();
 		setFinalViewVisible(src.isSelected());

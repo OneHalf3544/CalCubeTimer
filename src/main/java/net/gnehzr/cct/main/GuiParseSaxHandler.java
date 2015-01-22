@@ -27,11 +27,11 @@ import java.util.List;
 *
 * @author OneHalf
 */
-class GUIParser extends DefaultHandler {
+class GuiParseSaxHandler extends DefaultHandler {
 
-	private static final Logger LOG = Logger.getLogger(GUIParser.class);
+	private static final Logger LOG = Logger.getLogger(GuiParseSaxHandler.class);
 
-	private CALCubeTimer calCubeTimer;
+	private CALCubeTimerFrame calCubeTimerFrame;
     private int level = -2;
     private int componentID = -1;
     private List<String> strs;
@@ -43,28 +43,31 @@ class GUIParser extends DefaultHandler {
     private final StatisticsTableModel statsModel;
     private final DynamicBorderSetter dynamicBorderSetter;
     private final XMLGuiMessages xmlGuiMessages;
+    private final ActionMap actionMap;
 
-    public GUIParser(CALCubeTimer calCubeTimer, JFrame frame, Configuration configuration,
-                     StatisticsTableModel statsModel, DynamicBorderSetter dynamicBorderSetter, XMLGuiMessages xmlGuiMessages){
-        this.calCubeTimer = calCubeTimer;
+    public GuiParseSaxHandler(CALCubeTimerFrame calCubeTimerFrame, JFrame frame, Configuration configuration,
+                              StatisticsTableModel statsModel, DynamicBorderSetter dynamicBorderSetter,
+                              XMLGuiMessages xmlGuiMessages, ActionMap actionMap){
+        this.calCubeTimerFrame = calCubeTimerFrame;
         this.frame = frame;
         this.configuration = configuration;
         this.statsModel = statsModel;
         this.dynamicBorderSetter = dynamicBorderSetter;
         this.xmlGuiMessages = xmlGuiMessages;
+        this.actionMap = actionMap;
 
         componentTree = new ArrayList<>();
         strs = new ArrayList<>();
         needText = new ArrayList<>();
         elementNames = new ArrayList<>();
 
-        calCubeTimer.tabbedPanes.clear();
-        calCubeTimer.splitPanes.clear();
+        calCubeTimerFrame.tabbedPanes.clear();
+        calCubeTimerFrame.splitPanes.clear();
 
-        for(DynamicDestroyable dd : calCubeTimer.dynamicStringComponents) {
+        for(DynamicDestroyable dd : calCubeTimerFrame.dynamicStringComponents) {
             dd.destroy();
         }
-        calCubeTimer.dynamicStringComponents.clear();
+        calCubeTimerFrame.dynamicStringComponents.clear();
     }
 
     @Override
@@ -182,7 +185,7 @@ class GUIParser extends DefaultHandler {
             case "component":
                 if (attrs == null || (temp = attrs.getValue("type")) == null)
                     throw new SAXException("parse error in component");
-                com = calCubeTimer.persistentComponents.getComponent(temp);
+                com = calCubeTimerFrame.persistentComponents.getComponent(temp);
                 if (com == null)
                     throw new SAXException("could not find component: " + temp.toLowerCase());
                 break;
@@ -258,12 +261,12 @@ class GUIParser extends DefaultHandler {
             case "tabbedpane":
                 com = new DynamicTabbedPane(statsModel, configuration, xmlGuiMessages);
                 com.setName(componentID + "");
-                calCubeTimer.tabbedPanes.add((JTabbedPane) com);
+                calCubeTimerFrame.tabbedPanes.add((JTabbedPane) com);
                 break;
             case "splitpane":
                 com = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, null, null);
                 com.setName(componentID + "");
-                calCubeTimer.splitPanes.add((JSplitPane) com);
+                calCubeTimerFrame.splitPanes.add((JSplitPane) com);
                 break;
             case "glue":
                 Component glue;
@@ -282,7 +285,7 @@ class GUIParser extends DefaultHandler {
         if(com instanceof AbstractButton){
             if(attrs != null){
                 if((temp = attrs.getValue("action")) != null){
-                    AbstractAction a = calCubeTimer.actionMap.getAction(temp);
+                    AbstractAction a = actionMap.getAction(temp, calCubeTimerFrame, calCubeTimerFrame.model);
                     if(a != null) ((AbstractButton)com).setAction(a);
                     else throw new SAXException("parse error in action: " + temp.toLowerCase());
                 }
@@ -441,7 +444,7 @@ class GUIParser extends DefaultHandler {
         }
 
         if(com instanceof DynamicDestroyable)
-            calCubeTimer.dynamicStringComponents.add((DynamicDestroyable)com);
+            calCubeTimerFrame.dynamicStringComponents.add((DynamicDestroyable)com);
     }
 
     @Override

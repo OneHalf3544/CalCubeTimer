@@ -12,13 +12,13 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class ShowConfigurationDialogAction extends AbstractAction {
-	private CALCubeTimer cct;
-	public ShowConfigurationDialogAction(CALCubeTimer cct){
+	private CALCubeTimerFrame cct;
+	public ShowConfigurationDialogAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.showConfigurationDialog();
+		cct.showConfigurationDialog(cct.model);
 	}
 }
