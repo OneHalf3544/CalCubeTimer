@@ -207,8 +207,9 @@ public class ScramblePluginManager {
 
 	public String getDefaultGeneratorGroup(ScrambleVariation var) {
 		int c = getIndexOfVariation(var);
-		if(c == -1 || var.getPlugin().getDefaultGenerators() == null)
+		if(c == -1 || var.getPlugin().getDefaultGenerators() == null) {
 			return null;
+		}
 		return var.getPlugin().getDefaultGenerators()[c];
 	}
 	

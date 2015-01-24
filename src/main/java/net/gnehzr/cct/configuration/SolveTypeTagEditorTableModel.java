@@ -69,19 +69,17 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
 	public void apply() {
 		List<String> tagNames = new ArrayList<>(tags.size());
-		for(int c = 0; c < tags.size(); c++) {
-			TypeAndName tan = tags.get(c);
-			if(tan.type == null) { //this indicates that the type was created
-				try {
-					SolveType.createSolveType(tan.name);
-				} catch (Exception e) {
-					LOG.info("unexpected exception", e);
-					continue;
-				}
+		for (TypeAndName typeAndName : tags) {
+			if (typeAndName.type == null) { //this indicates that the type was created
+				if (!SolveType.isValidTagName(typeAndName.name)) {
+                    LOG.info("skip wrong tag name: " + typeAndName.name);
+                    continue;
+                }
+				SolveType.createSolveType(typeAndName.name);
 			} else {
-				tan.type.rename(tan.name);
+				typeAndName.type.rename(typeAndName.name);
 			}
-			tagNames.add(tan.name);
+			tagNames.add(typeAndName.name);
 		}
 		configuration.setStringArray(VariableKey.SOLVE_TAGS, tagNames);
 

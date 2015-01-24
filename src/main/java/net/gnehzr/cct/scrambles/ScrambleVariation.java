@@ -69,11 +69,8 @@ public class ScrambleVariation {
 	}
 
 	public int getPuzzleUnitSize(boolean defaults) {
-		try {
-			return configuration.getInt(VariableKey.UNIT_SIZE(this), defaults);
-		} catch(Exception e) {
-			return scramblePlugin.getDefaultUnitSize();
-		}
+		Integer unitSize = configuration.getInt(VariableKey.UNIT_SIZE(this), defaults);
+		return unitSize  != null ? unitSize : scramblePlugin.getDefaultUnitSize();
 	}
 	public void setPuzzleUnitSize(int size) {
 		if(this != scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation())
@@ -83,6 +80,7 @@ public class ScrambleVariation {
 	public int hashCode() {
 		return toString().hashCode();
 	}
+
 	public boolean equals(Object o) {
 		try {
 			ScrambleVariation other = (ScrambleVariation) o;
