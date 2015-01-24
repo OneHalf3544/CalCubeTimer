@@ -197,10 +197,12 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 
 	@Override
 	public void configurationChanged(Profile profile) {
-		try {
-			clientFrame.setSize(configuration.getDimension(VariableKey.IRC_FRAME_DIMENSION, false));
-			clientFrame.setLocation(configuration.getPoint(VariableKey.IRC_FRAME_LOCATION, false));
-		} catch(NullPointerException ignored) {} //we don't really care if the variables were undefined, things should still work
+		Dimension dimension = configuration.getDimension(VariableKey.IRC_FRAME_DIMENSION, false);
+		Point location = configuration.getPoint(VariableKey.IRC_FRAME_LOCATION, false);
+		if (location != null && dimension != null) {
+			clientFrame.setSize(dimension);
+			clientFrame.setLocation(location);
+		}
 	}
 	public void saveToConfiguration() {
 		configuration.setDimension(VariableKey.IRC_FRAME_DIMENSION, clientFrame.getSize());
@@ -519,7 +521,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
             if(old != null) {
                 try {
                     old.setSelected(true);
-                } catch(PropertyVetoException e) {}
+                } catch(PropertyVetoException e) {LOG.info("ignored exception", e);}
             }
             f.appendMessage(sender, message);
         });
@@ -586,7 +588,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
                     f.appendInformation(StringAccessor.getString("IRCClientGUI.connected") + ": " + channel);
                     try {
                         f.setSelected(true);
-                    } catch(PropertyVetoException e) {}
+                    } catch(PropertyVetoException e) {LOG.info("ignored exception", e);}
                     setCommChannel(f, commChannel);
                     f.setConnected(true);
                 }
@@ -759,7 +761,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
                 login.setLocation((desk.getWidth() - login.getWidth()) / 2, (desk.getHeight() - login.getHeight()) / 2);
                 try {
                     login.setSelected(true);
-                } catch(PropertyVetoException e) {}
+                } catch(PropertyVetoException e) {LOG.info("ignored exception", e);}
             }
         });
 	}
@@ -774,7 +776,9 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 		int port = -1;
 		try {
 			port = Integer.parseInt(urlAndPort[1]);
-		} catch(Exception ignored) {}
+		} catch(Exception e) {
+			LOG.info("ignored exception", e);
+		}
 		final int PORT = port;
 		serverFrame.setTitle(StringAccessor.getString("IRCClientGUI.connecting") + ": " + urlAndPort[0] + ":" + port);
 		connectThread = new Thread() {
@@ -785,7 +789,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 						bot.disconnect();
 						try {
 							bot.dispose();
-						} catch(NullPointerException ignored) {}
+						} catch(NullPointerException e) {LOG.info("ignored exception", e);}
 						bot = new KillablePircBot(IRCClientGUI.this, FINGER_MSG, configuration);
 					}
 					bot.setAutoNickChange(true);
@@ -880,8 +884,9 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 					}
 				}
 			}
-			if(alliswell)
+			if(alliswell) {
 				verifyCommChannels.stop();
+			}
 		}
 	});
 

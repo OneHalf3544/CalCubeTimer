@@ -673,21 +673,24 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
             if(fullscreenFrame != null) {
 				fullscreenFrame.dispose();
 			}
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            GraphicsDevice[] gs = ge.getScreenDevices();
-            GraphicsDevice gd = gs[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
-            fullscreenFrame = new JFrame(gd.getDefaultConfiguration());
-            fullscreenFrame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-            fullscreenFrame.setResizable(false);
-            fullscreenFrame.setUndecorated(true);
-            fullscreenFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-            fullscreenPanel.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
-            fullscreenFrame.add(fullscreenPanel);
+			GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment()
+					.getScreenDevices()[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
+			createFullscreenFrame(gd);
             setFullScreen(model.isFullscreen());
 
             repaintTimes();
             actionMap.refreshActions();
         });
+	}
+
+	private void createFullscreenFrame(GraphicsDevice gd) {
+		fullscreenFrame = new JFrame(gd.getDefaultConfiguration());
+		fullscreenFrame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+		fullscreenFrame.setResizable(false);
+		fullscreenFrame.setUndecorated(true);
+		fullscreenFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		fullscreenPanel.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
+		fullscreenFrame.add(fullscreenPanel);
 	}
 
 	public void addTimeAction() {

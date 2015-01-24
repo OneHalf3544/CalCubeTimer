@@ -42,11 +42,6 @@ public class MegaminxScramble extends Scramble {
 	}
 
 	@Override
-	public boolean supportsScrambleImage() {
-		return false;
-	}
-
-	@Override
 	public String htmlify(String formatMe) {
 		return formatMe;
 	}
@@ -96,11 +91,11 @@ public class MegaminxScramble extends Scramble {
 	}
 
 	public MegaminxScramble() {
-		super(PUZZLE_NAME);
+		super(PUZZLE_NAME, true);
 	}
 
 	public MegaminxScramble(String variation, String scramble) throws InvalidScrambleException {
-		super(PUZZLE_NAME, scramble);
+		super(PUZZLE_NAME, true, scramble);
 		pochmann = variation.equals(VARIATIONS[1]);
 		if(!setAttributes()) {
 			throw new InvalidScrambleException(scramble);
@@ -108,7 +103,7 @@ public class MegaminxScramble extends Scramble {
 	}
 
 	public MegaminxScramble(String variation, int length) {
-		super(PUZZLE_NAME);
+		super(PUZZLE_NAME, true);
 		this.length = length;
 		pochmann = variation.equals(VARIATIONS[1]);
 		setAttributes();

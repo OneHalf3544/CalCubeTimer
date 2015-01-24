@@ -81,7 +81,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 			} else {
 				tan.type.rename(tan.name);
 			}
-			tagNames.set(c, tan.name);
+			tagNames.add(tan.name);
 		}
 		configuration.setStringArray(VariableKey.SOLVE_TAGS, tagNames);
 

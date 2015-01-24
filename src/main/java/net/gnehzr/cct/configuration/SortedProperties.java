@@ -6,6 +6,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.misc.Utils;
+import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
@@ -15,6 +18,8 @@ import java.util.List;
 import java.util.Properties;
 
 public class SortedProperties {
+
+	private static final Logger LOG = Logger.getLogger(SortedProperties.class);
 
 	private final Map<String, String> properties;
 	private final ImmutableSortedMap<String, String> defaultProperties;
@@ -58,12 +63,13 @@ public class SortedProperties {
 		return properties.containsKey(key.toKey()) || defaultProperties.containsKey(key.toKey());
 	}
 
+	@Nullable
 	private String getValue(String key, boolean getOnlyDefaultValue) {
 		String val = properties.get(key);
 		if (getOnlyDefaultValue || val == null) {
 			val = defaultProperties.get(key);
 		}
-		return val == null ? "Couldn't find key " + key : val;
+		return val;
 	}
 
 	private String getValue(VariableKey<?> key, boolean getOnlyDefaultValue) {
@@ -82,22 +88,27 @@ public class SortedProperties {
 		properties.put(key.toKey(), s);
 	}
 
+	@NotNull
 	public String getString(VariableKey<String> key, boolean defaultValue) {
-		return getValue(key, defaultValue);
+		String value = getValue(key, defaultValue);
+		return getNonnullStringForKey(key, value);
 	}
+
+	private String getNonnullStringForKey(Object key, String value) {
+		return value == null ? "Couldn't find key " + key : value;
+	}
+
+	@NotNull
 	private String getString(String key) {
-		return getValue(key, false);
+		return getNonnullStringForKey(key, getValue(key, false));
 	}
 	public void setString(VariableKey<String> key, String value) {
 		setValue(key, value);
 	}
 
 	public Long getLong(VariableKey<Integer> key, boolean defaultValue) {
-		try {
-			return Long.parseLong(getValue(key, defaultValue));
-		} catch(Exception e) {
-			return null;
-		}
+		String value = getValue(key, defaultValue);
+		return value == null ? null : Long.parseLong(value);
 	}
 	public void setLong(VariableKey<Integer> key, long value) {
 		setValue(key, Long.toString(value));
@@ -117,30 +128,33 @@ public class SortedProperties {
 		setValue(key, Boolean.toString(newValue));
 	}
 
-	public Dimension getDimension(VariableKey<Dimension> key, boolean defaultValue) {
-		try {
-			String[] dims = getValue(key, false).split("x");
-			Dimension temp = new Dimension(Integer.parseInt(dims[0]), Integer.parseInt(dims[1]));
-			if(temp.height <= 0) //we don't allow invisible dimensions
-				temp.height = 100;
-			if(temp.width <= 0)
-				temp.width = 100;
-			return temp;
-		} catch(Exception e) {
-			return null;
-		}
+	@Nullable
+	public Dimension getDimension(VariableKey<Dimension> key) {
+		String value = getValue(key, false);
+		if (value == null) {
+            return null;
+        }
+
+		String[] dims = value.split("x");
+		Dimension temp = new Dimension(Integer.parseInt(dims[0]), Integer.parseInt(dims[1]));
+		if(temp.height <= 0) //we don't allow invisible dimensions
+            temp.height = 100;
+		if(temp.width <= 0)
+            temp.width = 100;
+		return temp;
 	}
-	public void setDimension(VariableKey<Dimension> key, Dimension newValue) {
+
+	public void setDimension(VariableKey<Dimension> key, @NotNull Dimension newValue) {
 		setValue(key, newValue.width + "x" + newValue.height);
 	}
 
 	public Point getPoint(VariableKey<Point> key, boolean defaultValue) {
-		try {
-			String[] dims = getValue(key, defaultValue).split(",");
-			return new Point(Integer.parseInt(dims[0]), Integer.parseInt(dims[1]));
-		} catch(Exception e) {
-			return null;
-		}
+		String value = getValue(key, defaultValue);
+		if (value == null) {
+            return null;
+        }
+		String[] dims = value.split(",");
+		return new Point(Integer.parseInt(dims[0]), Integer.parseInt(dims[1]));
 	}
 	public void setPoint(VariableKey<Point> key, Point newValue) {
 		setValue(key, newValue.x + "," + newValue.y);
@@ -161,11 +175,8 @@ public class SortedProperties {
 
 	//special characters are for now just ';'
 	public List<String> getStringArray(VariableKey<List<String>> key, boolean defaultValue) {
-		try {
-			return Lists.newArrayList(getValue(key, defaultValue).split("\n"));
-		} catch(NullPointerException e) {
-			return null;
-		}
+		String value = getValue(key, defaultValue);
+		return value == null ? null : Lists.newArrayList(value.split("\n"));
 	}
 	public void setStringArray(VariableKey<List<String>> key, List<?> arr) {
 		String mashed = "";
@@ -176,16 +187,17 @@ public class SortedProperties {
 	}
 
 	public Integer[] getIntegerArray(VariableKey<Integer[]> key, boolean defaultValue) {
-		try {
-			String[] s = getValue(key, defaultValue).split("\n");
-			Integer[] i = new Integer[s.length];
-			for(int ch = 0; ch < s.length; ch++) {
-				i[ch] = Integer.parseInt(s[ch]);
-			}
-			return i;
-		} catch(NullPointerException e) {
-			return null;
-		}
+		String value = getValue(key, defaultValue);
+		if (value == null) {
+            return null;
+        }
+
+		String[] s = value.split("\n");
+		Integer[] i = new Integer[s.length];
+		for(int ch = 0; ch < s.length; ch++) {
+            i[ch] = Integer.parseInt(s[ch]);
+        }
+		return i;
 	}
 	public void setIntegerArray(VariableKey<Integer[]> key, Integer[] arr) {
 		String mashed = "";

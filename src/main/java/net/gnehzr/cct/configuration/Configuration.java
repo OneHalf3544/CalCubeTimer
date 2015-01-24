@@ -309,7 +309,7 @@ public class Configuration {
 	}
 
 	public Dimension getDimension(VariableKey<Dimension> ircFrameDimension, boolean b) {
-		return props.getDimension(ircFrameDimension, b);
+		return props.getDimension(ircFrameDimension);
 	}
 
 	public float getFloat(VariableKey<Float> opacity, boolean b) {

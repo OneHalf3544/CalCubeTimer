@@ -26,6 +26,7 @@ public abstract class Scramble {
 
 	private final String puzzleName;
 	private final ScramblePluginMessages messageAccessor;
+	private final boolean supportsScrambleImage;
 
 	public static Scramble unknownScramble(String scramble) {
 		return new NullScramble(scramble);
@@ -46,7 +47,9 @@ public abstract class Scramble {
 
 	protected abstract Scramble createScramble(final String variation, final int length, final String generatorGroup, final List<String> attributes);
 
-	public abstract boolean supportsScrambleImage();
+	public final boolean supportsScrambleImage() {
+		return supportsScrambleImage;
+	}
 
 	public ScramblePluginMessages getMessageAccessor() {
 		return messageAccessor;
@@ -71,13 +74,14 @@ public abstract class Scramble {
 	protected int length = 0;
 	protected String scramble = null;
 
-	public Scramble(String puzzleName) {
+	public Scramble(String puzzleName, boolean supportsScrambleImage) {
 		this.puzzleName = puzzleName;
+		this.supportsScrambleImage = supportsScrambleImage;
 		this.messageAccessor = new ScramblePluginMessages(getClass());
 	}
 
-	public Scramble(String puzzleName, String scramble) {
-		this(puzzleName);
+	public Scramble(String puzzleName, boolean supportsScrambleImage, String scramble) {
+		this(puzzleName, supportsScrambleImage);
 		this.scramble = scramble;
 	}
 

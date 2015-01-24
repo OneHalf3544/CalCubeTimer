@@ -26,13 +26,8 @@ class NullScramble extends Scramble {
         return NULL_SCRAMBLE;
     }
 
-    @Override
-    public boolean supportsScrambleImage() {
-        return false;
-    }
-
     NullScramble(String scramble) {
-        super("NULL_SCRAMBLE", scramble);
+        super("NULL_SCRAMBLE", false, scramble);
 	}
 
     @Override

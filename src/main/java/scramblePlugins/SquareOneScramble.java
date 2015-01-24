@@ -37,14 +37,14 @@ public class SquareOneScramble extends Scramble {
 	}
 
 	private SquareOneScramble(int length, String generatorGroup, List<String> attrs) {
-		super(PUZZLE_NAME);
+		super(PUZZLE_NAME, true);
 		this.length = length;
 		setGenerator(generatorGroup);
 		setAttributes(attrs);
 	}
 
 	public SquareOneScramble(String s, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
-		super(s);
+		super(s, true);
 		setGenerator(generatorGroup);
 		if(!setAttributes(attrs))
 			throw new InvalidScrambleException(s);
@@ -58,11 +58,6 @@ public class SquareOneScramble extends Scramble {
 	@Override
 	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
 		return new SquareOneScramble(length, generatorGroup, attributes);
-	}
-
-	@Override
-	public boolean supportsScrambleImage() {
-		return false;
 	}
 
 	@Override

@@ -782,7 +782,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		} else if(source == inspectionCountdown) {
 			speakInspection.setEnabled(inspectionCountdown.isSelected());
 		} else if(e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(profileDao.getSelectedProfile())) {
-			int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("configurationDialog.saveprofile"));
+			int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("ConfigurationDialog.saveprofile"));
 			switch (choice) {
 				case JOptionPane.YES_OPTION:
 					applyAndSave();

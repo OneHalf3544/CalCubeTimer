@@ -24,14 +24,14 @@ public class ClockScramble extends Scramble {
 	}
 
 	public ClockScramble(String s, List<String> attrs) throws InvalidScrambleException {
-		super(s);
+		super(s, false);
 		if(!setAttributes(attrs)) {
 			throw new InvalidScrambleException(s);
 		}
 	}
 
 	public ClockScramble(int length, List<String> attrs) {
-		super(PUZZLE_NAME);
+		super(PUZZLE_NAME, false);
 		this.length = length;
 		setAttributes(attrs);
 	}
@@ -44,11 +44,6 @@ public class ClockScramble extends Scramble {
 	@Override
 	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
 		return new ClockScramble(length, attributes);
-	}
-
-	@Override
-	public boolean supportsScrambleImage() {
-		return false;
 	}
 
 	@Override

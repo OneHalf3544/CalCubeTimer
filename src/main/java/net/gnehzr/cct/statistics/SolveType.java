@@ -1,7 +1,9 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.i18n.StringAccessor;
+import org.apache.log4j.Logger;
 
+import java.text.ParseException;
 import java.util.*;
 
 /**
@@ -14,11 +16,13 @@ import java.util.*;
 */
 public class SolveType {
 
+    private static final Logger LOG = Logger.getLogger(SolveType.class);
+
     private static final Map<String, SolveType> SOLVE_TYPES = new HashMap<>();
 
     public static SolveType createSolveType(String desc) throws Exception {
         if(desc.isEmpty() || desc.contains(",")) {
-            throw new Exception(StringAccessor.getString("SolveTime.invalidtype"));
+            throw new ParseException(StringAccessor.getString("SolveTime.invalidtype"), 0);
         }
         if(SOLVE_TYPES.containsKey(desc.toLowerCase())) {
             return SOLVE_TYPES.get(desc);
@@ -44,7 +48,9 @@ public class SolveType {
             if(ch == types.size()) { //we didn't find the tag, so we'll have to create it
                 try {
                     types.add(createSolveType(tag));
-                } catch(Exception e) {}
+                } catch(Exception e) {
+                    LOG.info("ignored exception", e);
+                }
             }
         }
         return types;

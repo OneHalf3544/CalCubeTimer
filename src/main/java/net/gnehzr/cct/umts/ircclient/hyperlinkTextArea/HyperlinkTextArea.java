@@ -30,6 +30,7 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 	public HyperlinkTextArea() {
 		doc = getDocument();
 		setUI(new BasicTextAreaUI() {
+			@Override
 			public View create(Element elem) {
 				return new EllipsisWrappedView(elem, getWrapStyleWord(), getHighlighter());
 			}
@@ -40,6 +41,7 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 		refreshBorder();
 		getCaret().setSelectionVisible(true);
 	}
+	@Override
 	public void setFont(Font f) {
 		super.setFont(f);
 		refreshBorder();
@@ -51,13 +53,14 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 	public static interface HyperlinkListener {
 		public void hyperlinkUpdate(HyperlinkTextArea source, String url, int linkNum);
 	}
-	private ArrayList<HyperlinkListener> hyperlinkListeners = new ArrayList<HyperlinkListener>();
+	private ArrayList<HyperlinkListener> hyperlinkListeners = new ArrayList<>();
 	public void addHyperlinkListener(HyperlinkListener l) {
 		hyperlinkListeners.add(l);
 	}
 	public void removeHyperlinkListener(HyperlinkListener l) {
 		hyperlinkListeners.remove(l);
 	}
+	@Override
 	public void mouseClicked(MouseEvent e) {
 		if(getMousePosition() != null) {
 			int pos = viewToModel(getMousePosition());
@@ -79,9 +82,13 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 		}
 		setCursor(Cursor.getDefaultCursor());
 	}
+	@Override
 	public void mouseEntered(MouseEvent e) {}
+	@Override
 	public void mouseExited(MouseEvent e) {}
+	@Override
 	public void mousePressed(MouseEvent e) {}
+	@Override
 	public void mouseReleased(MouseEvent e) {
 		int start = getSelectionStart();
 		int end = getSelectionEnd();
@@ -93,24 +100,31 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 		}
 		repaint();
 	}
+	@Override
 	public String getSelectedText() {
 		return super.getSelectedText().replaceAll(ZWSP, "");
 	}
 	public boolean isSelectingText() {
 		return getSelectionStart() != getSelectionEnd();
 	}
+	@Override
 	public void mouseDragged(MouseEvent e) {
 		repaint();
 	}
 	
+	@Override
 	public void mouseMoved(MouseEvent e) {
 		updateCursor();
 	}
+
 	private void updateCursor() {
 		Integer pos = null;
 		try {
 			pos = viewToModel(getMousePosition());
-		} catch(Throwable e) {} //i'm not sure what's going on here, but it's not really critical
+		} catch(RuntimeException e) {
+		 	//i'm not sure what's going on here, but it's not really critical
+			LOG.info("ignored exception", e);
+		}
 		if(pos != null) {
 			for(Highlight h : clickableLinks) {
 				if(h.getStartOffset() <= pos && pos <= h.getEndOffset()) {
@@ -121,26 +135,25 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 		}
 		setCursor(Cursor.getDefaultCursor());
 	}
+	@Override
 	public void changedUpdate(DocumentEvent e) {}
+	@Override
 	public void insertUpdate(DocumentEvent e) {
 		updateCursor();
 		repaint(); //need to update highlights
 	}
+	@Override
 	public void removeUpdate(DocumentEvent e) {
 		updateCursor();
 		repaint(); //need to update highlights
 	}
 
-	private ArrayList<Highlight> clickableLinks = new ArrayList<Highlight>();
+	private ArrayList<Highlight> clickableLinks = new ArrayList<>();
 	public void clear() {
 		setText("");
 		getHighlighter().removeAllHighlights();
 		clickableLinks.clear();
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				updateCursor(); //for some reason, the cursor is turning into a hand when the above lines are executed
-			}
-		});
+		SwingUtilities.invokeLater(this::updateCursor);
 	}
 	
 	public boolean appendToLink(int linkNumber, String str) {
@@ -156,6 +169,7 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 		return getLineOfOffset(clickableLinks.get(linkNumber).getStartOffset());
 	}
 	
+	@Override
 	public void append(String str) {
 		append(str, null);
 	}
@@ -168,7 +182,7 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 		int end = length + str.length();
 		super.append(str);
 
-		HashMap<Integer, CCTLink> cctlinks = new HashMap<Integer, CCTLink>();
+		HashMap<Integer, CCTLink> cctlinks = new HashMap<>();
 		try {
 			int offset = 0;
 			Matcher m = URL_PATTERN.matcher(str);
@@ -213,7 +227,9 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 					temp = scramble.indexOf(':');
 					number = Integer.parseInt(scramble.substring(1, temp));
 					scramble = scramble.substring(temp + 1);
-				} catch(Exception ee) {}
+				} catch(Exception ee) {
+					LOG.info("ignored exception", ee);
+				}
 			}
 
 			if((temp = scramble.indexOf(':')) != -1) {

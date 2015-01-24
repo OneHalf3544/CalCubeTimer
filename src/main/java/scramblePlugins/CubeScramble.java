@@ -27,17 +27,12 @@ public class CubeScramble extends Scramble {
     private static final Logger LOG = Logger.getLogger(CubeScramble.class);
 
     public CubeScramble() {
-        super("Cube");
+        super("Cube", true);
     }
 
     @Override
     public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
         return new CubeScramble(variation, scramble, generatorGroup, attributes);
-    }
-
-    @Override
-    public boolean supportsScrambleImage() {
-        return false;
     }
 
     @Override
@@ -120,14 +115,14 @@ public class CubeScramble extends Scramble {
     }
 
     private CubeScramble(int size, int length, List<String> attrs) {
-        super("Cube");
+        super("Cube", true);
         this.size = size;
         super.length = length;
         setAttributes(attrs);
     }
 
     public CubeScramble(String variation, String s, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
-        super(s);
+        super(s, true);
         parseGeneratorGroup(generatorGroup);
         this.size = Integer.parseInt(variation.split("x")[0]);
         if (!setAttributes(attrs))

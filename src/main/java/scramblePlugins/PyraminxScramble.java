@@ -24,14 +24,14 @@ public class PyraminxScramble extends Scramble {
 	}
 
 	public PyraminxScramble(String s, List<String> attrs) throws InvalidScrambleException {
-		super("Pyraminx", s);
+		super("Pyraminx", true, s);
 		if(!setAttributes(attrs)) {
 			throw new InvalidScrambleException(s);
 		}
 	}
 
 	public PyraminxScramble(int length, List<String> attrs) {
-		super("Pyraminx");
+		super("Pyraminx", true);
 		this.length = length;
 		setAttributes(attrs);
 	}
@@ -52,11 +52,6 @@ public class PyraminxScramble extends Scramble {
 	@Override
 	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
 		return new PyraminxScramble(length, attributes);
-	}
-
-	@Override
-	public boolean supportsScrambleImage() {
-		return false;
 	}
 
 	@Override

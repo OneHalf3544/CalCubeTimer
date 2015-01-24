@@ -3,7 +3,6 @@ package net.gnehzr.cct.main;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.scrambles.Scramble;
@@ -21,33 +20,34 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 @Singleton
-public class ScramblePopupFrame extends JDialog implements ConfigurationChangeListener, MouseListener, ActionListener {
+public class ScramblePopupFrame extends JDialog implements MouseListener, ActionListener {
 
 	private final Configuration configuration;
 	private JPanel pane;
-	private JTextArea scrambleInfoArea;
+	private JTextArea scrambleInfoTextArea;
 	private JScrollPane scrambleInfoScroller;
-	private ScrambleViewComponent incrementalScrambleView, finalView;
+	private ScrambleViewComponent incrementalScrambleView;
+	private ScrambleViewComponent finalView;
 
 	@Inject
 	private ToggleScramblePopupAction visibilityAction;
 
 	@Inject
-	public ScramblePopupFrame(/*CALCubeTimerFrame parent, */
+	public ScramblePopupFrame(CALCubeTimerFrame parent,
 							  Configuration configuration, ScramblePluginManager scramblePluginManager) {
-		super((JFrame)null/*todo parent*/);
+		super(parent);
 		this.configuration = configuration;
 		incrementalScrambleView = new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
-		finalView = new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
+		finalView = 			  new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
 		pane = new JPanel(new GridLayout(1, 0));
 		pane.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		pane.add(incrementalScrambleView);
-		scrambleInfoArea = new JTextArea();
-		scrambleInfoScroller = new JScrollPane(scrambleInfoArea);
-		scrambleInfoArea.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
+		scrambleInfoTextArea = new JTextArea();
+		scrambleInfoScroller = new JScrollPane(scrambleInfoTextArea);
+		scrambleInfoTextArea.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		scrambleInfoScroller.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		this.setContentPane(pane);
-		this.configuration.addConfigurationChangeListener(this);
+		this.configuration.addConfigurationChangeListener(this::configurationChanged);
 		addMouseListener(this);
 		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
 	}
@@ -77,7 +77,6 @@ public class ScramblePopupFrame extends JDialog implements ConfigurationChangeLi
 		super.setVisible(c);
 	}
 
-	@Override
 	public void configurationChanged(Profile profile) {
 		setFinalViewVisible(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
 		incrementalScrambleView.syncColorScheme(false);
@@ -86,6 +85,7 @@ public class ScramblePopupFrame extends JDialog implements ConfigurationChangeLi
 		if(location != null)
 			setLocation(location);
 	}
+
 	public void setScramble(Scramble incrementalScramble, Scramble fullScramble, ScrambleVariation newVariation) {
 		incrementalScrambleView.setScramble(incrementalScramble, newVariation);
 		finalView.setScramble(fullScramble, newVariation);
@@ -93,9 +93,9 @@ public class ScramblePopupFrame extends JDialog implements ConfigurationChangeLi
 		if(info == null) {
 			pane.remove(scrambleInfoScroller);
 		} else {
-			scrambleInfoArea.setText(incrementalScramble.getExtraInfo());
+			scrambleInfoTextArea.setText(incrementalScramble.getExtraInfo());
 			scrambleInfoScroller.setPreferredSize(incrementalScrambleView.getPreferredSize()); //force scrollbars if necessary
-			scrambleInfoArea.setCaretPosition(0); //force scroll to the top
+			scrambleInfoTextArea.setCaretPosition(0); //force scroll to the top
 			pane.add(scrambleInfoScroller);
 		}
 		refreshPopup();

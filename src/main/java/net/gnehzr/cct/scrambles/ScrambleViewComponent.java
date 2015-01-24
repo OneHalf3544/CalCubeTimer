@@ -25,8 +25,9 @@ public class ScrambleViewComponent extends JComponent implements ComponentListen
 			@Override
 			public void configurationChanged(Profile profile) {
 				GAP = configuration.getInt(VariableKey.POPUP_GAP, false);
-				if(GAP == null)
+				if(GAP == null) {
 					GAP = DEFAULT_GAP;
+				}
 			}
 		});
 		this.configuration = configuration;

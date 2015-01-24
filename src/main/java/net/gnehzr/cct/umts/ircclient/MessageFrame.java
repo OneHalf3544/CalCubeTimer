@@ -83,7 +83,7 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 		
 		try {
 			setIcon(true);
-		} catch(PropertyVetoException ignored) {}
+		} catch(PropertyVetoException e) {LOG.info("ignored exception", e);}
 		setPreferredSize(new Dimension(450, 300));
 		this.addInternalFrameListener(new InternalFrameAdapter() {
 			@Override
@@ -400,8 +400,8 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 	private List<String> commands = new ArrayList<>();
 	private int nthCommand = 0;
 	@Override
-	public void actionPerformed(ActionEvent e) {
-		if(e.getSource() == messageAppender) {
+	public void actionPerformed(ActionEvent event) {
+		if(event.getSource() == messageAppender) {
 			final int vertVal = msgScroller.getVerticalScrollBar().getValue();
 			final int horVal = msgScroller.getHorizontalScrollBar().getValue();
 			final boolean atBottom = isAtBottom();
@@ -425,7 +425,9 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 						setNum = setMap.lastKey();
 						scrambleMap = setMap.get(setNum);
 						scrambleNum = scrambleMap.firstKey();
-					} catch(Exception ignored) {}
+					} catch(Exception e2) {
+						LOG.info("ignored exception", e2);
+					}
 					l.fragmentation &= scrambleNum != null && scrambleNum == l.number;
 					if(l.fragmentation) {
 						int linkNum = scrambleMap.get(scrambleNum);
@@ -437,7 +439,9 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 							int line = messageArea.getLineOfLink(link);
 							int start = messageArea.getLineStartOffset(line);
 							messageArea.getDocument().remove(start, messageArea.getLineEndOffset(line) - start);
-						} catch(Exception ignored) {}
+						} catch(Exception e) {
+							LOG.info("ignored exception", e);
+						}
 					} else {
 						if(scrambleNum == null || scrambleNum - 1 != l.number) {
 							setNum = setNum == null ? 0 : setNum + 1;
@@ -462,14 +466,14 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
                     });
 				}
 			}
-		} else if(e.getSource() == chatField) {
-			if(e.getActionCommand().isEmpty())
+		} else if(event.getSource() == chatField) {
+			if(event.getActionCommand().isEmpty())
 				return;
-			commands.add(e.getActionCommand());
+			commands.add(event.getActionCommand());
 			chatField.setText("");
 			nthCommand = commands.size();
 			for(CommandListener l : listeners)
-				l.commandEntered(this, e.getActionCommand());
+				l.commandEntered(this, event.getActionCommand());
 		}
 	}
 	@Override

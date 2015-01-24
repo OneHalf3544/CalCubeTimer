@@ -4,12 +4,12 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -18,20 +18,65 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
-public class DraggableJTable extends JTable implements MouseListener, MouseMotionListener, KeyListener, ActionListener {
+public class DraggableJTable extends JTable implements MouseMotionListener, ActionListener {
+
+	private static final Logger LOG = Logger.getLogger(DraggableJTable.class);
 
 	private final Configuration configuration;
 	String addText;
+	private boolean ignoreMoving;
+
+	private JTableHeader headers;
+	private List<? extends SortKey> defaultSort;
+
+	private SelectionListener selectionListener;
+	private DraggableJTableModel model;
+	Vector<HideableTableColumn> cols;
+	private int fromRow;
+
 	//You must set any editors or renderers before setting this table's model
 	//because the preferred size is computed inside setModel()
 	public DraggableJTable(Configuration configuration, boolean draggable, final boolean columnChooser) {
 		this.configuration = configuration;
-		this.addMouseListener(this);
+		MouseListener mouselistener = new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() >= 2) {
+					int row = DraggableJTable.this.rowAtPoint(e.getPoint());
+					if (selectionListener != null) {
+						selectionListener.rowSelected(row);
+						DraggableJTable.this.repaint();
+					}
+				}
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (e.getSource() == this)
+					fromRow = rowAtPoint(e.getPoint());
+				maybeShowPopup(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				maybeShowPopup(e);
+			}
+
+		};
+		this.addMouseListener(mouselistener);
 		if(draggable) {
 			setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			this.addMouseMotionListener(this);
 		}
-		this.addKeyListener(this);
+		this.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				int keyCode = e.getKeyCode();
+				if(keyCode == KeyEvent.VK_DELETE || keyCode == KeyEvent.VK_BACK_SPACE) {
+					deleteSelectedRows(true);
+				}
+			}
+		});
 		this.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 		this.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
 		headers = new JTableHeader() {
@@ -45,8 +90,9 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 			}
 		};
 		setTableHeader(headers);
-		if(columnChooser)
-			headers.addMouseListener(this);
+		if(columnChooser) {
+			headers.addMouseListener(mouselistener);
+		}
 		//need to override the DefaultTableColumnModel's moveColumn()
 		//in order to catch mouse dragging, the JTable's moveColumn()
 		//won't catch that stuff
@@ -79,143 +125,22 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 	public void refreshStrings(String addText) {
 		this.addText = addText;
 	}
-	
-	private JTableHeader headers;
-
-	public void setHeadersVisible(boolean visible) {
-		if(!visible) {
-			setTableHeader(null);
-		} else if(visible) {
-			setTableHeader(headers);
-		}
-	}
-	
-	private class JTableModelWrapper extends DraggableJTableModel {
-		private DraggableJTableModel wrapped;
-		public JTableModelWrapper(DraggableJTableModel wrapped) {
-			this.wrapped = wrapped;
-			wrapped.addTableModelListener(new TableModelListener() {
-				@Override
-				public void tableChanged(TableModelEvent e) {
-					fireTableChanged(e);
-					int[] rows = getSelectedRows();
-					if(rows.length > 0)
-						setRowSelectionInterval(rows[0], rows[0]);
-				}
-			});
-		}
-		@Override
-		public void deleteRows(int[] indices) {
-			wrapped.deleteRows(indices);
-		}
-		@Override
-		public int getColumnCount() {
-			return wrapped.getColumnCount();
-		}
-		@Override
-		public int getRowCount() {
-			if(addText == null)
-				return wrapped.getRowCount();
-			return wrapped.getRowCount() + 1;
-		}
-		@Override
-		public Object getValueAt(int rowIndex, int columnIndex) {
-			if(rowIndex == wrapped.getRowCount()) {
-				if(columnIndex == 0)
-					return addText;
-				return "";
-			}
-			
-			return wrapped.getValueAt(rowIndex, columnIndex);
-		}
-		@Override
-		public boolean isCellEditable(int rowIndex, int columnIndex) {
-			if(rowIndex == wrapped.getRowCount())
-				return columnIndex == 0;
-			
-			return wrapped.isCellEditable(rowIndex, columnIndex);
-		}
-		@Override
-		public boolean isRowDeletable(int rowIndex) {
-			if(rowIndex == wrapped.getRowCount())
-				return false;
-			
-			return wrapped.isRowDeletable(rowIndex);
-		}
-		@Override
-		public void removeRows(int[] indices) {
-			wrapped.removeRows(indices);
-		}
-		@Override
-		public void setValueAt(Object value, int rowIndex, int columnIndex) {
-			wrapped.setValueAt(value, rowIndex, columnIndex);
-		}
-		@Override
-		public void showPopup(MouseEvent e, DraggableJTable source, Component prevFocusOwner) {
-			if(rowAtPoint(e.getPoint()) != wrapped.getRowCount())
-				wrapped.showPopup(e, source, prevFocusOwner);
-		}
-		@Override
-		public Class<?> getColumnClass(int columnIndex) {
-			return wrapped.getColumnClass(columnIndex);
-		}
-		@Override
-		public String getColumnName(int column) {
-			return wrapped.getColumnName(column);
-		}
-		@Override
-		public void insertValueAt(Object value, int rowIndex) {
-			wrapped.insertValueAt(value, rowIndex);
-		}
-		@Override
-		public String getToolTip(int rowIndex, int columnIndex) {
-			if(rowIndex == wrapped.getRowCount())
-				return null;
-			return wrapped.getToolTip(rowIndex, columnIndex);
-		}
-	}
 
 	public void promptForNewRow() {
 		editCellAt(model.getRowCount() - 1, 0);
 	}
+
 	@Override
 	public boolean editCellAt(int row, int column) {
 		boolean temp = super.editCellAt(row, column);
 		getEditorComponent().requestFocusInWindow();
 		return temp;
 	}
-	
-	private static class HideableTableColumn {
-		TableColumn col;
-		boolean isVisible;
-		int viewIndex;
-		int modelIndex;
-		public HideableTableColumn(TableColumn col, boolean isVisible, int modelIndex, int viewIndex) {
-			this.col = col;
-			this.isVisible = isVisible;
-			this.modelIndex = modelIndex;
-			this.viewIndex = viewIndex;
-		}
-		public TableColumn getColumn() {
-			return col;
-		}
-		public boolean isVisible() {
-			return isVisible;
-		}
-		public int getModelIndex() {
-			return modelIndex;
-		}
-		public int getViewIndex() {
-			return viewIndex;
-		}
-		public String toString() {
-			return viewIndex+"="+isVisible;
-		}
-	}
-	Vector<HideableTableColumn> cols;
+
 	public Vector<HideableTableColumn> getAllColumns() {
 		return cols;
 	}
+
 	private HideableTableColumn getHideableTableColumn(int viewIndex) {
 		for(HideableTableColumn c : cols) {
 			if(viewIndex == c.viewIndex) { 
@@ -232,7 +157,7 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 		}
 		return null;
 	}
-	private boolean ignoreMoving;
+
 	public void setColumnVisible(int column, boolean visible) {
 		boolean isVisible = isColumnVisible(column);
 		if(isVisible == visible)
@@ -241,7 +166,7 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 		ignoreMoving = true;
 		if(!visible) {
 			removeColumn(hideCol.col);
-		} else if(visible) {
+		} else {
 			addColumn(hideCol.col);  //this appends the column to the end of the view
 			int trueView = hideableModelToView(hideCol.viewIndex);
 			if(trueView < getColumnModel().getColumnCount() - 1) { //this moves the column to where it belongs
@@ -302,21 +227,20 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 			moveHideableColumn(from, from - 1);
 			moveHideableColumn(from - 1, to);
 		} else { //from +-1 == to
-			HideableTableColumn newCol = getHideableTableColumn(to);//getHideableTableColumn(getColumnModel().getColumn(to));
-			HideableTableColumn oldCol = getHideableTableColumn(from);//getHideableTableColumn(getColumnModel().getColumn(from));
+			HideableTableColumn newCol = getHideableTableColumn(to); //getHideableTableColumn(getColumnModel().getColumn(to));
+			HideableTableColumn oldCol = getHideableTableColumn(from); //getHideableTableColumn(getColumnModel().getColumn(from));
 			//swapping newCol and oldCol viewIndices
 			int temp = newCol.viewIndex;
 			newCol.viewIndex = oldCol.viewIndex;
 			oldCol.viewIndex = temp;
 		}
 	}
-	
-	private DraggableJTableModel model;
+
 	@Override
 	public void setModel(@NotNull TableModel tableModel) {
 		if (tableModel instanceof DraggableJTableModel) {
 			model = (DraggableJTableModel) tableModel;
-			model = new JTableModelWrapper(model);
+			model = new JTableModelWrapper(this, model);
 			super.setModel(model);
 			computePreferredSizes(null);
 			cols = new Vector<>();
@@ -375,6 +299,7 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 			render = null;
 		}
 	}
+
 	private Dimension getRendererPreferredSize(Object value, int col) {
 		Component c = getCellRenderer(0, col).getTableCellRendererComponent(
 				this,
@@ -386,6 +311,7 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 		//c == null if the class returned by getColumnClass(0) doesn't have a constructor of 1 string
 		return c == null ? new Dimension(0, 0) : c.getPreferredSize();
 	}
+
 	private Dimension getEditorPreferredSize(Object value, int col) {
 		Component c = getCellEditor(0, col).getTableCellEditorComponent(
 				this,
@@ -397,20 +323,16 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 		return c == null ? new Dimension(0, 0) : c.getPreferredSize();
 	}
 	
-	private List<? extends SortKey> defaultSort;
-	//see getSortedColumn() for explanation
-	public void sortByColumn(int col) {
-		if(col == 0)
+	public void sortByColumn(SortKey sortKey) {
+		if(sortKey == null) {
 			return;
-		SortOrder so;
-		if(col < 0)
-			so = SortOrder.DESCENDING;
-		else
-			so = SortOrder.ASCENDING;
-		defaultSort = Arrays.asList(new SortKey(Math.abs(col) - 1, so));
+		}
+		defaultSort = Arrays.asList(sortKey);
 		try {
 			getRowSorter().setSortKeys(defaultSort);
-		} catch(Exception e3) {}
+		} catch(Exception e3) {
+			LOG.trace("ignored exception", e3);
+		}
 	}
 	//returns column + 1, negative if descending, positive if ascending
 	//returns 0 if no column is sorted
@@ -428,61 +350,42 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 		}
 		return 0;
 	}
-	public void tableChanged(TableModelEvent e) {
+	@Override
+	public void tableChanged(TableModelEvent event) {
 		//TODO - refreshing the tooltip would be nice here
 		
 		List<? extends SortKey> sorts = null;
-		if(getRowSorter() != null) {
+		if (getRowSorter() != null) {
 			sorts = getRowSorter().getSortKeys();
 		}
-		if(sorts == null || sorts.isEmpty())
+		if (sorts == null || sorts.isEmpty()) {
 			sorts = defaultSort;
-		super.tableChanged(e);
-		if(getRowSorter() != null) {
-			try{
-				getRowSorter().setSortKeys(sorts);
-			} catch(Exception e2) {
-				try {
-					getRowSorter().setSortKeys(defaultSort);
-				} catch(Exception e3) {}
-			}
 		}
+		super.tableChanged(event);
+		if (getRowSorter() == null) {
+			return;
+		}
+		try{
+            getRowSorter().setSortKeys(sorts);
+        } catch(Exception e2) {
+            LOG.trace("ignored exception", e2);
+            try {
+                getRowSorter().setSortKeys(defaultSort);
+            } catch(Exception e3) {
+                LOG.trace("ignored exception", e3);
+            }
+        }
 	}
 	
 	
 	public interface SelectionListener {
 		public void rowSelected(int row);
 	}
-	private SelectionListener selectionListener;
+
 	public void setSelectionListener(SelectionListener sl) {
 		selectionListener = sl;
 	}
-	
-	private int fromRow;
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		if(e.getClickCount() >= 2) {
-			int row = this.rowAtPoint(e.getPoint());
-			if(selectionListener != null) {
-				selectionListener.rowSelected(row);
-				this.repaint();
-			}
-		}
-	}
-	@Override
-	public void mouseEntered(MouseEvent e) {}
-	@Override
-	public void mouseExited(MouseEvent e) {}
-	@Override
-	public void mousePressed(MouseEvent e) {
-		if(e.getSource() == this)
-			fromRow = rowAtPoint(e.getPoint());
-		maybeShowPopup(e);
-	}
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		maybeShowPopup(e);
-	}
+
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		if(e.getSource() == this) {
@@ -498,51 +401,44 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 	@Override
 	public void mouseMoved(MouseEvent e) {}
 
-	@Override
-	public void keyPressed(KeyEvent e) {
-		int keyCode = e.getKeyCode();
-		if(keyCode == KeyEvent.VK_DELETE || keyCode == KeyEvent.VK_BACK_SPACE) {
-			deleteSelectedRows(true);
-		}
-	}
-	@Override
-	public void keyReleased(KeyEvent e) {}
-	@Override
-	public void keyTyped(KeyEvent e) {}
-
 	private void maybeShowPopup(MouseEvent e) {
-		if(e.isPopupTrigger()) {
-			if(e.getSource() == this) {
-				int row;
-				if((row = rowAtPoint(e.getPoint())) != -1) {
-					Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-					if(getSelectedRowCount() <= 1) {
-						// if right clicking on a single cell, this will select it first
-						setRowSelectionInterval(row, row);
-					}
-					model.showPopup(e, this, c);
-				}
-			} else if(e.getSource() == headers) {
-				JPopupMenu j = new JPopupMenu();
-				JMenuItem t = new JMenuItem(StringAccessor.getString("DraggableJTable.choosecolumns"));
-				t.setEnabled(false);
-				j.add(t);
-				j.addSeparator();
-				JCheckBoxMenuItem[] columnCheckBoxes = new JCheckBoxMenuItem[cols.size()];
-		        for(int ch = 1; ch < columnCheckBoxes.length; ch++) {
-		        	JCheckBoxMenuItem check = new JCheckBoxMenuItem(cols.get(ch).col.getHeaderValue().toString(), isColumnVisible(ch));
-		        	check.setActionCommand(ch+"");
-		        	check.addActionListener(this);
-		          	columnCheckBoxes[cols.get(ch).viewIndex] = check;
-		        }
-		        for(JCheckBoxMenuItem check : columnCheckBoxes) {
-		        	if(check != null)
-		        		j.add(check);
-		        }
-				j.show(headers, e.getX(), e.getY());
-			}
+		if (!e.isPopupTrigger()) {
+			return;
 		}
+		if(e.getSource() == this) {
+            int row;
+            if((row = rowAtPoint(e.getPoint())) != -1) {
+                Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                if(getSelectedRowCount() <= 1) {
+                    // if right clicking on a single cell, this will select it first
+                    setRowSelectionInterval(row, row);
+                }
+                model.showPopup(e, this, c);
+            }
+        } else {
+            if (e.getSource() == headers) {
+                JPopupMenu jPopupMenu = new JPopupMenu();
+                JMenuItem jMenuItem = new JMenuItem(StringAccessor.getString("DraggableJTable.choosecolumns"));
+                jMenuItem.setEnabled(false);
+                jPopupMenu.add(jMenuItem);
+                jPopupMenu.addSeparator();
+                JCheckBoxMenuItem[] columnCheckBoxes = new JCheckBoxMenuItem[cols.size()];
+                for (int ch = 1; ch < columnCheckBoxes.length; ch++) {
+                    JCheckBoxMenuItem check = new JCheckBoxMenuItem(cols.get(ch).col.getHeaderValue().toString(), isColumnVisible(ch));
+                    check.setActionCommand(ch + "");
+                    check.addActionListener(this);
+                    columnCheckBoxes[cols.get(ch).viewIndex] = check;
+                }
+                for (JCheckBoxMenuItem check : columnCheckBoxes) {
+                    if (check != null) {
+                        jPopupMenu.add(check);
+                    }
+                }
+                jPopupMenu.show(headers, e.getX(), e.getY());
+            }
+        }
 	}
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		JCheckBoxMenuItem check = (JCheckBoxMenuItem) e.getSource();
@@ -594,11 +490,13 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 		}
 		configuration.setIntegerArray(VariableKey.JTABLE_COLUMN_ORDERING(this.getName()), ordering);
 	}
+
 	public void loadFromConfiguration() {
 		for(HideableTableColumn htc : this.getAllColumns()) {
 			int index = htc.getModelIndex();
-			if(index != 0)
+			if(index != 0) {
 				setColumnVisible(index, true);
+			}
 		}
 		this.setColumnOrdering(configuration.getIntegerArray(VariableKey.JTABLE_COLUMN_ORDERING(this.getName()), false));
 		
@@ -608,11 +506,19 @@ public class DraggableJTable extends JTable implements MouseListener, MouseMotio
 			if(width != null) {
 				tc.setPreferredWidth(width);
 			}
-			if(index != 0)
+			if(index != 0) {
 				this.setColumnVisible(index, configuration.getBoolean(VariableKey.COLUMN_VISIBLE(this, index), false));
+			}
 		}
+		this.sortByColumn(getSortKeyFromConfig());
+	}
+
+	private SortKey getSortKeyFromConfig() {
 		Integer sortCol = configuration.getInt(VariableKey.JCOMPONENT_VALUE(this.getName() + "_sortBy", false, configuration.getXMLGUILayout()), false);
-		if(sortCol != null)
-			this.sortByColumn(sortCol);
+		if (sortCol == 0) {
+			return null;
+		}
+		SortOrder sortOrder = sortCol < 0 ? SortOrder.DESCENDING : SortOrder.ASCENDING;
+		return new SortKey(Math.abs(sortCol) - 1, sortOrder);
 	}
 }

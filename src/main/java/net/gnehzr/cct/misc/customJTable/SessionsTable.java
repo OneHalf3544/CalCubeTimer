@@ -16,13 +16,11 @@ import java.awt.*;
 
 public class SessionsTable extends DraggableJTable implements SelectionListener {
 	private final StatisticsTableModel statsModel;
-	private final Configuration configuration;
 	private final ProfileDao profileDao;
 
 	public SessionsTable(StatisticsTableModel statsModel, Configuration configuration, ScramblePluginManager scramblePluginManager, ProfileDao profileDao) {
 		super(configuration, false, true);
 		this.statsModel = statsModel;
-		this.configuration = configuration;
 		this.profileDao = profileDao;
 		this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		//for some reason, the default preferred size is huge
@@ -37,8 +35,8 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		this.setDefaultRenderer(ScrambleCustomization.class, new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao));
 		this.setRowHeight(new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao).getPreferredSize().height);
 		super.setSelectionListener(this);
-		configuration.addConfigurationChangeListener((p) -> { refreshModel(); });
-		super.sortByColumn(-1); //this will sort column 0 in descending order
+		configuration.addConfigurationChangeListener((p) -> refreshModel());
+		super.sortByColumn(new RowSorter.SortKey(0, SortOrder.DESCENDING));
 		refreshModel();
 	}
 	@Override
@@ -59,10 +57,11 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		super.setModel(pd);
 	}
 	
-	public void tableChanged(TableModelEvent e) {
-		int modelRow = e.getFirstRow();
-		boolean oneRowSelected = (modelRow == e.getLastRow());
-		if(modelRow != -1 && e.getType() == TableModelEvent.UPDATE && oneRowSelected) {
+	@Override
+	public void tableChanged(TableModelEvent event) {
+		int modelRow = event.getFirstRow();
+		boolean oneRowSelected = (modelRow == event.getLastRow());
+		if(modelRow != -1 && event.getType() == TableModelEvent.UPDATE && oneRowSelected) {
 			Session s = pd.getNthSession(modelRow);
 			if(s != null && s == statsModel.getCurrentSession()) {
 				//this indicates that the ScrambleCustomization of the currently selected profile has been changed
@@ -70,7 +69,7 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 				fireSessionSelected(s);
 			}
 		}
-		super.tableChanged(e);
+		super.tableChanged(event);
 	}
 	
 	private SessionListener l;

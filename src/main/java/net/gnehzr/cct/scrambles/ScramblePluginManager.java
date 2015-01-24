@@ -7,17 +7,14 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import scramblePlugins.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Singleton
 public class ScramblePluginManager {
@@ -36,6 +33,7 @@ public class ScramblePluginManager {
 	}
 
 	private List<Class<? extends Scramble>> pluginClasses = ImmutableList.of(
+			// todo load class names from /META-INF/somefile
 			CubeScramble.class,
 			ClockScramble.class,
 			MegaminxScramble.class,
@@ -199,25 +197,6 @@ public class ScramblePluginManager {
 		return getScramblePlugin(aClass).getAttributes();
 	}
 
-	public Scramble newScramble(Class<? extends Scramble> aClass, final String variation, final int length, final String generatorGroup,
-								final List<String> attributes) {
-
-		return getScramblePlugin(aClass).newScramble(variation, length, generatorGroup, attributes);
-	}
-
-	@NotNull
-	public Scramble importScramble(Class<? extends Scramble> aClass, final String variation, final String scramble, final String generatorGroup,
-								   final List<String> attributes) {
-
-		try {
-			return getScramblePlugin(aClass).importScramble(variation, scramble, generatorGroup, attributes);
-
-        } catch (InvalidScrambleException e) {
-            LOG.info("cannot load scramble", e);
-            return Scramble.unknownScramble(scramble);
-        }
-	}
-
 	public Scramble getScramblePlugin(Class<? extends Scramble> aClass) {
 		return scramblePlugins.get(aClass);
 	}
@@ -226,12 +205,6 @@ public class ScramblePluginManager {
 		return instance.getScrambleImage(gap, Math.max(unitSize, instance.getDefaultUnitSize()), colorScheme);
 	}
 
-	public int getDefaultScrambleLength(Class<? extends Scramble> aClass, ScrambleVariation var) {
-		int c = getIndexOfVariation(var);
-		if(c == -1)
-			return 0;
-		return getScramblePlugin(aClass).getDefaultLengths()[c];
-	}
 	public String getDefaultGeneratorGroup(ScrambleVariation var) {
 		int c = getIndexOfVariation(var);
 		if(c == -1 || var.getPlugin().getDefaultGenerators() == null)
@@ -250,32 +223,6 @@ public class ScramblePluginManager {
 			}
 		}
 		return -1;
-	}
-
-	public String[][] getFaceNames(Class<? extends Scramble> aClass) {
-		return getScramblePlugin(aClass).getFaceNamesColors();
-	}
-	public String getPuzzleName(Class<? extends Scramble> aClass) {
-		return getScramblePlugin(aClass).getPuzzleName();
-	}
-	public Pattern getTokenRegex(Class<? extends Scramble> aClass) {
-		return getScramblePlugin(aClass).getTokenRegex();
-	}
-	
-	public int getNewUnitSize(Class<? extends Scramble> aClass, final int width, final int height, final int gap, final String variation) {
-		return getScramblePlugin(aClass).getNewUnitSize(width, height, gap, variation);
-	}
-	
-	public Dimension getImageSize(Class<? extends Scramble> aClass, final int gap, final int unitSize, final String variation) {
-		return getScramblePlugin(aClass).getImageSize(gap, unitSize, variation);
-	}
-	
-	public Shape[] getFaces(Class<? extends Scramble> aClass, final int gap, final int unitSize, final String variation) {
-		return getScramblePlugin(aClass).getFaces(gap, unitSize, variation);
-	}
-	
-	public String htmlify(Class<? extends Scramble> aClass, final String scramble) {
-		return getScramblePlugin(aClass).htmlify(scramble);
 	}
 
 	public Color[] getColorScheme(Scramble scramblePlugin, boolean defaults) {

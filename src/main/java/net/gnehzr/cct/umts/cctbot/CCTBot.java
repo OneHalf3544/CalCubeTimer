@@ -56,12 +56,12 @@ public class CCTBot implements IRCListener {
 				int maxCount = MAX_SCRAMBLES;
 				try {
 					maxCount = scrambleMaxMap.get(channel);
-				} catch(NullPointerException e) {}
+				} catch(NullPointerException e) {LOG.info("ignored exception", e);}
 				int count = 1;
 				if(varAndCount.length == 2) {
 					try {
 						count = Math.min(Integer.parseInt(varAndCount[1]), maxCount);
-					} catch(NumberFormatException e) {}
+					} catch(NumberFormatException e) {LOG.info("ignored exception", e);}
 				}
 
 				ScrambleVariation sv = scramblePluginManager.getBestMatchVariation(varAndCount[0]);
@@ -113,7 +113,7 @@ public class CCTBot implements IRCListener {
 				// Pause for a short while...?
 				try {
 					Thread.sleep(1000);
-				} catch(InterruptedException e1) {}
+				} catch(InterruptedException e1) {LOG.info("ignored exception", e1);}
 			}
 		}
 		LOG.info("Done reconnecting!");
@@ -308,7 +308,7 @@ public class CCTBot implements IRCListener {
 								logger.info("Max scramble info removed for " + chan_max[0]);
 								continue;
 							}
-						} catch(NumberFormatException e) {}
+						} catch(NumberFormatException e) {LOG.info("ignored exception", e);}
 					} else {
 						try {
 							int c = Integer.parseInt(chan_max[0]);
@@ -317,7 +317,7 @@ public class CCTBot implements IRCListener {
 								logger.info("Default max scrambles set to " + MAX_SCRAMBLES);
 								continue;
 							}
-						} catch(NumberFormatException e) {}
+						} catch(NumberFormatException e) {LOG.info("ignored exception", e);}
 					}
 				} else {
 					logger.info("Default max scrambles is " + MAX_SCRAMBLES);

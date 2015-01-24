@@ -2,7 +2,6 @@ package net.gnehzr.cct.umts.cctbot;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.ProfileDao;
 import org.apache.log4j.Logger;
 import org.jibble.pircbot.IrcException;
 import org.testng.annotations.Test;
@@ -11,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 public class CCTBotTest {
 
@@ -30,7 +30,7 @@ public class CCTBotTest {
             }
         });
 
-        HashMap<String, String> argMap = null;
+        Map<String, String> argMap;
         try {
             argMap = parseArguments(args);
         } catch(Exception e) {
@@ -66,7 +66,6 @@ public class CCTBotTest {
             }
 
         Configuration configuration = new Configuration(Configuration.getRootDirectory());
-        ProfileDao profileDao = new ProfileDao(null, configuration, null, null, null);
         CCTBot cctbot = new CCTBot(new ScramblePluginManager(configuration), configuration);
 
         if(argMap.containsKey("p"))
@@ -105,13 +104,15 @@ public class CCTBotTest {
         LOGGER.info("USAGE: CCTBot (-c COMMCHANNEL) (-m SCRAMBLEMAX_DEFAULT) (-p PREFIX) -u irc://servername.tld(:port)#channel");
     }
 
-    private static HashMap<String, String> parseArguments(String[] args) throws Exception {
-        HashMap<String, String> argMap = new HashMap<>();
-        for(int c = 0; c < args.length; c += 2)
-            if(args[c].startsWith("-"))
+    private static Map<String, String> parseArguments(String[] args) throws Exception {
+        Map<String, String> argMap = new HashMap<>();
+        for(int c = 0; c < args.length; c += 2) {
+            if (args[c].startsWith("-")) {
                 argMap.put(args[c].substring(1), args[c + 1]);
-            else
+            } else {
                 throw new Exception();
+            }
+        }
         return argMap;
     }
 
