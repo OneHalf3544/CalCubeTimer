@@ -205,7 +205,7 @@ public class ScrambleImportDialog extends JDialog implements ActionListener, Doc
 			if (!importedScram.trim().isEmpty()) {
 				empty = false;
 				try {
-					scrams.add(sc.generateScramble(importedScram));
+					scrams.add(sc.importScramble(importedScram));
 					validationString.append("<span class=\"green\">O");
 				} catch (InvalidScrambleException e) {
 					perfect = false;

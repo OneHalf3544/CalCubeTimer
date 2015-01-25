@@ -29,9 +29,10 @@ import java.util.regex.Pattern;
  * Scramble text field component
  */
 @Singleton
-public class ScrambleArea extends JScrollPane implements ComponentListener, HyperlinkListener, MouseListener, MouseMotionListener {
+public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListener, HyperlinkListener, MouseListener, MouseMotionListener {
 
-	private static final Logger LOG = Logger.getLogger(ScrambleArea.class);
+	private static final Logger LOG = Logger.getLogger(ScrambleHyperlinkArea.class);
+	private static final Pattern NULL_SCRAMBLE_REGEX = Pattern.compile("^(.+)()$");
 
 	private ScramblePopupFrame scramblePopup;
 	private JEditorPane scramblePane = null;
@@ -40,8 +41,16 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
 
+	private String currentScramble;
+	private String incrementScramble;
+	private Scramble fullScramble;
+	private ScrambleCustomization currentCustomization;
+	private StringBuilder part1, part2, part3;
+	private int moveNum;
+	private String backgroundColor;
+
 	@Inject
-	public ScrambleArea(ScramblePopupFrame scramblePopup, Configuration configuration, ScramblePluginManager scramblePluginManager) {
+	public ScrambleHyperlinkArea(ScramblePopupFrame scramblePopup, Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		super(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		this.scramblePopup = scramblePopup;
 		this.configuration = configuration;
@@ -115,22 +124,16 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 		super.updateUI();
 		setBorder(t);
 	}
+
 	public void resetPreferredSize() {
 		setPreferredSize(new Dimension(0, 100));
 	}
-	private String currentScramble;
-	private String incrScramble;
-	private Scramble fullScramble;
-	private ScrambleCustomization currentCustomization;
-	private StringBuilder part1, part2, part3;
-	private int moveNum;
-	private String backgroundColor;
-	private static final Pattern NULL_SCRAMBLE_REGEX = Pattern.compile("^(.+)()$");
+
 	public void setScramble(String newScramble, ScrambleCustomization sc) {
 		currentCustomization = sc;
 		try {
-			fullScramble = currentCustomization.generateScramble(newScramble);
-			currentScramble = fullScramble.toString();
+			fullScramble = currentCustomization.importScramble(newScramble);
+			currentScramble = fullScramble.getScrambleString();
 		} catch(Exception e) { //if we can't parse this scramble, we'll just treat it as a null scramble
 			currentScramble = newScramble.trim();
 			fullScramble = null;
@@ -162,8 +165,9 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 		Matcher m;
 		int num = 0;
 		Pattern regex = currentCustomization.getScramblePlugin().getTokenRegex();
-		if(regex == null || fullScramble == null)
+		if(regex == null || fullScramble == null) {
 			regex = NULL_SCRAMBLE_REGEX;
+		}
 		
 		while((m = regex.matcher(s)).matches()){
 			String str = m.group(1).trim();
@@ -185,30 +189,36 @@ public class ScrambleArea extends JScrollPane implements ComponentListener, Hype
 	@Override
 	public void hyperlinkUpdate(HyperlinkEvent e) {
 		if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-			incrScramble = e.getDescription();
-			String[] moveAndScramble = incrScramble.split(" ", 2); 
+			incrementScramble = e.getDescription();
+			String[] moveAndScramble = incrementScramble.split(" ", 2);
 			if(moveAndScramble.length != 2) { //this happens if we have an empty null scramble
-				incrScramble = "";
-				scramblePane.setText(incrScramble); 
+				incrementScramble = "";
+				scramblePane.setText(incrementScramble);
 			} else {
 				moveNum = Integer.parseInt(moveAndScramble[0]);
-				incrScramble = moveAndScramble[1];
+				incrementScramble = moveAndScramble[1];
 			}
 			updateScramblePane();
-			Scramble s = null;
-			try {
-				s = currentCustomization.generateScramble(incrScramble);
-			} catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
-				currentCustomization = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
-				try {
-					s = currentCustomization.generateScramble(incrScramble);
-				} catch (InvalidScrambleException e1) {
-					LOG.info("unexpected exception", e1);
-				}
-			}
-			scramblePopup.setScramble(s, fullScramble, currentCustomization.getScrambleVariation());
+			scramblePopup.setScramble(incrementalScramble(), fullScramble, currentCustomization.getScrambleVariation());
 		}
 	}
+
+	private Scramble incrementalScramble() {
+		try {
+            return currentCustomization.importScramble(incrementScramble);
+		}
+		catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
+			LOG.info("unexpected exception", e0);
+            currentCustomization = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
+            try {
+                return currentCustomization.importScramble(incrementScramble);
+            } catch (InvalidScrambleException e1) {
+                LOG.info("unexpected exception", e1);
+				return null;
+            }
+        }
+	}
+
 	private void updateScramblePane() {
 		int caretPos = scramblePane.getCaretPosition();
 		scramblePane.setDocument(new HTMLEditorKit().createDefaultDocument());

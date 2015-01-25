@@ -83,7 +83,7 @@ public class ScrambleList {
 		ScrambleString c = scrambles.get(scrambleNumber);
 		if(c == null) {
 			Scramble s = scrambleCustomisation.generateScramble();
-			c = new ScrambleString(s.toString(), false, s.getLength());
+			c = new ScrambleString(s.getScrambleString(), false, s.getLength());
 			scrambles.set(scrambleNumber, c);
 		}
 		return c;

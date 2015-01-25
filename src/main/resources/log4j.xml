@@ -18,7 +18,7 @@
     </logger>
 
     <logger name="scramblePlugins">
-        <level value="ERROR"/>
+        <level value="DEBUG"/>
     </logger>
 
     <root>

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -27,7 +28,7 @@ class NullScramble extends Scramble {
     }
 
     NullScramble(String scramble) {
-        super("NULL_SCRAMBLE", false, scramble);
+        super("NULL_SCRAMBLE", false, scramble, false);
 	}
 
     @Override
@@ -41,8 +42,8 @@ class NullScramble extends Scramble {
     }
 
     @Override
-    public Shape[] getFaces(int gap, int pieceSize, String variation) {
-        return new Shape[0];
+    public Map<String, Shape> getFaces(int gap, int pieceSize, String variation) {
+        return Collections.emptyMap();
     }
 
     @Override
@@ -50,9 +51,10 @@ class NullScramble extends Scramble {
         return formatMe;
     }
 
+    @NotNull
     @Override
-    protected String[][] getFaceNamesColors() {
-        return new String[0][];
+    public Map<String, Color> getFaceNamesColors() {
+        return Collections.emptyMap();
     }
 
     @Override

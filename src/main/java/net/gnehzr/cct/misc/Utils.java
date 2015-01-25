@@ -118,10 +118,14 @@ public class Utils {
 
 	public static Color stringToColor(String s, boolean nullIfInvalid) {
 		try {
-			return new Color(Integer.parseInt(s, 16));
+			return stringToColor(s);
 		} catch(Exception e) {
 			return nullIfInvalid ? null : Color.WHITE;
 		}
+	}
+
+	public static Color stringToColor(String s) {
+		return new Color(Integer.parseInt(s, 16));
 	}
 
 	public static String fontToString(Font f) {

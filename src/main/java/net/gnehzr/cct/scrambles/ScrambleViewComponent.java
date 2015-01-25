@@ -4,35 +4,38 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class ScrambleViewComponent extends JComponent {
 
+	private static final Logger LOGGER = Logger.getLogger(ScrambleViewComponent.class);
+
 	private static final int DEFAULT_GAP = 5;
-	static Integer GAP = DEFAULT_GAP;
+	private static final Dimension PREFERRED_SIZE = new Dimension(0, 0);
+
+	private static Integer GAP = DEFAULT_GAP;
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
 	private boolean fixedSize;
 
 	private BufferedImage buffer;
-	private Scramble currentScram = null;
+	private Scramble currentScramble = null;
 	private Scramble currentPlugin = null;
 	private ScrambleVariation currentVariation = null;
-	private Color[] colorScheme = null;
-	private Shape[] faces = null;
-	private int focusedFace = -1;
+	private Map<String, Color> colorScheme = null;
+	private Map<String, Shape> faces = null;
+	private String focusedFaceId = null;
 
-	public ScrambleViewComponent(Configuration configuration, ScramblePluginManager scramblePluginManager) {
-		this.scramblePluginManager = scramblePluginManager;
-		configuration.addConfigurationChangeListener(createConfigurationListener(configuration));
-		this.configuration = configuration;
-	}
-
-	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks, Configuration configuration, ScramblePluginManager scramblePluginManager) {
+	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks, Configuration configuration,
+								 ScramblePluginManager scramblePluginManager) {
 		this.fixedSize = fixedSize;
 		this.scramblePluginManager = scramblePluginManager;
 		if(!fixedSize) {
@@ -42,6 +45,7 @@ public class ScrambleViewComponent extends JComponent {
 			addMouseListener(createMouseListener());
 			addMouseMotionListener(createMouseMotionListener());
 		}
+		configuration.addConfigurationChangeListener(createConfigurationListener(configuration));
 		this.configuration = configuration;
 	}
 
@@ -53,18 +57,21 @@ public class ScrambleViewComponent extends JComponent {
 	}
 	
 	public void redo() {
-		setScramble(currentScram, currentVariation);
+		setScramble(currentScramble, currentVariation);
 	}
 
 	public void setScramble(Scramble scramble, ScrambleVariation variation) {
-		currentScram = scramble;
+		LOGGER.debug("set scramble " + scramble + ", variation " + variation);
+		checkArgument(scramble != null && scramble.length != 0, "scramble: " + scramble);
+
+		currentScramble = scramble;
 		currentVariation = variation;
 		if(colorScheme == null || currentVariation.getPlugin() != currentPlugin) {
 			currentPlugin = currentVariation.getPlugin();
 			colorScheme = scramblePluginManager.getColorScheme(currentPlugin, false);
 		}
 		faces = currentPlugin.getFaces(GAP, getUnitSize(false), currentVariation.getVariation());
-		buffer = scramblePluginManager.getScrambleImage(currentScram, GAP, getUnitSize(false), colorScheme);
+		buffer = scramblePluginManager.getScrambleImage(currentScramble, GAP, getUnitSize(false), colorScheme);
 		repaint();	//this will cause the scramble to be drawn
 		invalidate(); //this forces the component to fit itself to its layout properly
 	}
@@ -72,8 +79,7 @@ public class ScrambleViewComponent extends JComponent {
 	public boolean scrambleHasImage() {
 		return buffer != null;
 	}
-	
-	private static final Dimension PREFERRED_SIZE = new Dimension(0, 0);
+
 	@Override
 	public Dimension getPreferredSize() {
 		if(buffer == null) {
@@ -110,14 +116,14 @@ public class ScrambleViewComponent extends JComponent {
 		}
 
 		if(buffer != null) {
-			if(focusedFace != -1) {
+			if(focusedFaceId == null) {
 				AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 				((Graphics2D)g).setComposite(ac);
 				//first, draw the whole scramble opaque
 				g.drawImage(buffer, 0, 0, null);
 				
 				//now prepare the surface for drawing the selected face in solid
-				g.setClip(faces[focusedFace]);
+				g.setClip(faces.get(focusedFaceId));
 				ac = ac.derive(1.0f);
 				((Graphics2D)g).setComposite(ac);
 			}
@@ -129,20 +135,23 @@ public class ScrambleViewComponent extends JComponent {
 	}
 
 	private void findFocusedFace(Point p) {
-		focusedFace = -1;
-		for(int c = 0; p != null && faces != null && c < faces.length; c++) {
-			if(faces[c] != null && faces[c].contains(p)) {
-				focusedFace = c;
-				break;
-			}
+		focusedFaceId = null;
+		if (p == null) {
+			repaint();
+			return;
 		}
+		focusedFaceId = faces.entrySet().stream()
+				.filter(shape -> shape.getValue() != null && shape.getValue().contains(p))
+				.map(Map.Entry::getKey)
+				.findFirst()
+				.orElse(null);
+
 		repaint();
 	}
 
 	public void commitColorSchemeToConfiguration() {
-		for(int face = 0; face < colorScheme.length; face++) {
-			configuration.setColor(VariableKey.PUZZLE_COLOR(currentPlugin, currentPlugin.getFaceNamesColors()[0][face]),
-					colorScheme[face]);
+		for(Map.Entry<String, Color> face : colorScheme.entrySet()) {
+			configuration.setColor(VariableKey.PUZZLE_COLOR(currentPlugin, face.getKey()), face.getValue());
 		}
 	}
 
@@ -188,12 +197,12 @@ public class ScrambleViewComponent extends JComponent {
 		return new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if(focusedFace != -1) {
+				if(focusedFaceId != null) {
 					Color c = JColorChooser.showDialog(ScrambleViewComponent.this,
-							StringAccessor.getString("ScrambleViewComponent.choosecolor") + ": " + currentPlugin.getFaceNamesColors()[0][focusedFace],
-							colorScheme[focusedFace]);
+							StringAccessor.getString("ScrambleViewComponent.choosecolor") + ": " + focusedFaceId,
+							colorScheme.get(focusedFaceId));
 					if(c != null) {
-						colorScheme[focusedFace] = c;
+						colorScheme.put(focusedFaceId, c);
 						redo();
 					}
 					findFocusedFace(getMousePosition());

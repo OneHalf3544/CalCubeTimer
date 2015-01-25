@@ -1,5 +1,7 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableMap;
+import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.Scramble;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,42 +11,54 @@ import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SquareOneScramble extends Scramble {
 
-	private static final String[][] FACE_NAMES_COLORS =
-	{ { "L",	  "B", 		"R", 	  "F",		"U",	  "D" },
-	  { "ffff00", "ff0000", "0000ff", "ffc800", "ffffff", "00ff00" } };
+	private static final Map<String, Color> FACE_NAMES_COLORS = ImmutableMap.<String, Color>builder()
+			.put("L", Utils.stringToColor("ffff00"))
+			.put("B", Utils.stringToColor("ff0000"))
+			.put("R", Utils.stringToColor("0000ff"))
+			.put("F", Utils.stringToColor("ffc800"))
+			.put("U", Utils.stringToColor("ffffff"))
+			.put("D", Utils.stringToColor("00ff00"))
+			.build();
 
+	private static final String FACES_ORDER = "LBRFUD";
 	private static final String PUZZLE_NAME = "Square-1";
 	private static final int[] DEFAULT_LENGTHS = { 40 };
 	private static final int DEFAULT_UNIT_SIZE = 32;
 	private static final Pattern TOKEN_REGEX = Pattern.compile("^(\\( *-?\\d+ *, *-?\\d+ *\\)|/)(.*)$");
 	private static final String[] ATTRIBUTES = new String[] { "%%slashes%%" };
 	private static final String[] DEFAULT_GENERATORS = new String[] { "(x, x) /" };
-	
+	public static final String FRONT = "F";
+	public static final String BACK = "B";
+
 	private int twistCount = 0; //this will tell us the state of the middle pieces
 	private int[] state, turns;
 	private boolean slashes;
 
+	@SuppressWarnings("unused")
 	public SquareOneScramble() {
-		this(0, null, Collections.<String>emptyList());
+		super(PUZZLE_NAME, true, true);
+		this.length = 0;
+		setGenerator(null);
+		setAttributes(Collections.emptyList());
+
 	}
 
 	private SquareOneScramble(int length, String generatorGroup, List<String> attrs) {
-		super(PUZZLE_NAME, true);
+		super(PUZZLE_NAME, true, false);
 		this.length = length;
 		setGenerator(generatorGroup);
 		setAttributes(attrs);
 	}
 
 	public SquareOneScramble(String s, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
-		super(s, true);
+		super(s, true, false);
 		setGenerator(generatorGroup);
 		if(!setAttributes(attrs))
 			throw new InvalidScrambleException(s);
@@ -65,8 +79,9 @@ public class SquareOneScramble extends Scramble {
 		return formatMe;
 	}
 
+	@NotNull
 	@Override
-	protected String[][] getFaceNamesColors() {
+	public Map<String, Color> getFaceNamesColors() {
 		return FACE_NAMES_COLORS;
 	}
 
@@ -170,22 +185,21 @@ public class SquareOneScramble extends Scramble {
 		scramble = "";
 		StringBuilder scram = new StringBuilder();
 		int l=-1;
-		for(int i=0; i < turns.length; i++) {
-			int k=turns[i];
-			if(k==0) {
-				if(l==-1) scram.append(" (0,0)");
-				if(l==1) scram.append("0)");
-				if(l==2) scram.append(")");
-				if(l != 0 && slashes)
+		for (int k : turns) {
+			if (k == 0) {
+				if (l == -1) scram.append(" (0,0)");
+				if (l == 1) scram.append("0)");
+				if (l == 2) scram.append(")");
+				if (l != 0 && slashes)
 					scram.append(" /");
-				l=0;
-			}else if(k>0) {
-				scram.append(" (").append(k > 6 ? k-12 : k).append(",");
-				l=1;
-			}else if(k<0) {
-				if(l<=0) scram.append(" (0,");
-				scram.append(k <= -6 ? k+12 : k);
-				l=2;
+				l = 0;
+			} else if (k > 0) {
+				scram.append(" (").append(k > 6 ? k - 12 : k).append(",");
+				l = 1;
+			} else if (k < 0) {
+				if (l <= 0) scram.append(" (0,");
+				scram.append(k <= -6 ? k + 12 : k);
+				l = 2;
 			}
 		}
 		if(l==1) scram.append("0");
@@ -252,22 +266,23 @@ public class SquareOneScramble extends Scramble {
 		String[] trns = scramble.split("(\\(|\\)|\\( *\\))", -1);
 		scramble = "";
 		turns = new int[trns.length*3]; //definitely big enough, no need to trim
-		for(int ch = 0; ch < trns.length; ch++) {
+		for (String trn : trns) {
 			Matcher match;
-			if(trns[ch].matches(" *")) {
-
-			} else if(trns[ch].matches(" */ *")) {
+			if (trn.matches(" *")) {
+				continue;
+			}
+			if (trn.matches(" */ *")) {
 				domove(length++, 0);
-			} else if((match = regexp.matcher(trns[ch])).matches()) {
+			} else if ((match = regexp.matcher(trn)).matches()) {
 				int top = Integer.parseInt(match.group(1));
 				int bot = Integer.parseInt(match.group(2));
 				top = modulo(top, 12);
 				bot = modulo(bot, 12);
-				if(top != 0 && domove(length++, top))
+				if (top != 0 && domove(length++, top))
 					return false;
-				if(bot != 0 && domove(length++, bot-12))
+				if (bot != 0 && domove(length++, bot - 12))
 					return false;
-				if(implicitSlashes)
+				if (implicitSlashes)
 					domove(length++, 0);
 			} else
 				return false;
@@ -277,7 +292,7 @@ public class SquareOneScramble extends Scramble {
 	}
 
 	@Override
-	public BufferedImage getScrambleImage(int gap, int radius, Color[] colorScheme) {
+	public BufferedImage getScrambleImage(int gap, int radius, Map<String, Color> colorScheme) {
 		Dimension dim = getImageSize(gap, radius, null);
 		int width = dim.width;
 		int height = dim.height;
@@ -291,13 +306,13 @@ public class SquareOneScramble extends Scramble {
 		Rectangle2D.Double right_mid;
 		if(twistCount % 2 == 0) {
 			right_mid = new Rectangle2D.Double(width / 2. - half_square_width, height / 2. - radius * (multiplier - 1) / 2., 2*corner_width + edge_width, radius * (multiplier - 1));
-			g.setColor(colorScheme[3]); //front
+			g.setColor(colorScheme.get(FRONT));
 		} else {
 			right_mid = new Rectangle2D.Double(width / 2. - half_square_width, height / 2. - radius * (multiplier - 1) / 2., corner_width + edge_width, radius * (multiplier - 1));
-			g.setColor(colorScheme[1]); //back
+			g.setColor(colorScheme.get(BACK));
 		}
 		g.fill(right_mid);
-		g.setColor(colorScheme[3]); //front
+		g.setColor(colorScheme.get(FRONT));
 		g.fill(left_mid); //this will clobber part of the other guy
 		g.setColor(Color.BLACK);
 		g.draw(right_mid);
@@ -317,7 +332,7 @@ public class SquareOneScramble extends Scramble {
 		return buffer;
 	}
 
-	private void drawFace(Graphics2D g, int[] face, double x, double y, int gap, int radius, Color[] colorScheme) {
+	private void drawFace(Graphics2D g, int[] face, double x, double y, int gap, int radius, Map<String, Color> colorScheme) {
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
 		for(int ch = 0; ch < 12; ch++) {
@@ -328,7 +343,7 @@ public class SquareOneScramble extends Scramble {
 		g.dispose();
 	}
 
-	private int drawPiece(Graphics2D g, int piece, double x, double y, int gap,	int radius, Color[] colorScheme) {
+	private int drawPiece(Graphics2D g, int piece, double x, double y, int gap,	int radius, Map<String, Color> colorScheme) {
 		boolean corner = isCornerPiece(piece);
 		int degree = 30 * (corner ? 2 : 1);
 		GeneralPath[] p = corner ? getCornerPoly(x, y, radius) : getWedgePoly(x, y, radius);
@@ -348,14 +363,14 @@ public class SquareOneScramble extends Scramble {
 		return ((piece + (piece <= 7 ? 0 : 1)) % 2) == 0;
 	}
 
-	private Color[] getPieceColors(int piece, Color[] colorScheme) {
+	private Color[] getPieceColors(int piece, Map<String, Color> colorScheme) {
 		boolean up = piece <= 7;
-		Color top = up ? colorScheme[4] : colorScheme[5];
+		Color top = up ? getColorByIndex(colorScheme, 4) : getColorByIndex(colorScheme, 5);
 		if(isCornerPiece(piece)) { //corner piece
 			if(!up)
 				piece = 15 - piece;
-			Color a = colorScheme[(piece/2+3) % 4];
-			Color b = colorScheme[piece/2];
+			Color a = getColorByIndex(colorScheme, (piece / 2 + 3) % 4);
+			Color b = getColorByIndex(colorScheme, piece / 2);
 			if(!up) { //mirror for bottom
 				Color t = a;
 				a = b;
@@ -365,8 +380,12 @@ public class SquareOneScramble extends Scramble {
 		} else { //wedge piece
 			if(!up)
 				piece = 14 - piece;
-			return new Color[] { top, colorScheme[piece/2] };
+			return new Color[]{top, getColorByIndex(colorScheme, piece / 2)};
 		}
+	}
+
+	private Color getColorByIndex(Map<String, Color> colorScheme, int i) {
+		return colorScheme.get(String.valueOf(FACES_ORDER.charAt(i)));
 	}
 
 	private static final double multiplier = 1.4;
@@ -422,6 +441,7 @@ public class SquareOneScramble extends Scramble {
 		return new GeneralPath[]{ p, side1, side2 };
 	}
 
+	@Override
 	public Dimension getImageSize(int gap, int radius, String variation) {
 		return new Dimension(getWidth(gap, radius), getHeight(gap, radius));
 	}
@@ -432,12 +452,14 @@ public class SquareOneScramble extends Scramble {
 	private static int getHeight(int gap, int radius) {
 		return (int) (4 * RADIUS_MULTIPLIER * multiplier * radius);
 	}
+	@Override
 	public int getNewUnitSize(int width, int height, int gap, String variation) {
 		return (int) Math.round(Math.min(width / (2 * RADIUS_MULTIPLIER * multiplier), height / (4 * RADIUS_MULTIPLIER * multiplier)));
 	}
 
 	//***NOTE*** this works only for the simple case where the puzzle is a cube
-	public Shape[] getFaces(int gap, int radius, String variation) {
+	@Override
+	public Map<String, Shape> getFaces(int gap, int radius, String variation) {
 		int width = getWidth(gap, radius);
 		int height = getHeight(gap, radius);
 		double half_width = (radius * RADIUS_MULTIPLIER) / Math.sqrt(2);
@@ -446,17 +468,18 @@ public class SquareOneScramble extends Scramble {
 		Area down = getSquare(width / 2.0, 3 * height / 4.0, half_width);
 		Area front = new Area(new Rectangle2D.Double(width / 2. - half_width * multiplier, height / 2. - radius * (multiplier - 1) / 2., 2 * half_width * multiplier, radius * (multiplier - 1)));
 		
-		Area[] faces = new Area[6];
-		for(int ch = 0; ch < 4; ch++) {
-			faces[ch] = new Area();
-			faces[ch].add(getTri(width / 2.0, height / 4.0, 2 * half_width * multiplier, (5-ch) % 4));
-			faces[ch].add(getTri(width / 2.0, 3 * height / 4.0, 2 * half_width * multiplier, (ch+1) % 4));
-			faces[ch].subtract(up);
-			faces[ch].subtract(down);
+		Map<String, Shape> faces = new HashMap<>(6);
+		for(char ch : FACES_ORDER.substring(0, 4).toCharArray()) {
+			Area value = new Area();
+			value.add(getTri(width / 2.0, height / 4.0, 2 * half_width * multiplier, (5 - ch) % 4));
+			value.add(getTri(width / 2.0, 3 * height / 4.0, 2 * half_width * multiplier, (ch + 1) % 4));
+			value.subtract(up);
+			value.subtract(down);
+			faces.put(Character.toString(ch), value);
 		}
-		faces[3].add(front);
-		faces[4] = up;
-		faces[5] = down;
+		((Area)faces.get(FRONT)).add(front);
+		faces.put("U", up);
+		faces.put("D", down);
 		return faces;
 	}
 	//x, y are the coordinates of the center of the square

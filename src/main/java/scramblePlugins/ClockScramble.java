@@ -7,31 +7,33 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class ClockScramble extends Scramble {
 
-	private static final String[][] FACE_NAMES_COLORS = {{},{}};
 	private static final String PUZZLE_NAME = "Clock";
 	private static final String[] VARIATIONS = { "Clock" };
 	private static final int[] DEFAULT_LENGTHS = {10};
 	private static final List<String> ATTRIBUTES = ImmutableList.of("%%verbose%%");
-//	private static final Pattern TOKEN_REGEX = Pattern.compile("^(\\S)(.*)$");
 	private boolean verbose;
 
+	@SuppressWarnings("UnusedDeclaration")
 	public ClockScramble() throws InvalidScrambleException {
-		this("", Collections.<String>emptyList());
+		super(PUZZLE_NAME, false, true);
+		this.length = 0;
+		setAttributes(Collections.emptyList());
 	}
 
 	public ClockScramble(String s, List<String> attrs) throws InvalidScrambleException {
-		super(s, false);
+		super(s, false, false);
 		if(!setAttributes(attrs)) {
 			throw new InvalidScrambleException(s);
 		}
 	}
 
 	public ClockScramble(int length, List<String> attrs) {
-		super(PUZZLE_NAME, false);
+		super(PUZZLE_NAME, false, false);
 		this.length = length;
 		setAttributes(attrs);
 	}
@@ -57,7 +59,7 @@ public class ClockScramble extends Scramble {
 	}
 
 	@Override
-	public Shape[] getFaces(int gap, int pieceSize, String variation) {
+	public Map<String, Shape> getFaces(int gap, int pieceSize, String variation) {
 		return NULL_SCRAMBLE.getFaces(gap, pieceSize, variation);
 	}
 
@@ -66,9 +68,10 @@ public class ClockScramble extends Scramble {
 		return formatMe;
 	}
 
+	@NotNull
 	@Override
-	protected String[][] getFaceNamesColors() {
-		return FACE_NAMES_COLORS;
+	public Map<String, Color> getFaceNamesColors() {
+		return NULL_SCRAMBLE.getFaceNamesColors();
 	}
 
 	@Override
@@ -111,12 +114,9 @@ public class ClockScramble extends Scramble {
 	}
 
 	private boolean setAttributes(List<String> attributes){
-		verbose=false;
-		for(String attr : attributes) {
-			if (attr.equals(ATTRIBUTES.get(0))) {
-				verbose = true;
-			}
-		}
+		verbose = attributes.stream()
+				.anyMatch(attr -> attr.equals(ATTRIBUTES.get(0)));
+
 		if(scramble != null) {
 			return validateScramble();
 		}

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -23,6 +24,9 @@ public abstract class Scramble {
 	private static final Logger LOG = Logger.getLogger(Scramble.class);
 
 	public static final Scramble NULL_SCRAMBLE = new NullScramble("");
+
+	@Deprecated
+	protected final boolean isPluginObject;
 
 	private final String puzzleName;
 	private final ScramblePluginMessages messageAccessor;
@@ -61,6 +65,10 @@ public abstract class Scramble {
 		return scramblePluginManager.getAttributes();
 	}
 
+	public String getScrambleString() {
+		return scramble;
+	}
+
 	public static class InvalidScrambleException extends Exception {
 		public InvalidScrambleException(String scramble) {
 			super(StringAccessor.getString("InvalidScrambleException.invalidscramble") + "\n" + scramble);
@@ -70,14 +78,15 @@ public abstract class Scramble {
 	protected int length = 0;
 	protected String scramble = null;
 
-	public Scramble(String puzzleName, boolean supportsScrambleImage) {
+	public Scramble(String puzzleName, boolean supportsScrambleImage, @Deprecated boolean isPluginObject) {
 		this.puzzleName = puzzleName;
 		this.supportsScrambleImage = supportsScrambleImage;
+		this.isPluginObject = isPluginObject;
 		this.messageAccessor = new ScramblePluginMessages(getClass());
 	}
 
-	public Scramble(String puzzleName, boolean supportsScrambleImage, String scramble) {
-		this(puzzleName, supportsScrambleImage);
+	public Scramble(String puzzleName, boolean supportsScrambleImage, String scramble, @Deprecated boolean isPluginObject) {
+		this(puzzleName, supportsScrambleImage, isPluginObject);
 		this.scramble = scramble;
 	}
 
@@ -86,7 +95,7 @@ public abstract class Scramble {
 	}
 	
 	public final String toString() {
-		return scramble;
+		return isPluginObject ? "Plugin{" + puzzleName + "}" : puzzleName + "{" + getScrambleString() + "}";
 	}
 
 	private static final Random r = new Random();
@@ -100,7 +109,7 @@ public abstract class Scramble {
 		return y + m;
 	}
 
-	public BufferedImage getScrambleImage(int gap, int cubieSize, Color[] colorScheme) {
+	public BufferedImage getScrambleImage(int gap, int cubieSize, Map<String, Color> colorScheme) {
 		return null;
 	}
 
@@ -108,7 +117,7 @@ public abstract class Scramble {
 
 	public abstract Dimension getImageSize(int gap, int minxRad, String variation);
 
-	public abstract Shape[] getFaces(int gap, int pieceSize, String variation);
+	public abstract Map<String, Shape> getFaces(int gap, int pieceSize, String variation);
 
 	/**
 	 * This adds html formatting to a scramble for display purposes
@@ -125,7 +134,8 @@ public abstract class Scramble {
 		return puzzleName;
 	}
 
-	protected abstract String[][] getFaceNamesColors();
+	@NotNull
+	public abstract Map<String, Color> getFaceNamesColors();
 
 	public abstract int getDefaultUnitSize();
 
@@ -150,13 +160,8 @@ public abstract class Scramble {
 		if(getPuzzleName().indexOf(':') != -1) {
 			throw new IllegalArgumentException("PUZZLE_NAME (" + getPuzzleName() + ") may not contain ':'!");
 		}
-		if(getFaceNamesColors() != null) {
-			if(getFaceNamesColors().length != 2) {
-				throw new ArrayIndexOutOfBoundsException("FACE_NAMES_COLORS.length (" + getFaceNamesColors().length + ") does not equal 2!");
-			}
-			if(getFaceNamesColors()[0].length != getFaceNamesColors()[1].length)
-				throw new ArrayIndexOutOfBoundsException("FACE_NAMES_COLORS[0].length (" + getFaceNamesColors()[0].length + ") != FACE_NAMES_COLORS[1].length (" + getFaceNamesColors()[1].length + ")");
-		}
+		Objects.requireNonNull(getFaceNamesColors());
+
 		for(String var : getVariations()) {
 			if(var == null || var.isEmpty()) {
 				throw new NullPointerException("Scramble variations may not be null or the empty string!");

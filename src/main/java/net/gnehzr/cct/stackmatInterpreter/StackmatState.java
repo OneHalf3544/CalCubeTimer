@@ -85,11 +85,17 @@ public class StackmatState extends TimerState {
 		}
 		return invert ? 15 - temp : temp;
 	}
+
 	public boolean oneHand() {
 		return rightHand ^ leftHand;
 	}
+
 	public boolean bothHands() {
 		return rightHand && leftHand;
+	}
+
+	public boolean noHands() {
+		return !bothHands();
 	}
 	//Added just for completeness
 	public boolean isRedLight() {

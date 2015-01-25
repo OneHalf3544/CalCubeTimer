@@ -1,5 +1,8 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.Scramble;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +14,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class MegaminxScramble extends Scramble {
@@ -19,9 +23,23 @@ public class MegaminxScramble extends Scramble {
 
 	private static final String PUZZLE_NAME = "Megaminx";
 
-	private static final String[][] FACE_NAMES_COLORS =
-	{ { "A", 	 "B",	   "C",		 "D",	   "E",		 "F",	   "a",		 "b",	   "f",		 "e",	   "d",		 "c" },
-	  { "ffffff", "336633", "66ffff", "996633", "3333ff", "993366", "ffff00", "66ff66", "ff9933", "ff0000", "000099", "ff66ff" } };
+	private static final Map<String, Color> FACE_NAMES_COLORS = ImmutableMap.<String, Color>builder()
+			.put("A", Utils.stringToColor("ffffff"))
+			.put("B", Utils.stringToColor("336633"))
+			.put("C", Utils.stringToColor("66ffff"))
+			.put("D", Utils.stringToColor("996633"))
+			.put("E", Utils.stringToColor("3333ff"))
+			.put("F", Utils.stringToColor("993366"))
+			.put("a", Utils.stringToColor("ffff00"))
+			.put("b", Utils.stringToColor("66ff66"))
+			.put("c", Utils.stringToColor("ff9933"))
+			.put("d", Utils.stringToColor("ff0000"))
+			.put("e", Utils.stringToColor("000099"))
+			.put("f", Utils.stringToColor("ff66ff"))
+			.build();
+
+	// ImmutableMap preserved iteration order
+	private static final List<String> FACES_ORDER = Lists.newArrayList(FACE_NAMES_COLORS.keySet());
 
 	private static final String[] VARIATIONS = { "Megaminx", "Pochmann Megaminx" };
 	private static final int[] DEFAULT_LENGTHS = { 77, 77 };
@@ -46,8 +64,9 @@ public class MegaminxScramble extends Scramble {
 		return formatMe;
 	}
 
+	@NotNull
 	@Override
-	protected String[][] getFaceNamesColors() {
+	public Map<String, Color> getFaceNamesColors() {
 		return FACE_NAMES_COLORS;
 	}
 
@@ -91,11 +110,11 @@ public class MegaminxScramble extends Scramble {
 	}
 
 	public MegaminxScramble() {
-		super(PUZZLE_NAME, true);
+		super(PUZZLE_NAME, true, true);
 	}
 
 	public MegaminxScramble(String variation, String scramble) throws InvalidScrambleException {
-		super(PUZZLE_NAME, true, scramble);
+		super(PUZZLE_NAME, true, scramble, false);
 		pochmann = variation.equals(VARIATIONS[1]);
 		if(!setAttributes()) {
 			throw new InvalidScrambleException(scramble);
@@ -103,7 +122,7 @@ public class MegaminxScramble extends Scramble {
 	}
 
 	public MegaminxScramble(String variation, int length) {
-		super(PUZZLE_NAME, true);
+		super(PUZZLE_NAME, true, false);
 		this.length = length;
 		pochmann = variation.equals(VARIATIONS[1]);
 		setAttributes();
@@ -157,8 +176,8 @@ public class MegaminxScramble extends Scramble {
 					}
 				} else {
 					int face = -1;
-					for (int ch = 0; ch < FACE_NAMES_COLORS[0].length; ch++) {
-						if (FACE_NAMES_COLORS[0][ch].equals("" + str.charAt(0))) {
+					for (int ch = 0; ch < FACES_ORDER.size(); ch++) {
+						if (FACES_ORDER.get(ch).equals("" + str.charAt(0))) {
 							face = ch;
 							break;
 						}
@@ -202,8 +221,10 @@ public class MegaminxScramble extends Scramble {
 				} while(last >= 0 && comm[side][last] != 0);
 				last = side;
 				int dir = random(4) + 1;
-				scram.append(" ").append(FACE_NAMES_COLORS[0][side]);
-				if(dir != 1) scram.append(dir);
+				scram.append(" ").append(FACES_ORDER.get(side));
+				if(dir != 1) {
+					scram.append(dir);
+				}
 
 				turn(side, dir);
 			}
@@ -332,7 +353,7 @@ public class MegaminxScramble extends Scramble {
 	}
 
 	@Override
-	public BufferedImage getScrambleImage(int gap, int minxRad, Color[] colorScheme) {
+	public BufferedImage getScrambleImage(int gap, int minxRad, Map<String, Color> colorScheme) {
 		Dimension dim = getImageSize(gap, minxRad, null);
 		BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
 		drawMinx(buffer.createGraphics(), gap, minxRad, colorScheme);
@@ -343,7 +364,7 @@ public class MegaminxScramble extends Scramble {
 		return new Dimension(getMegaminxViewWidth(gap, minxRad), getMegaminxViewHeight(gap, minxRad));
 	}
 
-	private void drawMinx(Graphics2D g, int gap, int minxRad, Color[] colorScheme){
+	private void drawMinx(Graphics2D g, int gap, int minxRad, Map<String, Color> colorScheme){
 		double x = minxRad*Math.sqrt(2*(1-Math.cos(.6*Math.PI)));
 		double a = minxRad*Math.cos(.1*Math.PI);
 		double b = x*Math.cos(.1*Math.PI);
@@ -367,7 +388,7 @@ public class MegaminxScramble extends Scramble {
 		drawPentagon(g, shift+gap+a, gap+x-d+minxRad, true, image[11], minxRad, colorScheme);
 	}
 
-	private void drawPentagon(Graphics2D g, double x, double y, boolean up, int[] state, int minxRad, Color[] colorScheme){
+	private void drawPentagon(Graphics2D g, double x, double y, boolean up, int[] state, int minxRad, Map<String, Color> colorScheme){
 		GeneralPath p = pentagon(up, minxRad);
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		p.transform(AffineTransform.getTranslateInstance(x, y));
@@ -423,7 +444,7 @@ public class MegaminxScramble extends Scramble {
 		}
 
 		for(int i = 0; i < ps.length; i++){
-			g.setColor(colorScheme[state[i]]);
+			g.setColor(colorScheme.get(FACES_ORDER.get(state[i])));
 			g.fill(ps[i]);
 			g.setColor(Color.BLACK);
 			g.draw(ps[i]);
@@ -476,7 +497,7 @@ public class MegaminxScramble extends Scramble {
 	}
 
 	@Override
-	public Shape[] getFaces(int gap, int minxRad, String variation) {
+	public Map<String, Shape> getFaces(int gap, int minxRad, String variation) {
 		double xx = minxRad*Math.sqrt(2*(1-Math.cos(.6*Math.PI)));
 		double a = minxRad*Math.cos(.1*Math.PI);
 		double b = xx*Math.cos(.1*Math.PI);
@@ -485,20 +506,20 @@ public class MegaminxScramble extends Scramble {
 		double ee = xx*Math.sin(.3*Math.PI);
 		double shift = gap+2*a+2*b;
 
-		return new Shape[] {
-				getPentagon(gap+a+b, gap+xx+minxRad, minxRad, false),
-				getPentagon(gap+a+b, gap+minxRad, minxRad, true),
-				getPentagon(gap+a+2*b, gap+xx-d+minxRad, minxRad, true),
-				getPentagon(gap+a+b+c, gap+xx+ee+minxRad, minxRad, true),
-				getPentagon(gap+a+b-c, gap+xx+ee+minxRad, minxRad, true),
-				getPentagon(gap+a, gap+xx-d+minxRad, minxRad, true),
-				getPentagon(shift+gap+a+b, gap+xx+minxRad, minxRad, false),
-				getPentagon(shift+gap+a+b, gap+minxRad, minxRad, true),
-				getPentagon(shift+gap+a+2*b, gap+xx-d+minxRad, minxRad, true),
-				getPentagon(shift+gap+a+b+c, gap+xx+ee+minxRad, minxRad, true),
-				getPentagon(shift+gap+a+b-c, gap+xx+ee+minxRad, minxRad, true),
-				getPentagon(shift+gap+a, gap+xx-d+minxRad, minxRad, true)
-		};
+		return ImmutableMap.<String, Shape>builder()
+				.put("A", getPentagon(gap + a + b, gap + xx + minxRad, minxRad, false))
+				.put("B", getPentagon(gap+a+b, gap+minxRad, minxRad, true))
+				.put("C", getPentagon(gap+a+2*b, gap+xx-d+minxRad, minxRad, true))
+				.put("D", getPentagon(gap+a+b+c, gap+xx+ee+minxRad, minxRad, true))
+				.put("E", getPentagon(gap+a+b-c, gap+xx+ee+minxRad, minxRad, true))
+				.put("F", getPentagon(gap+a, gap+xx-d+minxRad, minxRad, true))
+				.put("a", getPentagon(shift+gap+a+b, gap+xx+minxRad, minxRad, false))
+				.put("b", getPentagon(shift+gap+a+b, gap+minxRad, minxRad, true))
+				.put("c", getPentagon(shift+gap+a+2*b, gap+xx-d+minxRad, minxRad, true))
+				.put("d", getPentagon(shift+gap+a+b+c, gap+xx+ee+minxRad, minxRad, true))
+				.put("e", getPentagon(shift+gap+a+b-c, gap+xx+ee+minxRad, minxRad, true))
+				.put("f", getPentagon(shift+gap+a, gap+xx-d+minxRad, minxRad, true))
+				.build();
 	}
 	private static Shape getPentagon(double x, double y, int minxRad, boolean up) {
 		GeneralPath p = pentagon(up, minxRad);

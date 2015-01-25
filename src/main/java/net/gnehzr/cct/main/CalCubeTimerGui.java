@@ -36,7 +36,7 @@ public interface CalCubeTimerGui {
 
     JSpinner getScrambleNumber();
 
-    JSpinner getScrambleLength();
+    JSpinner getScrambleLengthSpinner();
 
     JComboBox<LocaleAndIcon> getLanguages();
 

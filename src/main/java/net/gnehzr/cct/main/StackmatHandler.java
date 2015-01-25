@@ -8,32 +8,38 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.time.Instant;
 
 @Singleton
-public class StackmatHandler implements PropertyChangeListener {
-	private TimingListener tl;
+public class StackmatHandler {
+
+	private final TimingListener timingListener;
+
 	private final Configuration configuration;
 
 	@Inject
-	public StackmatHandler(TimingListener timingListener, StackmatInterpreter si, Configuration configuration) {
-		this.tl = timingListener;
+	public StackmatHandler(TimingListener timingListener, StackmatInterpreter stackmatInterpreter, Configuration configuration) {
+		this.timingListener = timingListener;
 		this.configuration = configuration;
-		si.addPropertyChangeListener(this);
+		stackmatInterpreter.addPropertyChangeListener(this::stackmatStateChanged);
 		reset();
 	}
 	
 	public void reset() {
-		leftStart = rightStart = 0;
+		leftHandStart = null;
+		rightHandStart = null;
 		stackmatInspecting = false;
 	}
 
-	private long leftStart, rightStart;
+	private Instant leftHandStart;
+	private Instant rightHandStart;
+
 	private boolean stackmatInspecting;
-	public void propertyChange(PropertyChangeEvent evt) {
+
+	private void stackmatStateChanged(PropertyChangeEvent evt) {
 		String event = evt.getPropertyName();
 		boolean stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
-		tl.stackmatChanged();
+		timingListener.stackmatChanged();
 		if(!stackmatEnabled)
 			return;
 
@@ -44,63 +50,68 @@ public class StackmatHandler implements PropertyChangeListener {
 					processOneHandState(current);
 					return;
 				}
-				if (!current.bothHands()) {
-					if(!stackmatInspecting && (timeToStart(leftStart) || timeToStart(rightStart))) {
+				if (current.noHands()) {
+					if(!stackmatInspecting && (itsTimeToStartAfterInspection(leftHandStart) || itsTimeToStartAfterInspection(rightHandStart))) {
                         stackmatInspecting = true;
-                        tl.inspectionStarted();
+                        timingListener.inspectionStarted();
                     }
 				}
-				tl.refreshDisplay(current);
+				timingListener.refreshDisplay(current);
 			} else {
-				tl.refreshDisplay(current);
+				timingListener.refreshDisplay(current);
 				stackmatInspecting = false;
 				switch (event) {
 					case "TimeChange":
-						tl.timerStarted();
+						timingListener.timerStarted();
 						break;
 					case "Split":
-						tl.timerSplit(current);
+						timingListener.timerSplit(current);
 						break;
 					case "New Time":
-						tl.timerStopped(current);
+						timingListener.timerStopped(current);
 						break;
 					case "Current Display":
 						break;
 					case "Accident Reset":
-						tl.timerAccidentlyReset((StackmatState) evt.getOldValue());
+						timingListener.timerAccidentlyReset((StackmatState) evt.getOldValue());
 						break;
 				}
 			}
-			leftStart = current.leftHand() ? -1 : 0;
-			rightStart = current.rightHand() ? -1 : 0;
+			leftHandStart = null;
+			rightHandStart = null;
 		}
 	}
 
 	private void processOneHandState(StackmatState current) {
 		if(stackmatInspecting) {
-            tl.refreshDisplay(current);
+            timingListener.refreshDisplay(current);
             return;
         }
 		if(current.leftHand()) {
-            rightStart = 0;
-            if(leftStart <= 0)
-                leftStart = System.currentTimeMillis();
-            else if(timeToStart(leftStart))
-                current.clearLeftHand();
+            rightHandStart = null;
+            if(leftHandStart == null) {
+				leftHandStart = Instant.now();
+			}
+            else if(itsTimeToStartAfterInspection(leftHandStart)) {
+				current.clearLeftHand();
+			}
         } else { //the right hand is down
-            leftStart = 0;
-            if(rightStart <= 0)
-                rightStart = System.currentTimeMillis();
-            else if(timeToStart(rightStart))
-                current.clearRightHand();
+            leftHandStart = null;
+            if (rightHandStart == null) {
+				rightHandStart = Instant.now();
+			}
+            else if(itsTimeToStartAfterInspection(rightHandStart)) {
+				current.clearRightHand();
+			}
         }
-		tl.refreshDisplay(current);
-		return;
+		timingListener.refreshDisplay(current);
 	}
 
-	private boolean timeToStart(long time) {
-		if(time <= 0 || !configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false))
+	private boolean itsTimeToStartAfterInspection(Instant startTime) {
+		if(startTime == null || !configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false)) {
 			return false;
-		return (System.currentTimeMillis() - time >= configuration.getInt(VariableKey.DELAY_UNTIL_INSPECTION, false));
+		}
+		Instant endInspectionTime = startTime.plus(configuration.getDuration(VariableKey.DELAY_UNTIL_INSPECTION, false));
+		return !endInspectionTime.isAfter(Instant.now());
 	}
 }

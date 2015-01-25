@@ -1,5 +1,6 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.CrossSolver;
@@ -11,23 +12,32 @@ import org.kociemba.twophase.Tools;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//The public arrays are going to be accessed via reflection from the ScramblePlugin class
-//This way, other scramble plugins will not be able to modify the static arrays of other
-//scramble plugins.
 public class CubeScramble extends Scramble {
 
     private static final Logger LOG = Logger.getLogger(CubeScramble.class);
 
+    private static final Map<String, Color> FACE_NAMES_COLORS = ImmutableMap.<String, Color>builder()
+            .put("L", Utils.stringToColor("ff8000"))
+            .put("D", Utils.stringToColor("ffff00"))
+            .put("B", Utils.stringToColor("0000ff"))
+            .put("R", Utils.stringToColor("ff0000"))
+            .put("U", Utils.stringToColor("ffffff"))
+            .put("F", Utils.stringToColor("00ff00"))
+            .build();
+    public static final String PUZZLE_NAME = "Cube";
+
+    List<Integer> perm = new ArrayList<>();
+    List<Integer> twst = new ArrayList<>();
+    List<List<Integer>> permmv = new ArrayList<>();
+    List<List<Integer>> twstmv = new ArrayList<>();
+
     public CubeScramble() {
-        super("Cube", true);
+        super("Cube", true, true);
     }
 
     @Override
@@ -35,13 +45,10 @@ public class CubeScramble extends Scramble {
         return new CubeScramble(variation, scramble, generatorGroup, attributes);
     }
 
+    @NotNull
     @Override
-    public final String[][] getFaceNamesColors() {
-        return new String[][]
-                {
-                        {"L", "D", "B", "R", "U", "F"},
-                        {"ff8000", "ffff00", "0000ff", "ff0000", "ffffff", "00ff00"}
-                };
+    public final Map<String, Color> getFaceNamesColors() {
+        return FACE_NAMES_COLORS;
     }
 
 
@@ -102,8 +109,11 @@ public class CubeScramble extends Scramble {
     private boolean multislice;
     private boolean wideNotation;
     private boolean optimalCross;
-    private int size;
+    private int cubeSize;
     private int[][][] image;
+
+    private char solveCrossFace = DEFAULT_SOLVE_FACE();
+    private char solveCrossSide = DEFAULT_SOLVE_SIDE();
 
     private static int getSizeFromVariation(String variation) {
         return variation.isEmpty() ? 3 : Integer.parseInt(variation.split("x")[0]);
@@ -114,23 +124,20 @@ public class CubeScramble extends Scramble {
         parseGeneratorGroup(generatorGroup);
     }
 
-    private CubeScramble(int size, int length, List<String> attrs) {
-        super("Cube", true);
-        this.size = size;
+    private CubeScramble(int cubeSize, int length, List<String> attrs) {
+        super(PUZZLE_NAME, true, false);
+        this.cubeSize = cubeSize;
         super.length = length;
         setAttributes(attrs);
     }
 
-    public CubeScramble(String variation, String s, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
-        super(s, true);
+    public CubeScramble(String variation, String scramble, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
+        super(PUZZLE_NAME, true, scramble, false);
         parseGeneratorGroup(generatorGroup);
-        this.size = Integer.parseInt(variation.split("x")[0]);
+        this.cubeSize = getSizeFromVariation(variation);
         if (!setAttributes(attrs))
-            throw new InvalidScrambleException(s);
+            throw new InvalidScrambleException(scramble);
     }
-
-    private char solveCrossFace = DEFAULT_SOLVE_FACE();
-    private char solveCrossSide = DEFAULT_SOLVE_SIDE();
 
     @Override
     protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
@@ -151,21 +158,24 @@ public class CubeScramble extends Scramble {
         wideNotation = false;
         optimalCross = false;
         for (String attr : attributes) {
-            if (attr.equals(getAttributes().get(0)))
+            if (attr.equals(getAttributes().get(0))) {
                 multislice = true;
-            else if (attr.equals(getAttributes().get(1)))
+            }
+            else if (attr.equals(getAttributes().get(1))) {
                 wideNotation = true;
-            else if (attr.equals(getAttributes().get(2)))
+            }
+            else if (attr.equals(getAttributes().get(2))) {
                 optimalCross = true;
+            }
         }
         initializeImage();
 
         if (scramble == null) {
-            if (size == 2) {
+            if (cubeSize == 2) {
                 calcperm();
                 mix();
                 scramble = solve();
-            } else if (size == 3 && length > 0)
+            } else if (cubeSize == 3 && length > 0)
                 scramble = Search.solution(Tools.randomCube(), 21, 10, false);
         }
 
@@ -178,21 +188,11 @@ public class CubeScramble extends Scramble {
         return success;
     }
 
-    public static void main(String[] args) {
-        long start = System.nanoTime();
-        LOG.info(Search.solution(Tools.randomCube(), 21, 10, false));
-        LOG.info((System.nanoTime() - start) / 1e9);
-
-        start = System.nanoTime();
-        LOG.info(Search.solution(Tools.randomCube(), 21, 10, false));
-        LOG.info((System.nanoTime() - start) / 1e9);
-    }
-
     private String cacheInfo = null;
 
     @Override
     public String getTextComments() {
-        if (!optimalCross || size != 3) return null;
+        if (!optimalCross || cubeSize != 3) return null;
         if (cacheInfo == null) {
             ArrayList<String> solutions = getCrossSolutions();
             Collections.sort(solutions);
@@ -223,15 +223,6 @@ public class CubeScramble extends Scramble {
 
     List<Integer> seq = new ArrayList<>();
 
-    private boolean solved() {
-        for (int i = 0; i < 24; i += 4) {
-            int c = posit.get(i);
-            for (int j = 1; j < 4; j++)
-                if (posit.get(i + j) != c) return false;
-        }
-        return true;
-    }
-
     int[][] cornerIndices = new int[][]{{15, 16, 21}, {14, 20, 4}, {13, 9, 17}, {12, 5, 8}, {3, 23, 18}, {2, 6, 22}, {1, 19, 11}, {0, 10, 7}};
     String[] cornerNames = new String[]{"URF", "UFL", "UBR", "ULB", "DFR", "DLF", "DRB", "DBL"};
     HashMap<Character, Integer> faceToIndex = new HashMap<>();
@@ -256,17 +247,18 @@ public class CubeScramble extends Scramble {
         cp.add(7);
 
         initbrd();
-        List<Integer> co = new ArrayList<Integer>();
         int sum = 0;
         for (int i = 0; i < cp.size(); i++) {
             int orientation;
-            if (i == cp.size() - 1)
+            if (i == cp.size() - 1) {
                 orientation = 0;
-            else if (i == cp.size() - 2)
+            }
+            else if (i == cp.size() - 2) {
                 orientation = (3 - sum) % 3;
-            else
+            }
+            else {
                 orientation = (int) Math.floor(Math.random() * 3);
-            co.add(orientation);
+            }
             sum = (sum + orientation) % 3;
             for (int j = 0; j < 3; j++) {
                 int jj = (j + orientation) % 3;
@@ -287,22 +279,22 @@ public class CubeScramble extends Scramble {
 
     List<List<Integer>> adj = new ArrayList<>();
     {
-        adj.add(new ArrayList<>());
-        adj.add(new ArrayList<>());
-        adj.add(new ArrayList<>());
-        adj.add(new ArrayList<>());
-        adj.add(new ArrayList<>());
-        adj.add(new ArrayList<>());
+        adj.add(Arrays.asList(new Integer[6]));
+        adj.add(Arrays.asList(new Integer[6]));
+        adj.add(Arrays.asList(new Integer[6]));
+        adj.add(Arrays.asList(new Integer[6]));
+        adj.add(Arrays.asList(new Integer[6]));
+        adj.add(Arrays.asList(new Integer[6]));
     }
-
-    List<Integer> opp = new ArrayList<>();
-    int auto;
-    List<Integer> tot;
 
     private void calcadj() {
         //count all adjacent pairs (clockwise around corners)
         int a, b;
-        for (a = 0; a < 6; a++) for (b = 0; b < 6; b++) adj.get(a).set(b, 0);
+        for (a = 0; a < 6; a++) {
+            for (b = 0; b < 6; b++) {
+                adj.get(a).set(b, 0);
+            }
+        }
         for (a = 0; a < 48; a += 2) {
             if (posit.get(piece.get(a)) <= 5 && posit.get(piece.get(a + 1)) <= 5) {
                 List<Integer> temp = adj.get(posit.get(piece.get(a)));
@@ -312,14 +304,7 @@ public class CubeScramble extends Scramble {
         }
     }
 
-    private void calctot() {
-        //count how many of each colour
-        tot = Lists.newArrayList(0, 0, 0, 0, 0, 0, 0);
-        for (int e = 0; e < 24; e++) tot.set(posit.get(e), tot.get(posit.get(e)) + 1);
-    }
-
     List<List<Integer>> mov2fc = new ArrayList<>();
-
     {
         mov2fc.add(Lists.newArrayList(0, 2, 3, 1, 23, 19, 10, 6, 22, 18, 11, 7)); //D
         mov2fc.add(Lists.newArrayList(4, 6, 7, 5, 12, 20, 2, 10, 14, 22, 0, 8)); //L
@@ -329,26 +314,11 @@ public class CubeScramble extends Scramble {
         mov2fc.add(Lists.newArrayList(20, 21, 23, 22, 14, 16, 3, 6, 15, 18, 2, 4)); //F
     }
 
-    private void domove(int y) {
-        int q = 1 + (y >> 4);
-        int f = y & 15;
-        while (q > 0) {
-            for (int i = 0; i < mov2fc.get(f).size(); i += 4) {
-                int c = posit.get(mov2fc.get(f).get(i));
-                posit.set(mov2fc.get(f).get(i), posit.get(mov2fc.get(f).get(i + 3)));
-                posit.set(mov2fc.get(f).get(i + 3), posit.get(mov2fc.get(f).get(i + 2)));
-                posit.set(mov2fc.get(f).get(i + 2), posit.get(mov2fc.get(f).get(i + 1)));
-                posit.set(mov2fc.get(f).get(i + 1), c);
-            }
-            q--;
-        }
-    }
-
-    List<Integer> sol = new ArrayList<Integer>();
+    List<Integer> sol = new ArrayList<>();
 
     private String solve() {
         calcadj();
-        List<Integer> opp = new ArrayList<Integer>();
+        List<Integer> opp = Arrays.asList(new Integer[6]);
         for (int a = 0; a < 6; a++) {
             for (int b = 0; b < 6; b++) {
                 if (a != b && adj.get(a).get(b) + adj.get(b).get(a) == 0) {
@@ -358,20 +328,20 @@ public class CubeScramble extends Scramble {
             }
         }
         //Each piece is determined by which of each pair of opposite colours it uses.
-        List<Integer> ps = new ArrayList<Integer>();
-        List<Integer> tws = new ArrayList<Integer>();
+        List<Integer> ps = Arrays.asList(new Integer[7]);
+        List<Integer> tws = Arrays.asList(new Integer[7]);
         int a = 0;
         for (int d = 0; d < 7; d++) {
             int p = 0;
             for (int b = a; b < a + 6; b += 2) {
-                if (posit.get(piece.get(b)) == posit.get(piece.get(42))) p += 4;
-                if (posit.get(piece.get(b)) == posit.get(piece.get(44))) p += 1;
-                if (posit.get(piece.get(b)) == posit.get(piece.get(46))) p += 2;
+                if (Objects.equals(posit.get(piece.get(b)), posit.get(piece.get(42)))) p += 4;
+                if (Objects.equals(posit.get(piece.get(b)), posit.get(piece.get(44)))) p += 1;
+                if (Objects.equals(posit.get(piece.get(b)), posit.get(piece.get(46)))) p += 2;
             }
             ps.set(d, p);
-            if (posit.get(piece.get(a)) == posit.get(piece.get(42)) || posit.get(piece.get(a)) == opp.get(posit.get(piece.get(42))))
+            if (Objects.equals(posit.get(piece.get(a)), posit.get(piece.get(42))) || Objects.equals(posit.get(piece.get(a)), opp.get(posit.get(piece.get(42)))))
                 tws.set(d, 0);
-            else if (posit.get(piece.get(a + 2)) == posit.get(piece.get(42)) || posit.get(piece.get(a + 2)) == opp.get(posit.get(piece.get(42))))
+            else if (Objects.equals(posit.get(piece.get(a + 2)), posit.get(piece.get(42))) || Objects.equals(posit.get(piece.get(a + 2)), opp.get(posit.get(piece.get(42)))))
                 tws.set(d, 1);
             else tws.set(d, 2);
             a += 6;
@@ -421,7 +391,11 @@ public class CubeScramble extends Scramble {
                     for (a = 0; a < 3; a++) {
                         p = permmv.get(p).get(m);
                         s = twstmv.get(s).get(m);
-                        sol.set(d, 10 * m + a);
+                        if (sol.size() > d) {
+                            sol.set(d, 10 * m + a);
+                        } else {
+                            sol.add(10 * m + a);
+                        }
                         if (search(d + 1, p, s, l - 1, m)) {
                             return true;
                         }
@@ -432,26 +406,20 @@ public class CubeScramble extends Scramble {
         return false;
     }
 
-    List<Integer> perm = new ArrayList<Integer>();
-    List<Integer> twst = new ArrayList<Integer>();
-    List<List<Integer>> permmv = new ArrayList<>();
-    List<List<Integer>> twstmv = new ArrayList<>();
-
     private void calcperm() {
         //calculate solving arrays
         //first permutation
 
         for (int p = 0; p < 5040; p++) {
-            perm.set(p, -1);
-            permmv.set(p, new ArrayList<Integer>());
+            perm.add(p, -1);
+            permmv.add(p, new ArrayList<>());
             for (int m = 0; m < 3; m++) {
-                permmv.get(p).set(m, getprmmv(p, m));
+                permmv.get(p).add(m, getprmmv(p, m));
             }
         }
 
         perm.set(0, 0);
         for (int l = 0; l <= 6; l++) {
-            int n = 0;
             for (int p = 0; p < 5040; p++) {
                 if (perm.get(p) == l) {
                     for (int m = 0; m < 3; m++) {
@@ -460,7 +428,6 @@ public class CubeScramble extends Scramble {
                             q = permmv.get(q).get(m);
                             if (perm.get(q) == -1) {
                                 perm.set(q, l + 1);
-                                n++;
                             }
                         }
                     }
@@ -470,16 +437,15 @@ public class CubeScramble extends Scramble {
 
         //then twist
         for (int p = 0; p < 729; p++) {
-            twst.set(p, -1);
-            twstmv.set(p, new ArrayList<Integer>());
+            twst.add(p, -1);
+            twstmv.add(p, new ArrayList<>());
             for (int m = 0; m < 3; m++) {
-                twstmv.get(p).set(m, gettwsmv(p, m));
+                twstmv.get(p).add(m, gettwsmv(p, m));
             }
         }
 
         twst.set(0, 0);
         for (int l = 0; l <= 5; l++) {
-            int n = 0;
             for (int p = 0; p < 729; p++) {
                 if (twst.get(p) == l) {
                     for (int m = 0; m < 3; m++) {
@@ -488,7 +454,6 @@ public class CubeScramble extends Scramble {
                             q = twstmv.get(q).get(m);
                             if (twst.get(q) == -1) {
                                 twst.set(q, l + 1);
-                                n++;
                             }
                         }
                     }
@@ -502,7 +467,8 @@ public class CubeScramble extends Scramble {
         //given position p<5040 and move m<3, return new position number
         int a, b, c, q;
         //convert number into array;
-        List<Integer> ps = new ArrayList<Integer>();
+        List<Integer> ps = Arrays.asList(new Integer[8]);
+
         q = p;
         for (a = 1; a <= 7; a++) {
             b = q % a;
@@ -511,7 +477,8 @@ public class CubeScramble extends Scramble {
                 Integer ii = null;
                 try {
                     ii = ps.get(c);
-                } catch (Exception e) {
+                } catch (IndexOutOfBoundsException e) {
+                    LOG.debug("ignore error " + e);
                 }
                 ps.set(c + 1, ii);
             }
@@ -557,7 +524,7 @@ public class CubeScramble extends Scramble {
         //given orientation p<729 and move m<3, return new orientation number
         int a, b, c, d, q;
         //convert number into array;
-        List<Integer> ps = new ArrayList<Integer>();
+        List<Integer> ps = Arrays.asList(new Integer[7]);
         q = p;
         d = 0;
         for (a = 0; a <= 5; a++) {
@@ -612,11 +579,11 @@ public class CubeScramble extends Scramble {
         scramble = "";
         StringBuilder scram = new StringBuilder();
         int lastAxis = -1;
-        int axis = 0;
-        int slices = size - ((multislice || size % 2 != 0) ? 1 : 0);
+        int axis;
+        int slices = cubeSize - ((multislice || cubeSize % 2 != 0) ? 1 : 0);
         int[] slicesMoved = new int[slices];
         int[] directionsMoved = new int[3];
-        int moved = 0;
+        int moved;
 
         for (int i = 0; i < length; i += moved) {
             moved = 0;
@@ -634,7 +601,7 @@ public class CubeScramble extends Scramble {
                 } while (slicesMoved[slice] != 0);
                 int direction = random(3);
 
-                if (multislice || slices != size || (directionsMoved[direction] + 1) * 2 < slices ||
+                if (multislice || slices != cubeSize || (directionsMoved[direction] + 1) * 2 < slices ||
                         (directionsMoved[direction] + 1) * 2 == slices && directionsMoved[0] + directionsMoved[1] + directionsMoved[2] == directionsMoved[direction]) {
                     directionsMoved[direction]++;
                     moved++;
@@ -679,7 +646,7 @@ public class CubeScramble extends Scramble {
         int face = n >> 2;
         int direction = n & 3;
 
-        if (size <= 5) {
+        if (cubeSize <= 5) {
             if (wideNotation) {
                 move += FACES().charAt(face % 6);
                 if (face / 6 != 0) move += "w";
@@ -712,28 +679,28 @@ public class CubeScramble extends Scramble {
         String[] strs = scramble.split("\\s+");
         length = strs.length;
 
-        if (size < 2) return false;
-        else if (size == 2) {
-            for (int i = 0; i < strs.length; i++) {
-                if (!strs[i].matches(regexp2)) return false;
+        if (cubeSize < 2) return false;
+        else if (cubeSize == 2) {
+            for (String str : strs) {
+                if (!str.matches(regexp2)) return false;
             }
-        } else if (size <= 5) {
-            for (int i = 0; i < strs.length; i++) {
-                if (!strs[i].matches(regexp345)) return false;
+        } else if (cubeSize <= 5) {
+            for (String str : strs) {
+                if (!str.matches(regexp345)) return false;
             }
         } else {
-            for (int i = 0; i < strs.length; i++) {
-                if (!strs[i].matches(regexp)) return false;
+            for (String str : strs) {
+                if (!str.matches(regexp)) return false;
             }
         }
 
         StringBuilder newScram = new StringBuilder();
         try {
-            for (int i = 0; i < strs.length; i++) {
+            for (String str : strs) {
                 int face;
                 String slice1 = null;
-                if (size > 5) {
-                    Matcher m = shortPattern.matcher(strs[i]);
+                if (cubeSize > 5) {
+                    Matcher m = shortPattern.matcher(str);
                     if (!m.matches()) {
                         return false;
                     }
@@ -746,16 +713,18 @@ public class CubeScramble extends Scramble {
                         slice1 = slice2;
                     face = FACES().indexOf(m.group(2));
                 } else {
-                    face = FACES().indexOf(strs[i].charAt(0) + "");
+                    face = FACES().indexOf(str.charAt(0) + "");
                 }
 
                 int slice = face / 6;
                 face %= 6;
-                if (strs[i].indexOf("w") >= 0) slice++;
+                if (str.contains("w")) {
+                    slice++;
+                }
                 else if (slice1 != null)
                     slice = Integer.parseInt(slice1) - 1;
 
-                int dir = " 2'".indexOf(strs[i].charAt(strs[i].length() - 1) + "");
+                int dir = " 2'".indexOf(str.charAt(str.length() - 1) + "");
                 if (dir < 0) dir = 0;
 
                 int n = ((slice * 6 + face) * 4 + dir);
@@ -779,11 +748,11 @@ public class CubeScramble extends Scramble {
     }
 
     private void initializeImage() {
-        image = new int[6][size][size];
+        image = new int[6][cubeSize][cubeSize];
 
         for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < size; j++) {
-                for (int k = 0; k < size; k++) {
+            for (int j = 0; j < cubeSize; j++) {
+                for (int k = 0; k < cubeSize; k++) {
                     image[i][j][k] = i;
                 }
             }
@@ -798,51 +767,52 @@ public class CubeScramble extends Scramble {
 
         if (face > 2) {
             sface -= 3;
-            sslice = size - 1 - slice;
+            sslice = cubeSize - 1 - slice;
             sdir = 2 - dir;
         }
         for (int i = 0; i <= sdir; i++) {
-            for (int j = 0; j < size; j++) {
+            for (int j = 0; j < cubeSize; j++) {
                 if (sface == 0) {
                     int temp = image[4][j][sslice];
-                    image[4][j][sslice] = image[2][size - 1 - j][size - 1 - sslice];
-                    image[2][size - 1 - j][size - 1 - sslice] = image[1][j][sslice];
+                    image[4][j][sslice] = image[2][cubeSize - 1 - j][cubeSize - 1 - sslice];
+                    image[2][cubeSize - 1 - j][cubeSize - 1 - sslice] = image[1][j][sslice];
                     image[1][j][sslice] = image[5][j][sslice];
                     image[5][j][sslice] = temp;
                 } else if (sface == 1) {
-                    int temp = image[0][size - 1 - sslice][j];
-                    image[0][size - 1 - sslice][j] = image[2][size - 1 - sslice][j];
-                    image[2][size - 1 - sslice][j] = image[3][size - 1 - sslice][j];
-                    image[3][size - 1 - sslice][j] = image[5][size - 1 - sslice][j];
-                    image[5][size - 1 - sslice][j] = temp;
+                    int temp = image[0][cubeSize - 1 - sslice][j];
+                    image[0][cubeSize - 1 - sslice][j] = image[2][cubeSize - 1 - sslice][j];
+                    image[2][cubeSize - 1 - sslice][j] = image[3][cubeSize - 1 - sslice][j];
+                    image[3][cubeSize - 1 - sslice][j] = image[5][cubeSize - 1 - sslice][j];
+                    image[5][cubeSize - 1 - sslice][j] = temp;
                 } else if (sface == 2) {
                     int temp = image[4][sslice][j];
-                    image[4][sslice][j] = image[3][j][size - 1 - sslice];
-                    image[3][j][size - 1 - sslice] = image[1][size - 1 - sslice][size - 1 - j];
-                    image[1][size - 1 - sslice][size - 1 - j] = image[0][size - 1 - j][sslice];
-                    image[0][size - 1 - j][sslice] = temp;
+                    image[4][sslice][j] = image[3][j][cubeSize - 1 - sslice];
+                    image[3][j][cubeSize - 1 - sslice] = image[1][cubeSize - 1 - sslice][cubeSize - 1 - j];
+                    image[1][cubeSize - 1 - sslice][cubeSize - 1 - j] = image[0][cubeSize - 1 - j][sslice];
+                    image[0][cubeSize - 1 - j][sslice] = temp;
                 }
             }
         }
         if (slice == 0) {
             for (int i = 0; i <= 2 - dir; i++) {
-                for (int j = 0; j < (size + 1) / 2; j++) {
-                    for (int k = 0; k < size / 2; k++) {
+                for (int j = 0; j < (cubeSize + 1) / 2; j++) {
+                    for (int k = 0; k < cubeSize / 2; k++) {
                         int temp = image[face][j][k];
-                        image[face][j][k] = image[face][k][size - 1 - j];
-                        image[face][k][size - 1 - j] = image[face][size - 1 - j][size - 1 - k];
-                        image[face][size - 1 - j][size - 1 - k] = image[face][size - 1 - k][j];
-                        image[face][size - 1 - k][j] = temp;
+                        image[face][j][k] = image[face][k][cubeSize - 1 - j];
+                        image[face][k][cubeSize - 1 - j] = image[face][cubeSize - 1 - j][cubeSize - 1 - k];
+                        image[face][cubeSize - 1 - j][cubeSize - 1 - k] = image[face][cubeSize - 1 - k][j];
+                        image[face][cubeSize - 1 - k][j] = temp;
                     }
                 }
             }
         }
     }
 
-    public BufferedImage getScrambleImage(int gap, int cubieSize, Color[] colorScheme) {
-        Dimension dim = getImageSize(gap, cubieSize, size);
+    @Override
+    public BufferedImage getScrambleImage(int gap, int cubieSize, Map<String, Color> colorScheme) {
+        Dimension dim = getImageSize(gap, cubieSize, cubeSize);
         BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
-        drawCube(buffer.createGraphics(), image, gap, cubieSize, colorScheme);
+        drawCube(buffer.createGraphics(), image, gap, cubieSize, Lists.newArrayList(colorScheme.values()));
         return buffer;
     }
 
@@ -865,7 +835,7 @@ public class CubeScramble extends Scramble {
         return new Dimension(getCubeViewWidth(unitSize, gap, size), getCubeViewHeight(unitSize, gap, size));
     }
 
-    private void drawCube(Graphics2D g, int[][][] state, int gap, int cubieSize, Color[] colorScheme) {
+    private void drawCube(Graphics2D g, int[][][] state, int gap, int cubieSize, List<Color> colorScheme) {
         int size = state[0].length;
         paintCubeFace(g, gap, 2 * gap + size * cubieSize, size, cubieSize, state[0], colorScheme);
         paintCubeFace(g, 2 * gap + size * cubieSize, 3 * gap + 2 * size * cubieSize, size, cubieSize, state[1], colorScheme);
@@ -875,14 +845,14 @@ public class CubeScramble extends Scramble {
         paintCubeFace(g, 2 * gap + size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize, state[5], colorScheme);
     }
 
-    private void paintCubeFace(Graphics2D g, int x, int y, int size, int cubieSize, int[][] faceColors, Color[] colorScheme) {
+    private void paintCubeFace(Graphics2D g, int x, int y, int size, int cubieSize, int[][] faceColors, List<Color> colorScheme) {
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
                 g.setColor(Color.BLACK);
                 int tempx = x + col * cubieSize;
                 int tempy = y + row * cubieSize;
                 g.drawRect(tempx, tempy, cubieSize, cubieSize);
-                g.setColor(colorScheme[faceColors[row][col]]);
+                g.setColor(colorScheme.get(faceColors[row][col]));
                 g.fillRect(tempx + 1, tempy + 1, cubieSize - 1, cubieSize - 1);
             }
         }
@@ -896,16 +866,17 @@ public class CubeScramble extends Scramble {
         return (size * cubie + gap) * 3 + gap;
     }
 
-    public Shape[] getFaces(int gap, int cubieSize, String variation) {
+    @Override
+    public Map<String, Shape> getFaces(int gap, int cubieSize, String variation) {
         int size = getSizeFromVariation(variation);
-        return new Shape[]{
-                getFace(gap, 2 * gap + size * cubieSize, size, cubieSize),
-                getFace(2 * gap + size * cubieSize, 3 * gap + 2 * size * cubieSize, size, cubieSize),
-                getFace(4 * gap + 3 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize),
-                getFace(3 * gap + 2 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize),
-                getFace(2 * gap + size * cubieSize, gap, size, cubieSize),
-                getFace(2 * gap + size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize)
-        };
+        return ImmutableMap.<String, Shape>builder()
+                .put("L", getFace(gap, 2 * gap + size * cubieSize, size, cubieSize))
+                .put("D", getFace(2 * gap + size * cubieSize, 3 * gap + 2 * size * cubieSize, size, cubieSize))
+                .put("B", getFace(4 * gap + 3 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
+                .put("R", getFace(3 * gap + 2 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
+                .put("U", getFace(2 * gap + size * cubieSize, gap, size, cubieSize))
+                .put("F", getFace(2 * gap + size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
+                .build();
     }
 
     private static Shape getFace(int leftBound, int topBound, int size, int cubieSize) {

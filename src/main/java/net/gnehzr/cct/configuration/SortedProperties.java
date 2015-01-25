@@ -107,9 +107,14 @@ public class SortedProperties {
 	}
 
 	public Long getLong(VariableKey<Integer> key, boolean defaultValue) {
+		return getLong(key.toKey(), defaultValue);
+	}
+
+	public Long getLong(String key, boolean defaultValue) {
 		String value = getValue(key, defaultValue);
 		return value == null ? null : Long.parseLong(value);
 	}
+
 	public void setLong(VariableKey<Integer> key, long value) {
 		setValue(key, Long.toString(value));
 	}

@@ -8,7 +8,7 @@ import net.gnehzr.cct.configuration.JColorComponent;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
-import net.gnehzr.cct.main.ScrambleArea;
+import net.gnehzr.cct.main.ScrambleHyperlinkArea;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.Profile;
@@ -35,13 +35,13 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	private static final Logger LOG = Logger.getLogger(TimerLabel.class);
 
 	private KeyboardHandler keyHandler;
-	private ScrambleArea scrambleArea;
+	private ScrambleHyperlinkArea scrambleHyperlinkArea;
 	private final Configuration configuration;
 
 	@Inject
-	public TimerLabel(ScrambleArea scrambleArea, Configuration configuration) {
+	public TimerLabel(ScrambleHyperlinkArea scrambleHyperlinkArea, Configuration configuration) {
 		super("");
-		this.scrambleArea = scrambleArea;
+		this.scrambleHyperlinkArea = scrambleHyperlinkArea;
 		this.configuration = configuration;
 		addComponentListener(this);
 		setFocusable(true);
@@ -252,7 +252,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		boolean lowered = false;
 		if(keyboard) {
 			boolean focused = isFocusOwner();
-			scrambleArea.setTimerFocused(focused);
+			scrambleHyperlinkArea.setTimerFocused(focused);
 			if(focused) {
 				curr = green;
 				if(keysDown)

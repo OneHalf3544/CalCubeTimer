@@ -16,6 +16,7 @@ import java.awt.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
@@ -338,6 +339,11 @@ public class Configuration {
 
 	public Double getDouble(VariableKey<Double> key, boolean defaultValue) {
 		return props.getDouble(key, defaultValue);
+	}
+
+	public Duration getDuration(VariableKey<Duration> delayUntilInspection, boolean b) {
+		Long aLong = props.getLong(delayUntilInspection.toKey(), b);
+		return aLong == null ? null : Duration.ofMillis(aLong);
 	}
 
 	static class SubstanceFontPolicy implements FontPolicy {

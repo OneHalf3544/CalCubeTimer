@@ -6,7 +6,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.log4j.Logger;
 import scramblePlugins.*;
@@ -201,7 +200,7 @@ public class ScramblePluginManager {
 		return scramblePlugins.get(aClass);
 	}
 
-	public BufferedImage getScrambleImage(final Scramble instance, final int gap, final int unitSize, final Color[] colorScheme) {
+	public BufferedImage getScrambleImage(final Scramble instance, final int gap, final int unitSize, final Map<String, Color> colorScheme) {
 		return instance.getScrambleImage(gap, Math.max(unitSize, instance.getDefaultUnitSize()), colorScheme);
 	}
 
@@ -226,16 +225,15 @@ public class ScramblePluginManager {
 		return -1;
 	}
 
-	public Color[] getColorScheme(Scramble scramblePlugin, boolean defaults) {
-		if(scramblePlugin.getFaceNamesColors() == null) {
-			//this is for null scrambles
+	public Map<String, Color> getColorScheme(Scramble scramblePlugin, boolean defaults) {
+		if(scramblePlugin.getFaceNamesColors().isEmpty()) {
 			return null;
 		}
-		Color[] scheme = new Color[scramblePlugin.getFaceNamesColors()[0].length];
-		for(int face = 0; face < scheme.length; face++) {
-			scheme[face] = configuration.getColorNullIfInvalid(VariableKey.PUZZLE_COLOR(scramblePlugin, scramblePlugin.getFaceNamesColors()[0][face]), defaults);
-			if(scheme[face] == null)
-				scheme[face] = Utils.stringToColor(scramblePlugin.getFaceNamesColors()[1][face], false);
+		Map<String, Color> scheme = new HashMap<>(scramblePlugin.getFaceNamesColors().size());
+		for(Map.Entry<String, Color> face : scramblePlugin.getFaceNamesColors().entrySet()) {
+			Color colorFromConfig = configuration.getColorNullIfInvalid(
+					VariableKey.PUZZLE_COLOR(scramblePlugin, face.getKey()), defaults);
+			scheme.put(face.getKey(), colorFromConfig == null ? face.getValue() : colorFromConfig);
 		}
 		return scheme;
 	}
@@ -250,5 +248,15 @@ public class ScramblePluginManager {
 
 	public void setAttributes(List<String> attributes) {
 		this.attributes = attributes;
+	}
+
+	@Override
+	public String toString() {
+		Integer variationsCount = pluginClasses.stream()
+				.map(this::getScramblePlugin)
+				.map(scramble -> getScrambleVariations().length)
+				.reduce((a, b) -> a + b)
+				.orElse(0);
+		return String.format("ScramblePluginManager{has %d plugins (%d variations)}", pluginClasses.size(), variationsCount);
 	}
 }

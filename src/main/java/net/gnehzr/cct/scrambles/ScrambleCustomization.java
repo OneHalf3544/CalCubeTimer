@@ -104,11 +104,11 @@ public class ScrambleCustomization {
 
 	public Scramble generateScramble() {
 		Scramble newScramble = plugin.newScramble(variation.getVariation(), variation.getLength(), generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
-		LOG.info("generated scramble: " + newScramble + ", for plugin " + plugin);
+		LOG.info("generated scramble: " + newScramble + ", for plugin '" + plugin.getPuzzleName() + "', variation: " + variation);
 		return newScramble;
 	}
 
-	public Scramble generateScramble(String scramble) throws InvalidScrambleException {
+	public Scramble importScramble(String scramble) throws InvalidScrambleException {
 		return plugin.importScramble(variation.getVariation(), scramble, generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 }

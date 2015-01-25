@@ -1,5 +1,7 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableMap;
+import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.Scramble;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -12,36 +14,45 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.regex.Pattern;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 public class PyraminxScramble extends Scramble {
 
 	private static final Logger LOG = Logger.getLogger(PyraminxScramble.class);
 
+	private static final String FACES_ORDER = "FDLR";
+
+	@SuppressWarnings("UnusedDeclaration")
 	public PyraminxScramble() throws InvalidScrambleException {
-		this(0, Collections.<String>emptyList());
+		super("Pyraminx", true, true);
+		this.length = 0;
+		setAttributes(Collections.<String>emptyList());
 	}
 
 	public PyraminxScramble(String s, List<String> attrs) throws InvalidScrambleException {
-		super("Pyraminx", true, s);
+		super("Pyraminx", true, s, false);
 		if(!setAttributes(attrs)) {
 			throw new InvalidScrambleException(s);
 		}
 	}
 
 	public PyraminxScramble(int length, List<String> attrs) {
-		super("Pyraminx", true);
+		super("Pyraminx", true, false);
 		this.length = length;
 		setAttributes(attrs);
 	}
 
+	@NotNull
 	@Override
-	public final String[][] getFaceNamesColors() {
-		return new String[][] {
-				{ "F", "D", "L", "R" },
-	  			{ "ff0000", "0000ff", "00ff00", "ffff00" }
-		};
+	public final Map<String, Color> getFaceNamesColors() {
+		return ImmutableMap.<String, Color>builder()
+				.put("F", Utils.stringToColor("ff0000"))
+				.put("D", Utils.stringToColor("0000ff"))
+				.put("L", Utils.stringToColor("00ff00"))
+				.put("R", Utils.stringToColor("ffff00"))
+				.build();
 	}
 
 	@Override
@@ -123,7 +134,7 @@ public class PyraminxScramble extends Scramble {
 		}
 	}
 
-	private static String regexp = "^[ULRBulrb]'?$";
+	private static final String regexp = "^[ULRBulrb]'?$";
 	private boolean validateScramble() {
 		String[] strs = scramble.split("\\s+");
 		length = strs.length;
@@ -133,11 +144,11 @@ public class PyraminxScramble extends Scramble {
 		}
 
 		try{
-			for(int i = 0; i < strs.length; i++){
-				int face = "ULRBulrb".indexOf(strs[i].charAt(0));
-				if(face == -1) return false;
-				int dir = (strs[i].length() == 1 ? 1 : 2);
-				if(face >= 4) turnTip(face - 4, dir);
+			for (String str : strs) {
+				int face = "ULRBulrb".indexOf(str.charAt(0));
+				if (face == -1) return false;
+				int dir = (str.length() == 1 ? 1 : 2);
+				if (face >= 4) turnTip(face - 4, dir);
 				else turn(face, dir);
 			}
 		} catch(Exception e){
@@ -453,7 +464,8 @@ public class PyraminxScramble extends Scramble {
 		image[f3][s3] = temp;
 	}
 
-	public BufferedImage getScrambleImage(int gap, int pieceSize, Color[] colorScheme) {
+	@Override
+	public BufferedImage getScrambleImage(int gap, int pieceSize, Map<String, Color> colorScheme) {
 		Dimension dim = getImageSize(gap, pieceSize, null);
 		BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
 		drawMinx(buffer.createGraphics(), gap, pieceSize, colorScheme);
@@ -465,14 +477,14 @@ public class PyraminxScramble extends Scramble {
 		return new Dimension(getPyraminxViewWidth(gap, pieceSize), getPyraminxViewHeight(gap, pieceSize));
 	}
 
-	private void drawMinx(Graphics2D g, int gap, int pieceSize, Color[] colorScheme){
+	private void drawMinx(Graphics2D g, int gap, int pieceSize, Map<String, Color> colorScheme){
 		drawTriangle(g, 2*gap+3*pieceSize, gap+Math.sqrt(3)*pieceSize, true, image[0], pieceSize, colorScheme);
 		drawTriangle(g, 2*gap+3*pieceSize, 2*gap+2*Math.sqrt(3)*pieceSize, false, image[1], pieceSize, colorScheme);
 		drawTriangle(g, gap+1.5*pieceSize, gap+Math.sqrt(3)/2*pieceSize, false, image[2], pieceSize, colorScheme);
 		drawTriangle(g, 3*gap+4.5*pieceSize, gap+Math.sqrt(3)/2*pieceSize,  false, image[3], pieceSize, colorScheme);
 	}
 
-	private void drawTriangle(Graphics2D g, double x, double y, boolean up, int[] state, int pieceSize, Color[] colorScheme){
+	private void drawTriangle(Graphics2D g, double x, double y, boolean up, int[] state, int pieceSize, Map<String, Color> colorScheme){
 		GeneralPath p = triangle(up, pieceSize);
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		p.transform(AffineTransform.getTranslateInstance(x, y));
@@ -524,7 +536,7 @@ public class PyraminxScramble extends Scramble {
 		}
 
 		for(int i = 0; i < ps.length; i++){
-			g.setColor(colorScheme[state[i]]);
+			g.setColor(colorScheme.get(String.valueOf(FACES_ORDER.charAt(state[i]))));
 			g.fill(ps[i]);
 			g.setColor(Color.BLACK);
 			g.draw(ps[i]);
@@ -566,23 +578,25 @@ public class PyraminxScramble extends Scramble {
 	}
 
 	private static int getPyraminxViewWidth(int gap, int pieceSize) {
-		return (int)(2 * 3 * pieceSize + 4 * gap);
+		return 2 * 3 * pieceSize + 4 * gap;
 	}
 	private static int getPyraminxViewHeight(int gap, int pieceSize) {
 		return (int)(2 * 1.5 * Math.sqrt(3) * pieceSize + 3 * gap);
 	}
+	@Override
 	public int getNewUnitSize(int width, int height, int gap, String variation) {
 		return (int) Math.round(Math.min((width - 4*gap) / (3 * 2),
 				(height - 3*gap) / (3 * Math.sqrt(3))));
 	}
 
-	public Shape[] getFaces(int gap, int pieceSize, String variation) {
-		return new Shape[] {
-			getTriangle(2*gap+3*pieceSize, gap+Math.sqrt(3)*pieceSize, pieceSize, true),
-			getTriangle(2*gap+3*pieceSize, 2*gap+2*Math.sqrt(3)*pieceSize, pieceSize, false),
-			getTriangle(gap+1.5*pieceSize, gap+Math.sqrt(3)/2*pieceSize, pieceSize, false),
-			getTriangle(3*gap+4.5*pieceSize, gap+Math.sqrt(3)/2*pieceSize, pieceSize, false)
-		};
+	@Override
+	public Map<String, Shape> getFaces(int gap, int pieceSize, String variation) {
+		return ImmutableMap.of(
+			"F", getTriangle(2*gap+3*pieceSize, gap+Math.sqrt(3)*pieceSize, pieceSize, true),
+			"D", getTriangle(2*gap+3*pieceSize, 2*gap+2*Math.sqrt(3)*pieceSize, pieceSize, false),
+			"L", getTriangle(gap+1.5*pieceSize, gap+Math.sqrt(3)/2*pieceSize, pieceSize, false),
+			"R", getTriangle(3*gap+4.5*pieceSize, gap+Math.sqrt(3)/2*pieceSize, pieceSize, false)
+		);
 	}
 	private static Shape getTriangle(double x, double y, int pieceSize, boolean up) {
 		GeneralPath p = triangle(up, pieceSize);
