@@ -40,48 +40,62 @@ public class StackmatHandler implements PropertyChangeListener {
 		if(evt.getNewValue() instanceof StackmatState) {
 			StackmatState current = (StackmatState) evt.getNewValue();
 			if(event.equals("Reset")) { 
-				if(current.oneHand()) {
-					if(stackmatInspecting) {
-						
-					} else if(current.leftHand()) {
-						rightStart = 0;
-						if(leftStart <= 0)
-							leftStart = System.currentTimeMillis();
-						else if(timeToStart(leftStart))
-							current.clearLeftHand();
-					} else { //the right hand is down
-						leftStart = 0;
-						if(rightStart <= 0)
-							rightStart = System.currentTimeMillis();
-						else if(timeToStart(rightStart))
-							current.clearRightHand();
-					}
-					tl.refreshDisplay(current);
+				if (current.oneHand()) {
+					processOneHandState(current);
 					return;
-				} else if(current.bothHands()) {
-					
-				} else if(!stackmatInspecting && (timeToStart(leftStart) || timeToStart(rightStart))) {
-					stackmatInspecting = true;
-					tl.inspectionStarted();
+				}
+				if (!current.bothHands()) {
+					if(!stackmatInspecting && (timeToStart(leftStart) || timeToStart(rightStart))) {
+                        stackmatInspecting = true;
+                        tl.inspectionStarted();
+                    }
 				}
 				tl.refreshDisplay(current);
 			} else {
 				tl.refreshDisplay(current);
 				stackmatInspecting = false;
-				if(event.equals("TimeChange")) { 
-					tl.timerStarted();
-				} else if(event.equals("Split")) { 
-					tl.timerSplit(current);
-				} else if(event.equals("New Time")) { 
-					tl.timerStopped(current);
-				} else if(event.equals("Current Display")) { 
-				} else if(event.equals("Accident Reset")) { 
-					tl.timerAccidentlyReset((StackmatState) evt.getOldValue());
+				switch (event) {
+					case "TimeChange":
+						tl.timerStarted();
+						break;
+					case "Split":
+						tl.timerSplit(current);
+						break;
+					case "New Time":
+						tl.timerStopped(current);
+						break;
+					case "Current Display":
+						break;
+					case "Accident Reset":
+						tl.timerAccidentlyReset((StackmatState) evt.getOldValue());
+						break;
 				}
 			}
 			leftStart = current.leftHand() ? -1 : 0;
 			rightStart = current.rightHand() ? -1 : 0;
 		}
+	}
+
+	private void processOneHandState(StackmatState current) {
+		if(stackmatInspecting) {
+            tl.refreshDisplay(current);
+            return;
+        }
+		if(current.leftHand()) {
+            rightStart = 0;
+            if(leftStart <= 0)
+                leftStart = System.currentTimeMillis();
+            else if(timeToStart(leftStart))
+                current.clearLeftHand();
+        } else { //the right hand is down
+            leftStart = 0;
+            if(rightStart <= 0)
+                rightStart = System.currentTimeMillis();
+            else if(timeToStart(rightStart))
+                current.clearRightHand();
+        }
+		tl.refreshDisplay(current);
+		return;
 	}
 
 	private boolean timeToStart(long time) {

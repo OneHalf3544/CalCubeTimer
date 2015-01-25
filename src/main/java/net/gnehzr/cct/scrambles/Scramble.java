@@ -28,10 +28,6 @@ public abstract class Scramble {
 	private final ScramblePluginMessages messageAccessor;
 	private final boolean supportsScrambleImage;
 
-	public static Scramble unknownScramble(String scramble) {
-		return new NullScramble(scramble);
-	}
-
 	public final Scramble newScramble(String variation, int length, String generatorGroup, List<String> attributes) {
 		try {
 			return createScramble(variation, length, generatorGroup, attributes);
@@ -116,12 +112,15 @@ public abstract class Scramble {
 
 	/**
 	 * This adds html formatting to a scramble for display purposes
-	 * @param formatMe
-	 * @return
+	 * @param formatMe plain/text string to format
+	 * @return html-wrapped text
 	 */
 	public abstract String htmlify(String formatMe);
 
-	// cannot contain the character ":"
+	/**
+	 * Name cannot contain the character ":"
+	 * @return puzzle name.
+	 */
 	public final String getPuzzleName() {
 		return puzzleName;
 	}
@@ -132,14 +131,14 @@ public abstract class Scramble {
 
 	/**
 	 * This is so one class can handle 3x3x3-11x11x11, variations cannot contain the character ":"
-	 * @return
+	 * @return variation names
 	 */
 	@NotNull
 	public abstract String[] getVariations();
 
 	/**
 	 * HIGHLY RECOMMENDED, defines default lengths for each element of VARIATIONS (make it a one element array unless you defined VARIATIONS)
-	 * @return
+	 * @return array with default scramble lengths for each variations
 	 */
 	@NotNull
 	protected abstract int[] getDefaultLengths();
@@ -152,8 +151,9 @@ public abstract class Scramble {
 			throw new IllegalArgumentException("PUZZLE_NAME (" + getPuzzleName() + ") may not contain ':'!");
 		}
 		if(getFaceNamesColors() != null) {
-			if(getFaceNamesColors().length != 2)
+			if(getFaceNamesColors().length != 2) {
 				throw new ArrayIndexOutOfBoundsException("FACE_NAMES_COLORS.length (" + getFaceNamesColors().length + ") does not equal 2!");
+			}
 			if(getFaceNamesColors()[0].length != getFaceNamesColors()[1].length)
 				throw new ArrayIndexOutOfBoundsException("FACE_NAMES_COLORS[0].length (" + getFaceNamesColors()[0].length + ") != FACE_NAMES_COLORS[1].length (" + getFaceNamesColors()[1].length + ")");
 		}
@@ -196,7 +196,6 @@ public abstract class Scramble {
 		}
 	}
 
-
 	@NotNull
 	public abstract List<String> getAttributes();
 
@@ -208,43 +207,8 @@ public abstract class Scramble {
 	@Nullable
 	public abstract String[] getDefaultGenerators();
 
-
-	//As of now, there is support for named booleans to affect scrambles (attributes).
-	//This was introduced as a way of adding a multi-slice option for cubes.
-	//private static final String[] ATTRIBUTES; //This may come in useful for other puzzles.
-	//private static final String[] DEFAULT_ATTRIBUTES; //This is an array of the default attributes for a puzzle
-	
-	//public static final htmlify(String scramble);
-	
-	//Provides support for incremental scrambles, the Pattern should match 2 groups
-	//group 1: the next unit
-	//group 2: the rest of the scramble
-	//private static final Pattern TOKEN_REGEX;
-	
-	//Defines a default generator group for each scramble variation (make it a one element array if you didn't define VARIATIONS)
-	//If you define this field, remember to parse the generator string passed into the two constructors.
-	//private static final String[] DEFAULT_GENERATORS;
-
 	//TODO - this is poorly named, and for now, exists solely for optimal cross solutions for CubeScramble
-	public String getExtraInfo() {
+	public String getTextComments() {
 		return null;
 	}
-
-	/******** These must be defined to display your scrambles & allow a customizable color scheme **********/
-	
-	//private static final String[][] FACE_NAMES_COLORS; //Two dimensional array of names and colors
-	//private static final int DEFAULT_UNIT_SIZE; //Gives the default unit size for a scrambleview
-	
-	//public static int getNewUnitSize(int width, int height, int gap, String variation); //Returns the best fit unit size for this width and height
-	//public static Dimension getImageSize(int gap, int unitSize, String variation); //Returns the size of the scramble image
-	
-	//This method returns a BufferedImage with an image of the puzzles state
-	//public BufferedImage getScrambleImage(int gap, int unitSize, Color[] colorScheme);
-	
-	//This method returns an array of shapes, indexed as in the FACE_NAMES_COLORS array, it is used for clicking on a
-	//to customize a color scheme. If you define the above method (getScrambleImage()), it is highly recommended that you also
-	//define this method, otherwise users will be unable to configure the puzzle's color scheme
-	//public static Shape[] getFaces(int gap, int unitSize, String variation);
-	
-	/******** End optional fields and methods **********/
 }

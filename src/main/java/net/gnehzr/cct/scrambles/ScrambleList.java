@@ -77,8 +77,9 @@ public class ScrambleList {
 	}
 	
 	public ScrambleString getCurrent() {
-		if(scrambleNumber == scrambles.size())
+		if(scrambleNumber == scrambles.size()) {
 			scrambles.add(null); //ensure that there's capacity for the current scramble
+		}
 		ScrambleString c = scrambles.get(scrambleNumber);
 		if(c == null) {
 			Scramble s = scrambleCustomisation.generateScramble();

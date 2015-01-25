@@ -9,6 +9,7 @@ import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.umts.ircclient.IRCClient;
+import org.apache.log4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -22,6 +23,8 @@ import java.time.Instant;
 * @author OneHalf
 */
 class TimingListenerImpl implements TimingListener {
+
+    private static final Logger LOG = Logger.getLogger(TimingListenerImpl.class);
 
     @Inject
     private CalCubeTimerModel model;
@@ -103,6 +106,7 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerStopped(TimerState newTime) {
+        LOG.info("timer stopped: " +  newTime);
         model.setTiming(false);
         model.addTime(newTime);
         if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false))
@@ -130,6 +134,7 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void inspectionStarted() {
+        LOG.info("inspection started");
         model.setInspectionStart(Instant.now());
         model.startUpdateInspectionTimer();
         ircClient.sendUserstate();

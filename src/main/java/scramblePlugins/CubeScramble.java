@@ -191,7 +191,7 @@ public class CubeScramble extends Scramble {
     private String cacheInfo = null;
 
     @Override
-    public String getExtraInfo() {
+    public String getTextComments() {
         if (!optimalCross || size != 3) return null;
         if (cacheInfo == null) {
             ArrayList<String> solutions = getCrossSolutions();

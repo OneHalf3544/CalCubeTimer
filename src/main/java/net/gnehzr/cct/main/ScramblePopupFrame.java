@@ -89,11 +89,11 @@ public class ScramblePopupFrame extends JDialog implements MouseListener, Action
 	public void setScramble(Scramble incrementalScramble, Scramble fullScramble, ScrambleVariation newVariation) {
 		incrementalScrambleView.setScramble(incrementalScramble, newVariation);
 		finalView.setScramble(fullScramble, newVariation);
-		String info = incrementalScramble.getExtraInfo();
+		String info = incrementalScramble.getTextComments();
 		if(info == null) {
 			pane.remove(scrambleInfoScroller);
 		} else {
-			scrambleInfoTextArea.setText(incrementalScramble.getExtraInfo());
+			scrambleInfoTextArea.setText(incrementalScramble.getTextComments());
 			scrambleInfoScroller.setPreferredSize(incrementalScrambleView.getPreferredSize()); //force scrollbars if necessary
 			scrambleInfoTextArea.setCaretPosition(0); //force scroll to the top
 			pane.add(scrambleInfoScroller);

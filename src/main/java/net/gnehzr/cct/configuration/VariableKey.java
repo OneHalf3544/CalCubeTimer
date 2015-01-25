@@ -174,7 +174,13 @@ public class VariableKey<H> {
 	VariableKey(String propertiesName) {
 		propsName = propertiesName;
 	}
+
 	public String toKey() {
+		return propsName;
+	}
+
+	@Override
+	public String toString() {
 		return propsName;
 	}
 }

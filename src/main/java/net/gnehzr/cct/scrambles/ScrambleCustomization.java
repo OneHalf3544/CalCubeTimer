@@ -3,8 +3,12 @@ package net.gnehzr.cct.scrambles;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
+import org.apache.log4j.Logger;
 
 public class ScrambleCustomization {
+
+	private static final Logger LOG = Logger.getLogger(ScrambleCustomization.class);
+
 	private final Configuration configuration;
 	private ScrambleVariation variation;
 	private final ScramblePluginManager scramblePluginManager;
@@ -92,11 +96,16 @@ public class ScrambleCustomization {
 
 	@Override
 	public boolean equals(Object o) {
-		return o != null && this.toString().equals(o.toString());
+		if (o == null || o.getClass() != getClass()) {
+			return false;
+		}
+ 		return this.toString().equals(o.toString());
 	}
 
 	public Scramble generateScramble() {
-		return plugin.newScramble(variation.getVariation(), variation.getLength(), generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		Scramble newScramble = plugin.newScramble(variation.getVariation(), variation.getLength(), generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		LOG.info("generated scramble: " + newScramble + ", for plugin " + plugin);
+		return newScramble;
 	}
 
 	public Scramble generateScramble(String scramble) throws InvalidScrambleException {
