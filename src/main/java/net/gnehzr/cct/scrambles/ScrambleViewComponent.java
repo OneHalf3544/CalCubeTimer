@@ -61,7 +61,6 @@ public class ScrambleViewComponent extends JComponent {
 	}
 
 	public void setScramble(Scramble scramble, ScrambleVariation variation) {
-		LOGGER.debug("set scramble " + scramble + ", variation " + variation);
 		checkArgument(scramble != null && scramble.length != 0, "scramble: " + scramble);
 
 		currentScramble = scramble;

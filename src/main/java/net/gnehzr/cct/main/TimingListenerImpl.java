@@ -93,6 +93,7 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerStarted() {
+        LOG.info("timer started");
         model.setTiming(true);
         model.stopInspection();
         if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)) {
@@ -106,7 +107,7 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerStopped(TimerState newTime) {
-        LOG.info("timer stopped: " +  newTime);
+        LOG.info("timer stopped: " + newTime);
         model.setTiming(false);
         model.addTime(newTime);
         if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false))

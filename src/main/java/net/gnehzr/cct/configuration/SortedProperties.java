@@ -12,10 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
 
 public class SortedProperties {
 
@@ -136,7 +134,7 @@ public class SortedProperties {
 	@Nullable
 	public Dimension getDimension(VariableKey<Dimension> key) {
 		String value = getValue(key, false);
-		if (value == null) {
+		if (value == null || Objects.equals(value, "auto")) {
             return null;
         }
 
@@ -155,7 +153,7 @@ public class SortedProperties {
 
 	public Point getPoint(VariableKey<Point> key, boolean defaultValue) {
 		String value = getValue(key, defaultValue);
-		if (value == null) {
+		if (value == null || Objects.equals(value, "auto")) {
             return null;
         }
 		String[] dims = value.split(",");

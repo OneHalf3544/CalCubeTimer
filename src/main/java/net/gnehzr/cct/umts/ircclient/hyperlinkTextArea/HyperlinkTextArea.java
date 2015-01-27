@@ -118,16 +118,11 @@ public class HyperlinkTextArea extends JTextArea implements DocumentListener, Mo
 	}
 
 	private void updateCursor() {
-		Integer pos = null;
-		try {
-			pos = viewToModel(getMousePosition());
-		} catch(RuntimeException e) {
-		 	//i'm not sure what's going on here, but it's not really critical
-			LOG.info("ignored exception", e);
-		}
-		if(pos != null) {
+		Point mousePosition = getMousePosition();
+		if (mousePosition != null) {
+			Integer textCursorPosition = viewToModel(mousePosition);
 			for(Highlight h : clickableLinks) {
-				if(h.getStartOffset() <= pos && pos <= h.getEndOffset()) {
+				if(h.getStartOffset() <= textCursorPosition && textCursorPosition <= h.getEndOffset()) {
 					setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 					return;
 				}
