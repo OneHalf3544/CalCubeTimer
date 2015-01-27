@@ -42,7 +42,7 @@ public abstract class Scramble {
 	}
 
 	public abstract Scramble importScramble(final String variation, final String scramble, final String generatorGroup,
-								   final List<String> attributes) throws InvalidScrambleException;
+									        final List<String> attributes) throws InvalidScrambleException;
 
 
 	protected abstract Scramble createScramble(final String variation, final int length, final String generatorGroup, final List<String> attributes);
@@ -212,7 +212,6 @@ public abstract class Scramble {
 	@Nullable
 	public abstract String[] getDefaultGenerators();
 
-	//TODO - this is poorly named, and for now, exists solely for optimal cross solutions for CubeScramble
 	public String getTextComments() {
 		return null;
 	}

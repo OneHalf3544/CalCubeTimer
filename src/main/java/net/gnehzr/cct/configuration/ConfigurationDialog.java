@@ -1,5 +1,6 @@
 package net.gnehzr.cct.configuration;
 
+import com.google.common.collect.Iterables;
 import net.gnehzr.cct.configuration.SolveTypeTagEditorTableModel.TypeAndName;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
@@ -26,6 +27,7 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -95,21 +97,21 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		return reset;
 	}
 
-	private JTabbedPane tabbedPane;
 	private JButton applyButton, saveButton = null;
 	private JButton cancelButton = null;
 	private JButton resetAllButton = null;
 	private JComboBox<Profile> profiles = null;
+
 	private void createGUI() {
 		JPanel pane = new JPanel(new BorderLayout());
 		setContentPane(pane);
 
-		tabbedPane = new JTabbedPane() { // this will automatically give tabs numeric mnemonics
+		JTabbedPane tabbedPane = new JTabbedPane() { // this will automatically give tabs numeric mnemonics
 			@Override
 			public void addTab(String title, Component component) {
 				int currTab = this.getTabCount();
 				super.addTab((currTab + 1) + " " + title, component);
-				if(currTab < 9)
+				if (currTab < 9)
 					super.setMnemonicAt(currTab, Character.forDigit(currTab + 1, 10));
 			}
 		};
@@ -918,7 +920,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		return options;
 	}
 
-	private ArrayList<ScrambleViewComponent> solvedPuzzles;
+	private List<ScrambleViewComponent> solvedPuzzles;
 
 	private JScrollPane makePuzzleColorsPanel() {
 		JPanel options = new JPanel();
@@ -1088,10 +1090,11 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	
 	public void syncGUIwithConfig(boolean defaults) {
 		setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + profileDao.getSelectedProfile().getName());
-		profiles.setModel(new DefaultComboBoxModel<>(profileDao.getProfiles(configuration).toArray(new Profile[0])));
+		profiles.setModel(new DefaultComboBoxModel<>(Iterables.toArray(profileDao.getProfiles(configuration), Profile.class)));
 		profiles.setSelectedItem(profileDao.getSelectedProfile());
-		for(SyncGUIListener sl : resetListeners)
+		for(SyncGUIListener sl : resetListeners) {
 			sl.syncGUIWithConfig(defaults);
+		}
 	}
 
 	@Override
@@ -1123,8 +1126,9 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		configuration.setLong(VariableKey.METRONOME_DELAY, metronomeDelay.getMilliSecondsDelay());
 		configuration.setBoolean(VariableKey.SPEAK_TIMES, speakTimes.isSelected());
 		Object voice = voices.getSelectedItem();
-		if(voice != null)
+		if(voice != null) {
 			configuration.setString(VariableKey.VOICE, voice.toString());
+		}
 
 		configuration.setLong(VariableKey.SWITCH_THRESHOLD, (Integer) stackmatValue.getValue());
 		configuration.setBoolean(VariableKey.INVERTED_MINUTES, invertedMinutes.isSelected());
@@ -1204,6 +1208,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			configuration.saveConfigurationToFile(profileDao.getSelectedProfile().getConfigurationFile());
 		} catch(IOException e) {
 			//this could happen when the current profile was deleted
+			LOG.info("ignored exception", e);
 		}
 	}
 

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Statistics implements SolveCounter {
+
 	public static enum AverageType {
 		CURRENT {
 			public String toString() {

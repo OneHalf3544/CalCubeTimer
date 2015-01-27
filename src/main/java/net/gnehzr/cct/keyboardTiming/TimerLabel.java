@@ -138,6 +138,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	public void setStackmatGreenLight(boolean greenLight) {
 		this.greenLight = greenLight;
 	}
+
 	public void reset() {
 		leftHand = rightHand = greenLight = on = false;
 		keyHandler.reset();

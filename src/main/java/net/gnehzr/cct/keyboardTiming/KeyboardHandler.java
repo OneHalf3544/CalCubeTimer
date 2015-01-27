@@ -6,16 +6,23 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.TimingListener;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import org.apache.log4j.Logger;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class KeyboardHandler extends Timer {
+public class KeyboardHandler {
 
-	private static final Duration PERIOD = Duration.ofMillis(90);
+	private static final Logger LOGGER = Logger.getLogger(KeyboardHandler.class);
+
+	private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
+
+	private static final Duration PERIOD = Duration.ofMillis(45);
 
 	private TimingListener timingListener;
 	private final Configuration configuration;
@@ -25,6 +32,7 @@ public class KeyboardHandler extends Timer {
 
 	private Instant start;
 	private Instant current;
+	private ScheduledFuture<?> scheduledFuture;
 
 	public boolean isReset() {
 		return reset;
@@ -35,7 +43,6 @@ public class KeyboardHandler extends Timer {
 
 	@Inject
 	public KeyboardHandler(TimingListener timingListener, Configuration configuration) {
-		super((int)PERIOD.toMillis(), null);
 		this.timingListener = timingListener;
 		this.configuration = configuration;
 	}
@@ -65,7 +72,8 @@ public class KeyboardHandler extends Timer {
 		}
 		current = start = Instant.now();
 		if(!inspectionEnabled || inspecting) {
-			start();
+			scheduledFuture = EXECUTOR.scheduleAtFixedRate(
+					this::fireActionPerformed, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
 			inspecting = false;
 			reset = false;
 			timingListener.timerStarted();
@@ -75,8 +83,7 @@ public class KeyboardHandler extends Timer {
 		}
 	}
 
-	@Override
-	protected void fireActionPerformed(ActionEvent e) {
+	protected void fireActionPerformed() {
 		current = Instant.now();
 		timingListener.refreshDisplay(getTimerState());
 	}
@@ -96,10 +103,14 @@ public class KeyboardHandler extends Timer {
 		timingListener.timerSplit(getTimerState());
 	}
 
-	@Override
 	public void stop() {
 		current = Instant.now();
-		super.stop();
+		if (scheduledFuture != null) {
+			scheduledFuture.cancel(true);
+			scheduledFuture = null;
+		} else {
+			LOGGER.info("nothing to stop");
+		}
 		timingListener.refreshDisplay(getTimerState());
 	}
 
@@ -107,5 +118,9 @@ public class KeyboardHandler extends Timer {
 		timingListener.timerStopped(getTimerState());
 		reset = true;
 		current = Instant.now();
+	}
+
+	public boolean isRunning() {
+		return scheduledFuture != null && !scheduledFuture.isCancelled();
 	}
 }

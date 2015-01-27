@@ -12,8 +12,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public class ScrambleViewComponent extends JComponent {
 
 	private static final Logger LOGGER = Logger.getLogger(ScrambleViewComponent.class);
@@ -30,9 +28,11 @@ public class ScrambleViewComponent extends JComponent {
 	private Scramble currentScramble = null;
 	private Scramble currentPlugin = null;
 	private ScrambleVariation currentVariation = null;
+	private String focusedFaceId = null;
+
+	// todo move to scramblePluginManager:
 	private Map<String, Color> colorScheme = null;
 	private Map<String, Shape> faces = null;
-	private String focusedFaceId = null;
 
 	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks, Configuration configuration,
 								 ScramblePluginManager scramblePluginManager) {
@@ -61,8 +61,6 @@ public class ScrambleViewComponent extends JComponent {
 	}
 
 	public void setScramble(Scramble scramble, ScrambleVariation variation) {
-		checkArgument(scramble != null && scramble.length != 0, "scramble: " + scramble);
-
 		currentScramble = scramble;
 		currentVariation = variation;
 		if(colorScheme == null || currentVariation.getPlugin() != currentPlugin) {
