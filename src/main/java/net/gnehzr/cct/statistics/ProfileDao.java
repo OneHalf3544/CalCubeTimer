@@ -9,6 +9,7 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.ProfileSerializer.RandomInputStream;
 import org.apache.log4j.Logger;
+import org.hibernate.SessionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXException;
 
@@ -28,7 +29,7 @@ import java.util.Map;
  * @author OneHalf
  */
 @Singleton
-public class ProfileDao {
+public class ProfileDao extends HibernateDaoSupport {
 
     private static final Logger LOG = Logger.getLogger(ProfileDao.class);
 
@@ -43,12 +44,13 @@ public class ProfileDao {
     private final StatisticsTableModel statsModel;
     private final ScramblePluginManager scramblePluginManager;
 
-    private static final String guestName = "Guest";
+    private static final String GUEST_NAME = "Guest";
     private CalCubeTimerGui calCubeTimerFrame;
 
     @Inject
     public ProfileDao(ProfileSerializer profileSerializer, Configuration configuration, StatisticsTableModel statsModel,
-                      ScramblePluginManager scramblePluginManager, CalCubeTimerGui calCubeTimerFrame) {
+                      ScramblePluginManager scramblePluginManager, CalCubeTimerGui calCubeTimerFrame, SessionFactory sessionFactory) {
+        super(sessionFactory);
         this.profileSerializer = profileSerializer;
         this.configuration = configuration;
         this.statsModel = statsModel;
@@ -220,7 +222,7 @@ public class ProfileDao {
     }
 
     public Profile createGuestProfile(Configuration configuration) {
-        Profile temp = getProfileByName(getGuestName());
+        Profile temp = getProfileByName(GUEST_NAME);
         createProfileDirectory(temp);
         return temp;
     }
@@ -228,7 +230,7 @@ public class ProfileDao {
     public List<Profile> getProfiles(Configuration configuration) {
         String[] profDirs = configuration.getProfilesFolder().list((f, s) -> {
             File temp = new File(f, s);
-            return !temp.isHidden() && temp.isDirectory() && !s.equalsIgnoreCase(getGuestName());
+            return !temp.isHidden() && temp.isDirectory() && !s.equalsIgnoreCase(GUEST_NAME);
         });
         List<Profile> profs = new ArrayList<>();
         profs.add(guestProfile);
@@ -263,16 +265,6 @@ public class ProfileDao {
         profileCache = p;
     }
 
-    public void saveConfigurationToFile(File f) throws IOException {
-        configuration.saveConfigurationToFile(f);
-        if(profileCache.isSaveable()) {
-            PrintWriter profileOut = new PrintWriter(new FileWriter(configuration.getStartupProfileFile()));
-            profileOut.println(profileCache.getName());
-            profileOut.println(configuration.profileOrdering);
-            profileOut.close();
-        }
-    }
-
     //this should always be up to date with the gui
     public Profile getSelectedProfile() {
         if(profileCache == null) {
@@ -283,13 +275,10 @@ public class ProfileDao {
             } catch (IOException e) {
                 LOG.info("exception", e);
                 profileName = "";
-            }
+        }
             profileCache = getProfile(profileName, configuration);
         }
         return profileCache;
     }
 
-    public String getGuestName() {
-        return guestName;
-    }
 }

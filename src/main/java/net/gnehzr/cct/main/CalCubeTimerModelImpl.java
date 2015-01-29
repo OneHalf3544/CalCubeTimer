@@ -129,15 +129,15 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void prepareForProfileSwitch() {
-        Profile p = profileDao.getSelectedProfile();
+        Profile profile = profileDao.getSelectedProfile();
         try {
-            profileDao.saveDatabase(p);
+            profileDao.saveDatabase(profile);
         } catch (TransformerConfigurationException | IOException | SAXException e1) {
             LOG.info("unexpected exception", e1);
         }
         calCubeTimerGui.saveToConfiguration();
         try {
-            configuration.saveConfigurationToFile(p.getConfigurationFile());
+            configuration.saveConfigurationToFile(profile);
         } catch (Exception e) {
             LOG.info("unexpected exception", e);
         }

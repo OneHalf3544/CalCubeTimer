@@ -64,9 +64,7 @@ class GuiParseSaxHandler extends DefaultHandler {
         calCubeTimerFrame.tabbedPanes.clear();
         calCubeTimerFrame.splitPanes.clear();
 
-        for(DynamicDestroyable dd : calCubeTimerFrame.dynamicStringComponents) {
-            dd.destroy();
-        }
+        calCubeTimerFrame.dynamicStringComponents.forEach(DynamicDestroyable::destroy);
         calCubeTimerFrame.dynamicStringComponents.clear();
     }
 

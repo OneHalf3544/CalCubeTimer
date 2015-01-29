@@ -2,6 +2,7 @@ package net.gnehzr.cct.umts.cctbot;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.statistics.ConfigurationDao;
 import org.apache.log4j.Logger;
 import org.jibble.pircbot.IrcException;
 import org.testng.annotations.Test;
@@ -11,6 +12,8 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.mockito.Mockito.mock;
 
 public class CCTBotTest {
 
@@ -65,7 +68,7 @@ public class CCTBotTest {
                 return;
             }
 
-        Configuration configuration = new Configuration(Configuration.getRootDirectory());
+        Configuration configuration = new Configuration(Configuration.getRootDirectory(), mock(ConfigurationDao.class));
         CCTBot cctbot = new CCTBot(new ScramblePluginManager(configuration), configuration);
 
         if(argMap.containsKey("p"))

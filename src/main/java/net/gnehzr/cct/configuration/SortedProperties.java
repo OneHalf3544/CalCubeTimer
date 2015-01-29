@@ -6,6 +6,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.statistics.ConfigurationDao;
+import net.gnehzr.cct.statistics.Profile;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +43,11 @@ public class SortedProperties {
 		return new SortedProperties(loadFile(propertiesFile), loadFile(defaultsFile));
 	}
 
+	public static SortedProperties load(Profile profileName, ConfigurationDao configurationDao, File defaultsFile) throws IOException {
+		//call loadConfiguration(null) when you want to use cct without dealing with config files
+		return new SortedProperties(configurationDao.getParametersForProfile(profileName), loadFile(defaultsFile));
+	}
+
 	public void saveConfigurationToFile(File f) throws IOException {
 		try (FileOutputStream propsOut = new FileOutputStream(f)) {
 			Properties properties = new Properties();
@@ -49,7 +56,11 @@ public class SortedProperties {
 		}
 	}
 
-	public static ImmutableMap<String, String> loadFile(File defaultsFile) throws IOException {
+	public void saveConfigurationToFile(Profile profile, ConfigurationDao configurationDao) throws IOException {
+		configurationDao.storeParameters(profile, this.properties);
+	}
+
+	private static ImmutableMap<String, String> loadFile(File defaultsFile) throws IOException {
 		try(InputStream in = new FileInputStream(defaultsFile)) {
 			Properties defaults = new Properties();
 			defaults.load(in);

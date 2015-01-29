@@ -2,6 +2,7 @@ package net.gnehzr.cct.umts.cctbot;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.logging.CCTLog;
+import net.gnehzr.cct.main.Main;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.umts.IRCListener;
@@ -291,7 +292,7 @@ public class CCTBot implements IRCListener {
 					logger.info("Exiting cctbot (" + arg + ")");
 					bot.quitServer(arg);
 				}
-				System.exit(0);
+				Main.exit(0);
 				continue;
 			} else if(command.equalsIgnoreCase(CMD_MAX_SCRAMBLES)) {
 				if(arg != null) {

@@ -1,18 +1,17 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Binder;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import com.google.inject.*;
 import com.google.inject.name.Names;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.statistics.HibernateDaoSupport;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.ProfileDao;
 import net.gnehzr.cct.umts.ircclient.IRCClient;
 import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
 import org.apache.log4j.Logger;
+import org.hibernate.SessionFactory;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.lafwidget.utils.LafConstants;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -33,6 +32,7 @@ import java.io.IOException;
 public class Main implements Module {
 
     private static final Logger LOG = Logger.getLogger(Main.class);
+    private static Injector injector;
 
     @Override
     public void configure(Binder binder) {
@@ -51,6 +51,8 @@ public class Main implements Module {
         binder.bind(TimingListener.class).to(TimingListenerImpl.class);
         binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class);
         binder.bind(TimerLabel.class).annotatedWith(Names.named("bigTimersDisplay")).to(TimerLabel.class);
+
+        binder.bind(SessionFactory.class).toProvider(HibernateDaoSupport::configureSessionFactory);
     }
 
     public static void main(String[] args) {
@@ -60,7 +62,7 @@ public class Main implements Module {
         JDialog.setDefaultLookAndFeelDecorated(false);
         JFrame.setDefaultLookAndFeelDecorated(false);
 
-        Injector injector = Guice.createInjector(new Main());
+        injector = Guice.createInjector(new Main());
 
         //The error messages are not internationalized because I want people to
         //be able to google the following messages
@@ -89,42 +91,62 @@ public class Main implements Module {
         }
 
         SwingUtilities.invokeLater(() -> {
-            String errors = configuration.getStartupErrors();
-            if (!errors.isEmpty()) {
-                Utils.showErrorDialog(null, errors, "Couldn't start CCT!");
-                System.exit(1);
-            }
+
             try {
-                configuration.loadConfiguration(profileDao.getSelectedProfile().getConfigurationFile());
-            } catch (IOException e) {
-                LOG.info("unexpected exception", e);
+                String errors = configuration.getStartupErrors();
+                if (!errors.isEmpty()) {
+                    Utils.showErrorDialog(null, errors, "Couldn't start CCT!");
+                    Main.exit(1);
+                }
+                try {
+                    configuration.loadConfiguration(profileDao.getSelectedProfile());
+                } catch (IOException e) {
+                    LOG.info("unexpected exception", e);
+                }
+
+                JDialog.setDefaultLookAndFeelDecorated(true);
+                JFrame.setDefaultLookAndFeelDecorated(true);
+                calCubeTimerFrame.setLookAndFeel();
+
+                UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
+                UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
+                UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
+                UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
+
+                calCubeTimerFrame.setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
+                calCubeTimerFrame.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
+                calCubeTimerFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                calCubeTimerFrame.setSelectedProfile(profileDao.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
             }
-
-            JDialog.setDefaultLookAndFeelDecorated(true);
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            calCubeTimerFrame.setLookAndFeel();
-
-            UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
-            UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
-            UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
-            UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
-
-            calCubeTimerFrame.setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
-            calCubeTimerFrame.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
-            calCubeTimerFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            calCubeTimerFrame.setSelectedProfile(profileDao.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
+            catch (Exception e) {
+                LOG.error("unexpected exception", e);
+                Main.exit(1);
+            }
 
             calCubeTimerFrame.setVisible(true);
 
-            Runtime.getRuntime().addShutdownHook(new Thread(calCubeTimerModel::prepareForProfileSwitch));
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            }));
 
 
             calCubeTimerFrame.languagesComboboxListener.itemStateChanged(
-                            new ItemEvent(calCubeTimerFrame.languages, 0, configuration.getDefaultLocale(), ItemEvent.SELECTED));
+                    new ItemEvent(calCubeTimerFrame.languages, 0, configuration.getDefaultLocale(), ItemEvent.SELECTED));
 
             calCubeTimerFrame.profileComboboxListener.itemStateChanged(
                             new ItemEvent(calCubeTimerFrame.profilesComboBox, 0, profileDao.getSelectedProfile(), ItemEvent.SELECTED));
         });
     }
 
+    public static void exit(int code) {
+        if (injector == null) {
+            System.exit(code);
+        }
+        injector.getInstance(CalCubeTimerModel.class).prepareForProfileSwitch();
+        injector.getInstance(SessionFactory.class).close();
+        System.exit(code);
+    }
 }

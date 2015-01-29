@@ -2,8 +2,10 @@ package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
+import net.gnehzr.cct.statistics.ConfigurationDao;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -54,12 +56,15 @@ public class Configuration {
 	private final Pattern languageFile = Pattern.compile("^language_(.*).properties$");
 
 	private final File defaultsFile;
+	private final ConfigurationDao configurationDao;
 
-	public Configuration() throws IOException {
-		this(getRootDirectory());
+	@Inject
+	public Configuration(ConfigurationDao configurationDao) throws IOException {
+		this(getRootDirectory(), configurationDao);
 	}
 
-	public Configuration(File rootDirectory) throws IOException {
+	public Configuration(File rootDirectory, ConfigurationDao configurationDao) throws IOException {
+		this.configurationDao = configurationDao;
 		documentationFile = new File(rootDirectory, "documentation/readme.html");
 		dynamicStringsFile = new File(rootDirectory, "documentation/dynamicstrings.html");
 		profilesFolder = new File(rootDirectory, "profiles/");
@@ -77,6 +82,7 @@ public class Configuration {
 
 	// using for unit-tests
 	public Configuration(SortedProperties props) {
+		this.configurationDao = null;
 		this.props = props;
 		documentationFile = null;
 		dynamicStringsFile = null;
@@ -99,11 +105,11 @@ public class Configuration {
 	private CopyOnWriteArrayList<ConfigurationChangeListener> listeners = new CopyOnWriteArrayList<>();
 
 	public void addConfigurationChangeListener(ConfigurationChangeListener listener) {
-		LOG.trace("register listener: " + listener);
+		LOG.debug("register listener: " + listener);
 		listeners.add(listener);
 	}
 	public void removeConfigurationChangeListener(ConfigurationChangeListener listener) {
-		LOG.trace("remove listener: " + listener);
+		LOG.debug("remove listener: " + listener);
 		listeners.remove(listener);
 	}
 
@@ -148,13 +154,14 @@ public class Configuration {
 
 	public SortedProperties props;
 
-	public void loadConfiguration(File file) throws IOException {
-		props = SortedProperties.load(file, defaultsFile);
+	public void loadConfiguration(Profile profile) throws IOException {
+		props = SortedProperties.load(profile, configurationDao, defaultsFile);
 	}
 
 	//********* Start of specialized methods ***************//
 
 	public Profile commandLineProfile;
+
 	//this is used for adding profiles that aren't under the "profiles" directory
 	public void setCommandLineProfile(Profile profile) {
 		commandLineProfile = profile;
@@ -240,8 +247,8 @@ public class Configuration {
 		return startupProfileFile;
 	}
 
-	public void saveConfigurationToFile(File f) throws IOException {
-		props.saveConfigurationToFile(f);
+	public void saveConfigurationToFile(Profile profile) throws IOException {
+		props.saveConfigurationToFile(profile, configurationDao);
 	}
 
 	public boolean getBoolean(VariableKey<Boolean> key, boolean defaultValue) {

@@ -122,18 +122,18 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	final ItemListener profileComboboxListener = new ItemListener() {
 		@Override
 		public void itemStateChanged(ItemEvent e) {
-			Profile affected = (Profile) e.getItem();
+			Profile affectedProfile = (Profile) e.getItem();
 			if (e.getStateChange() == ItemEvent.DESELECTED) {
 				model.prepareForProfileSwitch();
 			} else if (e.getStateChange() == ItemEvent.SELECTED) {
 				statsModel.removeTableModelListener(CALCubeTimerFrame.this); //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
 
-				profileDao.setSelectedProfile(affected);
-				profileDao.loadDatabase(affected, scramblePluginManager);
+				profileDao.setSelectedProfile(affectedProfile);
+				profileDao.loadDatabase(affectedProfile, scramblePluginManager);
 
 				try {
-					configuration.loadConfiguration(affected.getConfigurationFile());
-					configuration.apply(affected);
+					configuration.loadConfiguration(affectedProfile);
+					configuration.apply(affectedProfile);
 				} catch (IOException err) {
 					LOG.info("unexpected exception", err);
 				}
@@ -522,7 +522,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	@Override
 	public void dispose() {
 		super.dispose();
-		System.exit(0);
+		Main.exit(0);
 	}
 
 	void setLookAndFeel() {

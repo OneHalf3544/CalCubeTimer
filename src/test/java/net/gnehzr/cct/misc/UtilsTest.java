@@ -1,11 +1,13 @@
 package net.gnehzr.cct.misc;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.statistics.ConfigurationDao;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 
 public class UtilsTest {
@@ -14,7 +16,7 @@ public class UtilsTest {
 
     @BeforeClass
     public void setUp() throws Exception {
-        configuration = new Configuration(Configuration.getRootDirectory());
+        configuration = new Configuration(Configuration.getRootDirectory(), mock(ConfigurationDao.class));
     }
 
     @Test(dataProvider = "times")

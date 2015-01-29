@@ -795,18 +795,18 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 					profiles.setSelectedItem(profileDao.getSelectedProfile());
 					return;
 			}
-			Profile p = (Profile) profiles.getSelectedItem();
+			Profile profile = (Profile) profiles.getSelectedItem();
 			try {
-				profileDao.saveDatabase(p);
+				profileDao.saveDatabase(profile);
 			} catch(Exception e1) {
 				LOG.info("unexpected exception", e1);
 			}
-			profileDao.setSelectedProfile(p);
-			profileDao.loadDatabase(p, scramblePluginManager);
+			profileDao.setSelectedProfile(profile);
+			profileDao.loadDatabase(profile, scramblePluginManager);
 
 			try {
-				configuration.loadConfiguration(p.getConfigurationFile());
-				configuration.apply(p);
+				configuration.loadConfiguration(profile);
+				configuration.apply(profile);
 			} catch(IOException err) {
 				LOG.info("unexpected exception", err);
 			}
@@ -1205,7 +1205,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		items[configuration.getInt(VariableKey.MIXER_NUMBER, false)].setInUse(true);
 
 		try {
-			configuration.saveConfigurationToFile(profileDao.getSelectedProfile().getConfigurationFile());
+			configuration.saveConfigurationToFile(profileDao.getSelectedProfile());
 		} catch(IOException e) {
 			//this could happen when the current profile was deleted
 			LOG.info("ignored exception", e);

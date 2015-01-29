@@ -89,8 +89,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	//this is needed to update the i18n text
 	public void fireStringUpdates() {
 		LOG.debug("StatisticsTableModel.fireStringUpdates()");
-		statsListeners
-				.forEach(StatisticsUpdateListener::update);
+		statsListeners.forEach(StatisticsUpdateListener::update);
 		undoRedoListener.refresh();
 	}
 	@Override
