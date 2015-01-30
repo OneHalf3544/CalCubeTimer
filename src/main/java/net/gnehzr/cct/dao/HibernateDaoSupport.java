@@ -1,4 +1,4 @@
-package net.gnehzr.cct.statistics;
+package net.gnehzr.cct.dao;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -28,7 +28,7 @@ import java.util.function.Function;
  */
 public class HibernateDaoSupport {
 
-    private static final Logger LOG = Logger.getLogger(HibernateProfileDao.class);
+    private static final Logger LOG = Logger.getLogger(HibernateDaoSupport.class);
 
     // Configure the session factory
     private final SessionFactory sessionFactory;

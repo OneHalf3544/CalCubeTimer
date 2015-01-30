@@ -10,7 +10,7 @@ import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 

@@ -1,10 +1,12 @@
-package net.gnehzr.cct.statistics;
+package net.gnehzr.cct.dao;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import net.gnehzr.cct.statistics.Profile;
+import org.apache.log4j.Logger;
 import org.hibernate.SessionFactory;
 
 import java.util.Collections;
@@ -23,17 +25,15 @@ import java.util.stream.Collectors;
 @Singleton
 public class ConfigurationDao extends HibernateDaoSupport {
 
+    private static final Logger LOGGER = Logger.getLogger(ConfigurationDao.class);
+
     @Inject
     public ConfigurationDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
 
-    void tmp() {
-        org.hibernate.Session session = null;
-        //session.createQuery("from ConfigEntity where profileName = :profileName" );
-    }
-
     public Map<String, String> getParametersForProfile(Profile profileName) {
+        LOGGER.info("get parameters for " + profileName);
         List<ConfigEntity> objects = getConfigEntities(profileName);
         return toEntitiesMap(objects);
     }
@@ -53,22 +53,30 @@ public class ConfigurationDao extends HibernateDaoSupport {
     }
 
     public void storeParameters(Profile profile, Map<String, String> properties) {
+        LOGGER.info("store properties for " + profile);
+
         List<ConfigEntity> oldParameters = getConfigEntities(profile);
         MapDifference<String, String> difference = Maps.difference(toEntitiesMap(oldParameters), properties);
         if (difference.areEqual()) {
+            LOGGER.debug("no changes");
             return;
         }
         update(session -> {
+            LOGGER.debug("remove " + difference.entriesOnlyOnLeft());
             oldParameters.stream()
                     .filter(c -> difference.entriesOnlyOnLeft().containsKey(c.getKey()))
                     .forEach(session::delete);
 
+            LOGGER.debug("add " + difference.entriesOnlyOnRight());
             difference.entriesOnlyOnRight().entrySet().stream()
                     .map(e -> new ConfigEntity(profile.getName(), e.getKey(), e.getValue()))
                     .forEach(session::save);
 
-            difference.entriesOnlyOnRight().entrySet().stream()
-                    .filter(c -> difference.entriesDiffering().containsKey(c.getKey()))
+            Map<String, MapDifference.ValueDifference<String>> differenceMap = difference.entriesDiffering();
+            LOGGER.debug("change " + differenceMap);
+            oldParameters.stream()
+                    .filter(c -> differenceMap.containsKey(c.getKey()))
+                    .peek(c -> c.setValue(differenceMap.get(c.getKey()).rightValue()))
                     .forEach(session::update);
         });
     }

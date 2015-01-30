@@ -11,7 +11,7 @@ public class ScrambleCustomization {
 
 	private final Configuration configuration;
 	private ScrambleVariation variation;
-	private final ScramblePluginManager scramblePluginManager;
+	public final ScramblePluginManager scramblePluginManager;
 	private Scramble plugin;
 	private String customization;
 	private String generator;
@@ -22,7 +22,7 @@ public class ScrambleCustomization {
 		this.scramblePluginManager = scramblePluginManager;
 		this.plugin = variation.getPlugin();
 		this.customization = customization;
-		loadGeneratorFromConfig(false);
+		this.setGenerator(scramblePluginManager.loadGeneratorFromConfig(this, false));
 	}
 	
 	public void setRA(int index, int newra, boolean trimmed) {
@@ -42,6 +42,10 @@ public class ScrambleCustomization {
 		return configuration.getBoolean(key, false);
 	}
 
+	public ScrambleVariation getVariation() {
+		return variation;
+	}
+
 	public void setScrambleVariation(ScrambleVariation newVariation) {
 		variation = newVariation;
 	}
@@ -53,17 +57,7 @@ public class ScrambleCustomization {
 	public void setGenerator(String generator) {
 		this.generator = generator;
 	}
-	private void loadGeneratorFromConfig(boolean defaults) {
-		if(scramblePluginManager.isGeneratorEnabled(getScramblePlugin())) {
-			generator = configuration.getString(VariableKey.SCRAMBLE_GENERATOR(this), defaults);
-			if(generator == null)
-				generator = scramblePluginManager.getDefaultGeneratorGroup(variation);
-		}
-	}
-	public void saveGeneratorToConfiguration() {
-		if(scramblePluginManager.isGeneratorEnabled(getScramblePlugin()))
-			configuration.setString(VariableKey.SCRAMBLE_GENERATOR(this), generator == null ? "" : generator);
-	}
+
 	public String getGenerator() {
 		return generator;
 	}

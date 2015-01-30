@@ -5,7 +5,7 @@ import net.gnehzr.cct.main.ScrambleChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.statistics.ProfileDatabase;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.StatisticsTableModel;

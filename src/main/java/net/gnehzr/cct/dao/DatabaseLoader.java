@@ -1,7 +1,11 @@
-package net.gnehzr.cct.statistics;
+package net.gnehzr.cct.dao;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SolveTime;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -20,7 +24,7 @@ import java.time.format.DateTimeParseException;
 *
 * @author OneHalf
 */
-class DatabaseLoader extends DefaultHandler {
+public class DatabaseLoader extends DefaultHandler {
 
     private Profile profile;
     private final Configuration configuration;
@@ -65,7 +69,7 @@ class DatabaseLoader extends DefaultHandler {
                 throw new SAXException("2nd level expected for session tag.");
             try {
                 session = new Session(LocalDateTime.parse(attributes.getValue("date"), configuration.getDateFormat()), configuration, scramblePluginManager, statsModel);
-                profile.puzzleDB.getPuzzleStatistics(customization).addSession(session, profile);
+                profile.getPuzzleDatabase().getPuzzleStatistics(customization).addSession(session, profile);
             } catch (DateTimeParseException e) {
                 throw new SAXException(e);
             }

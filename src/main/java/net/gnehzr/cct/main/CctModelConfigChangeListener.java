@@ -9,7 +9,7 @@ import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 
 import javax.swing.*;
 import java.util.List;

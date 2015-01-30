@@ -5,7 +5,7 @@ import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;

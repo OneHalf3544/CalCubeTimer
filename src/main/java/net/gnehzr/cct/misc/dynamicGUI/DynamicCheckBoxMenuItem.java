@@ -22,7 +22,7 @@ public class DynamicCheckBoxMenuItem extends JCheckBoxMenuItem
 			return getClass().getEnclosingClass().getSimpleName() + ": " + getText();
 		}
 	};
-	private DynamicString s = null;
+	private DynamicString currentDynamicString = null;
 
 	public DynamicCheckBoxMenuItem(Configuration configuration){
 		this.configuration = configuration;
@@ -30,21 +30,21 @@ public class DynamicCheckBoxMenuItem extends JCheckBoxMenuItem
 	}
 
 	@Override
-	public void setDynamicString(DynamicString s){
-		if(this.s != null) {
-			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
+	public void setDynamicString(DynamicString newDynamicString){
+		if(this.currentDynamicString != null) {
+			this.currentDynamicString.getStatisticsModel().removeStatisticsUpdateListener(this);
 		}
-		this.s = s;
-		if(this.s != null) {
-			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
+		this.currentDynamicString = newDynamicString;
+		if(newDynamicString != null) {
+			newDynamicString.getStatisticsModel().addStatisticsUpdateListener(this);
 			update();
 		}
 	}
 
 	@Override
 	public void update(){
-		if(s != null) {
-			setText(s.toString());
+		if(currentDynamicString != null) {
+			setText(currentDynamicString.toString());
 		}
 	}
 

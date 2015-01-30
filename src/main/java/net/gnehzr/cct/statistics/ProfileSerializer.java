@@ -148,7 +148,7 @@ public class ProfileSerializer {
         return hd;
     }
 
-    void writeStatisticFile(Profile profile) throws TransformerConfigurationException, IOException, SAXException {
+    public void writeStatisticFile(Profile profile) throws TransformerConfigurationException, IOException, SAXException {
         TransformerHandler hd = createTransformer();
 
         profile.getStatisticsRandomAccessFile().setLength(0);
@@ -165,7 +165,7 @@ public class ProfileSerializer {
         hd.endDocument();
     }
 
-    static class RandomInputStream extends InputStream {
+    public static class RandomInputStream extends InputStream {
         private RandomAccessFile raf;
 
         public RandomInputStream(RandomAccessFile raf) {

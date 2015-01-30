@@ -125,8 +125,9 @@ public class ScramblePluginManager {
 	}
 
 	public ScrambleCustomization getCustomizationFromVariation(ScrambleVariation sv, Profile profile) {
-		if(sv == null)
+		if(sv == null) {
 			return null;
+		}
 		return getCustomizationFromString(profile, sv.toString());
 	}
 
@@ -154,8 +155,9 @@ public class ScramblePluginManager {
 			if(databaseCustoms.hasNext()) {
 				name = databaseCustoms.next();
 			} else {
-				if(ch < 0)
+				if(ch < 0) {
 					break;
+				}
 				name = customNames.get(ch--);
 			}
 			int delimeter = name.indexOf(':');
@@ -163,8 +165,9 @@ public class ScramblePluginManager {
 			if(delimeter == -1) {
 				delimeter = name.length();
 				customizationName = null;
-			} else
+			} else {
 				customizationName = name.substring(delimeter + 1, name.length());
+			}
 			String variationName = name.substring(0, delimeter);
 			ScrambleCustomization scramCustomization = null;
 			for(ScrambleCustomization custom : scrambleCustomizations) {
@@ -176,14 +179,18 @@ public class ScramblePluginManager {
 			ScrambleCustomization sc;
 			if(scramCustomization != null)
 				sc = new ScrambleCustomization(configuration, scramCustomization.getScrambleVariation(), customizationName, this);
-			else if(variationName.equals(NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation().toString()))
+			else if(variationName.equals(NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation().toString())) {
 				sc = new ScrambleCustomization(configuration, NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation(), customizationName, this);
-			else
+			}
+			else {
 				sc = new ScrambleCustomization(configuration, new ScrambleVariation(Scramble.NULL_SCRAMBLE, variationName, configuration, this), customizationName, this);
-			if(!variationName.isEmpty()) {
+			}
+			if (!variationName.isEmpty()) {
 				if(scrambleCustomizations.contains(sc)) {
-					if(ch == customNames.size() - 1) //we don't want to move this customization to the front of the list if it's from the database
+					if(ch == customNames.size() - 1) {
+						//we don't want to move this customization to the front of the list if it's from the database
 						continue;
+					}
 					scrambleCustomizations.remove(sc);
 				}
 				scrambleCustomizations.add(0, sc);
@@ -258,5 +265,22 @@ public class ScramblePluginManager {
 				.reduce((a, b) -> a + b)
 				.orElse(0);
 		return String.format("ScramblePluginManager{has %d plugins (%d variations)}", pluginClasses.size(), variationsCount);
+	}
+
+	public String loadGeneratorFromConfig(ScrambleCustomization scrambleCustomization, boolean defaults) {
+		if (!isGeneratorEnabled(scrambleCustomization.getScramblePlugin())) {
+			return null;
+		}
+		String generatorConfig = configuration.getNullableString(VariableKey.scrambleGeneratorKey(scrambleCustomization), defaults);
+		return generatorConfig == null ? getDefaultGeneratorGroup(scrambleCustomization.getVariation()) : generatorConfig;
+	}
+
+	// todo scramble generator not save without configuration configuration dialog opening
+	public void saveGeneratorToConfiguration(ScrambleCustomization scrambleCustomization) {
+		if(isGeneratorEnabled(scrambleCustomization.getScramblePlugin())) {
+			configuration.setString(
+					VariableKey.scrambleGeneratorKey(scrambleCustomization),
+					scrambleCustomization.getGenerator() == null ? "" : scrambleCustomization.getGenerator());
+		}
 	}
 }

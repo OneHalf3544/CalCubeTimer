@@ -8,7 +8,7 @@ import net.gnehzr.cct.misc.JSpinnerWithText;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 import org.apache.log4j.Logger;
 
 import javax.imageio.ImageIO;

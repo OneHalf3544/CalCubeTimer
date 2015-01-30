@@ -3,7 +3,7 @@ package net.gnehzr.cct.misc.customJTable;
 import net.gnehzr.cct.configuration.ProfileListModel;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;

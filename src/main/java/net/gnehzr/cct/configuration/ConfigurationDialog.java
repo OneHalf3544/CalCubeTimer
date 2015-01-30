@@ -12,7 +12,7 @@ import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
 import org.apache.log4j.Logger;
@@ -1190,7 +1190,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 						.collect(Collectors.<String>toList()));
 		scramblePluginManager.saveLengthsToConfiguration();
 		for(ScrambleCustomization sc : puzzlesModel.getContents())
-			sc.saveGeneratorToConfiguration();
+			sc.scramblePluginManager.saveGeneratorToConfiguration(sc);
 
 		profilesModel.commitChanges();
 		configuration.setProfileOrdering(profilesModel.getContents());

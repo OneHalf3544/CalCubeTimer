@@ -11,7 +11,7 @@
         <property name="hibernate.hbm2ddl.auto">update</property>
         <property name="hibernate.show_sql">false</property>
 
-        <mapping class="net.gnehzr.cct.statistics.HibernateProfileDao$ProfileEntity"/>
-        <mapping class="net.gnehzr.cct.statistics.ConfigEntity"/>
+        <mapping class="net.gnehzr.cct.dao.ProfileEntity"/>
+        <mapping class="net.gnehzr.cct.dao.ConfigEntity"/>
     </session-factory>
 </hibernate-configuration>

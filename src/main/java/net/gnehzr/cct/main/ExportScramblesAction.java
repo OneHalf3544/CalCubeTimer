@@ -3,7 +3,7 @@ package net.gnehzr.cct.main;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.scrambles.ScrambleList;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

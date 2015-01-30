@@ -2,7 +2,7 @@ package net.gnehzr.cct.umts.cctbot;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.ConfigurationDao;
+import net.gnehzr.cct.dao.ConfigurationDao;
 import org.apache.log4j.Logger;
 import org.jibble.pircbot.IrcException;
 import org.testng.annotations.Test;

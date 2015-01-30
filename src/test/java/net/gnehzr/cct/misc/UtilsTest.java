@@ -1,7 +1,7 @@
 package net.gnehzr.cct.misc;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.statistics.ConfigurationDao;
+import net.gnehzr.cct.dao.ConfigurationDao;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;

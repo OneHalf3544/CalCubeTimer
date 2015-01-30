@@ -55,7 +55,7 @@ public class ScrambleList {
 
 	public void updateGeneratorGroup(String group) {
 		scrambleCustomisation.setGenerator(group);
-		scrambleCustomisation.saveGeneratorToConfiguration();
+		scrambleCustomisation.scramblePluginManager.saveGeneratorToConfiguration(scrambleCustomisation);
 		String scramble = null;
 		if(scrambleNumber < scrambles.size() && scrambles.get(scrambleNumber) != null)
 			scramble = scrambles.get(scrambleNumber).getScramble();

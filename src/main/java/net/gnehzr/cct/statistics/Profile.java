@@ -1,6 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -95,11 +96,11 @@ public class Profile {
     }
 
     @NotNull
-    File getDirectory() {
+    public File getDirectory() {
         return directory;
     }
 
-    File getStatistics() {
+    public File getStatistics() {
         return statistics;
     }
 

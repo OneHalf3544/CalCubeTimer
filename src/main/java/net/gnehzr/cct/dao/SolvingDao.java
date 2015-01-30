@@ -1,4 +1,4 @@
-package net.gnehzr.cct.statistics;
+package net.gnehzr.cct.dao;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.collect.ImmutableList;
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
@@ -88,8 +89,9 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 		int n = 0;
 		for(PuzzleStatistics ps : getPuzzlesStatistics()) {
 			for(Session s : ps.toSessionIterable()) {
-				if(s == findMe)
+				if(s == findMe) {
 					return n;
+				}
 				n++;
 			}
 		}

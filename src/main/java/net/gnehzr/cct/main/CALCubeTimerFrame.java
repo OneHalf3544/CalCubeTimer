@@ -6,6 +6,7 @@ import com.google.inject.name.Named;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationDialog;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.LocaleRenderer;
 import net.gnehzr.cct.i18n.StringAccessor;

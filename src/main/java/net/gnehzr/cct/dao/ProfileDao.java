@@ -1,4 +1,4 @@
-package net.gnehzr.cct.statistics;
+package net.gnehzr.cct.dao;
 
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -7,6 +7,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.ProfileSerializer.RandomInputStream;
 import org.apache.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -55,8 +56,12 @@ public class ProfileDao extends HibernateDaoSupport {
         this.configuration = configuration;
         this.statsModel = statsModel;
         this.scramblePluginManager = scramblePluginManager;
-        guestProfile = createGuestProfile(this.configuration);
+        guestProfile = createGuestProfile();
         this.calCubeTimerFrame = calCubeTimerFrame;
+    }
+
+    public List<ProfileEntity> getAllProfiles() {
+        return queryList("from PROFILE order by name");
     }
 
     public Profile getProfileByName(String name) {
@@ -176,17 +181,17 @@ public class ProfileDao extends HibernateDaoSupport {
     }
 
     @NotNull
-    File getDirectory(String name) {
+    public File getDirectory(String name) {
         return new File(configuration.getProfilesFolder(), name + "/");
     }
 
     @NotNull
-    File getConfiguration(File directory, String name) {
+    public File getConfiguration(File directory, String name) {
         return new File(directory, name + ".properties");
     }
 
     @NotNull
-    File getStatistics(File directory, String name) {
+    public File getStatistics(File directory, String name) {
         return new File(directory, name + ".xml");
     }
 
@@ -221,7 +226,7 @@ public class ProfileDao extends HibernateDaoSupport {
         profiles.put(profile.getName(), profile);
     }
 
-    public Profile createGuestProfile(Configuration configuration) {
+    public Profile createGuestProfile() {
         Profile temp = getProfileByName(GUEST_NAME);
         createProfileDirectory(temp);
         return temp;

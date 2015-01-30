@@ -5,9 +5,11 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
-import net.gnehzr.cct.statistics.ConfigurationDao;
+import net.gnehzr.cct.dao.ConfigurationDao;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.fonts.FontPolicy;
 import org.jvnet.substance.fonts.FontSet;
@@ -105,11 +107,11 @@ public class Configuration {
 	private CopyOnWriteArrayList<ConfigurationChangeListener> listeners = new CopyOnWriteArrayList<>();
 
 	public void addConfigurationChangeListener(ConfigurationChangeListener listener) {
-		LOG.debug("register listener: " + listener);
+		LOG.trace("register listener: " + listener);
 		listeners.add(listener);
 	}
 	public void removeConfigurationChangeListener(ConfigurationChangeListener listener) {
-		LOG.debug("remove listener: " + listener);
+		LOG.trace("remove listener: " + listener);
 		listeners.remove(listener);
 	}
 
@@ -248,7 +250,7 @@ public class Configuration {
 	}
 
 	public void saveConfigurationToFile(Profile profile) throws IOException {
-		props.saveConfigurationToFile(profile, configurationDao);
+		props.saveConfiguration(profile, configurationDao);
 	}
 
 	public boolean getBoolean(VariableKey<Boolean> key, boolean defaultValue) {
@@ -276,8 +278,14 @@ public class Configuration {
 		return aLong == null ? null : aLong.intValue();
 	}
 
+	@NotNull
 	public String getString(VariableKey<String> key, boolean defaults) {
 		return props.getString(key, defaults);
+	}
+
+	@Nullable
+	public String getNullableString(VariableKey<String> key, boolean defaults) {
+		return props.getNullableString(key, defaults);
 	}
 
 	public void setString(VariableKey<String> key, String s) {

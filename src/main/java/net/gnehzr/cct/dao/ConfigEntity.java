@@ -1,4 +1,4 @@
-package net.gnehzr.cct.statistics;
+package net.gnehzr.cct.dao;
 
 import javax.persistence.*;
 
@@ -17,9 +17,9 @@ public class ConfigEntity {
     @Id
     @GeneratedValue
     private Long id;
-    @Column(name = "KEY")
+    @Column(name = "KEY", nullable = false)
     private String key;
-    @Column(name = "PROFILE")
+    @Column(name = "PROFILE", nullable = false)
     private String profileName;
     @Column(name = "VALUE", length = 1000)
     private String value;
