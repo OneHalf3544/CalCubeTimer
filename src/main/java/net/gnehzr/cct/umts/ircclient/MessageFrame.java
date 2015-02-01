@@ -1,7 +1,7 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import net.gnehzr.cct.scrambles.Scramble;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea;
@@ -12,6 +12,7 @@ import org.jibble.pircbot.Colors;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.InternalFrameAdapter;
@@ -21,11 +22,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyVetoException;
 import java.net.URI;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.HashMap;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class MessageFrame extends JInternalFrame implements ActionListener, HyperlinkListener, KeyListener, DocumentListener {
 
@@ -309,34 +307,35 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 			TreeMap<Integer, Integer> scramblesMap = nickMap.get(l.nick).get(l.set);
 			int scramCount = scramblesMap.lastKey();
 
-			List<Scramble> scrambles = new ArrayList<>();
+			List<ScrambleString> scramblePlugins = new ArrayList<>();
 			for(int ch = scramCount; ch >= 0; ch--) {
 				CCTLink c = scramblesLinkMap.get(scramblesMap.get(ch));
 				if(c == null) {
 					break;
 				}
-				Scramble s = getScrambleFromLink(c);
-				scrambles.add(s);
+				ScrambleString s = getScrambleFromLink(c);
+				scramblePlugins.add(s);
 			}
 			ScrambleVariation sv = scramblePluginManager.getBestMatchVariation(l.variation);
 			if(sv == null)
 				sv = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
 
 			for(CommandListener cl : listeners) {
-				cl.scramblesImported(this, sv, scrambles, profileDao);
+				cl.scramblesImported(this, sv, scramblePlugins, profileDao);
 			}
 		}
 	}
-	private Scramble getScrambleFromLink(CCTLink l) {
-		ScrambleVariation var = scramblePluginManager.getBestMatchVariation(l.variation);
-		if(var == null)
+	private ScrambleString getScrambleFromLink(CCTLink cctLink) {
+		ScrambleVariation var = scramblePluginManager.getBestMatchVariation(cctLink.variation);
+		if(var == null) {
 			var = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
+		}
 		try {
-			return var.generateScramble(l.scramble);
+			return var.generateScramble(cctLink.scramble);
 		} catch(Exception e1) {
 			try {
 				var = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation();
-				return var.generateScramble(l.scramble);
+				return var.generateScramble(cctLink.scramble);
 			} catch(Exception e) {
 				LOG.info("unexpected exception", e);
 			}
@@ -513,6 +512,6 @@ public class MessageFrame extends JInternalFrame implements ActionListener, Hype
 
 		public void windowClosed(MessageFrame src);
 
-		public void scramblesImported(MessageFrame src, ScrambleVariation sv, List<Scramble> scrambles, Profile profile);
+		public void scramblesImported(MessageFrame src, ScrambleVariation sv, List<ScrambleString> scramblePlugins, Profile profile);
 	}
 }

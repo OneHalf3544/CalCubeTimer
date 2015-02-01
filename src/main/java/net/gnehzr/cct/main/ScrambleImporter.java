@@ -30,24 +30,24 @@ public class ScrambleImporter {
         this.model = model;
     }
 
-    public void importScrambles(ScrambleCustomization sc, List<Scramble> scrambles, CALCubeTimerFrame calCubeTimer) {
-        model.getScramblesList().setScrambleCustomization(sc);
-        model.getScramblesList().importScrambles(scrambles);
-        calCubeTimer.getScrambleCustomizationComboBox().setSelectedItem(model.getScramblesList().getScrambleCustomization());
+    public void importScrambles(ScrambleCustomization sc, List<ScrambleString> scramblePlugins, CALCubeTimerFrame calCubeTimer) {
+        model.getScramblesList().setCurrentScrambleCustomization(sc);
+        model.getScramblesList().importScrambles(scramblePlugins);
+        calCubeTimer.getScrambleCustomizationComboBox().setSelectedItem(model.getScramblesList().getCurrentScrambleCustomization());
         calCubeTimer.updateScramble();
     }
 
     public void exportScramblesAction(Profile selectedProfile, ScrambleList scramblesList) {
-        new ScrambleExportDialog(calCubeTimerFrame.getMainFrame(), scramblesList.getScrambleCustomization().getScrambleVariation(),
+        new ScrambleExportDialog(calCubeTimerFrame.getMainFrame(), scramblesList.getCurrentScrambleCustomization().getScrambleVariation(),
                 scramblePluginManager, configuration, selectedProfile, profileDao);
     }
 
-    public void importScrambles(ScrambleVariation sv, List<Scramble> scrambles, Profile profile, ScrambleList scramblesList) {
+    public void importScrambles(ScrambleVariation sv, List<ScrambleString> scramblePlugins, Profile profile, ScrambleList scramblesList) {
         if(!((ScrambleCustomization)calCubeTimerFrame.getScrambleCustomizationComboBox().getSelectedItem()).getScrambleVariation().equals(sv)) {
-            scramblesList.setScrambleCustomization(scramblePluginManager.getCustomizationFromString(profile, "" + sv.toString()));
+            scramblesList.setCurrentScrambleCustomization(scramblePluginManager.getCustomizationFromString(profile, "" + sv.toString()));
         }
-        calCubeTimerFrame.getScrambleCustomizationComboBox().setSelectedItem(scramblesList.getScrambleCustomization());
-        scramblesList.importScrambles(scrambles);
+        calCubeTimerFrame.getScrambleCustomizationComboBox().setSelectedItem(scramblesList.getCurrentScrambleCustomization());
+        scramblesList.importScrambles(scramblePlugins);
         calCubeTimerFrame.updateScramble();
     }
 }

@@ -1,6 +1,6 @@
 package net.gnehzr.cct.i18n;
 
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import org.apache.log4j.Logger;
 
 import java.util.MissingResourceException;
@@ -12,14 +12,14 @@ public class ScramblePluginMessages implements MessageAccessor {
 
 	private final ResourceBundle resourceBundle;
 
-	private final Class<? extends Scramble> pluginClass;
+	private final Class<? extends ScramblePlugin> pluginClass;
 
-	public ScramblePluginMessages(Class<? extends Scramble> pluginClass) {
+	public ScramblePluginMessages(Class<? extends ScramblePlugin> pluginClass) {
 		this.pluginClass = pluginClass;
 		this.resourceBundle = loadResources(this.pluginClass);
 	}
 
-	private ResourceBundle loadResources(Class<? extends Scramble> pluginClass) {
+	private ResourceBundle loadResources(Class<? extends ScramblePlugin> pluginClass) {
 		try {
 			return ResourceBundle.getBundle(pluginClass.getName());
 		} catch(MissingResourceException e) {

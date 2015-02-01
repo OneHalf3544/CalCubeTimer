@@ -9,8 +9,9 @@ import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.ActionMap;
 import net.gnehzr.cct.main.*;
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
@@ -489,8 +490,8 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 			.build();
 
 	@Override
-	public void scramblesImported(final MessageFrame src, ScrambleVariation sv, List<Scramble> scrambles, Profile profile) {
-		scrambleImporter.importScrambles(sv, scrambles, profile, /*todo scramblesList*/null);
+	public void scramblesImported(final MessageFrame src, ScrambleVariation sv, List<ScrambleString> scramblePlugins, Profile profile) {
+		scrambleImporter.importScrambles(sv, scramblePlugins, profile, /*todo scramblesList*/null);
 		// this is to keep the scramble frame from stealing focus
 		SwingUtilities.invokeLater(clientFrame::toFront);
 	}

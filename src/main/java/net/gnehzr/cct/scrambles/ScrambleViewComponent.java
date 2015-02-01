@@ -25,8 +25,8 @@ public class ScrambleViewComponent extends JComponent {
 	private boolean fixedSize;
 
 	private BufferedImage buffer;
-	private Scramble currentScramble = null;
-	private Scramble currentPlugin = null;
+	private ScrambleString currentScramblePlugin = null;
+	private ScramblePlugin currentPlugin = null;
 	private ScrambleVariation currentVariation = null;
 	private String focusedFaceId = null;
 
@@ -57,18 +57,18 @@ public class ScrambleViewComponent extends JComponent {
 	}
 	
 	public void redo() {
-		setScramble(currentScramble, currentVariation);
+		setScramble(currentScramblePlugin, currentVariation);
 	}
 
-	public void setScramble(Scramble scramble, ScrambleVariation variation) {
-		currentScramble = scramble;
+	public void setScramble(ScrambleString scramblePlugin, ScrambleVariation variation) {
+		currentScramblePlugin = scramblePlugin;
 		currentVariation = variation;
 		if(colorScheme == null || currentVariation.getPlugin() != currentPlugin) {
 			currentPlugin = currentVariation.getPlugin();
 			colorScheme = scramblePluginManager.getColorScheme(currentPlugin, false);
 		}
-		faces = currentPlugin.getFaces(GAP, getUnitSize(false), currentVariation.getVariation());
-		buffer = scramblePluginManager.getScrambleImage(currentScramble, GAP, getUnitSize(false), colorScheme);
+		faces = currentPlugin.getFaces(GAP, getUnitSize(false), currentVariation.getName());
+		buffer = scramblePluginManager.getScrambleImage(currentScramblePlugin, GAP, getUnitSize(false), colorScheme);
 		repaint();	//this will cause the scramble to be drawn
 		invalidate(); //this forces the component to fit itself to its layout properly
 	}
@@ -90,7 +90,7 @@ public class ScrambleViewComponent extends JComponent {
 		if(buffer == null) {
 			return PREFERRED_SIZE;
 		}
-		Dimension d = currentPlugin.getImageSize(GAP, getUnitSize(true), currentVariation.getVariation());
+		Dimension d = currentPlugin.getImageSize(GAP, getUnitSize(true), currentVariation.getName());
 		if(d != null) {
 			return d;
 		}
@@ -174,7 +174,7 @@ public class ScrambleViewComponent extends JComponent {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				if (currentVariation != null) {
-					currentVariation.setPuzzleUnitSize(currentPlugin.getNewUnitSize(getWidth(), getHeight(), GAP, currentVariation.getVariation()));
+					currentVariation.setPuzzleUnitSize(currentPlugin.getNewUnitSize(getWidth(), getHeight(), GAP, currentVariation.getName()));
 					redo();
 				}
 			}

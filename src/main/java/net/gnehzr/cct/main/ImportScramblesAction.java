@@ -48,7 +48,7 @@ class ImportScramblesAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         new ScrambleImportDialog(profileDao, calCubeTimerFrame, scrambleImporter,
-                scramblesList.getScrambleCustomization(),
+                scramblesList.getCurrentScrambleCustomization(),
                 scramblePluginManager, configuration);
     }
 

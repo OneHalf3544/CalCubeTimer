@@ -1,5 +1,6 @@
 package net.gnehzr.cct.scrambles;
 
+import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -16,20 +17,22 @@ import java.util.regex.Pattern;
 *
 * @author OneHalf
 */
-class NullScramble extends Scramble {
-    @Override
-    public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-        return NULL_SCRAMBLE;
+class NullScramblePlugin extends ScramblePlugin {
+
+    public NullScramblePlugin() {
+        super("NullScramblePlugin", false);
     }
 
     @Override
-    protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
-        return NULL_SCRAMBLE;
+    public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+                                         String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+        return ScramblePluginManager.NULL_IMPORTED_SCRUMBLE;
     }
 
-    NullScramble(String scramble) {
-        super("NULL_SCRAMBLE", false, scramble, false);
-	}
+    @Override
+    protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+        return ScramblePluginManager.NULL_CREATED_SCRAMBLE;
+    }
 
     @Override
     public int getNewUnitSize(int width, int height, int gap, String variation) {
@@ -64,8 +67,8 @@ class NullScramble extends Scramble {
 
     @NotNull
     @Override
-    public String[] getVariations() {
-        return new String[0];
+    public ImmutableList<String> getVariations() {
+        return ImmutableList.of();
     }
 
     @NotNull
@@ -91,8 +94,9 @@ class NullScramble extends Scramble {
         return null;
     }
 
+    @NotNull
     @Override
-    public String[] getDefaultGenerators() {
-        return null;
+    public Map<String, String> getDefaultGenerators() {
+        return Collections.emptyMap();
     }
 }

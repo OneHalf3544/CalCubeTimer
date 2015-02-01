@@ -303,6 +303,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	JSlider opacity;
 	JColorComponent scrambleFontChooser;
 	JColorComponent timerFontChooser;
+
 	private JPanel makeStandardOptionsPanel2() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -928,10 +929,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		options.add(Box.createHorizontalGlue());
 		JScrollPane scroller = new JScrollPane(options, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroller.getHorizontalScrollBar().setUnitIncrement(10);
-		Collection<Scramble> scramblePlugins = scramblePluginManager.getScramblePlugins();
+		Collection<ScramblePlugin> scramblePluginPlugins = scramblePluginManager.getScramblePlugins();
 		solvedPuzzles = new ArrayList<>();
 
-		for (Scramble plugin : scramblePlugins) {
+		for (ScramblePlugin plugin : scramblePluginPlugins) {
 			if (!plugin.supportsScrambleImage()) {
 				continue;
 			}

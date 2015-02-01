@@ -83,7 +83,7 @@ public class ScrambleExportDialog extends JDialog {
 				Utils.showErrorDialog(ScrambleExportDialog.this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
 				return;
 			}
-			if (exportScrambles(file, getNumberOfScrambles(), getVariation()))
+			if (generateAndExportScrambles(file, getNumberOfScrambles(), getVariation()))
 				setVisible(false);
 		});
 		JButton htmlExportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.htmlexport"));
@@ -125,15 +125,13 @@ public class ScrambleExportDialog extends JDialog {
 		return var;
 	}
 
-	private boolean exportScrambles(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
+	private boolean generateAndExportScrambles(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
 		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
-			ScrambleList generatedScrambles = new ScrambleList(scramblePluginManager);
-			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(configuration, scrambleVariation, null, scramblePluginManager));
-			for(int ch = 0; ch < numberOfScrambles; ch++, generatedScrambles.getNext()) {
-				fileWriter.println(generatedScrambles.getCurrent().getScramble());
+			ScrambleCustomization scrambleCustomization = new ScrambleCustomization(configuration, scrambleVariation, null, scramblePluginManager);
+			for(int ch = 0; ch < numberOfScrambles; ch++) {
+				fileWriter.println(scrambleCustomization.generateScramble().getScramble());
 			}
-
 			Utils.showConfirmDialog(this, StringAccessor.getString("ScrambleExportDialog.successmessage") + "\n" + outputFile.getPath());
 			return true;
 
@@ -165,19 +163,18 @@ public class ScrambleExportDialog extends JDialog {
 
 		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
+			ScrambleCustomization scrambleCustomization = new ScrambleCustomization(configuration, scrambleVariation, null, scramblePluginManager);
+			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP, false);
 			fileWriter.println("<html><head><title>Exported Scrambles</title></head><body><table>");
-			ScrambleList generatedScrambles = new ScrambleList(scramblePluginManager);
-			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(configuration, scrambleVariation, null, scramblePluginManager));
-
-			for(int ch = 0; ch < numberOfScrambles; ch++, generatedScrambles.getNext()) {
-				Scramble s = scrambleVariation.generateScramble(generatedScrambles.getCurrent().getScramble());
-				String str = s.toString();
-				BufferedImage image = scramblePluginManager.getScrambleImage(s, configuration.getInt(VariableKey.POPUP_GAP, false),
-						s.getDefaultUnitSize(), scramblePluginManager.getColorScheme(s, false));
+			for(int ch = 0; ch < numberOfScrambles; ch++) {
+				ScrambleString scramble = scrambleCustomization.generateScramble();
+				BufferedImage image = scramblePluginManager.getScrambleImage(scramble, popupGap,
+						scramble.getScramblePlugin().getDefaultUnitSize(), scramblePluginManager.getColorScheme(scramble.getScramblePlugin(), false));
 
 				File file = new File(imageDir, "scramble" + ch + ".png");
 				ImageIO.write(image, "png", file);
-				fileWriter.println("<tr><td>" + (ch + 1) + "</td><td width='100%'>" + str + "</td><td><img src='" + imageDir.getName() + File.separator + file.getName() + "'></td></tr>");
+				fileWriter.println("<tr><td>" + (ch + 1) + "</td><td width='100%'>" + scramble.toString()
+						+ "</td><td><img src='" + imageDir.getName() + File.separator + file.getName() + "'></td></tr>");
 			}
 			fileWriter.println("</table></body></html>");
 

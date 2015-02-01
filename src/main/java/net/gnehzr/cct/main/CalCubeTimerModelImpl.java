@@ -221,10 +221,11 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     }
 
     //if we deleted the current session, should we create a new one, or load the "nearest" session?
+    @Override
     public Session getNextSession(CALCubeTimerFrame calCubeTimerFrame) {
         Session nextSesh = getStatsModel().getCurrentSession();
         Profile p = profileDao.getSelectedProfile();
-        String customization = scramblesList.getScrambleCustomization().toString();
+        String customization = scramblesList.getCurrentScrambleCustomization().toString();
         ProfileDatabase puzzleDatabase = p.getPuzzleDatabase();
         PuzzleStatistics ps = puzzleDatabase.getPuzzleStatistics(customization);
         if (!ps.containsSession(nextSesh)) {
@@ -241,8 +242,9 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         statsModel.setSession(s);
         scramblesList.clear();
         Statistics stats = s.getStatistics();
-        for (int ch = 0; ch < stats.getAttemptCount(); ch++)
+        for (int ch = 0; ch < stats.getAttemptCount(); ch++) {
             scramblesList.addScramble(stats.get(ch).getScramble());
+        }
         scramblesList.setScrambleNumber(scramblesList.size() + 1);
 
         customizationEditsDisabled = true;
@@ -349,7 +351,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
                 return;
         }
         statsModel.getCurrentStatistics().add(protect);
-        return;
     }
 
     //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary

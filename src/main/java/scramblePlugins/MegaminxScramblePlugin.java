@@ -1,9 +1,12 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.ScrambleVariation;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class MegaminxScramble extends Scramble {
+public class MegaminxScramblePlugin extends ScramblePlugin {
 
-	private static final Logger LOG = Logger.getLogger(MegaminxScramble.class);
+	private static final Logger LOG = Logger.getLogger(MegaminxScramblePlugin.class);
 
 	private static final String PUZZLE_NAME = "Megaminx";
 
@@ -38,25 +41,41 @@ public class MegaminxScramble extends Scramble {
 			.put("f", Utils.stringToColor("ff66ff"))
 			.build();
 
-	// ImmutableMap preserved iteration order
-	private static final List<String> FACES_ORDER = Lists.newArrayList(FACE_NAMES_COLORS.keySet());
+	private static final String regexp = "^[A-Fa-f][234]?$";
+	private static final String regexp1 = "^(?:[RDY]([+-])\\1|U'?)$";
 
-	private static final String[] VARIATIONS = { "Megaminx", "Pochmann Megaminx" };
+	// ImmutableMap preserve iteration order
+	private static final List<String> FACES_ORDER = ImmutableList.copyOf(FACE_NAMES_COLORS.keySet());
+
+	public static final String POCHMANN_VARIATION_NAME = "Pochmann Megaminx";
+	private static final ImmutableList<String> VARIATIONS = ImmutableList.of( "Megaminx", POCHMANN_VARIATION_NAME);
 	private static final int[] DEFAULT_LENGTHS = { 77, 77 };
 
 	private static final double UNFOLDHEIGHT = 2 + 3 * Math.sin(.3 * Math.PI) + Math.sin(.1 * Math.PI);
 	private static final double UNFOLDWIDTH = 4 * Math.cos(.1 * Math.PI) + 2 * Math.cos(.3 * Math.PI);
-	private boolean pochmann = false;
 	private int[][] image;
 
-	@Override
-	public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-		return new MegaminxScramble(variation, scramble);
+
+	@SuppressWarnings("UnusedDeclaration")
+	public MegaminxScramblePlugin() {
+		super(PUZZLE_NAME, true);
+		initializeImage();
 	}
 
 	@Override
-	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
-		return new MegaminxScramble(variation, length);
+	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+		boolean pochmann = variation.getName().equals(POCHMANN_VARIATION_NAME);
+		if(!isValidScramble(scramble)) {
+			throw new InvalidScrambleException(scramble);
+		}
+		return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, null);
+	}
+
+	@Override
+	protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+		boolean pochmann = variation.getName().equals(POCHMANN_VARIATION_NAME);
+		return new ScrambleString(generateScramble(variation.getLength(), pochmann), false, variation, this, null);
 	}
 
 	@Override
@@ -77,7 +96,7 @@ public class MegaminxScramble extends Scramble {
 
 	@NotNull
 	@Override
-	public String[] getVariations() {
+	public List<String> getVariations() {
 		return VARIATIONS;
 	}
 
@@ -90,13 +109,13 @@ public class MegaminxScramble extends Scramble {
 	@NotNull
 	@Override
 	public List<String> getAttributes() {
-		return NULL_SCRAMBLE.getAttributes();
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getAttributes();
 	}
 
 	@NotNull
 	@Override
 	public List<String> getDefaultAttributes() {
-		return NULL_SCRAMBLE.getDefaultAttributes();
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
 	}
 
 	@Override
@@ -104,37 +123,10 @@ public class MegaminxScramble extends Scramble {
 		return null;
 	}
 
+	@NotNull
 	@Override
-	public String[] getDefaultGenerators() {
-		return NULL_SCRAMBLE.getDefaultGenerators();
-	}
-
-	public MegaminxScramble() {
-		super(PUZZLE_NAME, true, true);
-	}
-
-	public MegaminxScramble(String variation, String scramble) throws InvalidScrambleException {
-		super(PUZZLE_NAME, true, scramble, false);
-		pochmann = variation.equals(VARIATIONS[1]);
-		if(!setAttributes()) {
-			throw new InvalidScrambleException(scramble);
-		}
-	}
-
-	public MegaminxScramble(String variation, int length) {
-		super(PUZZLE_NAME, true, false);
-		this.length = length;
-		pochmann = variation.equals(VARIATIONS[1]);
-		setAttributes();
-	}
-
-	private boolean setAttributes(){
-		initializeImage();
-		if(scramble != null) {
-			return validateScramble();
-		}
-		generateScramble();
-		return true;
+	public Map<String, String> getDefaultGenerators() {
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
 	}
 
 	private void initializeImage() {
@@ -146,11 +138,8 @@ public class MegaminxScramble extends Scramble {
 		}
 	}
 
-	private static final String regexp = "^[A-Fa-f][234]?$";
-	private static final String regexp1 = "^(?:[RDY]([+-])\\1|U'?)$";
-	private boolean validateScramble() {
+	private boolean isValidScramble(String scramble) {
 		String[] strs = scramble.split("\\s+");
-		length = strs.length;
 
 		for (String str : strs) {
 			if (!str.matches(regexp1) && !str.matches(regexp)) return false;
@@ -209,48 +198,48 @@ public class MegaminxScramble extends Scramble {
 		{0,0,0,0,0,0, 0,0,0,0,1,0},
 		{0,0,0,0,0,0, 0,0,0,0,0,1}};
 
-	private void generateScramble(){
-		scramble = "";
-		StringBuilder scram = new StringBuilder();
-		if(!pochmann){
-			int last = -1;
-			for(int i = 0; i < length; i++){
-				int side;
-				do{
-					side = random(12);
-				} while(last >= 0 && comm[side][last] != 0);
-				last = side;
-				int dir = random(4) + 1;
-				scram.append(" ").append(FACES_ORDER.get(side));
-				if(dir != 1) {
-					scram.append(dir);
-				}
+	private String generateScramble(int length, boolean pochmann) {
+		if (length == 0) {
+			return "";
+		}
+		return pochmann ? generateNotPochmanScramble(length) : generatePochmanScramble(length);
+	}
 
-				turn(side, dir);
-			}
-		}
-		else{
-			for(int i = 0; i < length; ){
-				int dir = 0;
-				for(int j = 0; i < length && j < 10; i++, j++){
-					int side = j % 2;
-					dir = random(2);
-					scram.append(" ").append((side == 0) ? "R" : "D").append((dir == 0) ? "++" : "--");
-					bigTurn(side, (dir == 0) ? 2 : 3);
-				}
-				//dir = random(2); use last direction
-				/*
-				scram.append(" Y").append((dir == 0) ? "++" : "--");
-				bigTurn(1, (dir == 0) ? 2 : 3);
-				turn(0, (dir == 0) ? 3 : 2);
-				*/
-				scram.append(" U");
-				if(dir != 0) scram.append("'");
-				turn(0, (dir == 0) ? 1 : 4);
-			}
-		}
-		if(scram.length() > 0)
-			scramble = scram.substring(1);
+	private String generateNotPochmanScramble(int length) {
+		StringBuilder scramble = new StringBuilder();
+		for(int i = 0; i < length; ){
+            int dir = 0;
+            for(int j = 0; i < length && j < 10; i++, j++){
+                int side = j % 2;
+                dir = random(2);
+                scramble.append(" ").append((side == 0) ? "R" : "D").append((dir == 0) ? "++" : "--");
+                bigTurn(side, (dir == 0) ? 2 : 3);
+            }
+            scramble.append(" U");
+            if(dir != 0) scramble.append("'");
+            turn(0, (dir == 0) ? 1 : 4);
+        }
+		return scramble.substring(1);
+	}
+
+	private String generatePochmanScramble(int length) {
+		StringBuilder scramble = new StringBuilder();
+		int last = -1;
+		for(int i = 0; i < length; i++){
+            int side;
+            do{
+                side = random(12);
+            } while(last >= 0 && comm[side][last] != 0);
+            last = side;
+            int dir = random(4) + 1;
+            scramble.append(" ").append(FACES_ORDER.get(side));
+            if(dir != 1) {
+                scramble.append(dir);
+            }
+
+            turn(side, dir);
+        }
+		return scramble.substring(1);
 	}
 
 	private void turn(int side, int dir){

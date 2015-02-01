@@ -1,8 +1,12 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.ScrambleVariation;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,35 +17,71 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class PyraminxScramble extends Scramble {
+public class PyraminxScramblePlugin extends ScramblePlugin {
 
-	private static final Logger LOG = Logger.getLogger(PyraminxScramble.class);
+	private static final Logger LOG = Logger.getLogger(PyraminxScramblePlugin.class);
 
+	private static final String regexp = "^[ULRBulrb]'?$";
 	private static final String FACES_ORDER = "FDLR";
 
+	private int[][] image;
+
 	@SuppressWarnings("UnusedDeclaration")
-	public PyraminxScramble() throws InvalidScrambleException {
-		super("Pyraminx", true, true);
-		this.length = 0;
-		setAttributes(Collections.<String>emptyList());
+	public PyraminxScramblePlugin() throws InvalidScrambleException {
+		super("Pyraminx", true);
+		initializeImage();
 	}
 
-	public PyraminxScramble(String s, List<String> attrs) throws InvalidScrambleException {
-		super("Pyraminx", true, s, false);
-		if(!setAttributes(attrs)) {
-			throw new InvalidScrambleException(s);
+	@Override
+	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+		validateScramble(scramble);
+		return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, null);
+	}
+
+	@Override
+	protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+		return new ScrambleString(generateScramble(), false, variation, this, null);
+	}
+
+	private void initializeImage() {
+		image = new int[4][9];
+		for(int i = 0; i < image.length; i++){
+			for(int j = 0; j < image[0].length; j++){
+				image[i][j] = i;
+			}
 		}
 	}
 
-	public PyraminxScramble(int length, List<String> attrs) {
-		super("Pyraminx", true, false);
-		this.length = length;
-		setAttributes(attrs);
+	private void validateScramble(String scramble) throws InvalidScrambleException {
+		String[] strs = scramble.split("\\s+");
+
+		for (String str : strs) {
+			if (!str.matches(regexp)) {
+				throw new InvalidScrambleException(scramble);
+			}
+		}
+
+		try{
+			for (String str : strs) {
+				int face = "ULRBulrb".indexOf(str.charAt(0));
+				if (face == -1) {
+					throw new InvalidScrambleException(scramble);
+				}
+				int dir = (str.length() == 1 ? 1 : 2);
+				if (face >= 4) turnTip(face - 4, dir);
+				else turn(face, dir);
+			}
+		} catch (InvalidScrambleException e) {
+			throw e;
+		} catch (Exception e){
+			LOG.info("unexpected exception", e);
+			throw new InvalidScrambleException(scramble);
+		}
 	}
 
 	@NotNull
@@ -56,16 +96,6 @@ public class PyraminxScramble extends Scramble {
 	}
 
 	@Override
-	public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-		return new PyraminxScramble(scramble, attributes);
-	}
-
-	@Override
-	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
-		return new PyraminxScramble(length, attributes);
-	}
-
-	@Override
 	public String htmlify(String formatMe) {
 		return formatMe;
 	}
@@ -73,24 +103,25 @@ public class PyraminxScramble extends Scramble {
 	@NotNull
 	@Override
 	public List<String> getAttributes() {
-		return NULL_SCRAMBLE.getAttributes();
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getAttributes();
 	}
 
 	@NotNull
 	@Override
 	public List<String> getDefaultAttributes() {
-		return NULL_SCRAMBLE.getDefaultAttributes();
-	}
-
-	@Override
-	public String[] getDefaultGenerators() {
-		return NULL_SCRAMBLE.getDefaultGenerators();
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
 	}
 
 	@NotNull
 	@Override
-	public final String[] getVariations() {
-		return new String[]{"Pyraminx"};
+	public Map<String, String> getDefaultGenerators() {
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
+	}
+
+	@NotNull
+	@Override
+	public final ImmutableList<String> getVariations() {
+		return ImmutableList.of("Pyraminx");
 	}
 
 	@NotNull
@@ -108,56 +139,7 @@ public class PyraminxScramble extends Scramble {
 	public final Pattern getTokenRegex() {
 		return Pattern.compile("^([ULRBulrb]'?)(.*)$");
 	}
-	
-	private int[][] image;
 
-	private boolean setAttributes(List<String> attributes){
-		initializeImage();
-		
-		if(scramble != null) {
-			return validateScramble();
-		} else if(length == 0) { //we rely on scrambles of length zero for displaying the image
-			scramble = "";
-		} else {
-			//hacked in optimal scrambles for now
-			scramble = scramble();
-		}
-		return validateScramble();
-	}
-
-	private void initializeImage() {
-		image = new int[4][9];
-		for(int i = 0; i < image.length; i++){
-			for(int j = 0; j < image[0].length; j++){
-				image[i][j] = i;
-			}
-		}
-	}
-
-	private static final String regexp = "^[ULRBulrb]'?$";
-	private boolean validateScramble() {
-		String[] strs = scramble.split("\\s+");
-		length = strs.length;
-
-		for (String str : strs) {
-			if (!str.matches(regexp)) return false;
-		}
-
-		try{
-			for (String str : strs) {
-				int face = "ULRBulrb".indexOf(str.charAt(0));
-				if (face == -1) return false;
-				int dir = (str.length() == 1 ? 1 : 2);
-				if (face >= 4) turnTip(face - 4, dir);
-				else turn(face, dir);
-			}
-		} catch(Exception e){
-			LOG.info("unexpected exception", e);
-			return false;
-		}
-
-		return true;
-	}
 
 	List<String> b = new ArrayList<>();
 	static List<Integer> g = new ArrayList<>();
@@ -208,7 +190,7 @@ public class PyraminxScramble extends Scramble {
 					}
 	}
 
-	private String scramble() {
+	private String generateScramble() {
 		k = new ArrayList<>();
 		int t = 0, s = 0, q = 0, m, l, p;
 		h = new ArrayList<>();

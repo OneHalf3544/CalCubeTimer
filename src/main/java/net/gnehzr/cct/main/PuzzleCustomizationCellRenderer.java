@@ -8,10 +8,14 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRenderer {
+
 	private boolean icons;
+
 	public PuzzleCustomizationCellRenderer(boolean i) {
 		icons = i;
 	}
+
+	@Override
 	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 		String val;
 		Icon i = null;
@@ -28,7 +32,7 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 			}
 			if(icons)
 				i = sv.getImage();
-			String bolded = sv.getVariation();
+			String bolded = sv.getName();
 			if(bolded.isEmpty())
 				bolded = sv.getPlugin().getPuzzleName();
 			val = "<html><b>" + bolded + "</b>";  

@@ -20,10 +20,16 @@ public class ScramblePluginManager {
 
 	private static final Logger LOG = Logger.getLogger(ScramblePluginManager.class);
 
+	public static final ScramblePlugin NULL_SCRAMBLE_PLUGIN = new NullScramblePlugin();
+
 	public final ScrambleCustomization NULL_SCRAMBLE_CUSTOMIZATION;
 
+	public static final ScrambleString NULL_IMPORTED_SCRUMBLE = new ScrambleString("", true, null, NULL_SCRAMBLE_PLUGIN, null);
+	public static final ScrambleString NULL_CREATED_SCRAMBLE = new ScrambleString("", false, null, NULL_SCRAMBLE_PLUGIN, null);
+
+
 	private final Configuration configuration;
-	private final Map<Class<? extends Scramble>, Scramble> scramblePlugins;
+	private final Map<Class<? extends ScramblePlugin>, ScramblePlugin> scramblePlugins;
 
 	private List<String> attributes;
 
@@ -31,13 +37,13 @@ public class ScramblePluginManager {
 		this.setAttributes(attributes);
 	}
 
-	private List<Class<? extends Scramble>> pluginClasses = ImmutableList.of(
+	private List<Class<? extends ScramblePlugin>> pluginClasses = ImmutableList.of(
 			// todo load class names from /META-INF/somefile
-			CubeScramble.class,
-			ClockScramble.class,
-			MegaminxScramble.class,
-			PyraminxScramble.class,
-			SquareOneScramble.class
+			CubeScramblePlugin.class,
+			ClockScramblePlugin.class,
+			MegaminxScramblePlugin.class,
+			PyraminxScramblePlugin.class,
+			SquareOneScramblePlugin.class
 	);
 
 
@@ -48,14 +54,14 @@ public class ScramblePluginManager {
 		this.configuration = configuration;
 		this.scramblePlugins = createScramblePlugins();
 
-		NULL_SCRAMBLE_CUSTOMIZATION = new ScrambleCustomization(configuration,
-				new ScrambleVariation(Scramble.NULL_SCRAMBLE, "", this.configuration, this), null, this);
+		ScrambleVariation NULL_SCRAMBLE_VARIATION = new ScrambleVariation(NULL_SCRAMBLE_PLUGIN, "", this.configuration, this);
+		NULL_SCRAMBLE_CUSTOMIZATION = new ScrambleCustomization(configuration, NULL_SCRAMBLE_VARIATION, null, this);
 	}
 
-	public Map<Class<? extends Scramble>, Scramble> createScramblePlugins() throws IllegalAccessException, InstantiationException {
-		Map<Class<? extends Scramble>, Scramble> scramblePlugin = new HashMap<>();
-		for (Class<? extends Scramble> pluginClass : pluginClasses) {
-			Scramble plugin = pluginClass.newInstance();
+	public Map<Class<? extends ScramblePlugin>, ScramblePlugin> createScramblePlugins() throws IllegalAccessException, InstantiationException {
+		Map<Class<? extends ScramblePlugin>, ScramblePlugin> scramblePlugin = new HashMap<>();
+		for (Class<? extends ScramblePlugin> pluginClass : pluginClasses) {
+			ScramblePlugin plugin = pluginClass.newInstance();
 			plugin.checkPluginState();
 			scramblePlugin.put(pluginClass, plugin);
 		}
@@ -74,23 +80,23 @@ public class ScramblePluginManager {
 	}
 	public void reloadLengthsFromConfiguration(boolean defaults) {
 		for(ScrambleVariation v : getScrambleVariations()) {
-			v.setLength(v.getScrambleLength(defaults));
+			v.setLength(v.getScrambleLength(v.getName(), defaults));
 		}
 	}
 	private ScrambleVariation[] scrambleVariations;
 
 	public ScrambleVariation[] getScrambleVariations() {
 		if(scrambleVariations == null) {
-			List<ScrambleVariation> vars = new ArrayList<>();
-			for(Scramble p : scramblePlugins.values()) {
-				for(String var : p.getVariations()) {
-					vars.add(new ScrambleVariation(p, var, configuration, this));
+			List<ScrambleVariation> variations = new ArrayList<>();
+			for(ScramblePlugin plugin : scramblePlugins.values()) {
+				for(String variationName : plugin.getVariations()) {
+					variations.add(new ScrambleVariation(plugin, variationName, configuration, this));
 				}
 			}
-			if(vars.isEmpty()) {
-				vars.add(NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation());
+			if(variations.isEmpty()) {
+				variations.add(NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation());
 			}
-			scrambleVariations = vars.toArray(new ScrambleVariation[vars.size()]);
+			scrambleVariations = variations.toArray(new ScrambleVariation[variations.size()]);
 		}
 		return scrambleVariations;
 	}
@@ -132,18 +138,17 @@ public class ScramblePluginManager {
 	}
 
 	public ScrambleCustomization getCustomizationFromString(Profile profile, String customName) {
-		List<ScrambleCustomization> scrambleCustomizations = getScrambleCustomizations(profile, false);
-		for(ScrambleCustomization custom : scrambleCustomizations)
-			if(custom.toString().equals(customName))
-				return custom;
-
-		return null;
+		return getScrambleCustomizations(profile, false).stream()
+				.filter(c -> c.toString().equals(customName))
+				.findAny()
+				.orElse(null);
 	}
 
 	public List<ScrambleCustomization> getScrambleCustomizations(Profile selectedProfile, boolean defaults) {
 		ArrayList<ScrambleCustomization> scrambleCustomizations = new ArrayList<>();
-		for(ScrambleVariation t : getScrambleVariations())
-			scrambleCustomizations.add(new ScrambleCustomization(configuration, t, null, this));
+		for(ScrambleVariation variation : getScrambleVariations()) {
+			scrambleCustomizations.add(new ScrambleCustomization(configuration, variation, null, this));
+		}
 		List<String> customNames = configuration.getStringArray(VariableKey.SCRAMBLE_CUSTOMIZATIONS, defaults);
 		if(customNames == null) {
 			customNames = Lists.newArrayList();
@@ -177,13 +182,14 @@ public class ScramblePluginManager {
 				}
 			}
 			ScrambleCustomization sc;
-			if(scramCustomization != null)
+			if(scramCustomization != null) {
 				sc = new ScrambleCustomization(configuration, scramCustomization.getScrambleVariation(), customizationName, this);
+			}
 			else if(variationName.equals(NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation().toString())) {
 				sc = new ScrambleCustomization(configuration, NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation(), customizationName, this);
 			}
 			else {
-				sc = new ScrambleCustomization(configuration, new ScrambleVariation(Scramble.NULL_SCRAMBLE, variationName, configuration, this), customizationName, this);
+				sc = new ScrambleCustomization(configuration, new ScrambleVariation(NULL_SCRAMBLE_PLUGIN, variationName, configuration, this), customizationName, this);
 			}
 			if (!variationName.isEmpty()) {
 				if(scrambleCustomizations.contains(sc)) {
@@ -199,53 +205,40 @@ public class ScramblePluginManager {
 		return scrambleCustomizations;
 	}
 
-	public List<String> getAvailablePuzzleAttributes(Class<? extends Scramble> aClass) {
+	public List<String> getAvailablePuzzleAttributes(Class<? extends ScramblePlugin> aClass) {
 		return getScramblePlugin(aClass).getAttributes();
 	}
 
-	public Scramble getScramblePlugin(Class<? extends Scramble> aClass) {
+	public ScramblePlugin getScramblePlugin(Class<? extends ScramblePlugin> aClass) {
 		return scramblePlugins.get(aClass);
 	}
 
-	public BufferedImage getScrambleImage(final Scramble instance, final int gap, final int unitSize, final Map<String, Color> colorScheme) {
-		return instance.getScrambleImage(gap, Math.max(unitSize, instance.getDefaultUnitSize()), colorScheme);
+	public BufferedImage getScrambleImage(final ScrambleString instance, final int gap, final int unitSize, final Map<String, Color> colorScheme) {
+		return instance.getScramblePlugin().getScrambleImage(gap, Math.max(unitSize, instance.getScramblePlugin().getDefaultUnitSize()), colorScheme);
 	}
 
 	public String getDefaultGeneratorGroup(ScrambleVariation var) {
-		int c = getIndexOfVariation(var);
-		if(c == -1 || var.getPlugin().getDefaultGenerators() == null) {
-			return null;
-		}
-		return var.getPlugin().getDefaultGenerators()[c];
+		return var.getPlugin().getDefaultGenerators().get(var.getName());
 	}
 	
-	public boolean isGeneratorEnabled(Scramble scramble) {
-		return scramble.getDefaultGenerators() != null;
-	}
-	
-	private int getIndexOfVariation(ScrambleVariation var) {
-		for(int c = 0; c < var.getPlugin().getVariations().length; c++) {
-			if (var.getPlugin().getVariations()[c].equals(var.getVariation())) {
-				return c;
-			}
-		}
-		return -1;
+	public boolean isGeneratorEnabled(ScrambleVariation scrambleVariation) {
+		return scrambleVariation.getPlugin().getDefaultGenerators().containsKey(scrambleVariation.getName());
 	}
 
-	public Map<String, Color> getColorScheme(Scramble scramblePlugin, boolean defaults) {
-		if(scramblePlugin.getFaceNamesColors().isEmpty()) {
+	public Map<String, Color> getColorScheme(ScramblePlugin scramblePluginPlugin, boolean defaults) {
+		if(scramblePluginPlugin.getFaceNamesColors().isEmpty()) {
 			return null;
 		}
-		Map<String, Color> scheme = new HashMap<>(scramblePlugin.getFaceNamesColors().size());
-		for(Map.Entry<String, Color> face : scramblePlugin.getFaceNamesColors().entrySet()) {
+		Map<String, Color> scheme = new HashMap<>(scramblePluginPlugin.getFaceNamesColors().size());
+		for(Map.Entry<String, Color> face : scramblePluginPlugin.getFaceNamesColors().entrySet()) {
 			Color colorFromConfig = configuration.getColorNullIfInvalid(
-					VariableKey.PUZZLE_COLOR(scramblePlugin, face.getKey()), defaults);
+					VariableKey.PUZZLE_COLOR(scramblePluginPlugin, face.getKey()), defaults);
 			scheme.put(face.getKey(), colorFromConfig == null ? face.getValue() : colorFromConfig);
 		}
 		return scheme;
 	}
 
-	public Collection<Scramble> getScramblePlugins() {
+	public Collection<ScramblePlugin> getScramblePlugins() {
 		return scramblePlugins.values();
 	}
 
@@ -268,7 +261,7 @@ public class ScramblePluginManager {
 	}
 
 	public String loadGeneratorFromConfig(ScrambleCustomization scrambleCustomization, boolean defaults) {
-		if (!isGeneratorEnabled(scrambleCustomization.getScramblePlugin())) {
+		if (!isGeneratorEnabled(scrambleCustomization.getScrambleVariation())) {
 			return null;
 		}
 		String generatorConfig = configuration.getNullableString(VariableKey.scrambleGeneratorKey(scrambleCustomization), defaults);
@@ -277,7 +270,7 @@ public class ScramblePluginManager {
 
 	// todo scramble generator not save without configuration configuration dialog opening
 	public void saveGeneratorToConfiguration(ScrambleCustomization scrambleCustomization) {
-		if(isGeneratorEnabled(scrambleCustomization.getScramblePlugin())) {
+		if(isGeneratorEnabled(scrambleCustomization.getScrambleVariation())) {
 			configuration.setString(
 					VariableKey.scrambleGeneratorKey(scrambleCustomization),
 					scrambleCustomization.getGenerator() == null ? "" : scrambleCustomization.getGenerator());

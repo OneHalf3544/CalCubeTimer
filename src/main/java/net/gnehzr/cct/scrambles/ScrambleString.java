@@ -12,15 +12,23 @@ public class ScrambleString {
 
     private String scramble;
     private boolean imported;
-    private int length;
+    private ScrambleVariation variation;
+    private final ScramblePlugin scramblePluginPlugin;
+    private String textComments;
 
-	public ScrambleString(String scramble, boolean imported, int length) {
+    public ScrambleString(String scramble, boolean imported, ScrambleVariation variation, ScramblePlugin scramblePluginPlugin, String textComments) {
         this.scramble = scramble;
         this.imported = imported;
-        this.length = length;
+        this.variation = variation;
+        this.scramblePluginPlugin = scramblePluginPlugin;
+        this.textComments = textComments;
     }
 
-	public String getScramble() {
+    public ScramblePlugin getScramblePlugin() {
+        return scramblePluginPlugin;
+    }
+
+    public String getScramble() {
         return scramble;
     }
 
@@ -28,11 +36,15 @@ public class ScrambleString {
         return imported;
     }
 
-	public int getLength() {
-        return length;
+	public ScrambleVariation getVariation() {
+        return variation;
     }
 
 	public String toString() {
         return scramble;
+    }
+
+    public String getTextComments() {
+        return textComments;
     }
 }

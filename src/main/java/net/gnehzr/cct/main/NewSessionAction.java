@@ -42,7 +42,7 @@ public class NewSessionAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent arg0) {
         if (statsModel.getRowCount() > 0) { //only create a new session if we've added any times to the current one
-            statsModel.setSession(calCubeTimerFrame.createNewSession(profileDao.getSelectedProfile(), scramblesList.getScrambleCustomization().toString()));
+            statsModel.setSession(calCubeTimerFrame.createNewSession(profileDao.getSelectedProfile(), scramblesList.getCurrentScrambleCustomization().toString()));
             calCubeTimerFrame.getTimeLabel().reset();
             scramblesList.clear();
             calCubeTimerFrame.updateScramble();

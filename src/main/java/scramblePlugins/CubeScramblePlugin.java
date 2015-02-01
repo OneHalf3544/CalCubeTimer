@@ -1,12 +1,17 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.CrossSolver;
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.ScrambleVariation;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jooq.lambda.tuple.Tuple;
+import org.jooq.lambda.tuple.Tuple2;
 import org.kociemba.twophase.Search;
 import org.kociemba.twophase.Tools;
 
@@ -17,9 +22,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CubeScramble extends Scramble {
+public class CubeScramblePlugin extends ScramblePlugin {
 
-    private static final Logger LOG = Logger.getLogger(CubeScramble.class);
+    private static final Logger LOG = Logger.getLogger(CubeScramblePlugin.class);
+
+    public static final String PUZZLE_NAME = "Cube";
 
     private static final Map<String, Color> FACE_NAMES_COLORS = ImmutableMap.<String, Color>builder()
             .put("L", Utils.stringToColor("ff8000"))
@@ -29,9 +36,21 @@ public class CubeScramble extends Scramble {
             .put("U", Utils.stringToColor("ffffff"))
             .put("F", Utils.stringToColor("00ff00"))
             .build();
-    public static final String PUZZLE_NAME = "Cube";
+
+    private static final String FACES = "LDBRUFldbruf";
 
     private static final String[] FACES_ORDER = {"L", "D", "B", "R", "U", "F"};
+
+    private static final char DEFAULT_SOLVE_FACE = 'U';
+    private static final char DEFAULT_SOLVE_SIDE = 'D';
+
+    private static final String regexp2 = "^[LDBRUF][2']?$";
+    private static final String regexp345 = "^(?:[LDBRUF]w?|[ldbruf])[2']?$";
+    private static final String regexp = "^(\\d+)?([LDBRUF])(?:\\((\\d+)\\))?[2']?$";
+    private static final Pattern shortPattern = Pattern.compile(regexp);
+    public static final String MULTISLICE_ATTRIBUTE = "%%multislice%%";
+    public static final String OPTIMALCROSS_ATTRIBUTE = "%%optimalcross%%";
+    public static final String WIDE_NOTATION_ATTRIBUTE = "%%widenotation%%";
 
     List<Integer> perm = new ArrayList<>();
     List<Integer> twst = new ArrayList<>();
@@ -40,7 +59,15 @@ public class CubeScramble extends Scramble {
 
     private String cacheInfo = null;
 
-    List<Integer> posit = new ArrayList<>();
+    List<Integer> posit() {
+        return Lists.newArrayList(
+                1, 1, 1, 1,
+                2, 2, 2, 2,
+                5, 5, 5, 5,
+                4, 4, 4, 4,
+                3, 3, 3, 3,
+                0, 0, 0, 0);
+    }
 
     private static final boolean shortNotation = true;
     private boolean multislice;
@@ -49,29 +76,62 @@ public class CubeScramble extends Scramble {
     private int cubeSize;
     private String[][][] image;
 
-    private static final char DEFAULT_SOLVE_FACE = 'U';
-    private static final char DEFAULT_SOLVE_SIDE = 'D';
-
-    public final String dg = DEFAULT_SOLVE_FACE + " " + DEFAULT_SOLVE_SIDE; //solve the U face on D
+    //solve the U face on D
+    public final String dg = DEFAULT_SOLVE_FACE + " " + DEFAULT_SOLVE_SIDE;
 
     private char solveCrossFace = DEFAULT_SOLVE_FACE;
     private char solveCrossSide = DEFAULT_SOLVE_SIDE;
 
     List<Integer> sol = new ArrayList<>();
 
-    private final static String regexp2 = "^[LDBRUF][2']?$";
-    private final static String regexp345 = "^(?:[LDBRUF]w?|[ldbruf])[2']?$";
-    private final static String regexp = "^(\\d+)?([LDBRUF])(?:\\((\\d+)\\))?[2']?$";
-    private final static Pattern shortPattern = Pattern.compile(regexp);
-
-    public CubeScramble() {
-        super("Cube", true, true);
+    @SuppressWarnings("UnusedDeclaration")
+    public CubeScramblePlugin() {
+        super(PUZZLE_NAME, true);
     }
 
     @Override
-    public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-        return new CubeScramble(variation, scramble, generatorGroup, attributes);
+    protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+        this.cubeSize = getSizeFromVariation(variation.getName());
+
+        Tuple2<Character, Character> generator = parseGeneratorGroup(generatorGroup);
+        solveCrossFace = generator.v1();
+        solveCrossSide = generator.v2();
+
+        multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
+        wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
+        optimalCross = attributes.contains(OPTIMALCROSS_ATTRIBUTE);
+
+        initializeImage(cubeSize);
+
+        String scramble;
+        if (cubeSize == 2) {
+            scramble = generateScrambleFor2x2();
+        } else if (cubeSize == 3 && variation.getLength() > 0)
+            scramble = Search.solution(Tools.randomCube(), 21, 10, false);
+        else {
+            scramble = generateScramble(variation.getLength());
+
+        }
+        return new ScrambleString(scramble, false, variation, this, getTextComments(scramble));
     }
+
+    @Override
+    public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+                                         String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+        parseGeneratorGroup(generatorGroup);
+        cubeSize = getSizeFromVariation(variation.getName());
+        multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
+        wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
+        optimalCross = attributes.contains(OPTIMALCROSS_ATTRIBUTE);
+
+        initializeImage(cubeSize);
+        
+        if (!isValidScramble(scramble)) {
+            throw new InvalidScrambleException(scramble);
+        }
+        return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, getTextComments(scramble));
+    }
+
 
     @NotNull
     @Override
@@ -79,16 +139,27 @@ public class CubeScramble extends Scramble {
         return FACE_NAMES_COLORS;
     }
 
-
     @Override
     @NotNull
-    public final String[] getVariations() {
-        return new String[]{"2x2x2", "3x3x3", "4x4x4", "5x5x5", "6x6x6", "7x7x7", "8x8x8", "9x9x9", "10x10x10", "11x11x11"};
+    public final ImmutableList<String> getVariations() {
+        return ImmutableList.of("2x2x2", "3x3x3", "4x4x4", "5x5x5", "6x6x6", "7x7x7", "8x8x8", "9x9x9", "10x10x10", "11x11x11");
     }
 
+    @NotNull
     @Override
-    public final String[] getDefaultGenerators() {
-        return new String[]{dg, dg, dg, dg, dg, dg, dg, dg, dg, dg};
+    public final Map<String, String> getDefaultGenerators() {
+        return ImmutableMap.<String, String>builder()
+                .put("2x2x2", dg)
+                .put("3x3x3", dg)
+                .put("4x4x4", dg)
+                .put("5x5x5", dg)
+                .put("6x6x6", dg)
+                .put("7x7x7", dg)
+                .put("8x8x8", dg)
+                .put("9x9x9", dg)
+                .put("10x10x10", dg)
+                .put("11x11x11", dg)
+                .build();
     }
 
     @NotNull
@@ -100,7 +171,10 @@ public class CubeScramble extends Scramble {
     @NotNull
     @Override
     public final List<String> getAttributes() {
-        return Lists.newArrayList("%%multislice%%", "%%widenotation%%", "%%optimalcross%%");
+        return ImmutableList.of(
+                MULTISLICE_ATTRIBUTE,
+                WIDE_NOTATION_ATTRIBUTE,
+                OPTIMALCROSS_ATTRIBUTE);
     }
 
     @NotNull
@@ -119,111 +193,79 @@ public class CubeScramble extends Scramble {
         return Pattern.compile("^((?:\\d+)?[LDBRUFldbruf](?:\\(\\d+\\))?w?[2']?)(.*)$");
     }
 
-    private static String FACES() {
-        return "LDBRUFldbruf";
-    }
-
-    private static int getSizeFromVariation(String variation) {
-        return variation.isEmpty() ? 3 : Integer.parseInt(variation.split("x")[0]);
-    }
-
-    public CubeScramble(String variation, int length, String generatorGroup, List<String> attrs) {
-        this(getSizeFromVariation(variation), length, attrs);
-        parseGeneratorGroup(generatorGroup);
-    }
-
-    private CubeScramble(int cubeSize, int length, List<String> attrs) {
-        super(PUZZLE_NAME, true, false);
-        this.cubeSize = cubeSize;
-        super.length = length;
-        setAttributes(attrs);
-    }
-
-    public CubeScramble(String variation, String scramble, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
-        super(PUZZLE_NAME, true, scramble, false);
-        parseGeneratorGroup(generatorGroup);
-        this.cubeSize = getSizeFromVariation(variation);
-        if (!setAttributes(attrs))
-            throw new InvalidScrambleException(scramble);
-    }
-
-    @Override
-    protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
-        return new CubeScramble(variation, length, generatorGroup, attributes);
-    }
-
-    public void parseGeneratorGroup(String generatorGroup) {
-        if (generatorGroup == null) return;
-        String[] faces = generatorGroup.split(" ");
-        if (faces.length == 2) {
-            solveCrossFace = faces[0].charAt(0);
-            solveCrossSide = faces[1].charAt(0);
+    private String getTextComments(String scramble) {
+        if (!optimalCross || cubeSize != 3) {
+            return null;
         }
-    }
-
-    private boolean setAttributes(List<String> attributes) {
-        multislice = false;
-        wideNotation = false;
-        optimalCross = false;
-        for (String attr : attributes) {
-            if (attr.equals(getAttributes().get(0))) {
-                multislice = true;
-            }
-            else if (attr.equals(getAttributes().get(1))) {
-                wideNotation = true;
-            }
-            else if (attr.equals(getAttributes().get(2))) {
-                optimalCross = true;
-            }
-        }
-        initializeImage();
-
-        if (scramble == null) {
-            if (cubeSize == 2) {
-                calcperm();
-                mix();
-                scramble = solve();
-            } else if (cubeSize == 3 && length > 0)
-                scramble = Search.solution(Tools.randomCube(), 21, 10, false);
-        }
-
-        boolean success = true;
-        if (scramble != null) {
-            success = validateScramble();
-        } else {
-            generateScramble();
-        }
-        return success;
-    }
-
-    @Override
-    public String getTextComments() {
-        if (!optimalCross || cubeSize != 3) return null;
         if (cacheInfo == null) {
-            ArrayList<String> solutions = getCrossSolutions();
+            ArrayList<String> solutions = getCrossSolutions(scramble);
             Collections.sort(solutions);
             cacheInfo = Utils.join(solutions.toArray(), "\n");
         }
         return cacheInfo;
     }
 
-    private ArrayList<String> getCrossSolutions() {
+
+    @Override
+    public String htmlify(String formatMe) {
+        return formatMe.replaceAll("\\((\\d+)\\)", "<sub>$1</sub>");
+    }
+
+    @Override
+    public BufferedImage getScrambleImage(int gap, int cubieSize, Map<String, Color> colorScheme) {
+        Dimension dim = getImageSize(gap, cubieSize, cubeSize);
+        BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
+        drawCube(buffer.createGraphics(), image, gap, cubieSize, colorScheme);
+        return buffer;
+    }
+
+    @Override
+    public int getNewUnitSize(int width, int height, int gap, String variation) {
+        return getNewUnitSize(width, height, gap, getSizeFromVariation(variation));
+    }
+
+    @Override
+    public Dimension getImageSize(int gap, int unitSize, String variation) {
+        return getImageSize(gap, unitSize, getSizeFromVariation(variation));
+    }
+
+    @Override
+    public Map<String, Shape> getFaces(int gap, int cubieSize, String variation) {
+        int size = getSizeFromVariation(variation);
+        return ImmutableMap.<String, Shape>builder()
+                .put("L", getFace(gap, 2 * gap + size * cubieSize, size, cubieSize))
+                .put("D", getFace(2 * gap + size * cubieSize, 3 * gap + 2 * size * cubieSize, size, cubieSize))
+                .put("B", getFace(4 * gap + 3 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
+                .put("R", getFace(3 * gap + 2 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
+                .put("U", getFace(2 * gap + size * cubieSize, gap, size, cubieSize))
+                .put("F", getFace(2 * gap + size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
+                .build();
+    }
+
+    private static int getSizeFromVariation(String variation) {
+        return variation.isEmpty() ? 3 : Integer.parseInt(variation.split("x")[0]);
+    }
+
+    public Tuple2<Character, Character> parseGeneratorGroup(String generatorGroup) {
+        if (generatorGroup == null) {
+            return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
+        }
+        String[] faces = generatorGroup.split(" ");
+        if (faces.length == 2) {
+            Tuple.tuple(faces[0].charAt(0), faces[1].charAt(0));
+        }
+        return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
+    }
+
+    private String generateScrambleFor2x2() {
+        calcperm();
+        List<Integer> posit = posit();
+        mix(posit);
+        return solve(posit);
+    }
+
+    private ArrayList<String> getCrossSolutions(String scramble) {
         return CrossSolver.solveCross(solveCrossFace, solveCrossSide, scramble);
-    }
-
-
-    private void initbrd() {
-        posit = Lists.<Integer>newArrayList(
-                1, 1, 1, 1,
-                2, 2, 2, 2,
-                5, 5, 5, 5,
-                4, 4, 4, 4,
-                3, 3, 3, 3,
-                0, 0, 0, 0);
-    }
-
-    {
-        initbrd();
     }
 
     List<Integer> seq = new ArrayList<>();
@@ -240,7 +282,7 @@ public class CubeScramble extends Scramble {
             .put('F', 0)
             .build();
 
-    private void mix() {
+    private void mix(List<Integer> posit) {
         //Modified to choose a random state, rather than apply 500 random turns
         //-Jeremy Fleischman
         List<Integer> remaining = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
@@ -250,7 +292,6 @@ public class CubeScramble extends Scramble {
         //it would appear that the solver only works if the BLD piece is fixed, which is fine
         cp.add(7);
 
-        initbrd();
         int sum = 0;
         for (int i = 0; i < cp.size(); i++) {
             int orientation;
@@ -291,7 +332,7 @@ public class CubeScramble extends Scramble {
         adj.add(Arrays.asList(new Integer[6]));
     }
 
-    private void calcadj() {
+    private void calcadj(List<Integer> posit) {
         //count all adjacent pairs (clockwise around corners)
         int a, b;
         for (a = 0; a < 6; a++) {
@@ -309,17 +350,9 @@ public class CubeScramble extends Scramble {
     }
 
     List<List<Integer>> mov2fc = new ArrayList<>();
-    {
-        mov2fc.add(Lists.newArrayList(0, 2, 3, 1, 23, 19, 10, 6, 22, 18, 11, 7)); //D
-        mov2fc.add(Lists.newArrayList(4, 6, 7, 5, 12, 20, 2, 10, 14, 22, 0, 8)); //L
-        mov2fc.add(Lists.newArrayList(8, 10, 11, 9, 12, 7, 1, 17, 13, 5, 0, 19)); //B
-        mov2fc.add(Lists.newArrayList(12, 13, 15, 14, 8, 17, 21, 4, 9, 16, 20, 5)); //U
-        mov2fc.add(Lists.newArrayList(16, 17, 19, 18, 15, 9, 1, 23, 13, 11, 3, 21)); //R
-        mov2fc.add(Lists.newArrayList(20, 21, 23, 22, 14, 16, 3, 6, 15, 18, 2, 4)); //F
-    }
 
-    private String solve() {
-        calcadj();
+    private String solve(List<Integer> posit) {
+        calcadj(posit);
         List<Integer> opp = Arrays.asList(new Integer[6]);
         for (int a = 0; a < 6; a++) {
             for (int b = 0; b < 6; b++) {
@@ -374,6 +407,15 @@ public class CubeScramble extends Scramble {
             return tt;
         }
         return null;
+    }
+
+    {
+        mov2fc.add(Lists.newArrayList(0, 2, 3, 1, 23, 19, 10, 6, 22, 18, 11, 7)); //D
+        mov2fc.add(Lists.newArrayList(4, 6, 7, 5, 12, 20, 2, 10, 14, 22, 0, 8)); //L
+        mov2fc.add(Lists.newArrayList(8, 10, 11, 9, 12, 7, 1, 17, 13, 5, 0, 19)); //B
+        mov2fc.add(Lists.newArrayList(12, 13, 15, 14, 8, 17, 21, 4, 9, 16, 20, 5)); //U
+        mov2fc.add(Lists.newArrayList(16, 17, 19, 18, 15, 9, 1, 23, 13, 11, 3, 21)); //R
+        mov2fc.add(Lists.newArrayList(20, 21, 23, 22, 14, 16, 3, 6, 15, 18, 2, 4)); //F
     }
 
     private boolean search(int d, int q, int t, int l, int lm) {
@@ -577,8 +619,11 @@ public class CubeScramble extends Scramble {
         return q;
     }
 
-    private void generateScramble() {
-        scramble = "";
+    private String generateScramble(int length) {
+        if (length == 0) {
+            return "";
+        }
+
         StringBuilder scram = new StringBuilder();
         int lastAxis = -1;
         int axis;
@@ -634,13 +679,7 @@ public class CubeScramble extends Scramble {
             }
             lastAxis = axis;
         }
-        if (scram.length() > 0)
-            scramble = scram.substring(1);
-    }
-
-    @Override
-    public String htmlify(String formatMe) {
-        return formatMe.replaceAll("\\((\\d+)\\)", "<sub>$1</sub>");
+        return scram.substring(1);
     }
 
     private String moveString(int n) {
@@ -650,13 +689,13 @@ public class CubeScramble extends Scramble {
 
         if (cubeSize <= 5) {
             if (wideNotation) {
-                move += FACES().charAt(face % 6);
+                move += FACES.charAt(face % 6);
                 if (face / 6 != 0) move += "w";
             } else {
-                move += FACES().charAt(face);
+                move += FACES.charAt(face);
             }
         } else {
-            String f = "" + FACES().charAt(face % 6);
+            String f = "" + FACES.charAt(face % 6);
             if (face / 6 == 0) {
                 move += f;
             } else {
@@ -672,9 +711,8 @@ public class CubeScramble extends Scramble {
         return move;
     }
 
-    private boolean validateScramble() {
+    private boolean isValidScramble(String scramble) {
         String[] strs = scramble.split("\\s+");
-        length = strs.length;
 
         if (cubeSize < 2) return false;
         else if (cubeSize == 2) {
@@ -691,7 +729,6 @@ public class CubeScramble extends Scramble {
             }
         }
 
-        StringBuilder newScram = new StringBuilder();
         try {
             for (String str : strs) {
                 int face;
@@ -708,9 +745,9 @@ public class CubeScramble extends Scramble {
                     }
                     if (slice1 == null)
                         slice1 = slice2;
-                    face = FACES().indexOf(m.group(2));
+                    face = FACES.indexOf(m.group(2));
                 } else {
-                    face = FACES().indexOf(str.charAt(0) + "");
+                    face = FACES.indexOf(str.charAt(0) + "");
                 }
 
                 int slice = face / 6;
@@ -724,27 +761,21 @@ public class CubeScramble extends Scramble {
                 int dir = " 2'".indexOf(str.charAt(str.length() - 1) + "");
                 if (dir < 0) dir = 0;
 
-                int n = ((slice * 6 + face) * 4 + dir);
-                newScram.append(" ");
-                newScram.append(moveString(n));
-
                 do {
                     slice(face, slice, dir);
                     slice--;
                 } while (multislice && slice >= 0);
             }
-        } catch (Exception e) {
+            return true;
+        }
+        catch (Exception e) {
             LOG.info("unexpected exception", e);
             return false;
         }
 
-        if (newScram.length() > 0)
-            scramble = newScram.substring(1); //we do this to force notation update when an attribute changes
-        else scramble = newScram.toString();
-        return true;
     }
 
-    private void initializeImage() {
+    private void initializeImage(int cubeSize) {
         image = new String[6][cubeSize][cubeSize];
 
         for (int i = 0; i < 6; i++) {
@@ -805,27 +836,9 @@ public class CubeScramble extends Scramble {
         }
     }
 
-    @Override
-    public BufferedImage getScrambleImage(int gap, int cubieSize, Map<String, Color> colorScheme) {
-        Dimension dim = getImageSize(gap, cubieSize, cubeSize);
-        BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
-        drawCube(buffer.createGraphics(), image, gap, cubieSize, colorScheme);
-        return buffer;
-    }
-
-    @Override
-    public int getNewUnitSize(int width, int height, int gap, String variation) {
-        return getNewUnitSize(width, height, gap, getSizeFromVariation(variation));
-    }
-
     private static int getNewUnitSize(int width, int height, int gap, int size) {
         return (int) Math.min((width - 5 * gap) / 4. / size,
                 (height - 4 * gap) / 3. / size);
-    }
-
-    @Override
-    public Dimension getImageSize(int gap, int unitSize, String variation) {
-        return getImageSize(gap, unitSize, getSizeFromVariation(variation));
     }
 
     private static Dimension getImageSize(int gap, int unitSize, int size) {
@@ -842,41 +855,28 @@ public class CubeScramble extends Scramble {
         paintCubeFace(g, 2 * gap + size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize, state[5], colorScheme);
     }
 
-    private void paintCubeFace(Graphics2D g, int x, int y, int size, int cubieSize, String[][] faceColors, Map<String, Color> colorScheme) {
+    private void paintCubeFace(Graphics2D g, int x, int y, int size, int cubeSize, String[][] faceColors, Map<String, Color> colorScheme) {
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
                 g.setColor(Color.BLACK);
-                int tempx = x + col * cubieSize;
-                int tempy = y + row * cubieSize;
-                g.drawRect(tempx, tempy, cubieSize, cubieSize);
+                int tempx = x + col * cubeSize;
+                int tempy = y + row * cubeSize;
+                g.drawRect(tempx, tempy, cubeSize, cubeSize);
                 g.setColor(colorScheme.get(faceColors[row][col]));
-                g.fillRect(tempx + 1, tempy + 1, cubieSize - 1, cubieSize - 1);
+                g.fillRect(tempx + 1, tempy + 1, cubeSize - 1, cubeSize - 1);
             }
         }
     }
 
-    private static int getCubeViewWidth(int cubie, int gap, int size) {
-        return (size * cubie + gap) * 4 + gap;
+    private static int getCubeViewWidth(int cube, int gap, int size) {
+        return (size * cube + gap) * 4 + gap;
     }
 
-    private static int getCubeViewHeight(int cubie, int gap, int size) {
-        return (size * cubie + gap) * 3 + gap;
+    private static int getCubeViewHeight(int cube, int gap, int size) {
+        return (size * cube + gap) * 3 + gap;
     }
 
-    @Override
-    public Map<String, Shape> getFaces(int gap, int cubieSize, String variation) {
-        int size = getSizeFromVariation(variation);
-        return ImmutableMap.<String, Shape>builder()
-                .put("L", getFace(gap, 2 * gap + size * cubieSize, size, cubieSize))
-                .put("D", getFace(2 * gap + size * cubieSize, 3 * gap + 2 * size * cubieSize, size, cubieSize))
-                .put("B", getFace(4 * gap + 3 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
-                .put("R", getFace(3 * gap + 2 * size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
-                .put("U", getFace(2 * gap + size * cubieSize, gap, size, cubieSize))
-                .put("F", getFace(2 * gap + size * cubieSize, 2 * gap + size * cubieSize, size, cubieSize))
-                .build();
-    }
-
-    private static Shape getFace(int leftBound, int topBound, int size, int cubieSize) {
-        return new Rectangle(leftBound, topBound, size * cubieSize, size * cubieSize);
+    private static Shape getFace(int leftBound, int topBound, int size, int cubeSize) {
+        return new Rectangle(leftBound, topBound, size * cubeSize, size * cubeSize);
     }
 }

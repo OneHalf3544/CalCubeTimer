@@ -2,7 +2,7 @@ package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
+import net.gnehzr.cct.scrambles.ScramblePlugin.InvalidScrambleException;
 import org.apache.log4j.Logger;
 
 public class ScrambleCustomization {
@@ -12,7 +12,7 @@ public class ScrambleCustomization {
 	private final Configuration configuration;
 	private ScrambleVariation variation;
 	public final ScramblePluginManager scramblePluginManager;
-	private Scramble plugin;
+	private ScramblePlugin plugin;
 	private String customization;
 	private String generator;
 
@@ -24,7 +24,17 @@ public class ScrambleCustomization {
 		this.customization = customization;
 		this.setGenerator(scramblePluginManager.loadGeneratorFromConfig(this, false));
 	}
-	
+
+	public ScrambleString generateScramble() {
+		ScrambleString newScramblePlugin = plugin.newScramble(variation, generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		LOG.info("generated scramble: " + newScramblePlugin + ", for plugin '" + plugin.getPuzzleName() + "', variation: " + variation);
+		return newScramblePlugin;
+	}
+
+	public ScrambleString importScramble(String scramble) throws InvalidScrambleException {
+		return plugin.importScramble(variation.withoutLength(), scramble, generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+	}
+
 	public void setRA(int index, int newra, boolean trimmed) {
 		configuration.setLong(VariableKey.RA_SIZE(index, this), newra);
 		configuration.setBoolean(VariableKey.RA_TRIMMED(index, this), trimmed);
@@ -62,7 +72,7 @@ public class ScrambleCustomization {
 		return generator;
 	}
 	
-	public Scramble getScramblePlugin() {
+	public ScramblePlugin getScramblePlugin() {
 		return variation.getPlugin();
 	}
 
@@ -75,11 +85,13 @@ public class ScrambleCustomization {
 	}
 
 	public String toString() {
-		String temp = variation.getVariation();
-		if(temp.isEmpty())
+		String temp = variation.getName();
+		if(temp.isEmpty()) {
 			temp += variation.getPlugin().getPuzzleName();
-		if(customization != null)
+		}
+		if(customization != null) {
 			temp += ":" + customization;
+		}
 		return temp;
 	}
 
@@ -94,15 +106,5 @@ public class ScrambleCustomization {
 			return false;
 		}
  		return this.toString().equals(o.toString());
-	}
-
-	public Scramble generateScramble() {
-		Scramble newScramble = plugin.newScramble(variation.getVariation(), variation.getLength(), generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
-		LOG.info("generated scramble: " + newScramble + ", for plugin '" + plugin.getPuzzleName() + "', variation: " + variation);
-		return newScramble;
-	}
-
-	public Scramble importScramble(String scramble) throws InvalidScrambleException {
-		return plugin.importScramble(variation.getVariation(), scramble, generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 }

@@ -1,8 +1,12 @@
 package scramblePlugins;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.ScrambleVariation;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -16,8 +20,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SquareOneScramble extends Scramble {
+public class SquareOneScramblePlugin extends ScramblePlugin {
 
+	private static final Pattern GENERATOR = Pattern.compile("\\( *(.+), *(.+) *\\)");
 	private static final Map<String, Color> FACE_NAMES_COLORS = ImmutableMap.<String, Color>builder()
 			.put("L", Utils.stringToColor("ffff00"))
 			.put("B", Utils.stringToColor("ff0000"))
@@ -29,49 +34,48 @@ public class SquareOneScramble extends Scramble {
 
 	private static final String FACES_ORDER = "LBRFUD";
 	private static final String PUZZLE_NAME = "Square-1";
+	public static final String SLASHES_ATTRIBUTE = "%%slashes%%";
 	private static final int[] DEFAULT_LENGTHS = { 40 };
 	private static final int DEFAULT_UNIT_SIZE = 32;
 	private static final Pattern TOKEN_REGEX = Pattern.compile("^(\\( *-?\\d+ *, *-?\\d+ *\\)|/)(.*)$");
-	private static final String[] ATTRIBUTES = new String[] { "%%slashes%%" };
+	private static final ImmutableList<String> ATTRIBUTES = ImmutableList.of(SLASHES_ATTRIBUTE);
 	private static final String[] DEFAULT_GENERATORS = new String[] { "(x, x) /" };
 	public static final String FRONT = "F";
 	public static final String BACK = "B";
 
+	private boolean turnTop;
+	private boolean turnBottom;
+
 	private int twistCount = 0; //this will tell us the state of the middle pieces
-	private int[] state, turns;
+	private int[] state;
+	//private int[] turns;
 	private boolean slashes;
 
 	@SuppressWarnings("unused")
-	public SquareOneScramble() {
-		super(PUZZLE_NAME, true, true);
-		this.length = 0;
+	public SquareOneScramblePlugin() {
+		super(PUZZLE_NAME, true);
 		setGenerator(null);
-		setAttributes(Collections.emptyList());
-
-	}
-
-	private SquareOneScramble(int length, String generatorGroup, List<String> attrs) {
-		super(PUZZLE_NAME, true, false);
-		this.length = length;
-		setGenerator(generatorGroup);
-		setAttributes(attrs);
-	}
-
-	public SquareOneScramble(String s, String generatorGroup, List<String> attrs) throws InvalidScrambleException {
-		super(s, true, false);
-		setGenerator(generatorGroup);
-		if(!setAttributes(attrs))
-			throw new InvalidScrambleException(s);
+		slashes = false;
+		initializeImage();
 	}
 
 	@Override
-	public Scramble importScramble(String variation, String scramble, String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-		return new SquareOneScramble(scramble, generatorGroup, attributes);
+	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+		slashes = attributes.contains(SLASHES_ATTRIBUTE);
+		setGenerator(generatorGroup);
+		OptionalInt length = validateScrambleAndGetLength(scramble);
+		if(!length.isPresent()) {
+			throw new InvalidScrambleException(scramble);
+		}
+		return new ScrambleString(scramble, true, variation.withLength(length.getAsInt()), this, null);
 	}
 
 	@Override
-	protected Scramble createScramble(String variation, int length, String generatorGroup, List<String> attributes) {
-		return new SquareOneScramble(length, generatorGroup, attributes);
+	protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+		slashes = attributes.contains(SLASHES_ATTRIBUTE);
+		setGenerator(generatorGroup);
+		return new ScrambleString(generateScramble(variation.getLength()), false, variation, this, null);
 	}
 
 	@Override
@@ -92,8 +96,8 @@ public class SquareOneScramble extends Scramble {
 
 	@NotNull
 	@Override
-	public String[] getVariations() {
-		return NULL_SCRAMBLE.getVariations();
+	public List<String> getVariations() {
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getVariations();
 	}
 
 	@NotNull
@@ -105,13 +109,13 @@ public class SquareOneScramble extends Scramble {
 	@NotNull
 	@Override
 	public List<String> getAttributes() {
-		return Arrays.asList(ATTRIBUTES);
+		return ATTRIBUTES;
 	}
 
 	@NotNull
 	@Override
 	public List<String> getDefaultAttributes() {
-		return NULL_SCRAMBLE.getDefaultAttributes();
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
 	}
 
 	@Override
@@ -119,29 +123,18 @@ public class SquareOneScramble extends Scramble {
 		return TOKEN_REGEX;
 	}
 
+	@NotNull
 	@Override
-	public String[] getDefaultGenerators() {
-		return DEFAULT_GENERATORS;
+	public Map<String, String> getDefaultGenerators() {
+		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
 	}
 
-	private boolean setAttributes(List<String> attributes) {
-		slashes = false;
-		for(String attr : attributes)
-			if(attr.equals(ATTRIBUTES[0]))
-				slashes = true;
-		initializeImage();
-		if(scramble != null) {
-			return validateScramble();
-		}
-		generateScramble();
-		return true;
-	}
-	
-	private static final Pattern GENERATOR = Pattern.compile("\\( *(.+), *(.+) *\\)");
-	private boolean turnTop, turnBottom;
 	private void setGenerator(String generator) {
-		turnTop = turnBottom = true;
-		if(generator == null) return;
+		turnTop = true;
+		turnBottom = true;
+		if(generator == null) {
+			return;
+		}
 		Matcher m = GENERATOR.matcher(generator);
 		if(m.find()) {
 			turnTop = !m.group(1).equals("0");
@@ -150,16 +143,16 @@ public class SquareOneScramble extends Scramble {
 	}
 
 	//Ported from http://www.worldcubeassociation.org/regulations/scrambles/scramble_square1.htm by Jeremy Fleischman
-	/* Javascript written by Jaap Scherphuis,  jaapsch a t yahoo d o t com */
+	/* Javascript written by Jaap Scherphuis,  jaapsch@yahoo.com */
 	private void initializeImage() {
 		state = new int[]{ 0,0,1,2,2,3,4,4,5,6,6,7,8,9,9,10,11,11,12,13,13,14,15,15 }; //piece array
-		turns = new int[length];
 	}
 
-	private void generateScramble() {
-		int i,move,ls;
-		ls=-1;
-		for(i = 0; i < length; i++) {
+	private String generateScramble(int length) {
+		int[] turns = new int[length];
+		int move;
+		int ls = -1;
+		for(int i = 0; i < length; i++) {
 			do {
 				if(ls==0) {
 					move=random(22)-11;
@@ -173,25 +166,33 @@ public class SquareOneScramble extends Scramble {
 				}
 				//we don't want to apply to restriction to the bottom if we're no allowed to turn the top
 				//if we did, we might loop forever making scrambles for a bandaged square 1
-			} while( (turnTop && twistCount>1 && move>=-6 && move<0) || domove(i, move));
+			} while( (turnTop && twistCount>1 && move>=-6 && move<0) || domove(i, move, turns));
 			if(move>0) ls=1;
 			else if(move<0) ls=2;
 			else { ls=0; }
 		}
-		finalizeScrambleString();
+		return finalizeScrambleString(slashes, turns);
 	}
 
-	private void finalizeScrambleString() {
-		scramble = "";
+	private String finalizeScrambleString(boolean slashes, int[] turns) {
 		StringBuilder scram = new StringBuilder();
 		int l=-1;
 		for (int k : turns) {
 			if (k == 0) {
-				if (l == -1) scram.append(" (0,0)");
-				if (l == 1) scram.append("0)");
-				if (l == 2) scram.append(")");
-				if (l != 0 && slashes)
+				switch (l) {
+					case -1:
+						scram.append(" (0,0)");
+						break;
+					case 1:
+						scram.append("0)");
+						break;
+					case 2:
+						scram.append(")");
+						break;
+				}
+				if (l != 0 && slashes) {
 					scram.append(" /");
+				}
 				l = 0;
 			} else if (k > 0) {
 				scram.append(" (").append(k > 6 ? k - 12 : k).append(",");
@@ -204,12 +205,11 @@ public class SquareOneScramble extends Scramble {
 		}
 		if(l==1) scram.append("0");
 		if(l!=0) scram.append(")");
-		if(scram.length() > 0)
-			scramble = scram.substring(1);
+		return scram.length() > 0 ? scram.substring(1) : "";
 	}
 	
 	//returns true if invalid, false if valid
-	private boolean domove(int index, int m) {
+	private boolean domove(int index, int m, int[] turns) {
 		int i,c,f=m;
 		//do move f
 		if(f == 0) { //slash
@@ -254,41 +254,46 @@ public class SquareOneScramble extends Scramble {
 	//**********END JAAP's CODE***************
 
 	private static final Pattern regexp = Pattern.compile("^ *(-?\\d+) *, *(-?\\d+) *$");
-	private boolean validateScramble() {
+
+	private OptionalInt validateScrambleAndGetLength(String scramble) {
 		//if there is no slash in the scramble, we assume that we're using implicit slashes
 		boolean implicitSlashes = scramble.indexOf('/') == -1;
 		//however, to get correct incremental scramble behavior, we will use the set attribute if
 		//there is only one set of parens
 		if(scramble.indexOf('(') == scramble.lastIndexOf('('))
 			implicitSlashes = !slashes;
-		
-		length = 0;
-		String[] trns = scramble.split("(\\(|\\)|\\( *\\))", -1);
-		scramble = "";
-		turns = new int[trns.length*3]; //definitely big enough, no need to trim
-		for (String trn : trns) {
+
+		int length = 0;
+		String[] turns = scramble.split("(\\(|\\)|\\( *\\))", -1);
+		int[] thisturns = new int[turns.length*3]; //definitely big enough, no need to trim
+		for (String trn : turns) {
 			Matcher match;
 			if (trn.matches(" *")) {
 				continue;
 			}
 			if (trn.matches(" */ *")) {
-				domove(length++, 0);
-			} else if ((match = regexp.matcher(trn)).matches()) {
-				int top = Integer.parseInt(match.group(1));
-				int bot = Integer.parseInt(match.group(2));
-				top = modulo(top, 12);
-				bot = modulo(bot, 12);
-				if (top != 0 && domove(length++, top))
-					return false;
-				if (bot != 0 && domove(length++, bot - 12))
-					return false;
-				if (implicitSlashes)
-					domove(length++, 0);
-			} else
-				return false;
+				domove(length++, 0, thisturns);
+			} else {
+				if ((match = regexp.matcher(trn)).matches()) {
+					int top = Integer.parseInt(match.group(1));
+					int bot = Integer.parseInt(match.group(2));
+					top = modulo(top, 12);
+					bot = modulo(bot, 12);
+					if (top != 0 && domove(length++, top, thisturns)) {
+						return OptionalInt.empty();
+					}
+					if (bot != 0 && domove(length++, bot - 12, thisturns)) {
+						return OptionalInt.empty();
+					}
+					if (implicitSlashes)
+						domove(length++, 0, thisturns);
+				} else {
+					return OptionalInt.empty();
+				}
+			}
 		}
-		finalizeScrambleString();
-		return true;
+		finalizeScrambleString(slashes, thisturns);
+		return OptionalInt.of(length);
 	}
 
 	@Override
@@ -445,13 +450,17 @@ public class SquareOneScramble extends Scramble {
 	public Dimension getImageSize(int gap, int radius, String variation) {
 		return new Dimension(getWidth(gap, radius), getHeight(gap, radius));
 	}
+
 	private static final double RADIUS_MULTIPLIER = Math.sqrt(2) * Math.cos(Math.toRadians(15));
+
 	private static int getWidth(int gap, int radius) {
 		return (int) (2 * RADIUS_MULTIPLIER * multiplier * radius);
 	}
+
 	private static int getHeight(int gap, int radius) {
 		return (int) (4 * RADIUS_MULTIPLIER * multiplier * radius);
 	}
+
 	@Override
 	public int getNewUnitSize(int width, int height, int gap, String variation) {
 		return (int) Math.round(Math.min(width / (2 * RADIUS_MULTIPLIER * multiplier), height / (4 * RADIUS_MULTIPLIER * multiplier)));

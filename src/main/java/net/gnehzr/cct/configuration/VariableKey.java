@@ -2,8 +2,9 @@ package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Throwables;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public class VariableKey<H> {
 		return new VariableKey<>("Scramble_Popup_unitSize_" + variation.toString());
 	}
 	public static VariableKey<Integer> SCRAMBLE_LENGTH(ScrambleVariation var) {
-		checkArgument(var.getPlugin() != Scramble.NULL_SCRAMBLE);
+		checkArgument(var.getPlugin() != ScramblePluginManager.NULL_SCRAMBLE_PLUGIN);
 		return new VariableKey<>("Puzzle_ScrambleLength_" + var.toString());
 	}
 
@@ -94,7 +95,7 @@ public class VariableKey<H> {
 	public static final VariableKey<List<String>> IMPORT_URLS = new VariableKey<>("Misc_scrambleURLs");
 	public static final VariableKey<List<String>> IRC_SERVERS = new VariableKey<>("IRC_Client_serverURLs");
 	public static final VariableKey<List<String>> SCRAMBLE_CUSTOMIZATIONS = new VariableKey<>("Scramble_customizations");
-	public static VariableKey<List<String>> PUZZLE_ATTRIBUTES(Scramble plugin) {
+	public static VariableKey<List<String>> PUZZLE_ATTRIBUTES(ScramblePlugin plugin) {
 		return new VariableKey<>("Puzzle_Attributes_" + plugin.getPuzzleName());
 	}
 
@@ -163,7 +164,7 @@ public class VariableKey<H> {
 	public static final VariableKey<Color> BEST_TIME = new VariableKey<Color>("Statistics_Color_bestTime"); 
 	public static final VariableKey<Color> CURRENT_AVERAGE = new VariableKey<Color>("Statistics_Color_currentAverage"); 
 	public static final VariableKey<Color> WORST_TIME = new VariableKey<Color>("Statistics_Color_worstTime"); 
-	public static VariableKey<Color> PUZZLE_COLOR(Scramble plugin, String faceName) {
+	public static VariableKey<Color> PUZZLE_COLOR(ScramblePlugin plugin, String faceName) {
 		return new VariableKey<>("Puzzle_Color_" + plugin.getPuzzleName() + "_face" + faceName);
 	}
 

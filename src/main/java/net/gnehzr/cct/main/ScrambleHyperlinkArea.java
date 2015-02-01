@@ -6,10 +6,10 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.Scramble;
-import net.gnehzr.cct.scrambles.Scramble.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.ScramblePlugin.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 
@@ -41,9 +41,9 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
 
-	private String currentScramble;
+	private ScrambleString currentScramble;
 	private String incrementScramble;
-	private Scramble fullScramble;
+	private ScrambleString fullScramblePlugin;
 	private ScrambleCustomization currentCustomization;
 	private StringBuilder part1, part2, part3;
 	private int moveNum;
@@ -88,7 +88,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if(e.getClickCount() == 2) {
-	        StringSelection ss = new StringSelection(currentScramble);
+	        StringSelection ss = new StringSelection(currentScramble.getScramble());
 	        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
 
 			success.show(e.getComponent(), e.getX() + 10, e.getY() + 10);
@@ -129,15 +129,10 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 		setPreferredSize(new Dimension(0, 100));
 	}
 
-	public void setScramble(String newScramble, ScrambleCustomization sc) {
+	public void setScramble(ScrambleString newScramble, ScrambleCustomization sc) {
 		currentCustomization = sc;
-		try {
-			fullScramble = currentCustomization.importScramble(newScramble);
-			currentScramble = fullScramble.getScrambleString();
-		} catch(Exception e) { //if we can't parse this scramble, we'll just treat it as a null scramble
-			currentScramble = newScramble.trim();
-			fullScramble = null;
-		}
+		fullScramblePlugin = newScramble;
+		currentScramble = fullScramblePlugin;
 
 		Font font = configuration.getFont(VariableKey.SCRAMBLE_FONT, false);
 		StringBuilder fontStyle = new StringBuilder(); 
@@ -160,12 +155,12 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 			.append("sub { font-size: ").append(font.getSize() / 2 + 1).append("; }")  
 			.append("</style></head>");
 		part3 = new StringBuilder("<center>");
-		String s = currentScramble;
+		String s = currentScramble.getScramble();
 		StringBuilder plainScramble = new StringBuilder();
 		Matcher m;
 		int num = 0;
 		Pattern regex = currentCustomization.getScramblePlugin().getTokenRegex();
-		if(regex == null || fullScramble == null) {
+		if(regex == null || fullScramblePlugin == null) {
 			regex = NULL_SCRAMBLE_REGEX;
 		}
 		
@@ -199,11 +194,11 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 				incrementScramble = moveAndScramble[1];
 			}
 			updateScramblePane();
-			scramblePopup.setScramble(incrementalScramble(), fullScramble, currentCustomization.getScrambleVariation());
+			scramblePopup.setScramble(incrementalScramble(), fullScramblePlugin, currentCustomization.getScrambleVariation());
 		}
 	}
 
-	private Scramble incrementalScramble() {
+	private ScrambleString incrementalScramble() {
 		try {
             return currentCustomization.importScramble(incrementScramble);
 		}
@@ -223,19 +218,18 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 		int caretPos = scramblePane.getCaretPosition();
 		scramblePane.setDocument(new HTMLEditorKit().createDefaultDocument());
 		String bgColor = "";
-		if(backgroundColor != null)
+		if(backgroundColor != null) {
 			bgColor = " bgcolor='" + backgroundColor + "'";
-		StringBuilder temp = new StringBuilder();
-		temp.append(part1).append(moveNum).append(part2);
-		temp.append("<body").append(bgColor).append(">").append(part3);  
+		}
 
 		scramblePane.setText("");
 		
-		scramblePane.setText(temp.toString());
+		scramblePane.setText(String.valueOf(part1) + moveNum + part2 + "<body" + bgColor + ">" + part3);
 		scramblePane.setCaretPosition(caretPos);
 	}
 
 	private boolean focused;
+
 	public void refresh() {
 		setTimerFocused(focused);
 		setScramble(currentScramble, currentCustomization);
@@ -268,10 +262,14 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 		}
 	}
 	
+	@Override
 	public void componentHidden(ComponentEvent arg0) {}
+	@Override
 	public void componentMoved(ComponentEvent arg0) {}
+	@Override
 	public void componentResized(ComponentEvent arg0) {
 		setProperSize();
 	}
+	@Override
 	public void componentShown(ComponentEvent arg0) {}
 }

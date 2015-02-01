@@ -94,16 +94,15 @@ public class CrossSolver {
 	}
 	
 	private static class DoubleHashMap<A, B> {
+
 		private HashMap<A, B> forward;
 		private HashMap<B, A> backward;
+
 		public DoubleHashMap() {
 			forward = new HashMap<A, B>();
 			backward = new HashMap<B, A>();
 		}
-//		public DoubleHashMap(DoubleHashMap<A, B> old) {
-//			forward = new HashMap<A, B>(old.forward);
-//			backward = new HashMap<B, A>(old.backward);
-//		}
+
 		public void put(A a, B b) {
 			forward.put(a, b);
 			backward.put(b, a);

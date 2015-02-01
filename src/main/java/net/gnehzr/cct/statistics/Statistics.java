@@ -1,5 +1,6 @@
 package net.gnehzr.cct.statistics;
 
+import com.google.common.collect.Iterables;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
@@ -122,7 +123,7 @@ public class Statistics implements SolveCounter {
 	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<>();
 
 	private final Configuration configuration;
-	ArrayList<SolveTime> times;
+	List<SolveTime> times;
 	private ArrayList<Double>[] averages;
 	private ArrayList<Double>[] sds;
 	private ArrayList<Double> sessionavgs;
@@ -218,16 +219,17 @@ public class Statistics implements SolveCounter {
 	
 	public void clear() {
 		int[] indices = new int[times.size()];
-		for(int ch = 0; ch < indices.length; ch++)
+		for(int ch = 0; ch < indices.length; ch++) {
 			indices[ch] = ch;
-		editActions.add(new StatisticsEdit(indices, times.toArray(new SolveTime[0]), null));
+		}
+		editActions.add(new StatisticsEdit(indices, Iterables.toArray(times, SolveTime.class), null));
 		initialize();
 		notifyListeners(false);
 	}
 
-	private List<StatisticsUpdateListener> strlisten;
+	private List<StatisticsUpdateListener> statisticsUpdateListeners;
 	public void setStatisticsUpdateListeners(List<StatisticsUpdateListener> listener) {
-		strlisten = listener;
+		statisticsUpdateListeners = listener;
 	}
 	
 	public DraggableJTableModel tableListener;
@@ -246,10 +248,8 @@ public class Statistics implements SolveCounter {
 				tableListener.fireTableDataChanged();
 		}
 		editActions.notifyListener();
-		if(strlisten != null) {
-			for(StatisticsUpdateListener listener : strlisten) {
-				listener.update();
-			}
+		if(statisticsUpdateListeners != null) {
+			statisticsUpdateListeners.forEach(StatisticsUpdateListener::update);
 		}
 	}
 	

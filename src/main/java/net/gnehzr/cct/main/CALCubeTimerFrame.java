@@ -22,7 +22,7 @@ import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicDestroyable;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.scrambles.Scramble;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
@@ -155,21 +155,21 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 			Statistics s = statsModel.getCurrentStatistics();
 			if (!model.getCustomizationEditsDisabled() && s != null) {
 				//TODO - changing session? //TODO - deleted customization?
-				s.editActions.add(new CustomizationEdit(model, model.getScramblesList().getScrambleCustomization(),
+				s.editActions.add(new CustomizationEdit(model, model.getScramblesList().getCurrentScrambleCustomization(),
 						(ScrambleCustomization) getScrambleCustomizationComboBox().getSelectedItem(), getScrambleCustomizationComboBox()));
 			}
 
-			model.getScramblesList().setScrambleCustomization((ScrambleCustomization) getScrambleCustomizationComboBox().getSelectedItem());
+			model.getScramblesList().setCurrentScrambleCustomization((ScrambleCustomization) getScrambleCustomizationComboBox().getSelectedItem());
 			//send current customization to irc, if connected
 			ircClient.sendUserstate();
 
 			//change current session's scramble customization
 			if (statsModel.getCurrentSession() != null) {
 				statsModel.getCurrentSession().setCustomization(
-						model.getScramblesList().getScrambleCustomization().toString(), profileDao.getSelectedProfile());
+						model.getScramblesList().getCurrentScrambleCustomization().toString(), profileDao.getSelectedProfile());
 			}
-			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getScrambleCustomization().getScrambleVariation().getPlugin());
-			String generator = model.getScramblesList().getScrambleCustomization().getGenerator();
+			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getCurrentScrambleCustomization().getScrambleVariation());
+			String generator = model.getScramblesList().getCurrentScrambleCustomization().getGenerator();
 			updateGeneratorField(generatorEnabled, generator);
 
 			createScrambleAttributesPanel();
@@ -580,16 +580,16 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		ScrambleString current = model.getScramblesList().getCurrent();
 		if(current != null) {
 			//set the length of the current scramble
-			safeSetValue(scrambleLengthSpinner, current.getLength(), scrambleLengthListener);
+			safeSetValue(scrambleLengthSpinner, current.getVariation().getLength(), scrambleLengthListener);
 			//update new number of scrambles
 			safeSetScrambleNumberMax(model.getScramblesList().size());
 			//update new scramble number
 			safeSetValue(scrambleNumber, model.getScramblesList().getScrambleNumber(), scrambleNumberListener);
-			scrambleHyperlinkArea.setScramble(current.getScramble(), model.getScramblesList().getScrambleCustomization()); //this will update scramblePopup
+			scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getCurrentScrambleCustomization()); //this will update scramblePopup
 
 			boolean canChangeStuff = model.getScramblesList().size() == model.getScramblesList().getScrambleNumber();
 			scrambleCustomizationComboBox.setEnabled(canChangeStuff);
-			scrambleLengthSpinner.setEnabled(current.getLength() != 0 && canChangeStuff && !current.isImported());
+			scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && canChangeStuff && !current.isImported());
 		}
 	}
 
@@ -811,7 +811,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 	@Override
 	public void createScrambleAttributesPanel() {
-		ScrambleCustomization sc = model.getScramblesList().getScrambleCustomization();
+		ScrambleCustomization sc = model.getScramblesList().getCurrentScrambleCustomization();
 		scrambleAttributesPanel.removeAll();
 		if (sc == null) {
 			return;
@@ -876,9 +876,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 	@Override
 	public void saveToConfiguration() {
-		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, model.getScramblesList().getScrambleCustomization().toString());
+		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, model.getScramblesList().getCurrentScrambleCustomization().toString());
 		scramblePluginManager.saveLengthsToConfiguration();
-		for (Scramble plugin : scramblePluginManager.getScramblePlugins()) {
+		for (ScramblePlugin plugin : scramblePluginManager.getScramblePlugins()) {
 			configuration.setStringArray(VariableKey.PUZZLE_ATTRIBUTES(plugin), plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 		}
 		configuration.setPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, scramblePopup.getLocation());

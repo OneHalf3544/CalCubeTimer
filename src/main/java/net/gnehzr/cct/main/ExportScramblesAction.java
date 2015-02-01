@@ -26,17 +26,15 @@ class ExportScramblesAction extends AbstractAction {
 	private final ProfileDao profileDao;
 	private final ScrambleImporter scrambleImporter;
 	private final ScrambleList scramblesList;
-	private final CALCubeTimerFrame calCubeTimerFrame;
 
 	@Inject
 	public ExportScramblesAction(ScrambleImporter scrambleImporter, ProfileDao profileDao,
-								 ScrambleList scramblesList, CALCubeTimerFrame calCubeTimerFrame){
+								 ScrambleList scramblesList) {
 		putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_E);
 		this.scrambleImporter = scrambleImporter;
 		this.profileDao = profileDao;
 		this.scramblesList = scramblesList;
-		this.calCubeTimerFrame = calCubeTimerFrame;
 
 	}
 

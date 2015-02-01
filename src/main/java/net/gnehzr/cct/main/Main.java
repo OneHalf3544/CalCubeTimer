@@ -62,7 +62,6 @@ public class Main implements Module {
         JDialog.setDefaultLookAndFeelDecorated(false);
         JFrame.setDefaultLookAndFeelDecorated(false);
 
-        injector = Guice.createInjector(new Main());
 
         //The error messages are not internationalized because I want people to
         //be able to google the following messages
@@ -72,22 +71,31 @@ public class Main implements Module {
             return;
         }
 
-        Configuration configuration = injector.getInstance(Configuration.class);
 
-        ProfileDao profileDao = injector.getInstance(ProfileDao.class);
-        CALCubeTimerFrame calCubeTimerFrame = injector.getInstance(CALCubeTimerFrame.class);
-        CalCubeTimerModelImpl calCubeTimerModel = injector.getInstance(CalCubeTimerModelImpl.class);
+        ProfileDao profileDao;
+        CALCubeTimerFrame calCubeTimerFrame;
+        Configuration configuration;
+        try {
+            injector = Guice.createInjector(new Main());
+            configuration = injector.getInstance(Configuration.class);
+            profileDao = injector.getInstance(ProfileDao.class);
+            calCubeTimerFrame = injector.getInstance(CALCubeTimerFrame.class);
 
-        if(args.length == 1) {
-            File startupProfileDir = new File(args[0]);
-            if(!startupProfileDir.exists() || !startupProfileDir.isDirectory()) {
-                LOG.info("Couldn't find directory " + startupProfileDir.getAbsolutePath());
-            } else {
+            if(args.length == 1) {
+                File startupProfileDir = new File(args[0]);
+                if(!startupProfileDir.exists() || !startupProfileDir.isDirectory()) {
+                    LOG.info("Couldn't find directory " + startupProfileDir.getAbsolutePath());
+                } else {
 
-                Profile commandedProfile = profileDao.loadProfile(startupProfileDir);
-                configuration.setCommandLineProfile(commandedProfile);
-                profileDao.setSelectedProfile(commandedProfile);
+                    Profile commandedProfile = profileDao.loadProfile(startupProfileDir);
+                    configuration.setCommandLineProfile(commandedProfile);
+                    profileDao.setSelectedProfile(commandedProfile);
+                }
             }
+        } catch (Exception e) {
+            LOG.error("initialisation error", e);
+            Main.exit(1);
+            throw new RuntimeException();
         }
 
         SwingUtilities.invokeLater(() -> {
@@ -124,14 +132,6 @@ public class Main implements Module {
             }
 
             calCubeTimerFrame.setVisible(true);
-
-            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-                @Override
-                public void run() {
-
-                }
-            }));
-
 
             calCubeTimerFrame.languagesComboboxListener.itemStateChanged(
                     new ItemEvent(calCubeTimerFrame.languages, 0, configuration.getDefaultLocale(), ItemEvent.SELECTED));
