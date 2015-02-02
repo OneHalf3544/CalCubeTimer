@@ -24,6 +24,8 @@ public class ScramblePluginManager {
 
 	public final ScrambleCustomization NULL_SCRAMBLE_CUSTOMIZATION;
 
+	private ScrambleVariation[] scrambleVariations;
+
 	public static final ScrambleString NULL_IMPORTED_SCRUMBLE = new ScrambleString("", true, null, NULL_SCRAMBLE_PLUGIN, null);
 	public static final ScrambleString NULL_CREATED_SCRAMBLE = new ScrambleString("", false, null, NULL_SCRAMBLE_PLUGIN, null);
 
@@ -39,6 +41,7 @@ public class ScramblePluginManager {
 
 	private List<Class<? extends ScramblePlugin>> pluginClasses = ImmutableList.of(
 			// todo load class names from /META-INF/somefile
+			Cube2x2ScramblePlugin.class,
 			CubeScramblePlugin.class,
 			ClockScramblePlugin.class,
 			MegaminxScramblePlugin.class,
@@ -46,11 +49,9 @@ public class ScramblePluginManager {
 			SquareOneScramblePlugin.class
 	);
 
-
 	@Inject
 	public ScramblePluginManager(Configuration configuration) throws IllegalArgumentException,
-			IllegalAccessException, InstantiationException {
-
+														       		 IllegalAccessException, InstantiationException {
 		this.configuration = configuration;
 		this.scramblePlugins = createScramblePlugins();
 
@@ -67,6 +68,7 @@ public class ScramblePluginManager {
 		}
 		return scramblePlugin;
 	}
+
 	//this has the potential to break a lot of things in cct,
 	//it's only used by cctbot right now
 	public void clearScramblePlugins() {
@@ -78,12 +80,12 @@ public class ScramblePluginManager {
 			configuration.setLong(VariableKey.SCRAMBLE_LENGTH(variation), variation.getLength());
 		}
 	}
+
 	public void reloadLengthsFromConfiguration(boolean defaults) {
 		for(ScrambleVariation v : getScrambleVariations()) {
 			v.setLength(v.getScrambleLength(v.getName(), defaults));
 		}
 	}
-	private ScrambleVariation[] scrambleVariations;
 
 	public ScrambleVariation[] getScrambleVariations() {
 		if(scrambleVariations == null) {
