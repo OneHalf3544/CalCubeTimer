@@ -9,7 +9,6 @@ import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.ActionMap;
 import net.gnehzr.cct.main.*;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
@@ -1005,7 +1004,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 		Statistics stats = statsModel.getCurrentStatistics();
 		myself.setCurrentRA(stats.average(Statistics.AverageType.CURRENT, 0), stats.toTerseString(Statistics.AverageType.CURRENT, 0, true));
 		myself.setBestRA(stats.average(Statistics.AverageType.RA, 0), stats.toTerseString(Statistics.AverageType.RA, 0, false));
-		myself.setSessionAverage(new SolveTime(stats.getSessionAvg(), null, configuration));
+		myself.setSessionAverage(new SolveTime(stats.getSessionAvg(), null));
 
 		myself.setSolvesAttempts(stats.getSolveCount(), stats.getAttemptCount());
 

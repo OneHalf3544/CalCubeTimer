@@ -1,13 +1,11 @@
 package scramblePlugins;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.CrossSolver;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.*;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.tuple.Tuple;
@@ -44,12 +42,13 @@ public class CubeScramblePlugin extends ScramblePlugin {
     private static final char DEFAULT_SOLVE_FACE = 'U';
     private static final char DEFAULT_SOLVE_SIDE = 'D';
 
-    private static final String regexp2 = "^[LDBRUF][2']?$";
-    private static final String regexp345 = "^(?:[LDBRUF]w?|[ldbruf])[2']?$";
-    private static final String regexp = "^(\\d+)?([LDBRUF])(?:\\((\\d+)\\))?[2']?$";
-    private static final Pattern shortPattern = Pattern.compile(regexp);
+    private static final String REGEXP_2 = "^[LDBRUF][2']?$";
+    private static final String REGEXP_345 = "^(?:[LDBRUF]w?|[ldbruf])[2']?$";
+    private static final String REGEXP = "^(\\d+)?([LDBRUF])(?:\\((\\d+)\\))?[2']?$";
+    private static final Pattern SHORT_PATTERN = Pattern.compile(REGEXP);
+
     public static final String MULTISLICE_ATTRIBUTE = "%%multislice%%";
-    public static final String OPTIMALCROSS_ATTRIBUTE = "%%optimalcross%%";
+    public static final String OPTIMAL_CROSS_ATTRIBUTE = "%%optimalcross%%";
     public static final String WIDE_NOTATION_ATTRIBUTE = "%%widenotation%%";
 
     List<Integer> perm = new ArrayList<>();
@@ -57,9 +56,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     List<List<Integer>> permmv = new ArrayList<>();
     List<List<Integer>> twstmv = new ArrayList<>();
 
-    private String cacheInfo = null;
-
-    List<Integer> posit() {
+    List<Integer> posit2x2() {
         return Lists.newArrayList(
                 1, 1, 1, 1,
                 2, 2, 2, 2,
@@ -70,17 +67,13 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     private static final boolean shortNotation = true;
+
     private boolean multislice;
     private boolean wideNotation;
     private boolean optimalCross;
-    private int cubeSize;
-    private String[][][] image;
 
     //solve the U face on D
     public final String dg = DEFAULT_SOLVE_FACE + " " + DEFAULT_SOLVE_SIDE;
-
-    private char solveCrossFace = DEFAULT_SOLVE_FACE;
-    private char solveCrossSide = DEFAULT_SOLVE_SIDE;
 
     List<Integer> sol = new ArrayList<>();
 
@@ -90,46 +83,41 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     @Override
-    protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
-        this.cubeSize = getSizeFromVariation(variation.getName());
-
-        Tuple2<Character, Character> generator = parseGeneratorGroup(generatorGroup);
-        solveCrossFace = generator.v1();
-        solveCrossSide = generator.v2();
+    public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+        int cubeSize = getSizeFromVariation(variation.getName());
 
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
         wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
-        optimalCross = attributes.contains(OPTIMALCROSS_ATTRIBUTE);
+        optimalCross = attributes.contains(OPTIMAL_CROSS_ATTRIBUTE);
 
-        initializeImage(cubeSize);
-
+        String[][][] image = initializeImage(cubeSize);
         String scramble;
         if (cubeSize == 2) {
             scramble = generateScrambleFor2x2();
         } else if (cubeSize == 3 && variation.getLength() > 0)
             scramble = Search.solution(Tools.randomCube(), 21, 10, false);
         else {
-            scramble = generateScramble(variation.getLength());
+            scramble = generateScramble(variation.getLength(), cubeSize, image);
 
         }
-        return new ScrambleString(scramble, false, variation, this, getTextComments(scramble));
+        return new ScrambleString(scramble, false, variation, this, getTextComments(scramble, cubeSize, generatorGroup));
     }
 
     @Override
     public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
                                          String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-        parseGeneratorGroup(generatorGroup);
-        cubeSize = getSizeFromVariation(variation.getName());
+
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
         wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
-        optimalCross = attributes.contains(OPTIMALCROSS_ATTRIBUTE);
+        optimalCross = attributes.contains(OPTIMAL_CROSS_ATTRIBUTE);
 
-        initializeImage(cubeSize);
-        
-        if (!isValidScramble(scramble)) {
+        int cubeSize = getSizeFromVariation(variation.getName());
+        String[][][] image = initializeImage(cubeSize);
+        if (!isValidScramble(scramble, cubeSize, image)) {
             throw new InvalidScrambleException(scramble);
         }
-        return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, getTextComments(scramble));
+        String text = getTextComments(scramble, getSizeFromVariation(variation.getName()), generatorGroup);
+        return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, text);
     }
 
 
@@ -174,7 +162,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return ImmutableList.of(
                 MULTISLICE_ATTRIBUTE,
                 WIDE_NOTATION_ATTRIBUTE,
-                OPTIMALCROSS_ATTRIBUTE);
+                OPTIMAL_CROSS_ATTRIBUTE);
     }
 
     @NotNull
@@ -193,16 +181,16 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return Pattern.compile("^((?:\\d+)?[LDBRUFldbruf](?:\\(\\d+\\))?w?[2']?)(.*)$");
     }
 
-    private String getTextComments(String scramble) {
-        if (!optimalCross || cubeSize != 3) {
+    private String getTextComments(String scramble, int cubeSize, String generatorGroup) {
+                if (!optimalCross || cubeSize != 3) {
             return null;
         }
-        if (cacheInfo == null) {
-            ArrayList<String> solutions = getCrossSolutions(scramble);
-            Collections.sort(solutions);
-            cacheInfo = Utils.join(solutions.toArray(), "\n");
-        }
-        return cacheInfo;
+
+        Tuple2<Character, Character> generator = parseGeneratorGroupFor3x3(generatorGroup);
+        List<String> solutions = getCrossSolutions(scramble, generator.v1, generator.v2);
+        Collections.sort(solutions);
+
+        return  Joiner.on("\n").join(solutions);
     }
 
 
@@ -212,7 +200,11 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     @Override
-    public BufferedImage getScrambleImage(int gap, int cubieSize, Map<String, Color> colorScheme) {
+    public BufferedImage getScrambleImage(ScrambleString scramble, int gap, int cubieSize, Map<String, Color> colorScheme) {
+        int cubeSize = getSizeFromVariation(scramble.getVariation().getName());
+        String[][][] image = initializeImage(cubeSize);
+        // todo
+        isValidScramble(scramble.getScramble(), cubeSize, image);
         Dimension dim = getImageSize(gap, cubieSize, cubeSize);
         BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
         drawCube(buffer.createGraphics(), image, gap, cubieSize, colorScheme);
@@ -246,7 +238,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return variation.isEmpty() ? 3 : Integer.parseInt(variation.split("x")[0]);
     }
 
-    public Tuple2<Character, Character> parseGeneratorGroup(String generatorGroup) {
+    public Tuple2<Character, Character> parseGeneratorGroupFor3x3(String generatorGroup) {
         if (generatorGroup == null) {
             return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
         }
@@ -257,14 +249,15 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
     }
 
+    // todo another class for 2x2x2 scramble plugin
     private String generateScrambleFor2x2() {
-        calcperm();
-        List<Integer> posit = posit();
-        mix(posit);
-        return solve(posit);
+        calcpermFor2x2();
+        List<Integer> posit = posit2x2();
+        mix2x2(posit);
+        return solve2x2(posit);
     }
 
-    private ArrayList<String> getCrossSolutions(String scramble) {
+    private ArrayList<String> getCrossSolutions(String scramble, char solveCrossFace, char solveCrossSide) {
         return CrossSolver.solveCross(solveCrossFace, solveCrossSide, scramble);
     }
 
@@ -282,7 +275,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
             .put('F', 0)
             .build();
 
-    private void mix(List<Integer> posit) {
+    private void mix2x2(List<Integer> posit) {
         //Modified to choose a random state, rather than apply 500 random turns
         //-Jeremy Fleischman
         List<Integer> remaining = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
@@ -332,7 +325,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         adj.add(Arrays.asList(new Integer[6]));
     }
 
-    private void calcadj(List<Integer> posit) {
+    private void calcadj2x2(List<Integer> posit) {
         //count all adjacent pairs (clockwise around corners)
         int a, b;
         for (a = 0; a < 6; a++) {
@@ -349,10 +342,8 @@ public class CubeScramblePlugin extends ScramblePlugin {
         }
     }
 
-    List<List<Integer>> mov2fc = new ArrayList<>();
-
-    private String solve(List<Integer> posit) {
-        calcadj(posit);
+    private String solve2x2(List<Integer> posit) {
+        calcadj2x2(posit);
         List<Integer> opp = Arrays.asList(new Integer[6]);
         for (int a = 0; a < 6; a++) {
             for (int b = 0; b < 6; b++) {
@@ -398,7 +389,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         if (q != 0 || t != 0) {
             sol.clear();
             for (int l = seq.size(); l < 100; l++) {
-                if (search(0, q, t, l, -1)) break;
+                if (search2x2(0, q, t, l, -1)) break;
             }
             String tt = "";
             for (q = 0; q < sol.size(); q++) {
@@ -409,16 +400,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return null;
     }
 
-    {
-        mov2fc.add(Lists.newArrayList(0, 2, 3, 1, 23, 19, 10, 6, 22, 18, 11, 7)); //D
-        mov2fc.add(Lists.newArrayList(4, 6, 7, 5, 12, 20, 2, 10, 14, 22, 0, 8)); //L
-        mov2fc.add(Lists.newArrayList(8, 10, 11, 9, 12, 7, 1, 17, 13, 5, 0, 19)); //B
-        mov2fc.add(Lists.newArrayList(12, 13, 15, 14, 8, 17, 21, 4, 9, 16, 20, 5)); //U
-        mov2fc.add(Lists.newArrayList(16, 17, 19, 18, 15, 9, 1, 23, 13, 11, 3, 21)); //R
-        mov2fc.add(Lists.newArrayList(20, 21, 23, 22, 14, 16, 3, 6, 15, 18, 2, 4)); //F
-    }
-
-    private boolean search(int d, int q, int t, int l, int lm) {
+    private boolean search2x2(int d, int q, int t, int l, int lm) {
         //searches for solution, from position q|t, in l moves exactly. last move was lm, current depth=d
         if (l == 0) {
             if (q == 0 && t == 0) {
@@ -440,7 +422,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
                         } else {
                             sol.add(10 * m + a);
                         }
-                        if (search(d + 1, p, s, l - 1, m)) {
+                        if (search2x2(d + 1, p, s, l - 1, m)) {
                             return true;
                         }
                     }
@@ -450,7 +432,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return false;
     }
 
-    private void calcperm() {
+    private void calcpermFor2x2() {
         //calculate solving arrays
         //first permutation
 
@@ -458,7 +440,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
             perm.add(p, -1);
             permmv.add(p, new ArrayList<>());
             for (int m = 0; m < 3; m++) {
-                permmv.get(p).add(m, getprmmv(p, m));
+                permmv.get(p).add(m, getprmmv2x2(p, m));
             }
         }
 
@@ -484,7 +466,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
             twst.add(p, -1);
             twstmv.add(p, new ArrayList<>());
             for (int m = 0; m < 3; m++) {
-                twstmv.get(p).add(m, gettwsmv(p, m));
+                twstmv.get(p).add(m, gettwsmvFor2x2(p, m));
             }
         }
 
@@ -507,7 +489,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         //remove wait sign
     }
 
-    private int getprmmv(int p, int m) {
+    private int getprmmv2x2(int p, int m) {
         //given position p<5040 and move m<3, return new position number
         int a, b, c, q;
         //convert number into array;
@@ -564,7 +546,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return q;
     }
 
-    private int gettwsmv(int p, int m) {
+    private int gettwsmvFor2x2(int p, int m) {
         //given orientation p<729 and move m<3, return new orientation number
         int a, b, c, d, q;
         //convert number into array;
@@ -619,7 +601,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return q;
     }
 
-    private String generateScramble(int length) {
+    private String generateScramble(int length, int cubeSize, String[][][] image) {
         if (length == 0) {
             return "";
         }
@@ -669,10 +651,10 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
                     int n = ((slice * 6 + face) * 4 + direction);
                     scram.append(" ");
-                    scram.append(moveString(n));
+                    scram.append(moveString(n, cubeSize));
 
                     do {
-                        slice(face, slice, direction);
+                        slice(face, slice, direction, image, cubeSize);
                         slice--;
                     } while (multislice && slice >= 0);
                 }
@@ -682,7 +664,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return scram.substring(1);
     }
 
-    private String moveString(int n) {
+    private String moveString(int n, int cubeSize) {
         String move = "";
         int face = n >> 2;
         int direction = n & 3;
@@ -711,58 +693,48 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return move;
     }
 
-    private boolean isValidScramble(String scramble) {
-        String[] strs = scramble.split("\\s+");
+    private boolean isValidScramble(String scramble, int cubeSize, String[][][] image) {
+        String[] moves = scramble.split("\\s+");
 
-        if (cubeSize < 2) return false;
-        else if (cubeSize == 2) {
-            for (String str : strs) {
-                if (!str.matches(regexp2)) return false;
-            }
-        } else if (cubeSize <= 5) {
-            for (String str : strs) {
-                if (!str.matches(regexp345)) return false;
-            }
-        } else {
-            for (String str : strs) {
-                if (!str.matches(regexp)) return false;
-            }
+        if (!scrambleMatchRegexp(moves, cubeSize)) {
+            return false;
         }
 
         try {
-            for (String str : strs) {
+            for (String move : moves) {
                 int face;
                 String slice1 = null;
                 if (cubeSize > 5) {
-                    Matcher m = shortPattern.matcher(str);
+                    Matcher m = SHORT_PATTERN.matcher(move);
                     if (!m.matches()) {
                         return false;
                     }
                     slice1 = m.group(1);
                     String slice2 = m.group(3);
-                    if (slice1 != null && slice2 != null) { //only short notation or long notation is allowed, not both
+                    if (slice1 != null && slice2 != null) {
+                        //only short notation or long notation is allowed, not both
                         return false;
                     }
                     if (slice1 == null)
                         slice1 = slice2;
                     face = FACES.indexOf(m.group(2));
                 } else {
-                    face = FACES.indexOf(str.charAt(0) + "");
+                    face = FACES.indexOf(move.substring(0, 1));
                 }
 
                 int slice = face / 6;
                 face %= 6;
-                if (str.contains("w")) {
+                if (move.contains("w")) {
                     slice++;
                 }
                 else if (slice1 != null)
                     slice = Integer.parseInt(slice1) - 1;
 
-                int dir = " 2'".indexOf(str.charAt(str.length() - 1) + "");
-                if (dir < 0) dir = 0;
+                int direction = " 2'".indexOf(move.charAt(move.length() - 1) + "");
+                if (direction < 0) direction = 0;
 
                 do {
-                    slice(face, slice, dir);
+                    slice(face, slice, direction, image, cubeSize);
                     slice--;
                 } while (multislice && slice >= 0);
             }
@@ -775,8 +747,34 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
     }
 
-    private void initializeImage(int cubeSize) {
-        image = new String[6][cubeSize][cubeSize];
+    private boolean scrambleMatchRegexp(String[] moves, int cubeSize) {
+        if (cubeSize < 2) {
+            return false;
+        }
+        else if (cubeSize == 2) {
+            for (String move : moves) {
+                if (!move.matches(REGEXP_2)) {
+                    return false;
+                }
+            }
+        } else if (cubeSize <= 5) {
+            for (String move : moves) {
+                if (!move.matches(REGEXP_345)) {
+                    return false;
+                }
+            }
+        } else {
+            for (String move : moves) {
+                if (!move.matches(REGEXP)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private String[][][] initializeImage(int cubeSize) {
+        String[][][] image = new String[6][cubeSize][cubeSize];
 
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < cubeSize; j++) {
@@ -785,18 +783,19 @@ public class CubeScramblePlugin extends ScramblePlugin {
                 }
             }
         }
+        return image;
     }
 
-    private void slice(int face, int slice, int dir) {
+    private void slice(int face, int slice, int direction, String[][][] image, int cubeSize) {
         face %= 6;
         int sface = face;
         int sslice = slice;
-        int sdir = dir;
+        int sdir = direction;
 
         if (face > 2) {
             sface -= 3;
             sslice = cubeSize - 1 - slice;
-            sdir = 2 - dir;
+            sdir = 2 - direction;
         }
         for (int i = 0; i <= sdir; i++) {
             for (int j = 0; j < cubeSize; j++) {
@@ -822,7 +821,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
             }
         }
         if (slice == 0) {
-            for (int i = 0; i <= 2 - dir; i++) {
+            for (int i = 0; i <= 2 - direction; i++) {
                 for (int j = 0; j < (cubeSize + 1) / 2; j++) {
                     for (int k = 0; k < cubeSize / 2; k++) {
                         String temp = image[face][j][k];
@@ -859,11 +858,11 @@ public class CubeScramblePlugin extends ScramblePlugin {
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
                 g.setColor(Color.BLACK);
-                int tempx = x + col * cubeSize;
-                int tempy = y + row * cubeSize;
-                g.drawRect(tempx, tempy, cubeSize, cubeSize);
+                int tempX = x + col * cubeSize;
+                int tempY = y + row * cubeSize;
+                g.drawRect(tempX, tempY, cubeSize, cubeSize);
                 g.setColor(colorScheme.get(faceColors[row][col]));
-                g.fillRect(tempx + 1, tempy + 1, cubeSize - 1, cubeSize - 1);
+                g.fillRect(tempX + 1, tempY + 1, cubeSize - 1, cubeSize - 1);
             }
         }
     }

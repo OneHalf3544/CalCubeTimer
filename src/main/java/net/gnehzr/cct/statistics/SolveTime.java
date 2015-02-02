@@ -7,6 +7,7 @@ import net.gnehzr.cct.configuration.VariableKey;import net.gnehzr.cct.i18n.Strin
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.util.*;
@@ -16,13 +17,20 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 
 	private static final Logger LOG = Logger.getLogger(SolveTime.class);
 
-	public static final SolveTime BEST = new SolveTime(0, null, null) {
+	public static final SolveTime NULL_TIME = new SolveTime() {
 		@Override
-		public void setTime(String toParse, boolean importing) { throw new AssertionError(); };
+		protected void setTime(String toParse) throws Exception {
+			throw new AssertionError();
+		}
 	};
-	public static final SolveTime WORST = new SolveTime(null) {
+
+	public static final SolveTime BEST = new SolveTime(0, null) {
 		@Override
-		public void setTime(String toParse, boolean importing) { throw new AssertionError(); };
+		public void setTime(String toParse) { throw new AssertionError(); }
+	};
+	public static final SolveTime WORST = new SolveTime() {
+		@Override
+		public void setTime(String toParse) { throw new AssertionError(); }
 	};
 	public static final SolveTime NA = WORST;
 
@@ -36,27 +44,22 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	//we need to know the index so we can syntax highlight it
 	private int whichRA = -1;
 
-	private final Configuration configuration;
-
-	public SolveTime(Configuration configuration) {
-		this.configuration = configuration;
+	private SolveTime() {
 		time = null;
 		setScramble(null);
 	}
 
-	public SolveTime(double seconds, String scramble, Configuration configuration) {
+	public SolveTime(double seconds, String scramble) {
 		this.time = Duration.ofMillis(10 * (long) (100 * seconds + .5));
 		LOG.trace("new SolveTime " + seconds);
 		setScramble(scramble);
-		this.configuration = configuration;
 	}
-	public SolveTime(double seconds, int whichRA, Configuration configuration) {
-		this(seconds, null, configuration);
+	public SolveTime(double seconds, int whichRA) {
+		this(seconds, null);
 		this.whichRA = whichRA;
 	}
 
-	private SolveTime(TimerState time, String scramble, Configuration configuration) {
-		this.configuration = configuration;
+	private SolveTime(TimerState time, String scramble) {
 		if(time != null) {
 			this.time = time.getTime();
 			LOG.trace("new SolveTime " + time.getTime());
@@ -68,24 +71,23 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		return whichRA;
 	}
 
-	public SolveTime(TimerState time, String scramble, List<SolveTime> splits, Configuration configuration) {
-		this(time, scramble, configuration);
+	public SolveTime(TimerState time, String scramble, List<SolveTime> splits) {
+		this(time, scramble);
 		this.splits = splits;
 	}
 
-	public SolveTime(String time, String scramble, Configuration configuration) throws Exception {
-		this.configuration = configuration;
-		setTime(time, false);
+	public SolveTime(String time, String scramble) throws Exception {
+		setTime(time);
 		setScramble(scramble);
 	}
 	
 	//This will create the appropriate scramble types if necessary, should probably only
 	//be called when parsing the xml gui
 	public void parseTime(String toParse) throws Exception {
-		setTime(toParse, true);
+		setTime(toParse);
 	}
 
-	protected void setTime(String toParse, boolean importing) throws Exception {
+	protected void setTime(String toParse) throws Exception {
 		time = Duration.ZERO; //don't remove this
 		toParse = toParse.trim();
 		if(toParse.isEmpty()) {
@@ -97,9 +99,6 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		for(c = 0; c < split.length - 1; c++) {
 			SolveType t = SolveType.getSolveType(split[c]);
 			if(t == null) {
-				if(!importing) {
-					throw new Exception(StringAccessor.getString("SolveTime.invalidtype"));
-				}
 				t = SolveType.createSolveType(split[c]);
 			}
 			types.add(t);
@@ -133,7 +132,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		double seconds = 0;
 		for(int i = 0; i < temp.length; i++) {
 			seconds *= 60;
-			double d = 0;
+			double d;
 			try {
 				d = Double.parseDouble(temp[i]); //we want this to handle only "." as a decimal separator
 			} catch(NumberFormatException e) {
@@ -168,7 +167,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	//this is for display by CCT
-	public String toString() {
+	public String toString(Configuration configuration) {
 		if(time == null || time.isNegative()) {
 			return "N/A";
 		}
@@ -177,6 +176,19 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 				.findFirst()
 				.map(Object::toString)
 				.orElseGet(() -> Utils.formatTime(this, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
+	}
+
+	//this is for display by CCT
+	@Override
+	public String toString() {
+		if(time == null || time.isNegative()) {
+			return "N/A";
+		}
+		return types.stream()
+				.filter(t -> !t.isSolved())
+				.findFirst()
+				.map(Object::toString)
+				.orElseGet(() -> Utils.formatTime(this, true) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
 	}
 
 	//this is for use by the database, and will save the raw time if the solve was a POP or DNF
@@ -204,7 +216,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		this.splits = new ArrayList<>();
 		for(String s : splitsString.split(", *")) {
 			try {
-				this.splits.add(new SolveTime(s, null, configuration));
+				this.splits.add(new SolveTime(s, null));
 			} catch (Exception e) {
 				LOG.error(e.getMessage(), e);
 			}
@@ -233,7 +245,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	}
 
 	@Override
-	public int compareTo(SolveTime o) {
+	public int compareTo(@NotNull SolveTime o) {
 		if(o == WORST)
 			return -1;
 		if(this == WORST)

@@ -30,7 +30,7 @@ class NullScramblePlugin extends ScramblePlugin {
     }
 
     @Override
-    protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+    public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
         return ScramblePluginManager.NULL_CREATED_SCRAMBLE;
     }
 

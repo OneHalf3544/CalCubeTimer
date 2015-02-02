@@ -1,10 +1,7 @@
 package scramblePlugins;
 
 import com.google.common.collect.ImmutableList;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -35,7 +32,7 @@ public class ClockScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+	public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
 		verbose = hasVerboseAttribute(attributes);
 
 		return new ScrambleString(generateScramble(), false, variation, this, null);

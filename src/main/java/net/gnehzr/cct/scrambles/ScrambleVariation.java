@@ -2,7 +2,6 @@ package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.scrambles.ScramblePlugin.InvalidScrambleException;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -84,7 +83,7 @@ public class ScrambleVariation {
 	}
 
 	public ScrambleString generateScramble() {
-		return scramblePlugin.newScramble(this, scramblePluginManager.getDefaultGeneratorGroup(this), getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		return scramblePlugin.createScramble(this, scramblePluginManager.getDefaultGeneratorGroup(this), getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 
 	public ScrambleString generateScramble(String scramble) throws InvalidScrambleException {

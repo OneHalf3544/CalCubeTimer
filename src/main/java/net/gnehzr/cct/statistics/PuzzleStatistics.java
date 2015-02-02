@@ -10,26 +10,37 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter {
 
 	private String customization;
-	private ProfileDatabase pd;
+	private ProfileDatabase profileDatabase;
 
 	private final Configuration configuration;
 
-	public PuzzleStatistics(String customization, ProfileDatabase pd, Configuration configuration,
+	private SolveTime bestTime;
+	private double globalAverage;
+	private double[] bestRAs;
+	private int solvedCount;
+	private int attemptCount;
+	private HashMap<SolveType, Integer> typeCounter;
+
+	public PuzzleStatistics(String customization, ProfileDatabase profileDatabase, Configuration configuration,
 							StatisticsTableModel statsModel) {
 		this.customization = customization;
-		this.pd = pd;
+		this.profileDatabase = profileDatabase;
 		this.configuration = configuration;
 		//We need some way for each profile database to listen for updates,
 		//this seems fine to me, although nasty
 		statsModel.addStatisticsUpdateListener(this);
 	}
+
 	public String getCustomization() {
 		return customization;
 	}
+
 	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<>();
+
 	public Iterable<Session> toSessionIterable() {
 		return sessions;
 	}
+
 	public int getSessionsCount() {
 		return sessions.size();
 	}
@@ -38,34 +49,33 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 		sessions.add(s);
 		s.setPuzzleStatistics(this, profile);
 		refreshStats();
-		pd.fireTableDataChanged();
+		profileDatabase.fireTableDataChanged();
 	}
+
 	public void removeSession(Session s) {
 		sessions.remove(s);
 		refreshStats();
-		pd.fireTableDataChanged();
+		profileDatabase.fireTableDataChanged();
 	}
+
 	public boolean containsSession(Session s) {
 		return sessions.contains(s);
 	}
+
 	public ProfileDatabase getPuzzleDatabase() {
-		return pd;
+		return profileDatabase;
 	}
+
 	public String toString() {
 		return customization;
 	}
+
 	@Override
 	public void update() {
 		refreshStats();
-		pd.fireTableDataChanged();
+		profileDatabase.fireTableDataChanged();
 	}
-	
-	private SolveTime bestTime;
-	private double globalAverage;
-	private double[] bestRAs;
-	private int solvedCount;
-	private int attemptCount;
-	private HashMap<SolveType, Integer> typeCounter;
+
 	private void refreshStats() {
 		bestTime = SolveTime.WORST;
 		solvedCount = 0;
@@ -102,22 +112,27 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 	public SolveTime getBestTime() {
 		return bestTime;
 	}
+
 	public double getBestRA(int num) {
 		return bestRAs[num];
 	}
+
 	public double getGlobalAverage() {
 		return globalAverage;
 	}
+
 	@Override
 	public int getSolveTypeCount(SolveType t) {
 		Integer c = typeCounter.get(t);
 		if(c == null) c = 0;
 		return c;
 	}
+
 	@Override
 	public int getSolveCount() {
 		return solvedCount;
 	}
+
 	@Override
 	public int getAttemptCount() {
 		return attemptCount;

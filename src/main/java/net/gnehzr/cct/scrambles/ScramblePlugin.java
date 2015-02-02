@@ -5,7 +5,6 @@ import com.google.common.collect.Sets;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.ScramblePluginMessages;
-import net.gnehzr.cct.i18n.StringAccessor;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,20 +29,16 @@ public abstract class ScramblePlugin {
 
 	private final boolean supportsScrambleImage;
 
-	public final ScrambleString newScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
-		return createScramble(variation, generatorGroup, attributes);
-	}
-
 	public abstract ScrambleString importScramble(final ScrambleVariation.WithoutLength variation, final String scramble,
 												  final String generatorGroup,
 												  final List<String> attributes) throws InvalidScrambleException;
 
+	public abstract ScrambleString createScramble(final ScrambleVariation variation,
+													 final String generatorGroup, final List<String> attributes);
+
 	protected int parseSize(String scramble) {
 		return scramble.trim().split("\\s+").length;
 	}
-
-	protected abstract ScrambleString createScramble(final ScrambleVariation variation,
-													 final String generatorGroup, final List<String> attributes);
 
 	public final boolean supportsScrambleImage() {
 		return supportsScrambleImage;
@@ -54,19 +49,13 @@ public abstract class ScramblePlugin {
 	}
 
 	public List<String> getEnabledPuzzleAttributes(ScramblePluginManager scramblePluginManager, Configuration configuration) {
-		if(scramblePluginManager.getAttributes() == null) {
+		if (scramblePluginManager.getAttributes() == null) {
 			scramblePluginManager.setAttributes(configuration.getStringArray(VariableKey.PUZZLE_ATTRIBUTES(this), false));
 			if(scramblePluginManager.getAttributes() == null) {
 				scramblePluginManager.setAttributes(getDefaultAttributes());
 			}
 		}
 		return scramblePluginManager.getAttributes();
-	}
-
-	public static class InvalidScrambleException extends Exception {
-		public InvalidScrambleException(String scramble) {
-			super(StringAccessor.getString("InvalidScrambleException.invalidscramble") + "\n" + scramble);
-		}
 	}
 
 	public ScramblePlugin(String puzzleName, boolean supportsScrambleImage) {
@@ -85,7 +74,7 @@ public abstract class ScramblePlugin {
 		if(y >= 0) return y;
 		return y + m;
 	}
-	public BufferedImage getScrambleImage(int gap, int cubieSize, Map<String, Color> colorScheme) {
+	public BufferedImage getScrambleImage(ScrambleString scrambleString, int gap, int cubieSize, Map<String, Color> colorScheme) {
 		return null;
 	}
 

@@ -52,7 +52,7 @@ public class CCTUser {
 	}
 	private SolveTime toSolveTime(String time) {
 		try {
-			return new SolveTime(time, null, configuration);
+			return new SolveTime(time, null);
 		} catch(Exception e) {
 			return SolveTime.NA;
 		}
@@ -117,7 +117,7 @@ public class CCTUser {
 		if(!formatted)
 			return "" + netTime;
 
-		return new SolveTime(netTime / 1000., null, configuration).toString();
+		return new SolveTime(netTime / 1000., null).toString();
 	}
 
 	public void setCurrentRA(SolveTime average, String terseTimes) {

@@ -30,7 +30,7 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		setEnabled(table.isEnabled());
 		setFont(table.getFont());
 		if(value == null)
-			setText(new SolveTime(configuration).toString());
+			setText(SolveTime.NULL_TIME.toString(configuration));
 		else
 			setText(value.toString());
 		setHorizontalAlignment(SwingConstants.RIGHT);

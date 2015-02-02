@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.i18n.StringAccessor;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -47,7 +48,7 @@ public class SolveType {
         return SOLVE_TYPES.get(name.toLowerCase());
     }
 
-    public static Collection<SolveType> getSolveTypes(List<String> solveTags) {
+    public static Collection<SolveType> getSolveTypes(@NotNull List<String> solveTags) {
         ArrayList<SolveType> types = new ArrayList<>(SOLVE_TYPES.values());
         for(int c = solveTags.size() - 1; c >= 0; c--) {
             String tag = solveTags.get(c);

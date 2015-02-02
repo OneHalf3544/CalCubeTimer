@@ -21,9 +21,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ProfileDatabase extends DraggableJTableModel implements ActionListener {
@@ -45,27 +44,29 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 		this.scramblePluginManager = scramblePluginManager;
 	}
 
-	public Collection<PuzzleStatistics> getPuzzlesStatistics() {
+	public List<PuzzleStatistics> getPuzzlesStatistics() {
 		return new ArrayList<>(database.values());
 	}
-	public Collection<String> getCustomizations() {
+
+	public List<String> getCustomizations() {
 		return new ArrayList<>(database.keySet());
 	}
 
 	public PuzzleStatistics getPuzzleStatistics(String customization) {
-		PuzzleStatistics t = database.get(customization);
-		if(t == null) {
-			t = new PuzzleStatistics(customization, this, configuration, statsModel);
-			database.put(customization, t);
+		PuzzleStatistics puzzleStatistics = database.get(customization);
+		if(puzzleStatistics == null) {
+			puzzleStatistics = new PuzzleStatistics(customization, this, configuration, statsModel);
+			database.put(customization, puzzleStatistics);
 		}
-		return t;
+		return puzzleStatistics;
 	}
 	
 	public void removeEmptySessions() {
 		for(PuzzleStatistics ps : getPuzzlesStatistics()) {
 			for(Session s : ps.toSessionIterable()) {
-				if(s.getStatistics().getAttemptCount() == 0)
+				if(s.getStatistics().getAttemptCount() == 0) {
 					ps.removeSession(s);
+				}
 			}
 		}
 	}
@@ -136,22 +137,27 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 			"ProfileDatabase.comment" };
 
 	private Class<?>[] columnClasses = new Class<?>[] { Session.class, ScrambleCustomization.class, SolveTime.class, SolveTime.class, SolveTime.class, SolveTime.class, SolveTime.class, Integer.class, String.class};
+
 	@Override
 	public String getColumnName(int column) {
 		return StringAccessor.getString(columnNames[column]);
 	}
+
 	@Override
 	public int getColumnCount() {
 		return columnNames.length;
 	}
+
 	@Override
 	public int getRowCount() {
 		return sessionCache.size();
 	}
+
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return columnClasses[columnIndex];
 	}
+
 	@Override
 	public Object getValueAt(int row, int col) {
 		Session s = getNthSession(row);
@@ -163,9 +169,9 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 		case 2: //session average
 			return s.getStatistics().average(AverageType.SESSION, 0);
 		case 3: //best ra0
-			return new SolveTime(s.getStatistics().getBestAverage(0), null, configuration);
+			return new SolveTime(s.getStatistics().getBestAverage(0), null);
 		case 4: //best ra1
-			return new SolveTime(s.getStatistics().getBestAverage(1), null, configuration);
+			return new SolveTime(s.getStatistics().getBestAverage(1), null);
 		case 5: //best time
 			return s.getStatistics().getBestTime();
 		case 6: //stdev
@@ -189,17 +195,21 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 				rowIndex = indexOf(s); //changing the customization will change the index in the model
 				fireTableRowsUpdated(rowIndex, rowIndex);
 			}
-		} else if(columnIndex == 8 && value instanceof String)
+		} else if(columnIndex == 8 && value instanceof String) {
 			getNthSession(rowIndex).setComment((String) value);
+		}
 	}
+
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		return columnIndex == 1 || columnIndex == 8; //allow modification of the session customization or comment
 	}
+
 	@Override
 	public void insertValueAt(Object value, int rowIndex) {
 		//this only gets called if dragging is enabled
 	}
+
 	@Override
 	public void deleteRows(int[] indices) {
 		for(int ch = indices.length - 1; ch >= 0; ch--) {
@@ -208,20 +218,25 @@ public class ProfileDatabase extends DraggableJTableModel implements ActionListe
 		fireTableDataChanged();
 		fireSessionsDeleted();
 	}
+
 	@Override
 	public boolean isRowDeletable(int rowIndex) {
 		return true;
 	}
+
 	@Override
 	public void removeRows(int[] indices) {
 		deleteRows(indices);
 	}
+
 	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
 		String t = getNthSession(rowIndex).getComment();
 		return t.isEmpty() ? null : t;
 	}
+
 	private static final String SEND_TO_PROFILE = "sendToProfile";
+
 	@Override
 	public void showPopup(MouseEvent e, final DraggableJTable source, Component prevFocusOwner) {
 		JPopupMenu jpopup = new JPopupMenu();

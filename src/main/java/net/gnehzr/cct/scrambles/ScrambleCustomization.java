@@ -2,7 +2,6 @@ package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.scrambles.ScramblePlugin.InvalidScrambleException;
 import org.apache.log4j.Logger;
 
 public class ScrambleCustomization {
@@ -12,7 +11,6 @@ public class ScrambleCustomization {
 	private final Configuration configuration;
 	private ScrambleVariation variation;
 	public final ScramblePluginManager scramblePluginManager;
-	private ScramblePlugin plugin;
 	private String customization;
 	private String generator;
 
@@ -20,25 +18,26 @@ public class ScrambleCustomization {
 		this.configuration = configuration;
 		this.variation = variation;
 		this.scramblePluginManager = scramblePluginManager;
-		this.plugin = variation.getPlugin();
 		this.customization = customization;
 		this.setGenerator(scramblePluginManager.loadGeneratorFromConfig(this, false));
 	}
 
 	public ScrambleString generateScramble() {
-		ScrambleString newScramblePlugin = plugin.newScramble(variation, generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
-		LOG.info("generated scramble: " + newScramblePlugin + ", for plugin '" + plugin.getPuzzleName() + "', variation: " + variation);
+		ScrambleString newScramblePlugin = variation.getPlugin().createScramble(variation, generator, variation.getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		LOG.info("generated scramble: " + newScramblePlugin + ", for plugin '" + variation.getPlugin().getPuzzleName() + "', variation: " + variation);
 		return newScramblePlugin;
 	}
 
 	public ScrambleString importScramble(String scramble) throws InvalidScrambleException {
-		return plugin.importScramble(variation.withoutLength(), scramble, generator, plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		return variation.getPlugin().importScramble(variation.withoutLength(), scramble, generator,
+				variation.getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 
 	public void setRA(int index, int newra, boolean trimmed) {
 		configuration.setLong(VariableKey.RA_SIZE(index, this), newra);
 		configuration.setBoolean(VariableKey.RA_TRIMMED(index, this), trimmed);
 	}
+
 	public int getRASize(int index) {
 		Integer size = configuration.getInt(VariableKey.RA_SIZE(index, this), false);
 		if(size == null || size <= 0)

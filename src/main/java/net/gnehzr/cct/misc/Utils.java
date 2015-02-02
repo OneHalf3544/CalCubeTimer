@@ -32,22 +32,8 @@ public class Utils {
 	public static String getDecimalSeparator() {
 		return "" + getDecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
 	}
-	
-	public static String join(Object[] arr, String sep) {
-		StringBuilder s = new StringBuilder();
-		for(Object o : arr) {
-			s.append(sep).append(o.toString());
-		}
-		return s.substring(sep.length());
-	}
 
 	private Utils() {}
-	
-	public static int positiveModulo(int a, int b){
-		int y = a % b;
-		if(y >= 0) return y;
-		return y+b;
-	}
 
 	public static boolean equalDouble(double a, double b) {
 		return round(a, 2) == round(b, 2);
@@ -63,7 +49,7 @@ public class Utils {
 		if(Double.isInfinite(solveTime)) {
 			return "N/A";
 		}
-		return formatTime(new SolveTime(solveTime, null, null), useClockFormat);
+		return formatTime(new SolveTime(solveTime, null), useClockFormat);
 	}
 
 	public static String formatTime(SolveTime solveTime, boolean useClockFormat) {

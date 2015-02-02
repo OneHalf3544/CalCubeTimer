@@ -725,7 +725,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	}
 
 	public void keyboardTimingAction() {
-		boolean selected = (Boolean)actionMap.getAction("keyboardtiming", this, model).getValue(Action.SELECTED_KEY);
+		boolean selected = (Boolean)actionMap.getAction(KeyboardTimingAction.KEYBOARD_TIMING_ACTION, this, model).getValue(Action.SELECTED_KEY);
 		configuration.setBoolean(VariableKey.STACKMAT_ENABLED, !selected);
 		getTimeLabel().configurationChanged(profileDao.getSelectedProfile());
 		bigTimersDisplay.configurationChanged(profileDao.getSelectedProfile());

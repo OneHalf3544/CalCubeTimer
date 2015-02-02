@@ -12,7 +12,11 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class KeyboardTimingAction extends AbstractAction {
+
+	public static final String KEYBOARD_TIMING_ACTION = "keyboardtiming";
+
 	private CALCubeTimerFrame cct;
+
 	public KeyboardTimingAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 	}

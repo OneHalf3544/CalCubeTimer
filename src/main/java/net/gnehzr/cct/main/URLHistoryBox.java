@@ -6,16 +6,13 @@ import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.substance.utils.combo.SubstanceComboBoxEditor;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
 import java.util.List;
 
-public class URLHistoryBox extends JComboBox implements KeyListener {
+public class URLHistoryBox extends JComboBox<String> implements KeyListener {
+
 	private VariableKey<List<String>> valuesKey;
-	private List<String> values;
 	private IncrementalComboBoxModel model;
 	private JTextField editor;
 	private final Configuration configuration;
@@ -23,9 +20,10 @@ public class URLHistoryBox extends JComboBox implements KeyListener {
 	public URLHistoryBox(VariableKey<List<String>> valuesKey, Configuration configuration) {
 		this.valuesKey = valuesKey;
 		this.configuration = configuration;
-		this.values = configuration.getStringArray(valuesKey, false);
+		List<String> values = configuration.getStringArray(valuesKey, false);
 		
 		setEditor(new SubstanceComboBoxEditor() {
+			@Override
 			public void setItem(Object anObject) {} //we set the text from IncrementalComboBoxModel instead
 		});
 		editor = (JTextField) getEditor().getEditorComponent();
@@ -36,15 +34,15 @@ public class URLHistoryBox extends JComboBox implements KeyListener {
 		putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, true);
 	}
 	
+	@Override
 	public void keyPressed(KeyEvent e) {}
+
+	@Override
 	public void keyReleased(KeyEvent e) {}
+
+	@Override
 	public void keyTyped(KeyEvent e) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				//we invoke this later so we can see the update to the editor
-				editorUpdated();
-			}
-		});
+		SwingUtilities.invokeLater(this::editorUpdated);
 	}
 	
 	private void editorUpdated() {
@@ -58,62 +56,5 @@ public class URLHistoryBox extends JComboBox implements KeyListener {
 		model.addElement(editor.getText());
 		configuration.setStringArray(valuesKey, model.getItems());
 	}
-	
-	private static class IncrementalComboBoxModel implements ComboBoxModel {
-		private ArrayList<String> values;
-		private String prefix;
-		private ArrayList<String> filtered;
-		private JTextField editor;
-		public IncrementalComboBoxModel(List<String> values, JTextField editor) {
-			this.editor = editor;
-			this.values = new ArrayList<>(values);
-			filtered = new ArrayList<>();
-			setPrefix("");
-		}
-		public List<String> getItems() {
-			return values;
-		}
-		public void setPrefix(String prefix) {
-			this.prefix = prefix;
-			filtered.clear();
-			for(String s : values)
-				if(s.startsWith(prefix))
-					filtered.add(s);
-			fireDataChanged();
-		}
-		public void addElement(String elem) {
-			if(!values.contains(elem)) {
-				values.add(elem);
-				setPrefix(prefix); //force a refresh
-			}
-		}
-		
-		public Object getElementAt(int index) {
-			return filtered.get(index);
-		}
-		public int getSize() {
-			return filtered.size();
-		}
-		public Object getSelectedItem() {
-			if(o == null)
-				return "";
-			return o;
-		}
-		private Object o;
-		public void setSelectedItem(Object anItem) {
-			editor.setText(anItem.toString());
-			o = anItem;
-		}
-		private void fireDataChanged() {
-			for(ListDataListener ldl : l)
-				ldl.contentsChanged(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0, filtered.size()));
-		}
-		private ArrayList<ListDataListener> l = new ArrayList<ListDataListener>();
-		public void addListDataListener(ListDataListener ldl) {
-			l.add(ldl);
-		}
-		public void removeListDataListener(ListDataListener ldl) {
-			l.remove(ldl);
-		}
-	}
+
 }

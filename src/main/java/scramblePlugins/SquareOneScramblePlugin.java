@@ -3,10 +3,7 @@ package scramblePlugins;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -72,7 +69,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+	public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
 		slashes = attributes.contains(SLASHES_ATTRIBUTE);
 		setGenerator(generatorGroup);
 		return new ScrambleString(generateScramble(variation.getLength()), false, variation, this, null);
@@ -297,7 +294,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	public BufferedImage getScrambleImage(int gap, int radius, Map<String, Color> colorScheme) {
+	public BufferedImage getScrambleImage(ScrambleString scrambleString, int gap, int radius, Map<String, Color> colorScheme) {
 		Dimension dim = getImageSize(gap, radius, null);
 		int width = dim.width;
 		int height = dim.height;

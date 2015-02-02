@@ -18,6 +18,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Singleton
 public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
@@ -47,7 +48,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	}
 
 	public void setSession(@NotNull Session session) {
-		this.session = Objects.requireNonNull(session);;
+		this.session = Objects.requireNonNull(session);
 		if(stats != null) {
 			stats.setUndoRedoListener(null);
 			stats.setTableListener(null);
@@ -174,11 +175,11 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		} else {
 			if(source == discard) {
 				timesTable.deleteSelectedRows(false);
-			} else { //one of the jradio buttons
-				ArrayList<SolveType> types = new ArrayList<>();
-				for(SolveType key : typeButtons.keySet())
-					if(typeButtons.get(key).isSelected())
-						types.add(key);
+			} else {
+			 	//one of the jradio buttons
+				List<SolveType> types = typeButtons.keySet().stream()
+						.filter(key -> typeButtons.get(key).isSelected())
+						.collect(Collectors.toList());
 				stats.setSolveTypes(timesTable.getSelectedRow(), types);
 			}
 		}

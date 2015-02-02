@@ -3,10 +3,7 @@ package scramblePlugins;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.*;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +70,7 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	protected ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+	public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
 		boolean pochmann = variation.getName().equals(POCHMANN_VARIATION_NAME);
 		return new ScrambleString(generateScramble(variation.getLength(), pochmann), false, variation, this, null);
 	}
@@ -342,7 +339,7 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	public BufferedImage getScrambleImage(int gap, int minxRad, Map<String, Color> colorScheme) {
+	public BufferedImage getScrambleImage(ScrambleString scrambleString, int gap, int minxRad, Map<String, Color> colorScheme) {
 		Dimension dim = getImageSize(gap, minxRad, null);
 		BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
 		drawMinx(buffer.createGraphics(), gap, minxRad, colorScheme);

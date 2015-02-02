@@ -7,7 +7,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin.InvalidScrambleException;
+import net.gnehzr.cct.scrambles.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.log4j.Logger;
@@ -43,7 +43,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 
 	private ScrambleString currentScramble;
 	private String incrementScramble;
-	private ScrambleString fullScramblePlugin;
+	private ScrambleString fullScramble;
 	private ScrambleCustomization currentCustomization;
 	private StringBuilder part1, part2, part3;
 	private int moveNum;
@@ -131,8 +131,8 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 
 	public void setScramble(ScrambleString newScramble, ScrambleCustomization sc) {
 		currentCustomization = sc;
-		fullScramblePlugin = newScramble;
-		currentScramble = fullScramblePlugin;
+		fullScramble = newScramble;
+		currentScramble = fullScramble;
 
 		Font font = configuration.getFont(VariableKey.SCRAMBLE_FONT, false);
 		StringBuilder fontStyle = new StringBuilder(); 
@@ -160,7 +160,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 		Matcher m;
 		int num = 0;
 		Pattern regex = currentCustomization.getScramblePlugin().getTokenRegex();
-		if(regex == null || fullScramblePlugin == null) {
+		if(regex == null || fullScramble == null) {
 			regex = NULL_SCRAMBLE_REGEX;
 		}
 		
@@ -194,7 +194,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 				incrementScramble = moveAndScramble[1];
 			}
 			updateScramblePane();
-			scramblePopup.setScramble(incrementalScramble(), fullScramblePlugin, currentCustomization.getScrambleVariation());
+			scramblePopup.setScramble(incrementalScramble(), fullScramble, currentCustomization.getScrambleVariation());
 		}
 	}
 

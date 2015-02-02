@@ -20,27 +20,27 @@ public class SolveTimeTest {
 
     @Test
     public void testConstructor() throws Exception {
-        SolveTime solveTime = new SolveTime(123.45, "R' U2 B", configuration);
+        SolveTime solveTime = new SolveTime(123.45, "R' U2 B");
         assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
     }
 
     @Test
     public void testParseTime() throws Exception {
-        SolveTime solveTime = new SolveTime("123.45", "R' U2 B", configuration);
+        SolveTime solveTime = new SolveTime("123.45", "R' U2 B");
         assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
     }
 
     @Test(enabled = false)
     public void testSplitsToString() {
         SolveTime solveTime = new SolveTime(new TimerState(configuration, Duration.ofMinutes(2)), "R' U2", ImmutableList.of(
-                new SolveTime(30.02, "R", configuration),
-                new SolveTime(89.98, "U2", configuration)
-        ), configuration);
+                new SolveTime(30.02, "R"),
+                new SolveTime(89.98, "U2")
+        ));
         assertThat(solveTime.toSplitsString(), containsString("jghhfug"));
     }
 
     @Test
     public void testEmptySplitsTimeToString() {
-        assertThat(new SolveTime(123.22, "U B' D2", configuration).toSplitsString(), isEmptyString());
+        assertThat(new SolveTime(123.22, "U B' D2").toSplitsString(), isEmptyString());
     }
 }

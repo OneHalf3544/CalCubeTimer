@@ -156,7 +156,7 @@ public class DynamicString{
 							if (timeMatcher.matches()) {
 								String u = timeMatcher.group(1);
 								if (u.equals("best")) {
-									r = ps.getBestTime().toString();
+									r = ps.getBestTime().toString(configuration);
 								}
 								else {
 									r = "Unimplemented: " + u + " : " + sorig;
@@ -265,10 +265,10 @@ public class DynamicString{
 									r = formatProgressTime(stats.getProgressTime(), parens);
 									break;
 								case "best":
-									r = stats.getBestTime().toString();
+									r = stats.getBestTime().toString(configuration);
 									break;
 								case "worst":
-									r = stats.getWorstTime().toString();
+									r = stats.getWorstTime().toString(configuration);
 									break;
 								case "recent":
 									r = Utils.formatTime(stats.getCurrentTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
@@ -378,10 +378,10 @@ public class DynamicString{
 										case "best":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfBestAverage(num).toString();
+													r = stats.getBestTimeOfBestAverage(num).toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfBestAverage(num).toString();
+													r = stats.getWorstTimeOfBestAverage(num).toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + sorig;
@@ -391,10 +391,10 @@ public class DynamicString{
 										case "worst":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfWorstAverage(num).toString();
+													r = stats.getBestTimeOfWorstAverage(num).toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfWorstAverage(num).toString();
+													r = stats.getWorstTimeOfWorstAverage(num).toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + sorig;
@@ -404,10 +404,10 @@ public class DynamicString{
 										case "recent":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfCurrentAverage(num).toString();
+													r = stats.getBestTimeOfCurrentAverage(num).toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfCurrentAverage(num).toString();
+													r = stats.getWorstTimeOfCurrentAverage(num).toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + sorig;
@@ -417,10 +417,10 @@ public class DynamicString{
 										case "last":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfLastAverage(num).toString();
+													r = stats.getBestTimeOfLastAverage(num).toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfLastAverage(num).toString();
+													r = stats.getWorstTimeOfLastAverage(num).toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + sorig;

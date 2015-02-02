@@ -78,7 +78,7 @@ public class DatabaseLoader extends DefaultHandler {
         } else if (name.equalsIgnoreCase("solve")) {
             if (level != 3)
                 throw new SAXException("3rd level expected for solve tag.");
-            solve = new SolveTime(configuration);
+            solve = new SolveTime(0.0, "");
             seshCommentOrSolveTime = "";
         } else if (name.equalsIgnoreCase("comment")) {
             if (level == 3)

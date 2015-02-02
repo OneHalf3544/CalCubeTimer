@@ -1,7 +1,7 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.statistics.Statistics;
+import net.gnehzr.cct.statistics.CCTUndoableEdit;
 
 /**
 * <p>
@@ -11,7 +11,7 @@ import net.gnehzr.cct.statistics.Statistics;
 *
 * @author OneHalf
 */
-class CustomizationEdit implements Statistics.CCTUndoableEdit {
+class CustomizationEdit implements CCTUndoableEdit {
 
     private final CalCubeTimerModel calCubeTimerModel;
     private ScrambleCustomization oldCustom;

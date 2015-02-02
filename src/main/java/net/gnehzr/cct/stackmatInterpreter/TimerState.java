@@ -23,7 +23,7 @@ public class TimerState implements Comparable<TimerState> {
 	}
 
 	public SolveTime toSolveTime(String scramble, List<SolveTime> splits) {
-		return new SolveTime(this, scramble, splits, configuration);
+		return new SolveTime(this, scramble, splits);
 	}
 
 	public Duration getTime() {

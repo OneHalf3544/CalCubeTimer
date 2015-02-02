@@ -63,8 +63,9 @@ public class ScramblePopupFrame extends JDialog {
 	public void setVisible(boolean c) {
 		//this is here to prevent calls to setVisible(true) when the popup is already visible
 		//if we were to allow these, then the main gui could pop up on top of our fullscreen panel
-		if(isVisible() == c)
+		if(isVisible() == c) {
 			return;
+		}
 		if(incrementalScrambleView.scrambleHasImage()) {
 			configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, c);
 			visibilityAction.putValue(Action.SELECTED_KEY, c);
@@ -80,14 +81,14 @@ public class ScramblePopupFrame extends JDialog {
 			setLocation(location);
 	}
 
-	public void setScramble(ScrambleString incrementalScramblePlugin, ScrambleString fullScramblePlugin, ScrambleVariation newVariation) {
-		incrementalScrambleView.setScramble(incrementalScramblePlugin, newVariation);
-		finalView.setScramble(fullScramblePlugin, newVariation);
-		String info = incrementalScramblePlugin.getTextComments();
+	public void setScramble(ScrambleString incrementalScramble, ScrambleString fullScramble, ScrambleVariation newVariation) {
+		incrementalScrambleView.setScramble(incrementalScramble, newVariation);
+		finalView.setScramble(fullScramble, newVariation);
+		String info = incrementalScramble.getTextComments();
 		if(info == null) {
 			pane.remove(scrambleInfoScroller);
 		} else {
-			scrambleInfoTextArea.setText(incrementalScramblePlugin.getTextComments());
+			scrambleInfoTextArea.setText(incrementalScramble.getTextComments());
 			scrambleInfoScroller.setPreferredSize(incrementalScrambleView.getPreferredSize()); //force scrollbars if necessary
 			scrambleInfoTextArea.setCaretPosition(0); //force scroll to the top
 			pane.add(scrambleInfoScroller);
@@ -111,16 +112,17 @@ public class ScramblePopupFrame extends JDialog {
 				maybeShowPopup(e);
 			}
 
-			private void maybeShowPopup(MouseEvent e) {
-				if(e.isPopupTrigger()) {
-					JPopupMenu popup = new JPopupMenu();
+			private void maybeShowPopup(MouseEvent mouseEvent) {
+				if(mouseEvent.isPopupTrigger()) {
 					JCheckBoxMenuItem showFinal = new JCheckBoxMenuItem(StringAccessor.getString("ScrambleFrame.showfinalview"), isFinalViewVisible());
 					showFinal.addActionListener(e1 -> {
                         JCheckBoxMenuItem src = (JCheckBoxMenuItem) e1.getSource();
                         setFinalViewVisible(src.isSelected());
                     });
+
+					JPopupMenu popup = new JPopupMenu();
 					popup.add(showFinal);
-					popup.show(ScramblePopupFrame.this, e.getX(), e.getY());
+					popup.show(ScramblePopupFrame.this, mouseEvent.getX(), mouseEvent.getY());
 				}
 			}
 		};
@@ -132,11 +134,15 @@ public class ScramblePopupFrame extends JDialog {
 
 	public void setFinalViewVisible(boolean visible) {
 		configuration.setBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, visible);
-		if(isFinalViewVisible() == visible) return;
-		if(visible)
+		if(isFinalViewVisible() == visible) {
+			return;
+		}
+		if(visible) {
 			pane.add(finalView, 1);
-		else
+		}
+		else {
 			pane.remove(finalView);
+		}
 		pack();
 	}
 }

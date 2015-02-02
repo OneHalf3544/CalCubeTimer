@@ -174,23 +174,9 @@ public class ScramblePluginManager {
 				customizationName = name.substring(delimeter + 1, name.length());
 			}
 			String variationName = name.substring(0, delimeter);
-			ScrambleCustomization scramCustomization = null;
-			for(ScrambleCustomization custom : scrambleCustomizations) {
-				if(variationName.equals(custom.toString())) {
-					scramCustomization = custom;
-					break;
-				}
-			}
-			ScrambleCustomization sc;
-			if(scramCustomization != null) {
-				sc = new ScrambleCustomization(configuration, scramCustomization.getScrambleVariation(), customizationName, this);
-			}
-			else if(variationName.equals(NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation().toString())) {
-				sc = new ScrambleCustomization(configuration, NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation(), customizationName, this);
-			}
-			else {
-				sc = new ScrambleCustomization(configuration, new ScrambleVariation(NULL_SCRAMBLE_PLUGIN, variationName, configuration, this), customizationName, this);
-			}
+
+			ScrambleCustomization scramCustomization = searchCustomizationByName(scrambleCustomizations, variationName);
+			ScrambleCustomization sc = new ScrambleCustomization(configuration, scramCustomization.getVariation(), customizationName, this);
 			if (!variationName.isEmpty()) {
 				if(scrambleCustomizations.contains(sc)) {
 					if(ch == customNames.size() - 1) {
@@ -205,6 +191,13 @@ public class ScramblePluginManager {
 		return scrambleCustomizations;
 	}
 
+	private ScrambleCustomization searchCustomizationByName(List<ScrambleCustomization> customizations, String variationName) {
+		return customizations.stream()
+				.filter(variationName::equals)
+				.findAny()
+				.orElse(NULL_SCRAMBLE_CUSTOMIZATION);
+	}
+
 	public List<String> getAvailablePuzzleAttributes(Class<? extends ScramblePlugin> aClass) {
 		return getScramblePlugin(aClass).getAttributes();
 	}
@@ -213,8 +206,9 @@ public class ScramblePluginManager {
 		return scramblePlugins.get(aClass);
 	}
 
-	public BufferedImage getScrambleImage(final ScrambleString instance, final int gap, final int unitSize, final Map<String, Color> colorScheme) {
-		return instance.getScramblePlugin().getScrambleImage(gap, Math.max(unitSize, instance.getScramblePlugin().getDefaultUnitSize()), colorScheme);
+	public BufferedImage getScrambleImage(final ScrambleString scramble, final int gap, final int unitSize, final Map<String, Color> colorScheme) {
+		int finalUnitSize = Math.max(unitSize, scramble.getScramblePlugin().getDefaultUnitSize());
+		return scramble.getScramblePlugin().getScrambleImage(scramble, gap, finalUnitSize, colorScheme);
 	}
 
 	public String getDefaultGeneratorGroup(ScrambleVariation var) {
@@ -268,7 +262,7 @@ public class ScramblePluginManager {
 		return generatorConfig == null ? getDefaultGeneratorGroup(scrambleCustomization.getVariation()) : generatorConfig;
 	}
 
-	// todo scramble generator not save without configuration configuration dialog opening
+	// todo scramble generator not save without configuration dialog
 	public void saveGeneratorToConfiguration(ScrambleCustomization scrambleCustomization) {
 		if(isGeneratorEnabled(scrambleCustomization.getScrambleVariation())) {
 			configuration.setString(
