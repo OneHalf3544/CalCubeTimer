@@ -28,13 +28,13 @@ public class UtilsTest {
     @DataProvider(name = "times")
     private Object[][] getTimes() {
         return new Object[][]{
-                {new SolveTime(2134234.23, "F' U2 R"), "592:50:2.30"},
-                {new SolveTime(34.23, "F' U2 R"), "592:50:2.30"},
+                {new SolveTime(2134234.23), "592:50:2.30"},
+                {new SolveTime(34.23), "592:50:2.30"},
         };
     }
 
     @Test
     public void testClockFormat() throws Exception {
-        assertEquals(Utils.clockFormat(new SolveTime(72.2142, null)), "1:12:21");
+        assertEquals(Utils.clockFormat(new SolveTime(72.2142)), "1:12:21");
     }
 }

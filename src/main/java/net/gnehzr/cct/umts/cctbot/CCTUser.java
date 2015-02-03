@@ -52,7 +52,7 @@ public class CCTUser {
 	}
 	private SolveTime toSolveTime(String time) {
 		try {
-			return new SolveTime(time, null);
+			return new SolveTime(time);
 		} catch(Exception e) {
 			return SolveTime.NA;
 		}
@@ -108,25 +108,31 @@ public class CCTUser {
 		} else
 			startTime = System.currentTimeMillis() - state.getTime().toMillis();
 	}
-	public String getTimingState(boolean formatted) {
-		if(startTime == INSPECTING)
-			return INSPECTING_MSG;
-		if(startTime == STOPPED)
-			return "";
-		long netTime = System.currentTimeMillis() - startTime;
-		if(!formatted)
-			return "" + netTime;
 
-		return new SolveTime(netTime / 1000., null).toString();
+	public String getTimingState(boolean formatted) {
+		if(startTime == INSPECTING) {
+			return INSPECTING_MSG;
+		}
+		if(startTime == STOPPED) {
+			return "";
+		}
+		long netTime = System.currentTimeMillis() - startTime;
+		if(!formatted) {
+			return "" + netTime;
+		}
+
+		return new SolveTime(netTime / 1000.).toString(configuration);
 	}
 
 	public void setCurrentRA(SolveTime average, String terseTimes) {
 		currRA = average;
 		currRASolves = terseTimes;
 	}
+
 	public SolveTime getCurrentRA() {
 		return denullify(currRA);
 	}
+
 	public String getCurrRASolves() {
 		return denullify(currRASolves);
 	}

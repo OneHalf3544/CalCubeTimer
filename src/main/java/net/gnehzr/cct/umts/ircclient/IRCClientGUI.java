@@ -993,7 +993,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 	void syncUserStateNOW(CALCubeTimerFrame calCubeTimerFrame, CCTUser myself) {
 		myself.setCustomization(calCubeTimerFrame.getScrambleCustomizationComboBox().getSelectedItem().toString());
 
-		myself.setLatestTime(statsModel.getCurrentStatistics().get(-1));
+		myself.setLatestTime(statsModel.getCurrentStatistics().get(-1).getTime());
 
 		TimerState state = calCubeTimerFrame.getTimeLabel().getTimerState();
 		if(!calCubeTimerModel.isTiming()) {
@@ -1004,7 +1004,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 		Statistics stats = statsModel.getCurrentStatistics();
 		myself.setCurrentRA(stats.average(Statistics.AverageType.CURRENT, 0), stats.toTerseString(Statistics.AverageType.CURRENT, 0, true));
 		myself.setBestRA(stats.average(Statistics.AverageType.RA, 0), stats.toTerseString(Statistics.AverageType.RA, 0, false));
-		myself.setSessionAverage(new SolveTime(stats.getSessionAvg(), null));
+		myself.setSessionAverage(new SolveTime(stats.getSessionAvg()));
 
 		myself.setSolvesAttempts(stats.getSolveCount(), stats.getAttemptCount());
 

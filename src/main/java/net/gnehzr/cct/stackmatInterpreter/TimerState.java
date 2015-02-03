@@ -1,6 +1,8 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.statistics.Solution;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,8 +24,8 @@ public class TimerState implements Comparable<TimerState> {
 		this.time = time;
 	}
 
-	public SolveTime toSolveTime(String scramble, List<SolveTime> splits) {
-		return new SolveTime(this, scramble, splits);
+	public Solution toSolution(ScrambleString scramble, List<SolveTime> splits) {
+		return new Solution(this, scramble, splits);
 	}
 
 	public Duration getTime() {
@@ -33,6 +35,7 @@ public class TimerState implements Comparable<TimerState> {
 	public int hashCode() {
 		return this.getTime().hashCode();
 	}
+
 	public boolean equals(Object obj) {
 		if(obj instanceof TimerState) {
 			TimerState o = (TimerState) obj;
@@ -43,14 +46,14 @@ public class TimerState implements Comparable<TimerState> {
 
 	@Override
 	public int compareTo(@NotNull TimerState o) {
-		if(o == null || o.getTime() == null) {
+		if(o.getTime() == null) {
 			return (int) this.getTime().toMillis();
 		}
 		return this.getTime().compareTo(o.getTime());
 	}
 	@Override
 	public String toString() {
-		return toSolveTime(null, null).toString();
+		return new SolveTime(getTime()).toString(configuration);
 	}
 
 	public void setTime(Duration value) {

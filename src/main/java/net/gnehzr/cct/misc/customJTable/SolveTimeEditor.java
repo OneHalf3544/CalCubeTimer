@@ -27,7 +27,7 @@ public class SolveTimeEditor extends DefaultCellEditor {
 	public boolean stopCellEditing() {
 		String s = (String) super.getCellEditorValue();
 		try {
-			value = new SolveTime(s, null);
+			value = new SolveTime(s);
 		} catch (Exception e) {
 			JComponent component = (JComponent) getComponent();
 			component.setBorder(new LineBorder(Color.RED));

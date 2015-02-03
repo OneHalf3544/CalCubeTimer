@@ -75,8 +75,8 @@ public class ScrambleList {
 		return scrambles.size();
 	}
 	
-	public void addScramble(String scramble) {
-		scrambles.add(new ScrambleString(scramble, false, currentScrambleCustomisation.getScrambleVariation(), currentScrambleCustomisation.getScramblePlugin(), null));
+	public void addScramble(ScrambleString scramble) {
+		scrambles.add(scramble);
 	}
 	
 	public ScrambleString getCurrent() {

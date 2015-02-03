@@ -5,12 +5,10 @@ import javazoom.jl.decoder.JavaLayerException;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.statistics.ProfileDatabase;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.ScrambleList;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
@@ -74,7 +72,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     private boolean timing = false;
     private final ProfileDao profileDao;
-    private final ScramblePluginManager scramblePluginManager;
 
     final NumberSpeaker numberSpeaker;
     ActionMap actionMap;
@@ -97,15 +94,14 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     public CalCubeTimerModelImpl(CalCubeTimerGui calCubeTimerGui, Configuration configuration, ProfileDao profileDao,
-                                 ScramblePluginManager scramblePluginManager, StatisticsTableModel statsModel1,
-                                 NumberSpeaker numberSpeaker, ActionMap actionMap, CctModelConfigChangeListener cctModelConfigChangeListener) {
+                                 StatisticsTableModel statsModel1, NumberSpeaker numberSpeaker,
+                                 ActionMap actionMap, CctModelConfigChangeListener cctModelConfigChangeListener) {
         this.calCubeTimerGui = calCubeTimerGui;
         statsModel = statsModel1;
         this.configuration = configuration;
         this.profileDao = profileDao;
         this.numberSpeaker = numberSpeaker;
         this.actionMap = initializeActionMap(actionMap);
-        this.scramblePluginManager = scramblePluginManager;
         configuration.addConfigurationChangeListener(cctModelConfigChangeListener);
     }
 
@@ -309,12 +305,12 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void addTime(TimerState addMe) {
-        SolveTime protect = addMe.toSolveTime(null, splits);
+        Solution protect = addMe.toSolution(null, splits);
         if(penalty == null) {
-            protect.clearType();
+            protect.getTime().clearType();
         }
         else {
-            protect.setTypes(Arrays.asList(penalty));
+            protect.getTime().setTypes(Arrays.asList(penalty));
         }
         penalty = null;
         splits = new ArrayList<>();
@@ -342,10 +338,10 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             case JOptionPane.YES_OPTION:
                 break;
             case JOptionPane.NO_OPTION:
-                protect.setTypes(Arrays.asList(SolveType.PLUS_TWO));
+                protect.getTime().setTypes(Arrays.asList(SolveType.PLUS_TWO));
                 break;
             case JOptionPane.CANCEL_OPTION:
-                protect.setTypes(Arrays.asList(SolveType.DNF));
+                protect.getTime().setTypes(Arrays.asList(SolveType.DNF));
                 break;
             default:
                 return;

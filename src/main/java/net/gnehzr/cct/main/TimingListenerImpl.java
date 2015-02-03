@@ -8,6 +8,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.umts.ircclient.IRCClient;
 import org.apache.log4j.Logger;
 
@@ -36,9 +37,9 @@ class TimingListenerImpl implements TimingListener {
     @Inject
     private IRCClient ircClient;
     @Inject @Named("timeLabel")
-    private TimerLabel timeLabel = null;
+    private TimerLabel timeLabel;
     @Inject @Named("bigTimersDisplay")
-    private TimerLabel bigTimersDisplay = null;
+    private TimerLabel bigTimersDisplay;
 
     @Inject
     public TimingListenerImpl(Configuration configuration) {
@@ -107,13 +108,15 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerStopped(TimerState newTime) {
-        LOG.info("timer stopped: " + newTime);
+        LOG.info("timer stopped: " + new SolveTime(newTime.getTime()));
         model.setTiming(false);
         model.addTime(newTime);
-        if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false))
+        if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)) {
             calCubeTimerFrame.setFullScreen(false);
-        if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false))
+        }
+        if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false)) {
             model.stopMetronome();
+        }
         ircClient.sendUserstate();
     }
 

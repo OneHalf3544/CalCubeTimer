@@ -78,7 +78,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         if (cubeSize == 3 && variation.getLength() > 0)
             scramble = Search.solution(Tools.randomCube(), 21, 10, false);
         else {
-            scramble = generateScramble(variation.getLength(), cubeSize, image);
+            scramble = generateScramble(variation.getLength(), cubeSize, image, multislice);
 
         }
         return new ScrambleString(scramble, false, variation, this, getTextComments(scramble, cubeSize, generatorGroup));
@@ -162,7 +162,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     protected String getTextComments(String scramble, int cubeSize, String generatorGroup) {
-                if (!optimalCross || cubeSize != 3) {
+        if (!optimalCross || cubeSize != 3) {
             return null;
         }
 
@@ -232,7 +232,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return CrossSolver.solveCross(solveCrossFace, solveCrossSide, scramble);
     }
 
-    private String generateScramble(int length, int cubeSize, String[][][] image) {
+    private String generateScramble(int length, int cubeSize, String[][][] image, boolean multislice) {
         if (length == 0) {
             return "";
         }
@@ -367,7 +367,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
                 do {
                     slice(face, slice, direction, image, cubeSize);
                     slice--;
-                } while (this.multislice && slice >= 0);
+                } while (multislice && slice >= 0);
             }
             return true;
         }

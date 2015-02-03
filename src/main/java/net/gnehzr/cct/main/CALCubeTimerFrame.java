@@ -381,41 +381,37 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 	@Override
 	public void loadStringsFromDefaultLocale() {
-		Utils.doInWaitingState(this, () -> {
-			//this loads the strings for the swing components we use (JColorChooser and JFileChooser)
-			UIManager.getDefaults().setDefaultLocale(Locale.getDefault());
-			try {
-				ResourceBundle messages = ResourceBundle.getBundle("languages/javax_swing");
-				for(String key : messages.keySet())
-					UIManager.put(key, messages.getString(key));
-			} catch(MissingResourceException e) {
-				throw Throwables.propagate(e);
-			}
+		//this loads the strings for the swing components we use (JColorChooser and JFileChooser)
+		UIManager.getDefaults().setDefaultLocale(Locale.getDefault());
+		try {
+			ResourceBundle messages = ResourceBundle.getBundle("languages/javax_swing");
+			for(String key : messages.keySet())
+				UIManager.put(key, messages.getString(key));
+		} catch(MissingResourceException e) {
+			throw Throwables.propagate(e);
+		}
 
-			StringAccessor.clearResources();
-			xmlGuiMessages.reloadResources();
-			statsModel.fireStringUpdates(); //this is necessary to update the undo-redo actions
+		StringAccessor.clearResources();
+		xmlGuiMessages.reloadResources();
+		statsModel.fireStringUpdates(); //this is necessary to update the undo-redo actions
 
-			customGUIMenu.setText(StringAccessor.getString("CALCubeTimer.loadcustomgui"));
-			timesTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
-			scramblePopup.setTitle(StringAccessor.getString("CALCubeTimer.scrambleview"));
-			scrambleNumber.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblenumber"));
-			scrambleLengthSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblelength"));
-			scrambleHyperlinkArea.updateStrings();
+		customGUIMenu.setText(StringAccessor.getString("CALCubeTimer.loadcustomgui"));
+		timesTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
+		scramblePopup.setTitle(StringAccessor.getString("CALCubeTimer.scrambleview"));
+		scrambleNumber.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblenumber"));
+		scrambleLengthSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblelength"));
+		scrambleHyperlinkArea.updateStrings();
 
-			model.getTimingListener().stackmatChanged(); //force the stackmat label to refresh
-			timesTable.refreshColumnNames();
-			sessionsTable.refreshColumnNames();
+		model.getTimingListener().stackmatChanged(); //force the stackmat label to refresh
+		timesTable.refreshColumnNames();
+		sessionsTable.refreshColumnNames();
 
-			// setLookAndFeel();
-			createScrambleAttributesPanel();
-			configurationDialog = null; //this will force the config dialog to reload when necessary
+		// setLookAndFeel();
+		createScrambleAttributesPanel();
+		configurationDialog = null; //this will force the config dialog to reload when necessary
 
-			SwingUtilities.updateComponentTreeUI(this);
-			SwingUtilities.updateComponentTreeUI(scramblePopup);
-
-		});
-
+		SwingUtilities.updateComponentTreeUI(this);
+		SwingUtilities.updateComponentTreeUI(scramblePopup);
 	}
 
 	@Override
@@ -614,14 +610,14 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 	@Override
 	public void tableChanged(TableModelEvent event) {
-		final SolveTime latestTime = statsModel.getCurrentStatistics().get(-1);
-		if(latestTime != null) {
+		final Solution latestSolution = statsModel.getCurrentStatistics().get(-1);
+		if(latestSolution != null) {
 			ircClient.sendUserstate();
 		}
 		if(event != null && event.getType() == TableModelEvent.INSERT) {
-			ScrambleString curr = model.getScramblesList().getCurrent();
-			latestTime.setScramble(curr.getScramble());
-			boolean outOfScrambles = curr.isImported(); //This is tricky, think before you change it
+			ScrambleString currentScramble = model.getScramblesList().getCurrent();
+			latestSolution.setScramble(currentScramble);
+			boolean outOfScrambles = currentScramble.isImported(); //This is tricky, think before you change it
 			outOfScrambles = !model.getScramblesList().getNext().isImported() && outOfScrambles;
 			if(outOfScrambles) {
 				Utils.showWarningDialog(this,
@@ -634,7 +630,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 			Rectangle newTimeRect = timesTable.getCellRect(statsModel.getRowCount(), 0, true);
 			timesTable.scrollRectToVisible(newTimeRect);
 
-			model.speakTime(latestTime, this);
+			model.speakTime(latestSolution.getTime(), this);
 		}
 		repaintTimes();
 	}
@@ -770,12 +766,13 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	public void addSplit(TimerState state) {
 		long currentTime = System.currentTimeMillis();
 		if((currentTime - model.getLastSplit()) / 1000. > configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, false)) {
+			// todo hands variable is unused
 			String hands = "";
 			if(state instanceof StackmatState) {
 				hands += ((StackmatState) state).leftHand() ? StringAccessor.getString("CALCubeTimer.lefthand")
 														    : StringAccessor.getString("CALCubeTimer.righthand");
 			}
-			model.getSplits().add(state.toSolveTime(hands, null));
+			model.getSplits().add(state.toSolution(null, null).getTime());
 			model.setLastSplit(currentTime);
 		}
 	}

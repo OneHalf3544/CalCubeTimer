@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.SortedProperties;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.testng.annotations.Test;
 
@@ -20,27 +21,27 @@ public class SolveTimeTest {
 
     @Test
     public void testConstructor() throws Exception {
-        SolveTime solveTime = new SolveTime(123.45, "R' U2 B");
+        SolveTime solveTime = new SolveTime(123.45);
         assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
     }
 
     @Test
     public void testParseTime() throws Exception {
-        SolveTime solveTime = new SolveTime("123.45", "R' U2 B");
+        SolveTime solveTime = new SolveTime("123.45");
         assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
     }
 
     @Test(enabled = false)
     public void testSplitsToString() {
-        SolveTime solveTime = new SolveTime(new TimerState(configuration, Duration.ofMinutes(2)), "R' U2", ImmutableList.of(
-                new SolveTime(30.02, "R"),
-                new SolveTime(89.98, "U2")
+        Solution solveTime = new Solution(new TimerState(configuration, Duration.ofMinutes(2)), ScramblePluginManager.NULL_CREATED_SCRAMBLE, ImmutableList.of(
+                new SolveTime(30.02),
+                new SolveTime(89.98)
         ));
         assertThat(solveTime.toSplitsString(), containsString("jghhfug"));
     }
 
     @Test
     public void testEmptySplitsTimeToString() {
-        assertThat(new SolveTime(123.22, "U B' D2").toSplitsString(), isEmptyString());
+        assertThat(new Solution(new SolveTime(123.22), null).toSplitsString(), isEmptyString());
     }
 }

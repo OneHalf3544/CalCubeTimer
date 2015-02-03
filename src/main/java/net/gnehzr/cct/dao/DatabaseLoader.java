@@ -1,11 +1,11 @@
 package net.gnehzr.cct.dao;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.scrambles.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.Session;
-import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.statistics.*;
+import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Collections;
 
 /**
 * <p>
@@ -26,10 +27,19 @@ import java.time.format.DateTimeParseException;
 */
 public class DatabaseLoader extends DefaultHandler {
 
+    private static final Logger LOG = Logger.getLogger(DatabaseLoader.class);
+
     private Profile profile;
     private final Configuration configuration;
     private final StatisticsTableModel statsModel;
     private final ScramblePluginManager scramblePluginManager;
+
+    private int level = 0;
+    private String customization;
+    private String seshCommentOrSolveTime;
+    private Session session;
+    private Solution solve;
+    private String solveCommentOrScrambleOrSplits;
 
     public DatabaseLoader(Profile profile, Configuration configuration, StatisticsTableModel statsModel, ScramblePluginManager scramblePluginManager) {
         this.profile = profile;
@@ -42,13 +52,6 @@ public class DatabaseLoader extends DefaultHandler {
     public InputSource resolveEntity(String publicId, String systemId) throws IOException, SAXException {
         return new InputSource(new FileInputStream(configuration.getDatabaseDTD()));
     }
-
-    private int level = 0;
-    private String customization;
-    private String seshCommentOrSolveTime;
-    private Session session;
-    private SolveTime solve;
-    private String solveCommentOrScrambleOrSplits;
 
     @Override
     public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
@@ -78,7 +81,7 @@ public class DatabaseLoader extends DefaultHandler {
         } else if (name.equalsIgnoreCase("solve")) {
             if (level != 3)
                 throw new SAXException("3rd level expected for solve tag.");
-            solve = new SolveTime(0.0, "");
+            solve = new Solution(SolveTime.NULL_TIME, null);
             seshCommentOrSolveTime = "";
         } else if (name.equalsIgnoreCase("comment")) {
             if (level == 3)
@@ -110,7 +113,9 @@ public class DatabaseLoader extends DefaultHandler {
 
         if (name.equalsIgnoreCase("solve")) {
             try {
-                solve.parseTime(seshCommentOrSolveTime);
+                SolveTime solveTime = SolveTime.parseTime(seshCommentOrSolveTime);
+                solve.setTime(solveTime);
+
                 session.getStatistics().add(solve);
             } catch (Exception e) {
                 throw new SAXException("Unable to parse time: " + seshCommentOrSolveTime + " " + e.toString(), e);
@@ -119,10 +124,15 @@ public class DatabaseLoader extends DefaultHandler {
             if (level == 3) {
                 session.setComment(seshCommentOrSolveTime);
             } else if (level == 4) {
-                solve.setComment(solveCommentOrScrambleOrSplits);
+                solve.getTime().setComment(solveCommentOrScrambleOrSplits);
             }
         } else if (name.equalsIgnoreCase("scramble")) {
-            solve.setScramble(solveCommentOrScrambleOrSplits);
+            try {
+                ScrambleVariation variation = scramblePluginManager.getBestMatchVariation(customization);
+                solve.setScramble(variation.getPlugin().importScramble(variation.withoutLength(), solveCommentOrScrambleOrSplits, "", Collections.<String>emptyList()));
+            } catch (InvalidScrambleException e) {
+                LOG.warn("wrong scramble: " + solveCommentOrScrambleOrSplits, e);
+            }
         } else if (name.equalsIgnoreCase("splits"))
             solve.setSplitsFromString(solveCommentOrScrambleOrSplits);
     }

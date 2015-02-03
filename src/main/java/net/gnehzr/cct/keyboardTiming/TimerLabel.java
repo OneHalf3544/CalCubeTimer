@@ -1,5 +1,6 @@
 package net.gnehzr.cct.keyboardTiming;
 
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
@@ -34,6 +35,34 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	private static final Logger LOG = Logger.getLogger(TimerLabel.class);
 
+	private static final Dimension MIN_SIZE = new Dimension(0, 150);
+
+	private static final BufferedImage RED_STATUS_IMAGE = loadImage("red-button.png");
+	private static final BufferedImage GREEN_STATUS_IMAGE = loadImage("green-button.png");;
+
+	private static BufferedImage loadImage(String imageName) {
+		try {
+			//can't use TimerLabel.class because the class hasn't been loaded yet
+			return ImageIO.read(CALCubeTimerFrame.class.getResourceAsStream(imageName));
+		} catch (IOException e) {
+			throw Throwables.propagate(e);
+		}
+	}
+
+	private BufferedImage currentStatusImage;
+
+	private boolean greenLight;
+	private TimerState time;
+	private Font font;
+
+	private Boolean leftHand, rightHand;
+
+	//What follows is some really nasty code to deal with linux and window's differing behavior for keyrepeats
+	private Hashtable<Integer, Long> timeup = new Hashtable<>(KeyEvent.KEY_LAST);
+
+
+	Hashtable<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
+
 	private KeyboardHandler keyHandler;
 	private ScrambleHyperlinkArea scrambleHyperlinkArea;
 	private final Configuration configuration;
@@ -56,7 +85,22 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 				refreshTimer();
 			}
 		});
-		addKeyListener(new KeyAdapter() {
+		addKeyListener(createKeyListener(configuration));
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				requestFocusInWindow();
+			}
+		});
+		setFocusTraversalKeysEnabled(false);
+	}
+
+	public void setKeyboardHandler(KeyboardHandler keyHandler) {
+		this.keyHandler = keyHandler;
+	}
+
+	private KeyAdapter createKeyListener(final Configuration configuration) {
+		return new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) return;
@@ -78,37 +122,25 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 				int code = e.getKeyCode();
 				timeup.put(code, e.getWhen());
 				ActionListener checkForKeyPress = new ActionListener() {
-                    @Override
+					@Override
 					public void actionPerformed(ActionEvent evt) {
-                        if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
-                            keyDown.put(keyCode, false);
-                            keyReallyReleased(e);
-                        }
-                        ((Timer) evt.getSource()).stop();
-                    }
-                    private int keyCode;
-                    public ActionListener setKeyCode(int keyCode) {
-                        this.keyCode = keyCode;
-                        return this;
-                    }
-                }.setKeyCode(code);
+						if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
+							keyDown.put(keyCode, false);
+							keyReallyReleased(e);
+						}
+						((Timer) evt.getSource()).stop();
+					}
+					private int keyCode;
+					public ActionListener setKeyCode(int keyCode) {
+						this.keyCode = keyCode;
+						return this;
+					}
+				}.setKeyCode(code);
 
 				new Timer(10, checkForKeyPress).start();
 			}
-		});
-		addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				requestFocusInWindow();
-			}
-		});
-		setFocusTraversalKeysEnabled(false);
+		};
 	}
-	public void setKeyboardHandler(KeyboardHandler keyHandler) {
-		this.keyHandler = keyHandler;
-	}
-	
-	private static final Dimension MIN_SIZE = new Dimension(0, 150);
 
 	@Override
 	public Dimension getMaximumSize() {
@@ -134,7 +166,6 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		}
 		refreshTimer();
 	}
-	private boolean greenLight;
 	public void setStackmatGreenLight(boolean greenLight) {
 		this.greenLight = greenLight;
 	}
@@ -145,14 +176,13 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		refreshTimer();
 	}
 
-	private TimerState time;
-
 	public void setTime(TimerState time) {
 		setForeground(configuration.getColor(VariableKey.TIMER_FG, false));
 		this.time = time;
 		super.setText(time.toString());
 		componentResized(null);
 	}
+
 	public TimerState getTimerState() {
 		return time;
 	}
@@ -164,12 +194,13 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		super.setText(s);
 		componentResized(null);
 	}
+
 	@Override
 	public void componentHidden(ComponentEvent arg0) {}
+
 	@Override
 	public void componentMoved(ComponentEvent arg0) {}
 
-	private Font font;
 	@Override
 	public void setFont(Font font) {
 		this.font = font;
@@ -192,36 +223,29 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	@Override
 	public void componentShown(ComponentEvent arg0) {}
 
-	private static BufferedImage curr, red, green;
-	static {
-		try { //can't use TimerLabel.class because the class hasn't been loaded yet
-			red = ImageIO.read(CALCubeTimerFrame.class.getResourceAsStream("red-button.png"));
-			green = ImageIO.read(CALCubeTimerFrame.class.getResourceAsStream("green-button.png"));
-		} catch (IOException e) {
-			LOG.info("unexpected exception", e);
-		}
-	}
 	@Override
 	public void paintComponent(Graphics g) {
 		if(configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false)) {
-			g.drawImage(curr, 10, 20, null);
+			g.drawImage(currentStatusImage, 10, 20, null);
 		}
 		g.drawImage(getImageForHand(leftHand), 10, getHeight() - 50, null);
 		g.drawImage(getImageForHand(rightHand), getWidth() - 50, getHeight() - 50, null);
 		super.paintComponent(g);
 	}
-	private Boolean leftHand, rightHand;
+
 	public void setHands(Boolean leftHand, Boolean rightHand) {
 		this.leftHand = leftHand;
 		this.rightHand = rightHand;
 	}
 	//see StackmatState for an explanation
 	private BufferedImage getImageForHand(Boolean hand) {
-		if(!on)
+		if(!on) {
 			return null;
-		if(hand == null)
-			return green;
-		return hand ? red : null;
+		}
+		if(hand == null) {
+			return GREEN_STATUS_IMAGE;
+		}
+		return hand ? RED_STATUS_IMAGE : null;
 	}
 
 	@Override
@@ -255,7 +279,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			boolean focused = isFocusOwner();
 			scrambleHyperlinkArea.setTimerFocused(focused);
 			if(focused) {
-				curr = green;
+				currentStatusImage = GREEN_STATUS_IMAGE;
 				if(keysDown)
 					lowered = true;
 				if(keysDown && canStartTimer())
@@ -269,7 +293,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 				else
 					title = StringAccessor.getString("TimerLabel.startinspection"); 
 			} else {
-				curr = red;
+				currentStatusImage = RED_STATUS_IMAGE;
 				title = StringAccessor.getString("TimerLabel.clickme"); 
 				borderColor = Color.GRAY;
 				releaseAllKeys();
@@ -277,7 +301,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		} else {
 			title = StringAccessor.getString("TimerLabel.keyboardoff"); 
 			if(on) {
-				curr = green;
+				currentStatusImage = GREEN_STATUS_IMAGE;
 				if(greenLight) {
 					lowered = true;
 					borderColor = Color.GREEN;
@@ -285,7 +309,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 					borderColor = Color.RED;
 				}
 			} else {
-				curr = red;
+				currentStatusImage = RED_STATUS_IMAGE;
 				borderColor = Color.GRAY;
 			}
 		}
@@ -293,15 +317,12 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		setBorder(BorderFactory.createTitledBorder(b, title, TitledBorder.LEFT, TitledBorder.DEFAULT_POSITION, null, Utils.invertColor(getBackground())));
 		repaint();
 	}
-	
 
-	//What follows is some really nasty code to deal with linux and window's differing behavior for keyrepeats
-	private Hashtable<Integer, Long> timeup = new Hashtable<>(KeyEvent.KEY_LAST);
 	long getTime(int keycode) {
 		Long temp = timeup.get(keycode);
 		return (temp == null) ? 0 : temp;
 	}
-	Hashtable<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
+
 	boolean isKeyDown(int keycode) {
 		Boolean temp = keyDown.get(keycode);
 		return (temp == null) ? false : temp;

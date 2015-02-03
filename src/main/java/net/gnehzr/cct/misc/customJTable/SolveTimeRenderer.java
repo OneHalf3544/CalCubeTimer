@@ -2,6 +2,7 @@ package net.gnehzr.cct.misc.customJTable;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.statistics.Solution;
 import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.statistics.Statistics;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
@@ -39,11 +40,11 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color foreground = null;
 		Color background = null;
 
-		if(value instanceof SolveTime) {
+		if(value instanceof Solution) {
 			Statistics times = statsModel.getCurrentStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
-			SolveTime st = (SolveTime) value;
+			Solution st = (Solution) value;
 			int whichRA;
 			if((whichRA = st.getWhichRA()) != -1) { //this indicates we're dealing with an average, not a solve time
 				int raSize = times.getRASize(whichRA);

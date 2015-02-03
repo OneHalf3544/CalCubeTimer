@@ -1,5 +1,6 @@
 package net.gnehzr.cct.statistics;
 
+import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
@@ -33,8 +34,22 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 	private UndoRedoListener undoRedoListener;
 
-	private String[] columnNames = new String[] { "StatisticsTableModel.times", "StatisticsTableModel.ra0", "StatisticsTableModel.ra1", "StatisticsTableModel.comment", "StatisticsTableModel.tags" };
-	private Class<?>[] columnClasses = new Class<?>[] { SolveTime.class, SolveTime.class, SolveTime.class, String.class, String.class };
+	private String[] columnNames = new String[] {
+			"StatisticsTableModel.times",
+			"StatisticsTableModel.ra0",
+			"StatisticsTableModel.ra1",
+			"StatisticsTableModel.comment",
+			"StatisticsTableModel.tags",
+			"StatisticsTableModel.puzzleName",
+	};
+	private Class<?>[] columnClasses = new Class<?>[] {
+			SolveTime.class,
+			SolveTime.class,
+			SolveTime.class,
+			String.class,
+			String.class,
+			String.class,
+	};
 
 	private JMenuItem edit, discard;
 	private DraggableJTable timesTable;
@@ -93,6 +108,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		statsListeners.forEach(StatisticsUpdateListener::update);
 		undoRedoListener.refresh();
 	}
+
 	@Override
 	public String getColumnName(int column) {
 		return StringAccessor.getString(columnNames[column]);
@@ -121,49 +137,60 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		switch(columnIndex) {
 		case 0: //get the solvetime for this index
-			return stats.get(rowIndex);
+			return stats.get(rowIndex).getTime();
 		case 1: //falls through
 		case 2: //get the RA for this index in this column
-			return stats.getRA(rowIndex, columnIndex - 1);
+			return stats.getRA(rowIndex, columnIndex - 1).getTime();
 		case 3:
-			return stats.get(rowIndex).getComment();
+			return stats.get(rowIndex).getTime().getComment();
 		case 4: //tags
-			return stats.get(rowIndex).getTypes().toString();
+			return Joiner.on(", ").join(stats.get(rowIndex).getTime().getTypes());
+		case 5: // scramble variation
+			return stats.get(rowIndex).getScramble().getVariation().getName();
 		default:
 			return null;
 		}
 	}
+
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		return columnIndex == 0 || columnIndex == 3;
 	}
+
 	@Override
 	public boolean isRowDeletable(int rowIndex) {
 		return true;
 	}
+
 	@Override
 	public void insertValueAt(Object value, int rowIndex) {
-		stats.add(rowIndex, (SolveTime) value);
+		stats.add(rowIndex, (Solution) value);
 		fireTableRowsInserted(rowIndex, rowIndex);
 	}
+
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
-		if(columnIndex == 0 && value instanceof SolveTime)
-			stats.set(rowIndex, (SolveTime) value);
-		else if(columnIndex == 3 && value instanceof String)
-			stats.get(rowIndex).setComment((String) value);
+		if(columnIndex == 0 && value instanceof Solution) {
+			stats.set(rowIndex, (Solution) value);
+		}
+		else if(columnIndex == 3 && value instanceof String) {
+			stats.get(rowIndex).getTime().setComment((String) value);
+		}
 	}
+
 	@Override
 	public void deleteRows(int[] indices) {
 		stats.remove(indices);
 	}
+
 	@Override
 	public void removeRows(int[] indices) {
 		deleteRows(indices);
 	}
+
 	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
-		String t = stats.get(rowIndex).getComment();
+		String t = stats.get(rowIndex).getTime().getComment();
 		return t.isEmpty() ? null : t;
 	}
 
@@ -197,9 +224,9 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			return;
 		}
 		else if(selectedSolves.length == 1) {
-			SolveTime selectedSolve = stats.get(timesTable.getSelectedRow());
+			Solution selectedSolve = stats.get(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
-					+ Utils.formatTime(selectedSolve, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ));
+					+ Utils.formatTime(selectedSolve.getTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ));
 			rawTime.setEnabled(false);
 			jpopup.add(rawTime);
 
@@ -213,8 +240,8 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			
 			typeButtons = new HashMap<>();
 			ButtonGroup independent = new ButtonGroup();
-			JMenuItem attr = new JRadioButtonMenuItem("<html><b>" + StringAccessor.getString("StatisticsTableModel.nopenalty") + "</b></html>", !selectedSolve.isPenalty());
-			attr.setEnabled(!selectedSolve.isTrueWorstTime());
+			JMenuItem attr = new JRadioButtonMenuItem("<html><b>" + StringAccessor.getString("StatisticsTableModel.nopenalty") + "</b></html>", !selectedSolve.getTime().isPenalty());
+			attr.setEnabled(!selectedSolve.getTime().isTrueWorstTime());
 			attr.addActionListener(this);
 			jpopup.add(attr);
 			independent.add(attr);
@@ -222,11 +249,11 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			Collection<SolveType> types = SolveType.getSolveTypes(solveTagsArray);
 			for(SolveType type : types) {
 				if(type.isIndependent()) {
-					attr = new JRadioButtonMenuItem("<html><b>" + type.toString() + "</b></html>", selectedSolve.isType(type));
-					attr.setEnabled(!selectedSolve.isTrueWorstTime());
+					attr = new JRadioButtonMenuItem("<html><b>" + type.toString() + "</b></html>", selectedSolve.getTime().isType(type));
+					attr.setEnabled(!selectedSolve.getTime().isTrueWorstTime());
 					independent.add(attr);
 				} else {
-					attr = new JCheckBoxMenuItem(type.toString(), selectedSolve.isType(type));
+					attr = new JCheckBoxMenuItem(type.toString(), selectedSolve.getTime().isType(type));
 				}
 				attr.addActionListener(this);
 				jpopup.add(attr);
@@ -243,12 +270,12 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		jpopup.show(e.getComponent(), e.getX(), e.getY());
 	}
 
-	private void addSplitsPopup(JPopupMenu jpopup, SolveTime selectedSolve) {
+	private void addSplitsPopup(JPopupMenu jpopup, Solution selectedSolve) {
 		List<SolveTime> splits = selectedSolve.getSplits();
 		for (int i = 0; i < splits.size(); i++) {
 			SolveTime next = splits.get(i);
-			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.split") + i
-					+ ": " + next + "\t" + next.getScramble());
+
+			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.split") + i + ": " + next);
 			rawTime.setEnabled(false);
 			jpopup.add(rawTime);
 		}

@@ -14,9 +14,10 @@ import java.util.List;
 class StatisticsEdit implements CCTUndoableEdit {
     private Statistics statistics;
     private int[] positions;
-    SolveTime[] oldTimes;
-    private SolveTime newTime;
-    public StatisticsEdit(Statistics statistics, int[] rows, SolveTime[] oldValues, SolveTime newValue) {
+    Solution[] oldTimes;
+    private Solution newTime;
+
+    public StatisticsEdit(Statistics statistics, int[] rows, Solution[] oldValues, Solution newValue) {
         this.statistics = statistics;
         positions = rows;
         oldTimes = oldValues;
@@ -36,7 +37,7 @@ class StatisticsEdit implements CCTUndoableEdit {
     @Override
     public void doEdit() {
         if(row != -1) { //changed type
-            statistics.times.get(row).setTypes(newTypes);
+            statistics.times.get(row).getTime().setTypes(newTypes);
             statistics.refresh();
         } else { //time added/removed/changed
             statistics.editActions.setEnabled(false);
@@ -53,7 +54,7 @@ class StatisticsEdit implements CCTUndoableEdit {
     @Override
     public void undoEdit() {
         if(row != -1) { //changed type
-            statistics.times.get(row).setTypes(oldTypes);
+            statistics.times.get(row).getTime().setTypes(oldTypes);
             statistics.refresh();
         } else { //time added/removed/changed
             statistics.editActions.setEnabled(false);

@@ -51,7 +51,7 @@ public class Statistics implements SolveCounter {
 
 	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<>();
 
-	List<SolveTime> times;
+	List<Solution> times;
 	private ArrayList<Double>[] averages;
 	private ArrayList<Double>[] sds;
 	private ArrayList<Double> sessionavgs;
@@ -152,7 +152,7 @@ public class Statistics implements SolveCounter {
 		for(int ch = 0; ch < indices.length; ch++) {
 			indices[ch] = ch;
 		}
-		editActions.add(new StatisticsEdit(this, indices, Iterables.toArray(times, SolveTime.class), null));
+		editActions.add(new StatisticsEdit(this, indices, Iterables.toArray(times, Solution.class), null));
 		initialize();
 		notifyListeners(false);
 	}
@@ -185,25 +185,25 @@ public class Statistics implements SolveCounter {
 		}
 	}
 	
-	public void add(int pos, SolveTime st) {
+	public void add(int pos, Solution solution) {
 		if(pos == times.size()) {
-			add(st);
+			add(solution);
 		} else {
-			editActions.add(new StatisticsEdit(this, new int[]{pos}, null, st));
-			times.add(pos, st);
+			editActions.add(new StatisticsEdit(this, new int[]{pos}, null, solution));
+			times.add(pos, solution);
 			refresh();
 		}
 	}
 	
-	public void set(int pos, SolveTime st) {
+	public void set(int pos, Solution solution) {
 		if(pos == times.size()) {
-			addHelper(st);
-			editActions.add(new StatisticsEdit(this, new int[]{pos}, null, st));
+			addHelper(solution);
+			editActions.add(new StatisticsEdit(this, new int[]{pos}, null, solution));
 			notifyListeners(true);
 		} else {
-			st.setScramble(times.get(pos).getScramble());
-			editActions.add(new StatisticsEdit(this, new int[]{pos}, new SolveTime[]{times.get(pos)}, st));
-			times.set(pos, st);
+			solution.setScramble(times.get(pos).getScramble());
+			editActions.add(new StatisticsEdit(this, new int[]{pos}, new Solution[]{times.get(pos)}, solution));
+			times.set(pos, solution);
 			refresh(); //this will fire table data changed
 		}
 	}
@@ -211,7 +211,7 @@ public class Statistics implements SolveCounter {
 	//returns an array of the times removed
 	//index array must be sorted!
 	public void remove(int[] indices) {
-		SolveTime[] t = new SolveTime[indices.length];
+		Solution[] t = new Solution[indices.length];
 		for(int ch = indices.length - 1; ch >= 0; ch--) {
 			int i = indices[ch];
 			if(i >= 0 && i < times.size()) {
@@ -227,7 +227,7 @@ public class Statistics implements SolveCounter {
 	}
 	
 	public void setSolveTypes(int row, List<SolveType> newTypes) {
-		SolveTime selectedSolve = times.get(row);
+		SolveTime selectedSolve = times.get(row).getTime();
 		List<SolveType> oldTypes = selectedSolve.getTypes();
 		selectedSolve.setTypes(newTypes);
 		editActions.add(new StatisticsEdit(this, row, oldTypes, newTypes));
@@ -236,28 +236,28 @@ public class Statistics implements SolveCounter {
 	
 	//this method will not cause CALCubeTimer to increment the scramble number
 	//nasty fix for undo-redo
-	void addSilently(int pos, SolveTime s) {
-		editActions.add(new StatisticsEdit(this, new int[]{pos}, null, s));
-		times.add(pos, s);
+	void addSilently(int pos, Solution solution) {
+		editActions.add(new StatisticsEdit(this, new int[]{pos}, null, solution));
+		times.add(pos, solution);
 		refresh();
 	}
 
-	public void add(SolveTime s) {
+	public void add(Solution s) {
 		addHelper(s);
 		int newRow = times.size() - 1;
 		editActions.add(new StatisticsEdit(this, new int[]{newRow}, null, s));
 		notifyListeners(true);
 	}
 
-	private void addHelper(SolveTime solveTime) {
+	private void addHelper(Solution solveTime) {
 		times.add(solveTime);
-		sortedTimes.add(solveTime);
+		sortedTimes.add(solveTime.getTime());
 
 		for(int k = 0; k < RA_SIZES_COUNT; k++)
 			if(times.size() >= curRASize[k])
 				calculateCurrentAverage(k);
 
-		for(SolveType t : solveTime.getTypes()) {
+		for(SolveType t : solveTime.getTime().getTypes()) {
 			Integer count = solveCounter.get(t);
 			if(count == null)
 				count = 0;
@@ -265,8 +265,8 @@ public class Statistics implements SolveCounter {
 			solveCounter.put(t, count);
 		}
 		Integer numDNFs = getSolveTypeCount(SolveType.DNF);
-		if(!solveTime.isInfiniteTime()) {
-			double t = solveTime.secondsValue();
+		if(!solveTime.getTime().isInfiniteTime()) {
+			double t = solveTime.getTime().secondsValue();
 			runningTotal += t;
 			curSessionAvg = runningTotal / getSolveCount();
 			sessionavgs.add(curSessionAvg);
@@ -339,7 +339,7 @@ public class Statistics implements SolveCounter {
 		double total = 0;
 		int multiplier = 1;
 		for(int i = a; i < b; i++) {
-			SolveTime time = times.get(i);
+			SolveTime time = times.get(i).getTime();
 			if(time != best && time != worst) {
 				if(time.isInfiniteTime()) {
 					if(trimmed)
@@ -364,8 +364,8 @@ public class Statistics implements SolveCounter {
 		SolveTime[] best_worst = getBestAndWorstTimes(start, end);
 		double deviation = 0;
 		for(int i = start; i < end; i++) {
-			if(times.get(i) != best_worst[0] && times.get(i) != best_worst[1]) {
-				double diff = times.get(i).secondsValue() - average;
+			if(times.get(i).getTime() != best_worst[0] && times.get(i).getTime() != best_worst[1]) {
+				double diff = times.get(i).getTime().secondsValue() - average;
 				deviation += diff*diff;
 			}
 		}
@@ -373,15 +373,15 @@ public class Statistics implements SolveCounter {
 	}
 
 	void refresh() {
-		ArrayList<SolveTime> temp = new ArrayList<SolveTime>(times);
+		List<Solution> temp = new ArrayList<>(times);
 		initialize();
-		for(SolveTime t : temp) {
-			addHelper(t);
+		for(Solution solution : temp) {
+			addHelper(solution);
 		}
 		notifyListeners(false);
 	}
 
-	public SolveTime get(int n) {
+	public Solution get(int n) {
 		if(n < 0)
 			n = times.size() + n;
 
@@ -395,14 +395,14 @@ public class Statistics implements SolveCounter {
 		return curRASize[num];
 	}
 	
-	public SolveTime getRA(int num, int whichRA) {
+	public Solution getRA(int num, int whichRA) {
 		int RAnum = 1 + num - curRASize[whichRA];
 		double seconds;
 		if(RAnum < 0)
 			seconds = -1;
 		else
 			seconds = averages[whichRA].get(RAnum);
-		return new SolveTime(seconds, whichRA);
+		return new Solution(seconds, whichRA);
 	}
 
 	private boolean loadRAs() {
@@ -440,7 +440,7 @@ public class Statistics implements SolveCounter {
 		if(average == Double.POSITIVE_INFINITY)
 			return SolveTime.NULL_TIME;
 
-		return new SolveTime(average, null);
+		return new SolveTime(average);
 	}
 
 	public boolean isValid(AverageType type, int num) {
@@ -464,7 +464,7 @@ public class Statistics implements SolveCounter {
 		return true;
 	}
 
-	private List<SolveTime> getSublist(int a, int b) {
+	private List<Solution> getSublist(int a, int b) {
 		if(b > times.size())
 			b = times.size();
 		else if(b < 0)
@@ -472,7 +472,7 @@ public class Statistics implements SolveCounter {
 		return times.subList(a, b);
 	}
 
-	private List<SolveTime> getSublist(AverageType type, int num) {
+	private List<Solution> getSublist(AverageType type, int num) {
 		int[] bounds = getBounds(type, num);
 		return times.subList(bounds[0], bounds[1]);
 	}
@@ -505,12 +505,12 @@ public class Statistics implements SolveCounter {
 	public SolveTime[] getBestAndWorstTimes(int a, int b) {
 		SolveTime best = SolveTime.WORST;
 		SolveTime worst = SolveTime.BEST;
-		for(SolveTime time : getSublist(a, b)){
-			if(best.compareTo(time) >= 0)
-				best = time;
+		for(Solution time : getSublist(a, b)){
+			if(best.compareTo(time.getTime()) >= 0)
+				best = time.getTime();
 			// the following should not be an else
-			if(worst.compareTo(time) < 0)
-				worst = time;
+			if(worst.compareTo(time.getTime()) < 0)
+				worst = time.getTime();
 		}
 		return new SolveTime[] { best, worst };
 	}
@@ -519,12 +519,12 @@ public class Statistics implements SolveCounter {
 		SolveTime best = SolveTime.WORST;
 		SolveTime worst = SolveTime.BEST;
 		boolean ignoreInfinite = type == AverageType.SESSION;
-		for(SolveTime time : getSublist(type, num)) {
-			if(best.compareTo(time) >= 0)
-				best = time;
+		for(Solution time : getSublist(type, num)) {
+			if(best.compareTo(time.getTime()) >= 0)
+				best = time.getTime();
 			// the following should not be an else
-			if(worst.compareTo(time) < 0 && !(ignoreInfinite && time.isInfiniteTime()))
-				worst = time;
+			if(worst.compareTo(time.getTime()) < 0 && !(ignoreInfinite && time.getTime().isInfiniteTime()))
+				worst = time.getTime();
 		}
 		return new SolveTime[] { best, worst };
 	}
@@ -537,15 +537,15 @@ public class Statistics implements SolveCounter {
 				bestAndWorst[1], showSplits);
 	}
 
-	private String toStatsStringHelper(List<SolveTime> times,
+	private String toStatsStringHelper(List<Solution> times,
 			SolveTime best, SolveTime worst, boolean showSplits) {
 		StringBuilder ret = new StringBuilder();
 		int i = 0;
-		for(SolveTime next : times){
-			String comment = next.getComment();
+		for(Solution next : times){
+			String comment = next.getTime().getComment();
 			if(!comment.isEmpty())
 				comment = "\t" + comment;
-			boolean parens = next == best || next == worst;
+			boolean parens = next.getTime() == best || next.getTime() == worst;
 
 			ret.append(++i).append(".\t");
 			if(parens) ret.append("(");
@@ -565,7 +565,7 @@ public class Statistics implements SolveCounter {
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
 		SolveTime[] bestAndWorst = getBestAndWorstTimes(n, n + curRASize[num]);
-		List<SolveTime> list = getSublist(n, n + curRASize[num]);
+		List<Solution> list = getSublist(n, n + curRASize[num]);
 		if(list.size() == 0)
 			return "N/A";
 		
@@ -577,19 +577,19 @@ public class Statistics implements SolveCounter {
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
 		SolveTime[] bestAndWorst = getBestAndWorstTimes(type, num);
-		List<SolveTime> list = getSublist(type, num);
+		List<Solution> list = getSublist(type, num);
 		if(list.size() != curRASize[num] && !showincomplete)
 			return "N/A";
 		return toTerseStringHelper(list, bestAndWorst[0], bestAndWorst[1]);
 	}
 
-	private static String toTerseStringHelper(List<SolveTime> printMe,
+	private static String toTerseStringHelper(List<Solution> printMe,
 			SolveTime best, SolveTime worst) {
 		StringBuilder ret = new StringBuilder();
 		String nextAppend = "";
-		for(SolveTime next : printMe){
+		for(Solution next : printMe){
 			ret.append(nextAppend);
-			boolean parens = next == best || next == worst;
+			boolean parens = next.getTime() == best || next.getTime() == worst;
 			if(parens) ret.append("(");
 			ret.append(next.toString());
 			if(parens) ret.append(")");
@@ -606,7 +606,7 @@ public class Statistics implements SolveCounter {
 			sd = sds[num].get(indexOfBestRA[num]).doubleValue();
 		else if(type == AverageType.CURRENT)
 			sd = sds[num].get(sds[num].size() - 1).doubleValue();
-		return new SolveTime(sd, null);
+		return new SolveTime(sd);
 	}
 
 	private SolveTime bestTimeOfAverage(int n, int num) {
@@ -657,7 +657,7 @@ public class Statistics implements SolveCounter {
 		if(times.size() == 0 || n < 0 || n >= times.size())
 			return Double.POSITIVE_INFINITY;
 		
-		return times.get(n).secondsValue();
+		return times.get(n).getTime().secondsValue();
 	}
 
 	public double getAverage(int n, int num) {

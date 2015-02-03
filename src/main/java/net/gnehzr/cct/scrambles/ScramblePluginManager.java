@@ -108,7 +108,7 @@ public class ScramblePluginManager {
 			return null;
 		}
 		for(ScrambleVariation var : getScrambleVariations()) {
-			if (var.toString().toLowerCase().startsWith(variation)) {
+			if (var.getName().toLowerCase().startsWith(variation)) {
 				return var;
 			}
 		}
@@ -248,11 +248,7 @@ public class ScramblePluginManager {
 
 	@Override
 	public String toString() {
-		Integer variationsCount = pluginClasses.stream()
-				.map(this::getScramblePlugin)
-				.map(scramble -> getScrambleVariations().length)
-				.reduce((a, b) -> a + b)
-				.orElse(0);
+		Integer variationsCount = getScrambleVariations().length;
 		return String.format("ScramblePluginManager{has %d plugins (%d variations)}", pluginClasses.size(), variationsCount);
 	}
 

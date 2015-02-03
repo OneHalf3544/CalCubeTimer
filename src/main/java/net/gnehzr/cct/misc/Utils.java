@@ -49,7 +49,7 @@ public class Utils {
 		if(Double.isInfinite(solveTime)) {
 			return "N/A";
 		}
-		return formatTime(new SolveTime(solveTime, null), useClockFormat);
+		return formatTime(new SolveTime(solveTime), useClockFormat);
 	}
 
 	public static String formatTime(SolveTime solveTime, boolean useClockFormat) {
@@ -82,22 +82,25 @@ public class Utils {
 	}
 
 	public static Color invertColor(Color c) {
-		if(c == null)
+		if(c == null) {
 			return Color.BLACK;
+		}
 		return new Color(255 - c.getRed(), 255 - c.getGreen(), 255 - c.getBlue());
 	}
 
 	public static String colorToString(Color c) {
-		if(c == null)
+		if(c == null) {
 			return "";
+		}
 		return padWith0s(Integer.toHexString(c.getRGB() & 0xffffff));
 	}
 
 	private static String padWith0s(String s) {
 		int pad = 6 - s.length();
 		if(pad > 0) {
-			for(int i = 0; i < pad; i++)
+			for(int i = 0; i < pad; i++) {
 				s = "0" + s;
+			}
 		}
 		return s;
 	}

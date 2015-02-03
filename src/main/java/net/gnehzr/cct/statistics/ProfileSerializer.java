@@ -101,13 +101,13 @@ public class ProfileSerializer {
 
     private void writeSolveData(TransformerHandler hd, AttributesImpl atts, Statistics stats, int ch) throws SAXException {
         String temp;
-        SolveTime solveTime = stats.get(ch);
+        Solution solveTime = stats.get(ch);
         LOG.trace("write solveTime: " + solveTime);
         atts.clear();
         hd.startElement("", "", "solve", atts);
-        char[] chs = solveTime.toExternalizableString().toCharArray();
+        char[] chs = solveTime.getTime().toExternalizableString().toCharArray();
         hd.characters(chs, 0, chs.length);
-        temp = solveTime.getComment();
+        temp = solveTime.getTime().getComment();
         if (!temp.isEmpty()) {
             atts.clear();
             hd.startElement("", "", "comment", atts);
@@ -123,7 +123,7 @@ public class ProfileSerializer {
             hd.characters(chs, 0, chs.length);
             hd.endElement("", "", "splits");
         }
-        temp = solveTime.getScramble();
+        temp = solveTime.getScramble().getScramble();
         if (!temp.isEmpty()) {
             LOG.trace("write scramble: " + temp);
             atts.clear();
@@ -138,7 +138,7 @@ public class ProfileSerializer {
 
     private TransformerHandler createTransformer() throws TransformerConfigurationException {
         SAXTransformerFactory tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
-        tf.setAttribute("indent-number", Integer.valueOf(4));
+        tf.setAttribute("indent-number", 4);
         // SAX2.0 ContentHandler.
         TransformerHandler hd = tf.newTransformerHandler();
         Transformer serializer = hd.getTransformer();
@@ -172,6 +172,7 @@ public class ProfileSerializer {
             this.raf = raf;
         }
 
+        @Override
         public int read() throws IOException {
             return raf.read();
         }
@@ -184,6 +185,7 @@ public class ProfileSerializer {
             this.raf = raf;
         }
 
+        @Override
         public void write(int b) throws IOException {
             raf.write(b);
         }

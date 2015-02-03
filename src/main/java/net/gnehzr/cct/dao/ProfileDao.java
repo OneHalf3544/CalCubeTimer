@@ -34,7 +34,10 @@ public class ProfileDao extends HibernateDaoSupport {
 
     private static final Logger LOG = Logger.getLogger(ProfileDao.class);
 
+    private static final String GUEST_NAME = "Guest";
+
     private final static Map<String, Profile> profiles = new HashMap<>();
+
     private final ProfileSerializer profileSerializer;
     private final Configuration configuration;
 
@@ -45,19 +48,17 @@ public class ProfileDao extends HibernateDaoSupport {
     private final StatisticsTableModel statsModel;
     private final ScramblePluginManager scramblePluginManager;
 
-    private static final String GUEST_NAME = "Guest";
     private CalCubeTimerGui calCubeTimerFrame;
 
     @Inject
     public ProfileDao(ProfileSerializer profileSerializer, Configuration configuration, StatisticsTableModel statsModel,
-                      ScramblePluginManager scramblePluginManager, CalCubeTimerGui calCubeTimerFrame, SessionFactory sessionFactory) {
+                      ScramblePluginManager scramblePluginManager, SessionFactory sessionFactory) {
         super(sessionFactory);
         this.profileSerializer = profileSerializer;
         this.configuration = configuration;
         this.statsModel = statsModel;
         this.scramblePluginManager = scramblePluginManager;
         guestProfile = createGuestProfile();
-        this.calCubeTimerFrame = calCubeTimerFrame;
     }
 
     public List<ProfileEntity> getAllProfiles() {
@@ -110,25 +111,23 @@ public class ProfileDao extends HibernateDaoSupport {
         }
 
         return Utils.doWithLockedFile(profile.getStatistics(), file -> {
-            Utils.doInWaitingState(calCubeTimerFrame, () -> {
-                try {
-                    ProfileDatabase puzzleDB = new ProfileDatabase(configuration, this, statsModel, scramblePluginManager); //reset the database
-                    profile.setPuzzleDatabase(puzzleDB);
-                    profile.setStatisticsRandomAccessFile(file);
+            try {
+                ProfileDatabase puzzleDB = new ProfileDatabase(configuration, this, statsModel, scramblePluginManager); //reset the database
+                profile.setPuzzleDatabase(puzzleDB);
+                profile.setStatisticsRandomAccessFile(file);
 
-                    if (file.length() == 0) {
-                        LOG.debug("file is empty. skip parsing");
-                    } else { // if the file is empty, don't bother to parse it
-                        LOG.debug("parse file");
-                        DatabaseLoader handler = new DatabaseLoader(profile, configuration, statsModel, scramblePluginManager);
-                        profileSerializer.parseBySaxHandler(handler, new RandomInputStream(profile.getStatisticsRandomAccessFile()));
-                    }
-                    LOG.debug("file loading finished");
-
-                } catch (IOException e) {
-                    throw Throwables.propagate(e);
+                if (file.length() == 0) {
+                    LOG.debug("file is empty. skip parsing");
+                } else { // if the file is empty, don't bother to parse it
+                    LOG.debug("parse file");
+                    DatabaseLoader handler = new DatabaseLoader(profile, configuration, statsModel, scramblePluginManager);
+                    profileSerializer.parseBySaxHandler(handler, new RandomInputStream(profile.getStatisticsRandomAccessFile()));
                 }
-            });
+                LOG.debug("file loading finished");
+
+            } catch (IOException e) {
+                throw Throwables.propagate(e);
+            }
         });
     }
 
@@ -144,14 +143,12 @@ public class ProfileDao extends HibernateDaoSupport {
             return;
         }
 
-        Utils.doInWaitingState(calCubeTimerFrame, () -> {
-            try {
-                profileSerializer.writeStatisticFile(profile);
+        try {
+            profileSerializer.writeStatisticFile(profile);
 
-            } catch (IOException | SAXException | TransformerConfigurationException e) {
-                Throwables.propagate(e);
-            }
-        });
+        } catch (IOException | SAXException | TransformerConfigurationException e) {
+            Throwables.propagate(e);
+        }
 
         closeStatFileAndReleaseLock(profile);
     }

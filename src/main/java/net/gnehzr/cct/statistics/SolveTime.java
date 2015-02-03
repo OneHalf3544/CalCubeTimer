@@ -1,11 +1,9 @@
 package net.gnehzr.cct.statistics;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +22,7 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		}
 	};
 
-	public static final SolveTime BEST = new SolveTime(0, null) {
+	public static final SolveTime BEST = new SolveTime(Duration.ZERO) {
 		@Override
 		public void setTime(String toParse) { throw new AssertionError(); }
 	};
@@ -32,59 +30,34 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		@Override
 		public void setTime(String toParse) { throw new AssertionError(); }
 	};
+
 	public static final SolveTime NA = WORST;
 
 	private Set<SolveType> types = new HashSet<>();
 
 	private Duration time;
-	private String scramble = null;
-	private List<SolveTime> splits = ImmutableList.of();
-
-	//this constructor exists to allow the jtable of times to contain the averages also
-	//we need to know the index so we can syntax highlight it
-	private int whichRA = -1;
 
 	private SolveTime() {
 		time = null;
-		setScramble(null);
 	}
 
-	public SolveTime(double seconds, String scramble) {
+	@Deprecated
+	public SolveTime(double seconds) {
 		this.time = Duration.ofMillis(10 * (long) (100 * seconds + .5));
 		LOG.trace("new SolveTime " + seconds);
-		setScramble(scramble);
-	}
-	public SolveTime(double seconds, int whichRA) {
-		this(seconds, null);
-		this.whichRA = whichRA;
 	}
 
-	private SolveTime(TimerState time, String scramble) {
-		if(time != null) {
-			this.time = time.getTime();
-			LOG.trace("new SolveTime " + time.getTime());
-		}
-		setScramble(scramble);
+	public SolveTime(Duration time) {
+		this.time = time;
+		LOG.trace("new SolveTime " + time);
 	}
 
-	public int getWhichRA() {
-		return whichRA;
-	}
-
-	public SolveTime(TimerState time, String scramble, List<SolveTime> splits) {
-		this(time, scramble);
-		this.splits = splits;
-	}
-
-	public SolveTime(String time, String scramble) throws Exception {
+	public SolveTime(String time) throws Exception {
 		setTime(time);
-		setScramble(scramble);
 	}
-	
-	//This will create the appropriate scramble types if necessary, should probably only
-	//be called when parsing the xml gui
-	public void parseTime(String toParse) throws Exception {
-		setTime(toParse);
+
+	public static SolveTime parseTime(String toParse) throws Exception {
+		return new SolveTime(toParse);
 	}
 
 	protected void setTime(String toParse) throws Exception {
@@ -153,14 +126,6 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 	static String toUSFormatting(String time) {
 		return time.replaceAll(Pattern.quote(Utils.getDecimalSeparator()), ".");
 	}
-	
-	public void setScramble(String scramble) {
-		this.scramble = scramble;
-	}
-
-	public String getScramble() {
-		return scramble == null ? "" : scramble;
-	}
 
 	public Duration getTime() {
 		return time;
@@ -205,22 +170,6 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		
 		if(plusTwo) time += "+";
 		return typeString + time;
-	}
-
-	public String toSplitsString() {
-		return Joiner.on(", ").join(splits);
-	}
-	
-	//this follows the same formatting as the above method spits out
-	public void setSplitsFromString(String splitsString) {
-		this.splits = new ArrayList<>();
-		for(String s : splitsString.split(", *")) {
-			try {
-				this.splits.add(new SolveTime(s, null));
-			} catch (Exception e) {
-				LOG.error(e.getMessage(), e);
-			}
-		}
 	}
 
 	public double secondsValue() {
@@ -286,7 +235,4 @@ public class SolveTime extends Commentable implements Comparable<SolveTime> {
 		return time.isZero() && isInfiniteTime();
 	}
 
-	public List<SolveTime> getSplits() {
-		return splits;
-	}
 }
