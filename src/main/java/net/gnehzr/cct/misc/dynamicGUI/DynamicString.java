@@ -7,7 +7,7 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -473,7 +473,7 @@ public class DynamicString{
 				}
 				break;
 			case "date":
-				r = configuration.getDateFormat().format(LocalDate.now());
+				r = configuration.getDateFormat().format(LocalDateTime.now());
 				break;
 			default:
 				r = "Unimplemented: " + sorig;

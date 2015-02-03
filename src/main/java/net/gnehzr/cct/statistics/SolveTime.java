@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class SolveTime extends Commentable implements Comparable<SolveTime> {
+public class SolveTime implements Comparable<SolveTime> {
 
 	private static final Logger LOG = Logger.getLogger(SolveTime.class);
 

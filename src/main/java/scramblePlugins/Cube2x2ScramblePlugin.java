@@ -67,7 +67,7 @@ public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
     @NotNull
     @Override
     public final Map<String, String> getDefaultGenerators() {
-        return ImmutableMap.of("2x2x2", dg);
+        return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
     }
 
     @NotNull

@@ -326,7 +326,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             //This leaves +2 and DNF enabled, even if the user just got a +2 or DNF from inspection.
             //I don't really care however, since I doubt that anyone even uses this feature. --Jeremy
             choice = JOptionPane.showOptionDialog(null,
-                    StringAccessor.getString("CALCubeTimer.yourtime") + protect.toString() + StringAccessor.getString("CALCubeTimer.newtimedialog"),
+                    StringAccessor.getString("CALCubeTimer.yourtime") + protect.getTime().toString() + StringAccessor.getString("CALCubeTimer.newtimedialog"),
                     StringAccessor.getString("CALCubeTimer.confirm"),
                     JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.QUESTION_MESSAGE,

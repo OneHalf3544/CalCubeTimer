@@ -542,14 +542,14 @@ public class Statistics implements SolveCounter {
 		StringBuilder ret = new StringBuilder();
 		int i = 0;
 		for(Solution next : times){
-			String comment = next.getTime().getComment();
+			String comment = next.getComment();
 			if(!comment.isEmpty())
 				comment = "\t" + comment;
 			boolean parens = next.getTime() == best || next.getTime() == worst;
 
 			ret.append(++i).append(".\t");
 			if(parens) ret.append("(");
-			ret.append(next.toString());
+			ret.append(next.getTime().toString());
 			if(parens) ret.append(")\t");
 			else ret.append("\t");
 			ret.append(next.getScramble());

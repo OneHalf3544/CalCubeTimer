@@ -142,7 +142,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		case 2: //get the RA for this index in this column
 			return stats.getRA(rowIndex, columnIndex - 1).getTime();
 		case 3:
-			return stats.get(rowIndex).getTime().getComment();
+			return stats.get(rowIndex).getComment();
 		case 4: //tags
 			return Joiner.on(", ").join(stats.get(rowIndex).getTime().getTypes());
 		case 5: // scramble variation
@@ -174,7 +174,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			stats.set(rowIndex, (Solution) value);
 		}
 		else if(columnIndex == 3 && value instanceof String) {
-			stats.get(rowIndex).getTime().setComment((String) value);
+			stats.get(rowIndex).setComment((String) value);
 		}
 	}
 
@@ -190,7 +190,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
-		String t = stats.get(rowIndex).getTime().getComment();
+		String t = stats.get(rowIndex).getComment();
 		return t.isEmpty() ? null : t;
 	}
 

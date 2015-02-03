@@ -107,7 +107,7 @@ public class ProfileSerializer {
         hd.startElement("", "", "solve", atts);
         char[] chs = solveTime.getTime().toExternalizableString().toCharArray();
         hd.characters(chs, 0, chs.length);
-        temp = solveTime.getTime().getComment();
+        temp = solveTime.getComment();
         if (!temp.isEmpty()) {
             atts.clear();
             hd.startElement("", "", "comment", atts);

@@ -124,7 +124,7 @@ public class DatabaseLoader extends DefaultHandler {
             if (level == 3) {
                 session.setComment(seshCommentOrSolveTime);
             } else if (level == 4) {
-                solve.getTime().setComment(solveCommentOrScrambleOrSplits);
+                solve.setComment(solveCommentOrScrambleOrSplits);
             }
         } else if (name.equalsIgnoreCase("scramble")) {
             try {

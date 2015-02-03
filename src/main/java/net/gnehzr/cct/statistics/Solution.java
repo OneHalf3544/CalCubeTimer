@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author OneHalf
  */
-public class Solution {
+public class Solution extends Commentable {
 
     private static final Logger LOG = Logger.getLogger(Solution.class);
 
@@ -88,5 +88,10 @@ public class Solution {
 
     public SolveTime getTime() {
         return solveTime;
+    }
+
+    @Override
+    public String toString() {
+        return "Solution{" + solveTime  + ", " + scramble + "}";
     }
 }

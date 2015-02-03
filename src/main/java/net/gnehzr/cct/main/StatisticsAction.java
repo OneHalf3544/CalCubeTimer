@@ -16,10 +16,12 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class StatisticsAction extends AbstractAction {
+
 	private StatsDialogHandler statsHandler;
 	private StatisticsTableModel model;
 	private Statistics.AverageType type;
 	private int num;
+
 	public StatisticsAction(CALCubeTimerFrame cct, StatisticsTableModel model, Statistics.AverageType type, int num,
 							Configuration configuration){
 		statsHandler = new StatsDialogHandler(cct, configuration);
