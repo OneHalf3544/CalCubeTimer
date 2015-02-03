@@ -62,22 +62,27 @@ public class ConfigurationDao extends HibernateDaoSupport {
             return;
         }
         update(session -> {
-            LOGGER.debug("remove " + difference.entriesOnlyOnLeft());
-            oldParameters.stream()
-                    .filter(c -> difference.entriesOnlyOnLeft().containsKey(c.getKey()))
-                    .forEach(session::delete);
-
-            LOGGER.debug("add " + difference.entriesOnlyOnRight());
-            difference.entriesOnlyOnRight().entrySet().stream()
-                    .map(e -> new ConfigEntity(profile.getName(), e.getKey(), e.getValue()))
-                    .forEach(session::save);
+            if (!difference.entriesOnlyOnLeft().isEmpty()) {
+                LOGGER.debug("remove " + difference.entriesOnlyOnLeft());
+                oldParameters.stream()
+                        .filter(c -> difference.entriesOnlyOnLeft().containsKey(c.getKey()))
+                        .forEach(session::delete);
+            }
+            if (!difference.entriesOnlyOnRight().isEmpty()) {
+                LOGGER.debug("add " + difference.entriesOnlyOnRight());
+                difference.entriesOnlyOnRight().entrySet().stream()
+                        .map(e -> new ConfigEntity(profile.getName(), e.getKey(), e.getValue()))
+                        .forEach(session::save);
+            }
 
             Map<String, MapDifference.ValueDifference<String>> differenceMap = difference.entriesDiffering();
-            LOGGER.debug("change " + differenceMap);
-            oldParameters.stream()
-                    .filter(c -> differenceMap.containsKey(c.getKey()))
-                    .peek(c -> c.setValue(differenceMap.get(c.getKey()).rightValue()))
-                    .forEach(session::update);
+            if (!differenceMap.isEmpty()) {
+                LOGGER.debug("change " + differenceMap);
+                oldParameters.stream()
+                        .filter(c -> differenceMap.containsKey(c.getKey()))
+                        .peek(c -> c.setValue(differenceMap.get(c.getKey()).rightValue()))
+                        .forEach(session::update);
+            }
         });
     }
 
