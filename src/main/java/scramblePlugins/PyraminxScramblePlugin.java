@@ -1,5 +1,6 @@
 package scramblePlugins;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
@@ -25,18 +26,16 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 	private static final String regexp = "^[ULRBulrb]'?$";
 	private static final String FACES_ORDER = "FDLR";
 
-	private int[][] image;
-
 	@SuppressWarnings("UnusedDeclaration")
-	public PyraminxScramblePlugin() throws InvalidScrambleException {
+	public PyraminxScramblePlugin() {
 		super("Pyraminx", true);
-		initializeImage();
 	}
 
 	@Override
 	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
 										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-		validateScramble(scramble);
+		int[][] image = initializeImage();
+		validateScramble(image, scramble);
 		return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, null);
 	}
 
@@ -45,33 +44,34 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 		return new ScrambleString(generateScramble(), false, variation, this, null);
 	}
 
-	private void initializeImage() {
-		image = new int[4][9];
+	private int[][] initializeImage() {
+		int[][] image = new int[4][9];
 		for(int i = 0; i < image.length; i++){
 			for(int j = 0; j < image[0].length; j++){
 				image[i][j] = i;
 			}
 		}
+		return image;
 	}
 
-	private void validateScramble(String scramble) throws InvalidScrambleException {
-		String[] strs = scramble.split("\\s+");
+	private void validateScramble(int[][] image, String scramble) throws InvalidScrambleException {
+		String[] moves = scramble.split("\\s+");
 
-		for (String str : strs) {
+		for (String str : moves) {
 			if (!str.matches(regexp)) {
 				throw new InvalidScrambleException(scramble);
 			}
 		}
 
 		try{
-			for (String str : strs) {
+			for (String str : moves) {
 				int face = "ULRBulrb".indexOf(str.charAt(0));
 				if (face == -1) {
 					throw new InvalidScrambleException(scramble);
 				}
 				int dir = (str.length() == 1 ? 1 : 2);
-				if (face >= 4) turnTip(face - 4, dir);
-				else turn(face, dir);
+				if (face >= 4) turnTip(image, face - 4, dir);
+				else turn(image, face, dir);
 			}
 		} catch (InvalidScrambleException e) {
 			throw e;
@@ -213,13 +213,12 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 		s = 0;
 		i = new ArrayList<>();
 		for (m = 0; m < 5; m++) {
-
-			i.set(m, n(2));
+			i.add(n(2));
 			s += i.get(m);
 		}
-		i.set(5, s % 2);
+		i.add(s % 2);
 		for (m = 6; m < 10; m++) {
-			i.set(m, n(3));
+			i.add(n(3));
 		}
 		for (m = 0; m < 6; m++) {
 			l = 0;
@@ -268,7 +267,7 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 					for (a = 0; a < 2; a++) {
 						p = d.get(p).get(m);
 						s = e.get(s).get(m);
-						k.set(k.size(), m + 8 * a);
+						k.add(m + 8 * a);
 						if (v(p, s, l - 1, m))
 							return true;
 						k.remove(k.size() - 1);
@@ -381,62 +380,62 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 	 return (int) Math.floor(Math.random()*c);
 	}
 
-	private void turn(int side, int dir){
+	private void turn(int[][] image, int side, int dir){
 		for(int i = 0; i < dir; i++){
-			turn(side);
+			turn(image, side);
 		}
 	}
 
-	private void turnTip(int side, int dir){
+	private void turnTip(int[][] image, int side, int dir){
 		for(int i = 0; i < dir; i++){
-			turnTip(side);
+			turnTip(image, side);
 		}
 	}
 
-	private void turn(int s){
+	private void turn(int[][] image, int s){
 		switch(s){
 			case 0:
-				swap(0, 8, 3, 8, 2, 2);
-				swap(0, 1, 3, 1, 2, 4);
-				swap(0, 2, 3, 2, 2, 5);
+				swap(image, 0, 8, 3, 8, 2, 2);
+				swap(image, 0, 1, 3, 1, 2, 4);
+				swap(image, 0, 2, 3, 2, 2, 5);
 				break;
 			case 1:
-				swap(2, 8, 1, 2, 0, 8);
-				swap(2, 7, 1, 1, 0, 7);
-				swap(2, 5, 1, 8, 0, 5);
+				swap(image, 2, 8, 1, 2, 0, 8);
+				swap(image, 2, 7, 1, 1, 0, 7);
+				swap(image, 2, 5, 1, 8, 0, 5);
 				break;
 			case 2:
-				swap(3, 8, 0, 5, 1, 5);
-				swap(3, 7, 0, 4, 1, 4);
-				swap(3, 5, 0, 2, 1, 2);
+				swap(image, 3, 8, 0, 5, 1, 5);
+				swap(image, 3, 7, 0, 4, 1, 4);
+				swap(image, 3, 5, 0, 2, 1, 2);
 				break;
 			case 3:
-				swap(1, 8, 2, 2, 3, 5);
-				swap(1, 7, 2, 1, 3, 4);
-				swap(1, 5, 2, 8, 3, 2);
+				swap(image, 1, 8, 2, 2, 3, 5);
+				swap(image, 1, 7, 2, 1, 3, 4);
+				swap(image, 1, 5, 2, 8, 3, 2);
 				break;
 		}
-		turnTip(s);
+		turnTip(image, s);
 	}
 
-	private void turnTip(int s){
+	private void turnTip(int[][] image, int s){
 		switch(s){
 			case 0:
-				swap(0, 0, 3, 0, 2, 3);
+				swap(image, 0, 0, 3, 0, 2, 3);
 				break;
 			case 1:
-				swap(0, 6, 2, 6, 1, 0);
+				swap(image, 0, 6, 2, 6, 1, 0);
 				break;
 			case 2:
-				swap(0, 3, 1, 3, 3, 6);
+				swap(image, 0, 3, 1, 3, 3, 6);
 				break;
 			case 3:
-				swap(1, 6, 2, 0, 3, 3);
+				swap(image, 1, 6, 2, 0, 3, 3);
 				break;
 		}
 	}
 
-	private void swap(int f1, int s1, int f2, int s2, int f3, int s3){
+	private void swap(int[][] image, int f1, int s1, int f2, int s2, int f3, int s3){
 		int temp = image[f1][s1];
 		image[f1][s1] = image[f2][s2];
 		image[f2][s2] = image[f3][s3];
@@ -447,7 +446,14 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 	public BufferedImage getScrambleImage(ScrambleString scrambleString, int gap, int pieceSize, Map<String, Color> colorScheme) {
 		Dimension dim = getImageSize(gap, pieceSize, null);
 		BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
-		drawMinx(buffer.createGraphics(), gap, pieceSize, colorScheme);
+		int[][] image = initializeImage();
+		try {
+			validateScramble(image, scrambleString.getScramble());
+		} catch (InvalidScrambleException e1) {
+			throw Throwables.propagate(e1);
+		}
+
+		drawMinx(buffer.createGraphics(), image, gap, pieceSize, colorScheme);
 		return buffer;
 	}
 
@@ -456,7 +462,7 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 		return new Dimension(getPyraminxViewWidth(gap, pieceSize), getPyraminxViewHeight(gap, pieceSize));
 	}
 
-	private void drawMinx(Graphics2D g, int gap, int pieceSize, Map<String, Color> colorScheme){
+	private void drawMinx(Graphics2D g, int[][] image, int gap, int pieceSize, Map<String, Color> colorScheme){
 		drawTriangle(g, 2*gap+3*pieceSize, gap+Math.sqrt(3)*pieceSize, true, image[0], pieceSize, colorScheme);
 		drawTriangle(g, 2*gap+3*pieceSize, 2*gap+2*Math.sqrt(3)*pieceSize, false, image[1], pieceSize, colorScheme);
 		drawTriangle(g, gap+1.5*pieceSize, gap+Math.sqrt(3)/2*pieceSize, false, image[2], pieceSize, colorScheme);

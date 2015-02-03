@@ -36,7 +36,11 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	private static final int DEFAULT_UNIT_SIZE = 32;
 	private static final Pattern TOKEN_REGEX = Pattern.compile("^(\\( *-?\\d+ *, *-?\\d+ *\\)|/)(.*)$");
 	private static final ImmutableList<String> ATTRIBUTES = ImmutableList.of(SLASHES_ATTRIBUTE);
-	private static final String[] DEFAULT_GENERATORS = new String[] { "(x, x) /" };
+	private static final Map<String, String> DEFAULT_GENERATORS = ImmutableMap.of(PUZZLE_NAME, "(x, x) /");
+	private static final double RADIUS_MULTIPLIER = Math.sqrt(2) * Math.cos(Math.toRadians(15));
+	private static final Pattern regexp = Pattern.compile("^ *(-?\\d+) *, *(-?\\d+) *$");
+	private static final double multiplier = 1.4;
+
 	public static final String FRONT = "F";
 	public static final String BACK = "B";
 
@@ -45,23 +49,19 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 
 	private int twistCount = 0; //this will tell us the state of the middle pieces
 	private int[] state;
-	//private int[] turns;
-	private boolean slashes;
 
 	@SuppressWarnings("unused")
 	public SquareOneScramblePlugin() {
 		super(PUZZLE_NAME, true);
-		setGenerator(null);
-		slashes = false;
-		initializeImage();
 	}
 
 	@Override
 	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
 										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
-		slashes = attributes.contains(SLASHES_ATTRIBUTE);
+		boolean slashes = attributes.contains(SLASHES_ATTRIBUTE);
 		setGenerator(generatorGroup);
-		OptionalInt length = validateScrambleAndGetLength(scramble);
+		initializeImage();
+		OptionalInt length = validateScrambleAndGetLength(scramble, slashes);
 		if(!length.isPresent()) {
 			throw new InvalidScrambleException(scramble);
 		}
@@ -70,9 +70,10 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 
 	@Override
 	public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
-		slashes = attributes.contains(SLASHES_ATTRIBUTE);
+		boolean slashes = attributes.contains(SLASHES_ATTRIBUTE);
 		setGenerator(generatorGroup);
-		return new ScrambleString(generateScramble(variation.getLength()), false, variation, this, null);
+		initializeImage();
+		return new ScrambleString(generateScramble(variation.getLength(), slashes), false, variation, this, null);
 	}
 
 	@Override
@@ -94,7 +95,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public List<String> getVariations() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getVariations();
+		return ImmutableList.of(PUZZLE_NAME);
 	}
 
 	@NotNull
@@ -123,7 +124,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public Map<String, String> getDefaultGenerators() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
+		return DEFAULT_GENERATORS;
 	}
 
 	private void setGenerator(String generator) {
@@ -145,7 +146,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 		state = new int[]{ 0,0,1,2,2,3,4,4,5,6,6,7,8,9,9,10,11,11,12,13,13,14,15,15 }; //piece array
 	}
 
-	private String generateScramble(int length) {
+	private String generateScramble(int length, boolean slashes) {
 		int[] turns = new int[length];
 		int move;
 		int ls = -1;
@@ -250,9 +251,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	}
 	//**********END JAAP's CODE***************
 
-	private static final Pattern regexp = Pattern.compile("^ *(-?\\d+) *, *(-?\\d+) *$");
-
-	private OptionalInt validateScrambleAndGetLength(String scramble) {
+	private OptionalInt validateScrambleAndGetLength(String scramble, boolean slashes) {
 		//if there is no slash in the scramble, we assume that we're using implicit slashes
 		boolean implicitSlashes = scramble.indexOf('/') == -1;
 		//however, to get correct incremental scramble behavior, we will use the set attribute if
@@ -390,7 +389,6 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 		return colorScheme.get(String.valueOf(FACES_ORDER.charAt(i)));
 	}
 
-	private static final double multiplier = 1.4;
 	private GeneralPath[] getWedgePoly(double x, double y, int radius) {
 		AffineTransform trans = AffineTransform.getTranslateInstance(x, y);
 		GeneralPath p = new GeneralPath();
@@ -447,8 +445,6 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	public Dimension getImageSize(int gap, int radius, String variation) {
 		return new Dimension(getWidth(gap, radius), getHeight(gap, radius));
 	}
-
-	private static final double RADIUS_MULTIPLIER = Math.sqrt(2) * Math.cos(Math.toRadians(15));
 
 	private static int getWidth(int gap, int radius) {
 		return (int) (2 * RADIUS_MULTIPLIER * multiplier * radius);
