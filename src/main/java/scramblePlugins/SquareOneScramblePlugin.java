@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.*;
 import org.jetbrains.annotations.NotNull;
+import org.jooq.lambda.tuple.Tuple2;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -44,11 +45,18 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	public static final String FRONT = "F";
 	public static final String BACK = "B";
 
-	private boolean turnTop;
-	private boolean turnBottom;
+	static class State {
+		private final boolean turnTop;
+		private final boolean turnBottom;
 
-	private int twistCount = 0; //this will tell us the state of the middle pieces
-	private int[] state;
+		private int twistCount = 0; //this will tell us the state of the middle pieces
+		private final int[] state = new int[]{ 0,0,1,2,2,3,4,4,5,6,6,7,8,9,9,10,11,11,12,13,13,14,15,15 };;
+
+		public State(Tuple2<Boolean, Boolean> generator) {
+			turnTop = generator.v1;
+			turnBottom = generator.v2;
+		}
+	}
 
 	@SuppressWarnings("unused")
 	public SquareOneScramblePlugin() {
@@ -59,9 +67,9 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
 										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
 		boolean slashes = attributes.contains(SLASHES_ATTRIBUTE);
-		setGenerator(generatorGroup);
-		initializeImage();
-		OptionalInt length = validateScrambleAndGetLength(scramble, slashes);
+		Tuple2<Boolean, Boolean> generator = parseGenerator(generatorGroup);
+		State state = new State(generator);
+		OptionalInt length = validateScrambleAndGetLength(state, scramble, slashes);
 		if(!length.isPresent()) {
 			throw new InvalidScrambleException(scramble);
 		}
@@ -71,9 +79,8 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	@Override
 	public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
 		boolean slashes = attributes.contains(SLASHES_ATTRIBUTE);
-		setGenerator(generatorGroup);
-		initializeImage();
-		return new ScrambleString(generateScramble(variation.getLength(), slashes), false, variation, this, null);
+		Tuple2<Boolean, Boolean> generator = parseGenerator(generatorGroup);
+		return new ScrambleString(generateScramble(variation.getLength(), slashes, new State(generator)), false, variation, this, null);
 	}
 
 	@Override
@@ -127,26 +134,23 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 		return DEFAULT_GENERATORS;
 	}
 
-	private void setGenerator(String generator) {
-		turnTop = true;
-		turnBottom = true;
+	private Tuple2<Boolean, Boolean> parseGenerator(String generator) {
 		if(generator == null) {
-			return;
+			return new Tuple2<>(true, true);
 		}
 		Matcher m = GENERATOR.matcher(generator);
 		if(m.find()) {
-			turnTop = !m.group(1).equals("0");
-			turnBottom = !m.group(2).equals("0");
+			return new Tuple2<>(
+					!m.group(1).equals("0"),
+					!m.group(2).equals("0"));
 		}
+		return new Tuple2<>(true, true);
 	}
 
 	//Ported from http://www.worldcubeassociation.org/regulations/scrambles/scramble_square1.htm by Jeremy Fleischman
 	/* Javascript written by Jaap Scherphuis,  jaapsch@yahoo.com */
-	private void initializeImage() {
-		state = new int[]{ 0,0,1,2,2,3,4,4,5,6,6,7,8,9,9,10,11,11,12,13,13,14,15,15 }; //piece array
-	}
 
-	private String generateScramble(int length, boolean slashes) {
+	private String generateScramble(int length, boolean slashes, State state) {
 		int[] turns = new int[length];
 		int move;
 		int ls = -1;
@@ -164,7 +168,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 				}
 				//we don't want to apply to restriction to the bottom if we're no allowed to turn the top
 				//if we did, we might loop forever making scrambles for a bandaged square 1
-			} while( (turnTop && twistCount>1 && move>=-6 && move<0) || domove(i, move, turns));
+			} while( (state.turnTop && state.twistCount>1 && move>=-6 && move<0) || domove(state, i, move, turns));
 			if(move>0) ls=1;
 			else if(move<0) ls=2;
 			else { ls=0; }
@@ -207,42 +211,42 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	}
 	
 	//returns true if invalid, false if valid
-	private boolean domove(int index, int m, int[] turns) {
+	private boolean domove(State state, int index, int m, int[] turns) {
 		int i,c,f=m;
 		//do move f
 		if(f == 0) { //slash
 			for(i = 0; i < 6; i++){
-				c=state[i+12];
-				state[i+12]=state[i+6];
-				state[i+6]=c;
+				c = state.state[i+12];
+				state.state[i+12] = state.state[i+6];
+				state.state[i+6] = c;
 			}
-			twistCount++;
+			state.twistCount++;
 		} else if(f > 0) { //turn the top
-			if(!turnTop) return true;
+			if(!state.turnTop) return true;
 			f=modulo(12-f, 12);
-			if( state[f]==state[f-1] ) return true;
-			if( f<6 && state[f+6]==state[f+5] ) return true;
-			if( f>6 && state[f-6]==state[f-7] ) return true;
-			if( f==6 && state[0]==state[11] ) return true;
+			if( state.state[f]==state.state[f-1] ) return true;
+			if( f<6 && state.state[f+6]==state.state[f+5] ) return true;
+			if( f>6 && state.state[f-6]==state.state[f-7] ) return true;
+			if( f==6 && state.state[0]==state.state[11] ) return true;
 			int[] t = new int[12];
-			for(i=0;i<12;i++) t[i]=state[i];
+			for(i=0;i<12;i++) t[i]=state.state[i];
 			c=f;
 			for(i=0;i<12;i++){
-				state[i] = t[c];
+				state.state[i] = t[c];
 				if(c == 11)c=0; else c++;
 			}
 		} else if(f < 0) { //turn the bottom
-			if(!turnBottom) return true;
+			if(!state.turnBottom) return true;
 			f=modulo(-f, 12);
-			if( state[f+12]==state[f+11] ) return true;
-			if( f<6 && state[f+18]==state[f+17] ) return true;
-			if( f>6 && state[f+6]==state[f+5] ) return true;
-			if( f==6 && state[12]==state[23] ) return true;
+			if( state.state[f+12]==state.state[f+11] ) return true;
+			if( f<6 && state.state[f+18]==state.state[f+17] ) return true;
+			if( f>6 && state.state[f+6]==state.state[f+5] ) return true;
+			if( f==6 && state.state[12]==state.state[23] ) return true;
 			int[] t = new int[12];
-			for(i=0;i<12;i++) t[i]=state[i+12];
+			for(i=0;i<12;i++) t[i]=state.state[i+12];
 			c=f;
 			for(i=0;i<12;i++){
-				state[i+12]=t[c];
+				state.state[i+12]=t[c];
 				if(c==11)c=0; else c++;
 			}
 		}
@@ -251,7 +255,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	}
 	//**********END JAAP's CODE***************
 
-	private OptionalInt validateScrambleAndGetLength(String scramble, boolean slashes) {
+	private OptionalInt validateScrambleAndGetLength(State state, String scramble, boolean slashes) {
 		//if there is no slash in the scramble, we assume that we're using implicit slashes
 		boolean implicitSlashes = scramble.indexOf('/') == -1;
 		//however, to get correct incremental scramble behavior, we will use the set attribute if
@@ -268,21 +272,21 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 				continue;
 			}
 			if (trn.matches(" */ *")) {
-				domove(length++, 0, thisturns);
+				domove(state, length++, 0, thisturns);
 			} else {
 				if ((match = regexp.matcher(trn)).matches()) {
 					int top = Integer.parseInt(match.group(1));
 					int bot = Integer.parseInt(match.group(2));
 					top = modulo(top, 12);
 					bot = modulo(bot, 12);
-					if (top != 0 && domove(length++, top, thisturns)) {
+					if (top != 0 && domove(state, length++, top, thisturns)) {
 						return OptionalInt.empty();
 					}
-					if (bot != 0 && domove(length++, bot - 12, thisturns)) {
+					if (bot != 0 && domove(state, length++, bot - 12, thisturns)) {
 						return OptionalInt.empty();
 					}
 					if (implicitSlashes)
-						domove(length++, 0, thisturns);
+						domove(state, length++, 0, thisturns);
 				} else {
 					return OptionalInt.empty();
 				}
@@ -294,6 +298,8 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 
 	@Override
 	public BufferedImage getScrambleImage(ScrambleString scrambleString, int gap, int radius, Map<String, Color> colorScheme) {
+		State state = new State(new Tuple2<>(true, true));
+		validateScrambleAndGetLength(state, scrambleString.getScramble(), /*todo*/ false);
 		Dimension dim = getImageSize(gap, radius, null);
 		int width = dim.width;
 		int height = dim.height;
@@ -305,7 +311,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 		double corner_width = half_square_width - edge_width / 2.;
 		Rectangle2D.Double left_mid = new Rectangle2D.Double(width / 2. - half_square_width, height / 2. - radius * (multiplier - 1) / 2., corner_width, radius * (multiplier - 1));
 		Rectangle2D.Double right_mid;
-		if(twistCount % 2 == 0) {
+		if(state.twistCount % 2 == 0) {
 			right_mid = new Rectangle2D.Double(width / 2. - half_square_width, height / 2. - radius * (multiplier - 1) / 2., 2*corner_width + edge_width, radius * (multiplier - 1));
 			g.setColor(colorScheme.get(FRONT));
 		} else {
@@ -322,13 +328,13 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 		double x = width / 2.0;
 		double y = height / 4.0;
 		g.rotate(Math.toRadians(90 + 15), x, y);
-		drawFace(g, state, x, y, gap, radius, colorScheme);
+		drawFace(g, state.state, x, y, gap, radius, colorScheme);
 		g.dispose();
 
 		y *= 3.0;
 		g = buffer.createGraphics();
 		g.rotate(Math.toRadians(-90 - 15), x, y);
-		drawFace(g, Arrays.copyOfRange(state, 12, state.length), x, y, gap, radius, colorScheme);
+		drawFace(g, Arrays.copyOfRange(state.state, 12, state.state.length), x, y, gap, radius, colorScheme);
 		g.dispose();
 		return buffer;
 	}

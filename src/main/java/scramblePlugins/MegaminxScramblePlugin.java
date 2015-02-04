@@ -171,12 +171,12 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 					turn(image, face, dir);
 				}
 			}
-		} catch(Exception e){
+			return true;
+		}
+		catch(Exception e){
 			LOG.info("unexpected exception", e);
 			return false;
 		}
-
-		return true;
 	}
 
 	private final static int[][] comm = {
