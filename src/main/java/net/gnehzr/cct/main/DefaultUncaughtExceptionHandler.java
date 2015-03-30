@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @see java.awt.EventDispatchThread#processException
@@ -18,7 +19,7 @@ public class DefaultUncaughtExceptionHandler implements Thread.UncaughtException
             System.setProperty(SP_SUN_AWT_EXCEPTION_HANDLER, DefaultUncaughtExceptionHandler.class.getName());
     }
 
-	private Logger LOG = Logger.getLogger(DefaultUncaughtExceptionHandler.class);
+	private Logger LOG = LogManager.getLogger(DefaultUncaughtExceptionHandler.class);
 
 	public static void initialize() {
         // load class and perform initialization

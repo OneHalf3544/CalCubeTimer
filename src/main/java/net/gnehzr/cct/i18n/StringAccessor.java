@@ -1,6 +1,7 @@
 package net.gnehzr.cct.i18n;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
@@ -11,7 +12,7 @@ import java.util.ResourceBundle;
 
 public class StringAccessor {
 
-	private static final Logger LOG = Logger.getLogger(StringAccessor.class);
+	private static final Logger LOG = LogManager.getLogger(StringAccessor.class);
 
 	private static final String CCT_STRINGS = "languages/cctStrings";
 

@@ -2,11 +2,12 @@ package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ScrambleCustomization {
 
-	private static final Logger LOG = Logger.getLogger(ScrambleCustomization.class);
+	private static final Logger LOG = LogManager.getLogger(ScrambleCustomization.class);
 
 	private final Configuration configuration;
 	private ScrambleVariation variation;
@@ -46,7 +47,7 @@ public class ScrambleCustomization {
 	}
 	public boolean isTrimmed(int index) {
 		VariableKey<Boolean> key = VariableKey.RA_TRIMMED(index, this);
-		if(!configuration.props.keyExists(key))
+		if(!configuration.keyExists(key))
 			key = VariableKey.RA_TRIMMED(index, null);
 		return configuration.getBoolean(key, false);
 	}

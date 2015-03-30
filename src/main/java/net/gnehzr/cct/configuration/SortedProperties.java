@@ -1,5 +1,6 @@
 package net.gnehzr.cct.configuration;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
@@ -7,7 +8,8 @@ import com.google.common.collect.Maps;
 import net.gnehzr.cct.dao.ConfigurationDao;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.Profile;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +18,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 
 public class SortedProperties {
 
-	private static final Logger LOG = Logger.getLogger(SortedProperties.class);
+	private static final Logger LOG = LogManager.getLogger(SortedProperties.class);
+
+	static SortedProperties NOT_LOADED_PROPERTIES = new SortedProperties(ImmutableMap.of(), ImmutableMap.of()) {
+		@Override
+		public String getValue(VariableKey<?> key, boolean defaultValue) {
+			// LOG.error("get value from uninitialized properties. key=" + key);
+			// return super.getValue(key, defaultValue);
+			throw new IllegalStateException("get value from uninitialized properties. key=" + key);
+		}
+	};
 
 	private final Map<String, String> properties;
 	private final ImmutableSortedMap<String, String> defaultProperties;
@@ -31,7 +44,7 @@ public class SortedProperties {
 		this.defaultProperties = ImmutableSortedMap.copyOf(defaultProperties);
 	}
 
-	public static SortedProperties load(Profile profileName, ConfigurationDao configurationDao, File defaultsFile) throws IOException {
+	public static SortedProperties load(Profile profileName, ConfigurationDao configurationDao, File defaultsFile) {
 		//call loadConfiguration(null) when you want to use cct without dealing with config files
 		return new SortedProperties(configurationDao.getParametersForProfile(profileName), loadDefaultProperties(defaultsFile));
 	}
@@ -40,11 +53,13 @@ public class SortedProperties {
 		configurationDao.storeParameters(profile, this.properties);
 	}
 
-	private static ImmutableMap<String, String> loadDefaultProperties(File defaultsFile) throws IOException {
+	private static ImmutableMap<String, String> loadDefaultProperties(File defaultsFile) {
 		try(InputStream in = new FileInputStream(defaultsFile)) {
 			Properties defaults = new Properties();
 			defaults.load(in);
 			return Maps.fromProperties(defaults);
+		} catch (IOException e) {
+			throw Throwables.propagate(e);
 		}
 	}
 
@@ -61,7 +76,7 @@ public class SortedProperties {
 		return val;
 	}
 
-	private String getValue(VariableKey<?> key, boolean getOnlyDefaultValue) {
+	String getValue(VariableKey<?> key, boolean getOnlyDefaultValue) {
 		return getValue(key.toKey(), getOnlyDefaultValue);
 	}
 

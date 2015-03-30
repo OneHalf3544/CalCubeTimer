@@ -2,7 +2,8 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.help.AboutScrollFrame;
 import net.gnehzr.cct.i18n.StringAccessor;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -16,8 +17,11 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class AboutAction extends AbstractAction {
-	private static final Logger LOG = Logger.getLogger(AboutAction.class);
+
+	private static final Logger LOG = LogManager.getLogger(AboutAction.class);
+
 	private AboutScrollFrame makeMeVisible;
+
 	public AboutAction() {
 		try {
 			makeMeVisible = new AboutScrollFrame(CALCubeTimerFrame.class.getResource("about.html"), CALCubeTimerFrame.CUBE_ICON.getImage());

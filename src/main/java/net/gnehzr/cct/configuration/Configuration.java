@@ -4,10 +4,11 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.dao.ConfigurationDao;
+import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.statistics.Profile;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -17,7 +18,10 @@ import org.jvnet.substance.fonts.FontSet;
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -33,24 +37,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class Configuration {
 
-	private static final Logger LOG = Logger.getLogger(Configuration.class);
+	private static final Logger LOG = LogManager.getLogger(Configuration.class);
 
-	@Deprecated
+	private static File root;
+
 	private final File documentationFile;
-	@Deprecated
 	private final File dynamicStringsFile;
-	@Deprecated
-	private final File profilesFolder;
-	@Deprecated
 	private final File voicesFolder;
-	@Deprecated
-	private final File databaseDTD;
-	@Deprecated
 	private final File guiLayoutsFolder;
-	@Deprecated
 	private final File languagesFolder;
-	@Deprecated
-	private final File startupProfileFile;
+
 	private final File flagsFolder;
 
 	private final LocaleAndIcon jvmDefaultLocale;
@@ -69,39 +65,32 @@ public class Configuration {
 		this.configurationDao = configurationDao;
 		documentationFile = new File(rootDirectory, "documentation/readme.html");
 		dynamicStringsFile = new File(rootDirectory, "documentation/dynamicstrings.html");
-		profilesFolder = new File(rootDirectory, "profiles/");
 
 		voicesFolder = new File(rootDirectory, "voices/");
-		databaseDTD = new File(getProfilesFolder(), "database.dtd");
 		guiLayoutsFolder = new File(rootDirectory, "guiLayouts/");
 		languagesFolder = new File(rootDirectory, "languages/");
 		flagsFolder = new File(languagesFolder, "flags/");
-		startupProfileFile = new File(getProfilesFolder(), "startup");
-		defaultsFile = new File(getProfilesFolder(), "defaults.properties");
+		defaultsFile = new File(rootDirectory, "profiles/defaults.properties");
 		jvmDefaultLocale = new LocaleAndIcon(flagsFolder, Locale.getDefault(), null);
-		loadConfiguration(null);
 	}
 
 	// using for unit-tests
-	public Configuration(SortedProperties props) {
+	public Configuration(SortedProperties userProperties) {
 		this.configurationDao = null;
-		this.props = props;
+		this.userProperties = userProperties;
 		documentationFile = null;
 		dynamicStringsFile = null;
-		profilesFolder = null;
 
 		voicesFolder = null;
-		databaseDTD = null;
 		guiLayoutsFolder = null;
 		languagesFolder = null;
 		flagsFolder = null;
-		startupProfileFile = null;
 		defaultsFile = null;
 		jvmDefaultLocale = new LocaleAndIcon(flagsFolder, Locale.getDefault(), null);
 	}
 
 	public DateTimeFormatter getDateFormat() {
-		return DateTimeFormatter.ofPattern(props.getString(VariableKey.DATE_FORMAT, false));
+		return DateTimeFormatter.ofPattern(userProperties.getString(VariableKey.DATE_FORMAT, false));
 	}
 	
 	private CopyOnWriteArrayList<ConfigurationChangeListener> listeners = new CopyOnWriteArrayList<>();
@@ -118,8 +107,6 @@ public class Configuration {
 	public void apply(Profile currentProfile) {
 		listeners.forEach((l) -> l.configurationChanged(currentProfile));
 	}
-
-	private static File root;
 
 	public static File getRootDirectory() {
         if (root != null) {
@@ -154,20 +141,18 @@ public class Configuration {
 		return seriousError;
 	}
 
-	public SortedProperties props;
+	@NotNull
+	private SortedProperties userProperties = SortedProperties.NOT_LOADED_PROPERTIES;
 
-	public void loadConfiguration(Profile profile) throws IOException {
-		props = SortedProperties.load(profile, configurationDao, defaultsFile);
+	public void loadConfiguration(Profile profile) {
+		userProperties = SortedProperties.load(profile, configurationDao, defaultsFile);
+	}
+
+	public boolean isPropertiesLoaded() {
+		return userProperties != SortedProperties.NOT_LOADED_PROPERTIES;
 	}
 
 	//********* Start of specialized methods ***************//
-
-	public Profile commandLineProfile;
-
-	//this is used for adding profiles that aren't under the "profiles" directory
-	public void setCommandLineProfile(Profile profile) {
-		commandLineProfile = profile;
-	}
 
 	public void setProfileOrdering(List<Profile> profiles) {
         profileOrdering = Joiner.on("|").join(profiles);
@@ -180,7 +165,7 @@ public class Configuration {
 	//otherwise, returns null
 	public File getXMLGUILayout() {
 		for(File file : getXMLLayoutsAvailable()) {
-			if(file.getName().equalsIgnoreCase(props.getString(VariableKey.XML_LAYOUT, false))) {
+			if(file.getName().equalsIgnoreCase(userProperties.getString(VariableKey.XML_LAYOUT, false))) {
 				return file;
 			}
 		}
@@ -196,6 +181,7 @@ public class Configuration {
 		return null;
 	}
 	private File[] availableLayouts;
+
 	public File[] getXMLLayoutsAvailable() {
 		if(availableLayouts == null) {
 			availableLayouts = guiLayoutsFolder.listFiles(
@@ -218,7 +204,7 @@ public class Configuration {
 	public LocaleAndIcon getDefaultLocale() {
 		LocaleAndIcon l = new LocaleAndIcon(
 				flagsFolder,
-				new Locale(props.getString(VariableKey.LANGUAGE, false), props.getString(VariableKey.REGION, false)),
+				new Locale(userProperties.getString(VariableKey.LANGUAGE, false), userProperties.getString(VariableKey.REGION, false)),
 				null);
 		if(getAvailableLocales().contains(l))
 			return l;
@@ -233,132 +219,124 @@ public class Configuration {
 		return documentationFile.toURI();
 	}
 
-	public File getProfilesFolder() {
-		return profilesFolder;
-	}
-
-	public File getDatabaseDTD() {
-		return databaseDTD;
-	}
-
 	public File getVoicesFolder() {
 		return voicesFolder;
 	}
 
-	public File getStartupProfileFile() {
-		return startupProfileFile;
-	}
-
 	public void saveConfigurationToFile(Profile profile) throws IOException {
-		props.saveConfiguration(profile, configurationDao);
+		userProperties.saveConfiguration(profile, configurationDao);
 	}
 
 	public boolean getBoolean(VariableKey<Boolean> key, boolean defaultValue) {
-		return props.getBoolean(key, defaultValue);
+		return userProperties.getBoolean(key, defaultValue);
 	}
 
 	public String getString(String substring) {
-		return props.getString(new VariableKey<>(substring), false);
+		return userProperties.getString(new VariableKey<>(substring), false);
 	}
 
 	public List<String> getStringArray(VariableKey<List<String>> solveTags, boolean defaultValue) {
-		return props.getStringArray(solveTags, defaultValue);
+		return userProperties.getStringArray(solveTags, defaultValue);
 	}
 
 	public void setLong(VariableKey<Integer> key, long newValue) {
-		props.setLong(key, newValue);
+		userProperties.setLong(key, newValue);
 	}
 
 	public void setBoolean(VariableKey<Boolean> booleanVariableKey, boolean newValue) {
-		props.setBoolean(booleanVariableKey, newValue);
+		userProperties.setBoolean(booleanVariableKey, newValue);
 	}
 
 	public Integer getInt(VariableKey<Integer> integerVariableKey, boolean defaultValue) {
-		Long aLong = props.getLong(integerVariableKey, defaultValue);
+		Long aLong = userProperties.getLong(integerVariableKey, defaultValue);
 		return aLong == null ? null : aLong.intValue();
 	}
 
 	@NotNull
 	public String getString(VariableKey<String> key, boolean defaults) {
-		return props.getString(key, defaults);
+		return userProperties.getString(key, defaults);
 	}
 
 	@Nullable
 	public String getNullableString(VariableKey<String> key, boolean defaults) {
-		return props.getNullableString(key, defaults);
+		return userProperties.getNullableString(key, defaults);
 	}
 
 	public void setString(VariableKey<String> key, String s) {
-		props.setString(key, s);
+		userProperties.setString(key, s);
 	}
 
 	public Color getColorNullIfInvalid(VariableKey<Color> colorVariableKey, boolean defaults) {
-		return props.getColorNullIfInvalid(colorVariableKey, defaults);
+		return userProperties.getColorNullIfInvalid(colorVariableKey, defaults);
 	}
 
 	public void setIntegerArray(VariableKey<Integer[]> variableKey, Integer[] ordering) {
-		props.setIntegerArray(variableKey, ordering);
+		userProperties.setIntegerArray(variableKey, ordering);
 	}
 
 	public Integer[] getIntegerArray(VariableKey<Integer[]> variableKey, boolean b) {
-		return props.getIntegerArray(variableKey, b);
+		return userProperties.getIntegerArray(variableKey, b);
 	}
 
 	public void setDimension(VariableKey<Dimension> ircFrameDimension, Dimension size) {
-		props.setDimension(ircFrameDimension, size);
+		userProperties.setDimension(ircFrameDimension, size);
 	}
 
 	public void setPoint(VariableKey<Point> ircFrameLocation, Point location) {
-		props.setPoint(ircFrameLocation, location);
+		userProperties.setPoint(ircFrameLocation, location);
 	}
 
 	public void setStringArray(VariableKey<List<String>> valuesKey, List<?> items) {
-		props.setStringArray(valuesKey, items);
+		userProperties.setStringArray(valuesKey, items);
 	}
 
 	public Font getFont(VariableKey<Font> scrambleFont, boolean b) {
-		return props.getFont(scrambleFont, b);
+		return userProperties.getFont(scrambleFont, b);
 	}
 
 	public Color getColor(VariableKey<Color> timerFg, boolean b) {
-		return props.getColor(timerFg, b);
+		return userProperties.getColor(timerFg, b);
 	}
 
 	public Dimension getDimension(VariableKey<Dimension> ircFrameDimension, boolean b) {
-		return props.getDimension(ircFrameDimension);
+		return userProperties.getDimension(ircFrameDimension);
 	}
 
 	public float getFloat(VariableKey<Float> opacity, boolean b) {
-		return props.getFloat(opacity, b);
+		return userProperties.getFloat(opacity, b);
 	}
 
 	public Point getPoint(VariableKey<Point> ircFrameLocation, boolean b) {
-		return props.getPoint(ircFrameLocation, b);
+		return userProperties.getPoint(ircFrameLocation, b);
 	}
 
 	public void setColor(VariableKey<Color> currentAverage, Color background) {
-		props.setColor(currentAverage, background);
+		userProperties.setColor(currentAverage, background);
 	}
 
 	public void setFont(VariableKey<Font> timerFont, Font font) {
-		props.setFont(timerFont, font);
+		userProperties.setFont(timerFont, font);
 	}
 
 	public void setDouble(VariableKey<Double> minSplitDifference, Double value) {
-		props.setDouble(minSplitDifference, value);
+		userProperties.setDouble(minSplitDifference, value);
 	}
 
 	public void setFloat(VariableKey<Float> opacity, float v) {
-		props.setFloat(opacity, v);
+		userProperties.setFloat(opacity, v);
 	}
 
 	public Double getDouble(VariableKey<Double> key, boolean defaultValue) {
-		return props.getDouble(key, defaultValue);
+		return userProperties.getDouble(key, defaultValue);
 	}
 
 	public Duration getDuration(VariableKey<Duration> delayUntilInspection, boolean b) {
-		Long aLong = props.getLong(delayUntilInspection.toKey(), b);
+		Long aLong = userProperties.getLong(delayUntilInspection.toKey(), b);
 		return aLong == null ? null : Duration.ofMillis(aLong);
+	}
+
+	public boolean keyExists(VariableKey<Boolean> key) {
+		return userProperties.keyExists(key);
 	}
 
 	static class SubstanceFontPolicy implements FontPolicy {
@@ -401,8 +379,8 @@ public class Configuration {
 	private Font defaultSwingFont = SubstanceLookAndFeel.getFontPolicy().getFontSet(null, null).getTitleFont();
 	public void setDefaultLocale(LocaleAndIcon li) {
 		Locale l = li.getLocale();
-		props.setString(VariableKey.LANGUAGE, l.getLanguage());
-		props.setString(VariableKey.REGION, l.getCountry());
+		userProperties.setString(VariableKey.LANGUAGE, l.getLanguage());
+		userProperties.setString(VariableKey.REGION, l.getCountry());
 		Locale.setDefault(l);
 		currentFontPolicy.setFont(getFontForLocale(li));
 		SubstanceLookAndFeel.setFontPolicy(currentFontPolicy);

@@ -1,6 +1,7 @@
 package net.gnehzr.cct.i18n;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.io.File;
@@ -9,7 +10,7 @@ import java.util.Locale;
 
 public class LocaleAndIcon {
 
-	private static final Logger LOG = Logger.getLogger(LocaleAndIcon.class);
+	private static final Logger LOG = LogManager.getLogger(LocaleAndIcon.class);
 
 	private final File flagFolder;
 	private Locale l;

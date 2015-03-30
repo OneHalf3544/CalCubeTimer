@@ -7,11 +7,13 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.statistics.SolveType;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -19,7 +21,7 @@ import java.util.zip.ZipFile;
 @Singleton
 public class NumberSpeaker implements Comparable<NumberSpeaker> {
 
-	private static final Logger LOG = Logger.getLogger(NumberSpeaker.class);
+	private static final Logger LOG = LogManager.getLogger(NumberSpeaker.class);
 
 	private static final String ZIP_EXTENSION = ".zip";
 
@@ -128,26 +130,27 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 			getMP3FromName("dnf").play();
 		}
     	else {
-			speak(false, (int) Math.round(time.secondsValue() * 100));
+			speak(false, time.getTime());
 		}
     }
     
     //"Your time is " + lastin.toSolveTime(null, null).value() / 100. + " seconds"
     //Speaks something of the form "xyz.ab seconds"
-    public void speak(boolean yourTime, long hundredths) throws JavaLayerException {
+    public void speak(boolean yourTime, Duration hundredths) throws JavaLayerException {
     	Objects.requireNonNull(clips, "Failed to open " + name + ".zip!");
     	if(yourTime) {
     		getMP3FromName("your_time_is").play();
     	}
 		Boolean clockFormat = configuration.getBoolean(VariableKey.CLOCK_FORMAT, false);
 
-		LinkedList<String> time = breakItDown(hundredths, clockFormat);
-    	for(String file : time) {
+		List<String> wordFileNamesList = breakItDown(hundredths, clockFormat);
+    	for(String file : wordFileNamesList) {
     		getMP3FromName(file).play();
     	}
     }
     
-    private LinkedList<String> breakItDown(long hundredths, boolean clockFormat) {
+    private LinkedList<String> breakItDown(Duration duration, boolean clockFormat) {
+		long hundredths = duration.toMillis() / 10;
     	long largest; //either the number of minutes or hundreds of seconds
     	if(clockFormat) {
     		largest = hundredths / (60*100);

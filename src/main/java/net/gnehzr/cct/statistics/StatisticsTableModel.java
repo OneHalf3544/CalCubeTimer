@@ -9,7 +9,8 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,6 +18,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,11 +26,7 @@ import java.util.stream.Collectors;
 @Singleton
 public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
 
-	private static final Logger LOG = Logger.getLogger(StatisticsTableModel.class);
-
-	Statistics stats;
-
-	private Session session;
+	private static final Logger LOG = LogManager.getLogger(StatisticsTableModel.class);
 
 	private final Configuration configuration;
 
@@ -57,13 +55,17 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 	private Map<SolveType, JMenuItem> typeButtons;
 	private List<StatisticsUpdateListener> statsListeners = new ArrayList<>();
 
+	private Session session;
+
 	@Inject
 	public StatisticsTableModel(Configuration configuration) {
 		this.configuration = configuration;
+		session = new Session(LocalDateTime.now(), this.configuration, this);
 	}
 
 	public void setSession(@NotNull Session session) {
 		this.session = Objects.requireNonNull(session);
+		Statistics stats = Objects.requireNonNull(session.getStatistics());
 		if(stats != null) {
 			stats.setUndoRedoListener(null);
 			stats.setTableListener(null);
@@ -76,13 +78,9 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		stats.notifyListeners(false);
 	}
 
-	//@NotNull
+	@NotNull
 	public Session getCurrentSession() {
 		return session;
-	}
-
-	public Statistics getCurrentStatistics() {
-		return stats;
 	}
 
 	public void setUndoRedoListener(@NotNull UndoRedoListener l) {
@@ -130,23 +128,23 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 	@Override
 	public int getRowCount() {
-		return stats == null ? 0 : stats.getAttemptCount();
+		return session.getStatistics().getAttemptCount();
 	}
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		switch(columnIndex) {
 		case 0: //get the solvetime for this index
-			return stats.get(rowIndex).getTime();
+			return session.getStatistics().get(rowIndex).getTime();
 		case 1: //falls through
 		case 2: //get the RA for this index in this column
-			return stats.getRA(rowIndex, columnIndex - 1).getTime();
+			return session.getStatistics().getRA(rowIndex, columnIndex - 1).getTime();
 		case 3:
-			return stats.get(rowIndex).getComment();
+			return session.getStatistics().get(rowIndex).getComment();
 		case 4: //tags
-			return Joiner.on(", ").join(stats.get(rowIndex).getTime().getTypes());
+			return Joiner.on(", ").join(session.getStatistics().get(rowIndex).getTime().getTypes());
 		case 5: // scramble variation
-			return stats.get(rowIndex).getScramble().getVariation().getName();
+			return session.getStatistics().get(rowIndex).getScramble().getVariation().getName();
 		default:
 			return null;
 		}
@@ -164,23 +162,23 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 	@Override
 	public void insertValueAt(Object value, int rowIndex) {
-		stats.add(rowIndex, (Solution) value);
+		session.getStatistics().add(rowIndex, (Solution) value);
 		fireTableRowsInserted(rowIndex, rowIndex);
 	}
 
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(columnIndex == 0 && value instanceof Solution) {
-			stats.set(rowIndex, (Solution) value);
+			session.getStatistics().set(rowIndex, (Solution) value);
 		}
 		else if(columnIndex == 3 && value instanceof String) {
-			stats.get(rowIndex).setComment((String) value);
+			session.getStatistics().get(rowIndex).setComment((String) value);
 		}
 	}
 
 	@Override
 	public void deleteRows(int[] indices) {
-		stats.remove(indices);
+		session.getStatistics().remove(indices);
 	}
 
 	@Override
@@ -190,7 +188,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
-		String t = stats.get(rowIndex).getComment();
+		String t = session.getStatistics().get(rowIndex).getComment();
 		return t.isEmpty() ? null : t;
 	}
 
@@ -207,7 +205,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 				List<SolveType> types = typeButtons.keySet().stream()
 						.filter(key -> typeButtons.get(key).isSelected())
 						.collect(Collectors.toList());
-				stats.setSolveTypes(timesTable.getSelectedRow(), types);
+				session.getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
 			}
 		}
 		if(prevFocusOwner != null)
@@ -224,7 +222,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			return;
 		}
 		else if(selectedSolves.length == 1) {
-			Solution selectedSolve = stats.get(timesTable.getSelectedRow());
+			Solution selectedSolve = session.getStatistics().get(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
 					+ Utils.formatTime(selectedSolve.getTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ));
 			rawTime.setEnabled(false);

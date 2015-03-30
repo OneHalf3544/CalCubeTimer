@@ -4,7 +4,8 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 public class ScrambleViewComponent extends JComponent {
 
-	private static final Logger LOGGER = Logger.getLogger(ScrambleViewComponent.class);
+	private static final Logger LOGGER = LogManager.getLogger(ScrambleViewComponent.class);
 
 	private static final int DEFAULT_GAP = 5;
 	private static final Dimension PREFERRED_SIZE = new Dimension(0, 0);

@@ -13,7 +13,8 @@ import net.gnehzr.cct.main.ScrambleHyperlinkArea;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.Profile;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -33,7 +34,7 @@ import java.util.Hashtable;
 @Singleton
 public class TimerLabel extends JColorComponent implements ComponentListener, ConfigurationChangeListener {
 
-	private static final Logger LOG = Logger.getLogger(TimerLabel.class);
+	private static final Logger LOG = LogManager.getLogger(TimerLabel.class);
 
 	private static final Dimension MIN_SIZE = new Dimension(0, 150);
 
@@ -55,7 +56,8 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	private TimerState time;
 	private Font font;
 
-	private Boolean leftHand, rightHand;
+	private Boolean leftHand;
+	private Boolean rightHand;
 
 	//What follows is some really nasty code to deal with linux and window's differing behavior for keyrepeats
 	private Hashtable<Integer, Long> timeup = new Hashtable<>(KeyEvent.KEY_LAST);
@@ -95,6 +97,25 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		setFocusTraversalKeysEnabled(false);
 	}
 
+	public void setTime(TimerState time) {
+		this.time = time;
+		super.setText(time.toString());
+		componentResized(null);
+	}
+
+	@Override
+	public void configurationChanged(Profile profile) {
+		setForeground(configuration.getColor(VariableKey.TIMER_FG, false));
+		setBackground(configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, false));
+
+		setFont(configuration.getFont(VariableKey.TIMER_FONT, false));
+		if(time != null) //this will deal with any internationalization issues, if appropriate
+			setTime(time);
+		else
+			setText(getText());
+		refreshTimer();
+	}
+
 	public void setKeyboardHandler(KeyboardHandler keyHandler) {
 		this.keyHandler = keyHandler;
 	}
@@ -119,23 +140,15 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
 					return;
 				}
-				int code = e.getKeyCode();
-				timeup.put(code, e.getWhen());
-				ActionListener checkForKeyPress = new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent evt) {
-						if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
-							keyDown.put(keyCode, false);
-							keyReallyReleased(e);
-						}
-						((Timer) evt.getSource()).stop();
-					}
-					private int keyCode;
-					public ActionListener setKeyCode(int keyCode) {
-						this.keyCode = keyCode;
-						return this;
-					}
-				}.setKeyCode(code);
+				int keyCode = e.getKeyCode();
+				timeup.put(keyCode, e.getWhen());
+				ActionListener checkForKeyPress = evt -> {
+                    if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
+                        keyDown.put(keyCode, false);
+                        keyReallyReleased(e);
+                    }
+                    ((Timer) evt.getSource()).stop();
+                };
 
 				new Timer(10, checkForKeyPress).start();
 			}
@@ -176,12 +189,6 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		refreshTimer();
 	}
 
-	public void setTime(TimerState time) {
-		setForeground(configuration.getColor(VariableKey.TIMER_FG, false));
-		this.time = time;
-		super.setText(time.toString());
-		componentResized(null);
-	}
 
 	public TimerState getTimerState() {
 		return time;
@@ -246,18 +253,6 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			return GREEN_STATUS_IMAGE;
 		}
 		return hand ? RED_STATUS_IMAGE : null;
-	}
-
-	@Override
-	public void configurationChanged(Profile profile) {
-		setBackground(configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, false));
-		
-		setFont(configuration.getFont(VariableKey.TIMER_FONT, false));
-		if(time != null) //this will deal with any internationalization issues, if appropriate
-			setTime(time);
-		else
-			setText(getText());
-		refreshTimer();
 	}
 
 	private boolean canStartTimer() {

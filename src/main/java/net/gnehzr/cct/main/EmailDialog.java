@@ -5,7 +5,8 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.SendMailUsingAuthentication;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.mail.MessagingException;
 import javax.swing.*;
@@ -20,7 +21,7 @@ import java.net.URISyntaxException;
 
 public class EmailDialog extends JDialog implements ActionListener, CaretListener {
 
-	private static final Logger LOG = Logger.getLogger(EmailDialog.class);
+	private static final Logger LOG = LogManager.getLogger(EmailDialog.class);
 
 	private JTextField toAddress;
 	JTextField subject = null;

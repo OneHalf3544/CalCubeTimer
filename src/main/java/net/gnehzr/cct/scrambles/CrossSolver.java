@@ -1,20 +1,14 @@
 package net.gnehzr.cct.scrambles;
 
-import org.apache.log4j.Logger;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.*;
 
 public class CrossSolver {
 
-	private static final Logger LOG = Logger.getLogger(CrossSolver.class);
-
-	public static enum Face {
+	public enum Face {
 		FRONT('F'), UP('U'), RIGHT('R'), BACK('B'), LEFT('L'), DOWN('D');
 		private char f;
-		private Face(char f) {
+
+		Face(char f) {
 			this.f = f;
 			faces.put(this, f);
 		}
@@ -49,7 +43,7 @@ public class CrossSolver {
 		public static Rotate y = new Rotate("y", Face.FRONT, Face.LEFT, Face.BACK, Face.RIGHT);
 		public static Rotate z = new Rotate("z", Face.UP, Face.RIGHT, Face.DOWN, Face.LEFT);
 		
-		private HashMap<Face, Face> new_og = new HashMap<Face, Face>();
+		private HashMap<Face, Face> new_og = new HashMap<>();
 		private Rotate() {
 			for(Face f : Face.values())
 				new_og.put(f, f);
@@ -85,8 +79,8 @@ public class CrossSolver {
 		}
 	}
 	
-	private static DoubleHashMap<Face, Character> faces = new DoubleHashMap<Face, Character>();
-	private static DoubleHashMap<String, Integer> directions = new DoubleHashMap<String, Integer>();
+	private static DoubleHashMap<Face, Character> faces = new DoubleHashMap<>();
+	private static DoubleHashMap<String, Integer> directions = new DoubleHashMap<>();
 	static {
 		directions.put("'", 3);
 		directions.put("2", 2);
@@ -99,8 +93,8 @@ public class CrossSolver {
 		private HashMap<B, A> backward;
 
 		public DoubleHashMap() {
-			forward = new HashMap<A, B>();
-			backward = new HashMap<B, A>();
+			forward = new HashMap<>();
+			backward = new HashMap<>();
 		}
 
 		public void put(A a, B b) {
@@ -151,7 +145,7 @@ public class CrossSolver {
 				if(turn.isEmpty()) continue;
 				Character face = turn.charAt(0);
 				String dir = turn.substring(1);
-				c = c.applyTurn(new Pair<Face, Integer>(r.getOGFace(faces.getReverse(face)), directions.get(dir)));
+				c = c.applyTurn(new Pair<>(r.getOGFace(faces.getReverse(face)), directions.get(dir)));
 			}
 			return c;
 		}
@@ -200,13 +194,13 @@ public class CrossSolver {
 			int distance_to_last_edge = 0;
 			int sum = 0;
 			int shift = 1;
-			for(int i = 0; i < eo.length; i++) {
-				if(eo[i] != null) {
+			for (Boolean anEo : eo) {
+				if (anEo != null) {
 					orientations <<= 1;
-					if(eo[i])
+					if (anEo)
 						orientations++;
 					hash += shift * distance_to_last_edge;
-					shift *= 9-sum;
+					shift *= 9 - sum;
 					sum += distance_to_last_edge;
 					distance_to_last_edge = 0;
 				} else
@@ -243,7 +237,7 @@ public class CrossSolver {
 		}
 		public int hash_ep() {
 			int hash = 0;
-			ArrayList<Integer> edges = new ArrayList<Integer>(Arrays.asList(ep));
+			ArrayList<Integer> edges = new ArrayList<>(Arrays.asList(ep));
 			for(int c = 0; c < 4; c++) {
 				int i = edges.indexOf(c);
 				edges.remove(i);
@@ -253,7 +247,7 @@ public class CrossSolver {
 			return hash;
 		}
 		public static Integer[] unhash_ep(int ep_hash) {
-			ArrayList<Integer> ep = new ArrayList<Integer>();
+			ArrayList<Integer> ep = new ArrayList<>();
 			for(int c = 3; c >= 0; c--) {
 				int i = ep_hash % (12-c);
 				ep_hash /= (12-c);
@@ -272,25 +266,27 @@ public class CrossSolver {
 		}
 	}
 	
-	private static ArrayList<ArrayList<Pair<Face, Integer>>> iddfs(int hash1, int hash2, int solved1, int solved2, int[][] trans1, int[][] trans2, byte[] prune1, byte[] prune2, Pair<Face, Integer> lastTurn, int depth) {
+	private static List<List<Pair<Face, Integer>>> iddfs(int hash1, int hash2, int solved1, int solved2, int[][] trans1,
+														 int[][] trans2, byte[] prune1, byte[] prune2,
+														 Pair<Face, Integer> lastTurn, int depth) {
 		if(depth == 0) {
 			if(hash1 == solved1 && hash2 == solved2) {
-				ArrayList<Pair<Face, Integer>> sol = new ArrayList<Pair<Face,Integer>>();
+				List<Pair<Face, Integer>> sol = new ArrayList<>();
 				if(lastTurn != null)
 					sol.add(lastTurn);
-				ArrayList<ArrayList<Pair<Face, Integer>>> sols = new ArrayList<ArrayList<Pair<Face, Integer>>>();
+				List<List<Pair<Face, Integer>>> sols = new ArrayList<>();
 				sols.add(sol);
 				return sols;
 			} else
 				return null;
 		} else {
-			ArrayList<ArrayList<Pair<Face, Integer>>> sols = null;
+			List<List<Pair<Face, Integer>>> sols = null;
 			if((prune1 == null || prune1[hash1] <= depth) && (prune2 == null || prune2[hash2] <= depth)) {
-				for(Face f : Face.values()) {
+				for (Face f : Face.values()) {
 					if(lastTurn != null && (f == lastTurn.car || (f == lastTurn.car.getOpposite() && f.ordinal() > lastTurn.car.ordinal())))
 						continue;
 					for(int dir = 1; dir <= 3; dir++) {
-						Pair<Face, Integer> turn = new Pair<Face, Integer>(f, dir);
+						Pair<Face, Integer> turn = new Pair<>(f, dir);
 						int turnIndex = f.ordinal()*3 + dir - 1;
 						int newHash1 = hash1;
 						if(trans1 != null)
@@ -298,13 +294,13 @@ public class CrossSolver {
 						int newHash2 = hash2;
 						if(trans2 != null)
 							newHash2 = trans2[hash2][turnIndex];
-						ArrayList<ArrayList<Pair<Face, Integer>>> newSols = iddfs(newHash1, newHash2, solved1, solved2, trans1, trans2, prune1, prune2, turn, depth-1);
+						List<List<Pair<Face, Integer>>> newSols = iddfs(newHash1, newHash2, solved1, solved2, trans1, trans2, prune1, prune2, turn, depth-1);
 						if(newSols != null) {
 							if(lastTurn != null)
-								for(ArrayList<Pair<Face, Integer>> sol : newSols)
+								for(List<Pair<Face, Integer>> sol : newSols)
 									sol.add(0, lastTurn);
 							if(sols == null)
-								sols = new ArrayList<ArrayList<Pair<Face, Integer>>>();
+								sols = new ArrayList<>();
 							sols.addAll(newSols);
 						}
 					}
@@ -314,7 +310,7 @@ public class CrossSolver {
 		}
 	}
 	
-	private static EnumMap<Face, int[]> FACE_INDICES = new EnumMap<Face, int[]>(Face.class);
+	private static EnumMap<Face, int[]> FACE_INDICES = new EnumMap<>(Face.class);
 	static {
 		FACE_INDICES.put(Face.FRONT, new int[] { 0, 4, 8, 5 });
 		FACE_INDICES.put(Face.BACK, new int[] { 2, 6, 10, 7 });
@@ -333,7 +329,7 @@ public class CrossSolver {
 		for(int i = 0; i < trans_eo.length; i++) {
 			for(Face f : Face.values()) {
 				solved.eo = Cube.unhash_eo(i);
-				Pair<Face, Integer> turn = new Pair<Face, Integer>(f, 1);
+				Pair<Face, Integer> turn = new Pair<>(f, 1);
 				for(int d = 0; d < 3; d++) {
 					solved = solved.applyTurn(turn);
 					trans_eo[i][f.ordinal()*3 + d] = solved.hash_eo();
@@ -344,7 +340,7 @@ public class CrossSolver {
 		for(int i = 0; i < trans_ep.length; i++) {
 			for(Face f : Face.values()) {
 				solved.ep = Cube.unhash_ep(i);
-				Pair<Face, Integer> turn = new Pair<Face, Integer>(f, 1);
+				Pair<Face, Integer> turn = new Pair<>(f, 1);
 				for(int d = 0; d < 3; d++) {
 					solved = solved.applyTurn(turn);
 					trans_ep[i][f.ordinal()*3 + d] = solved.hash_ep();
@@ -371,7 +367,7 @@ public class CrossSolver {
 //		}
 		
 		prune_ep = new byte[solved.hash_ep_count()];
-		ArrayList<Integer> fringe = new ArrayList<Integer>();
+		ArrayList<Integer> fringe = new ArrayList<>();
 		fringe.add(ep_solved_hash);
 		while(!fringe.isEmpty()) {
 			int pos = fringe.remove(0);
@@ -389,21 +385,23 @@ public class CrossSolver {
 	}
 	
 	private static int[][] trans_eo, trans_ep;
-	private static byte[] prune_eo, prune_ep;
+	private static byte[] prune_ep;
 	private static int eo_solved_hash, ep_solved_hash;
-	private static ArrayList<ArrayList<Pair<Face, Integer>>> solveCross(Cube cube) {
+	private static List<List<Pair<Face, Integer>>> solveCross(Cube cube) {
 		int eo_hash = cube.hash_eo();
 		int ep_hash = cube.hash_ep();
 		for(int maxDepth = 0; maxDepth < 10; maxDepth++) {
 //			LOG.info("Searching depth: " + maxDepth);
-			ArrayList<ArrayList<Pair<Face, Integer>>> sols = iddfs(eo_hash, ep_hash, eo_solved_hash, ep_solved_hash, trans_eo, trans_ep, prune_eo, prune_ep, null, maxDepth);
-			if(sols != null && !sols.isEmpty())
+			List<List<Pair<Face, Integer>>> sols = iddfs(
+					eo_hash, ep_hash, eo_solved_hash, ep_solved_hash, trans_eo, trans_ep, null, prune_ep, null, maxDepth);
+			if(sols != null && !sols.isEmpty()) {
 				return sols;
+			}
 		}
-		return new ArrayList<ArrayList<Pair<Face, Integer>>>();
+		return new ArrayList<>();
 	}
 	
-	public static String toString(Rotate setup_rotations, Rotate rotation, ArrayList<Pair<Face, Integer>> sol) {
+	public static String toString(Rotate setup_rotations, Rotate rotation, List<Pair<Face, Integer>> sol) {
 		Rotate unsetup = setup_rotations.invert();
 		rotation = rotation.invert();
 		String sep = " ";
@@ -416,7 +414,7 @@ public class CrossSolver {
 		return setup_rotations + " " + solution;
 	}
 	
-	public static ArrayList<String> solveCross(char solveFaceName, char solveSideName, String scramble) {
+	public static List<String> solveCross(char solveFaceName, char solveSideName, String scramble) {
 		if(trans_eo == null) {
 			buildTables(Face.UP);
 		}
@@ -454,11 +452,11 @@ public class CrossSolver {
 		Cube c = new Cube(Face.UP);
 		c = c.applyTurns(rotateUpToCrossSide, scramble);
 //		long start = System.nanoTime();
-		ArrayList<ArrayList<Pair<Face, Integer>>> sols = solveCross(c);
+		List<List<Pair<Face, Integer>>> sols = solveCross(c);
 //		double elapsed = (System.nanoTime() - start)/1e9;
 //		LOG.info("Seconds " + elapsed);
-		ArrayList<String> solutions = new ArrayList<String>();
-		for(ArrayList<Pair<Face, Integer>> sol : sols)
+		List<String> solutions = new ArrayList<>();
+		for(List<Pair<Face, Integer>> sol : sols)
 			solutions.add(toString(crossToSolveSide, rotateUpToCrossSide, sol).trim());
 		
 		return solutions;

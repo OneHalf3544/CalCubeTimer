@@ -6,7 +6,8 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.TimingListener;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class KeyboardHandler {
 
-	private static final Logger LOGGER = Logger.getLogger(KeyboardHandler.class);
+	private static final Logger LOGGER = LogManager.getLogger(KeyboardHandler.class);
 
 	private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
 

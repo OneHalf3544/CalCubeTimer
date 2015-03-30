@@ -13,10 +13,14 @@ import org.hibernate.SessionFactory;
  * @author OneHalf
  */
 @Singleton
-public class SolvingDao extends HibernateDaoSupport {
+public class SolutionDao extends HibernateDaoSupport {
 
     @Inject
-    public SolvingDao(SessionFactory sessionFactory) {
+    public SolutionDao(SessionFactory sessionFactory) {
         super(sessionFactory);
+    }
+
+    public void saveSession(SessionEntity session) {
+        insertOrUpdate(session);
     }
 }

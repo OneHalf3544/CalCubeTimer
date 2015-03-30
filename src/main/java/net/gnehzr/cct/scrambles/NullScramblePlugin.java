@@ -1,6 +1,8 @@
 package net.gnehzr.cct.scrambles;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -19,6 +21,8 @@ import java.util.regex.Pattern;
 */
 class NullScramblePlugin extends ScramblePlugin {
 
+    private static final Logger LOG = LogManager.getLogger(NullScramblePlugin.class);
+
     public NullScramblePlugin() {
         super("NullScramblePlugin", false);
     }
@@ -26,12 +30,14 @@ class NullScramblePlugin extends ScramblePlugin {
     @Override
     public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
                                          String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+        LOG.debug("import scramble");
         return ScramblePluginManager.NULL_IMPORTED_SCRUMBLE;
     }
 
     @Override
     public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
-        return ScramblePluginManager.NULL_CREATED_SCRAMBLE;
+        LOG.debug("create scramble");
+        throw new UnsupportedOperationException("NullScramblePlugin.createScramble");
     }
 
     @Override

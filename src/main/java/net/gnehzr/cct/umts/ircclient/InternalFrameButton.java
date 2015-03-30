@@ -1,6 +1,7 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
@@ -16,7 +17,7 @@ import java.beans.PropertyVetoException;
 
 public class InternalFrameButton extends JButton implements MouseListener, Icon, PropertyChangeListener, ComponentListener {
 
-	private static final Logger LOG = Logger.getLogger(InternalFrameButton.class);
+	private static final Logger LOG = LogManager.getLogger(InternalFrameButton.class);
 
 	public JInternalFrame f;
 	private JPopupMenu preview;

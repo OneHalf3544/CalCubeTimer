@@ -2,14 +2,18 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JSpinnerWithText;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.dao.ProfileDao;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -23,13 +27,13 @@ import java.net.URL;
 
 public class ScrambleExportDialog extends JDialog {
 
-	private static final Logger LOG = Logger.getLogger(ScrambleExportDialog.class);
+	private static final Logger LOG = LogManager.getLogger(ScrambleExportDialog.class);
 
 	private final ScramblePluginManager scramblePluginManager;
 	private final Configuration configuration;
 
 	private JTextField urlField;
-	private ScrambleChooserComboBox<ScrambleVariation> scrambleChooser;
+	private ScrambleChooserComboBox<?> scrambleChooser;
 	private JSpinnerWithText scrambleLength, numberOfScrambles;
 
 	public ScrambleExportDialog(JFrame owner, ScrambleVariation selected, ScramblePluginManager scramblePluginManager,
@@ -48,7 +52,7 @@ public class ScrambleExportDialog extends JDialog {
 			}
 		});
 
-		scrambleChooser = new ScrambleChooserComboBox<>(false, false, this.scramblePluginManager, this.configuration, profileDao);
+		scrambleChooser = new ScrambleVariationChooserComboBox(false, this.scramblePluginManager, this.configuration);
 		scrambleChooser.setSelectedItem(selected);
 		scrambleChooser.addActionListener(e -> {
             if(scrambleLength != null) {

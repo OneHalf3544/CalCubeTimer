@@ -8,6 +8,7 @@ import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -15,14 +16,13 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.umts.ircclient.IRCClient;
-import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.inject.Singleton;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
-import javax.xml.transform.TransformerConfigurationException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +43,7 @@ import java.util.concurrent.Executors;
 @Singleton
 public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
-    private static final Logger LOG = Logger.getLogger(CalCubeTimerModelImpl.class);
+    private static final Logger LOG = LogManager.getLogger(CalCubeTimerModelImpl.class);
 
     private static final Duration INSPECTION_TIME = Duration.ofSeconds(15);
     private static final Duration FIRST_WARNING = Duration.ofSeconds(8);
@@ -122,17 +122,13 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     void initializeModel() {
-        tickTock = createTickTockTimer();
+        tickTock = createTickTockTimer("406__TicTacShutUp__click_1_d.wav"); // todo configuration.getString(VariableKey.METRONOME_CLICK_FILE, false));
     }
 
     @Override
     public void prepareForProfileSwitch() {
         Profile profile = profileDao.getSelectedProfile();
-        try {
-            profileDao.saveDatabase(profile);
-        } catch (TransformerConfigurationException | IOException | SAXException e1) {
-            LOG.info("unexpected exception", e1);
-        }
+        profileDao.saveDatabase(profile);
         calCubeTimerGui.saveToConfiguration();
         try {
             configuration.saveConfigurationToFile(profile);
@@ -175,9 +171,9 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         return actionMap;
     }
 
-    private Timer createTickTockTimer() {
+    private Timer createTickTockTimer(String methronomeResourceName) {
         try {
-            InputStream inputStream = getClass().getResourceAsStream(configuration.getString(VariableKey.METRONOME_CLICK_FILE, false));
+            InputStream inputStream = getClass().getResourceAsStream(methronomeResourceName);
             Objects.requireNonNull(inputStream);
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new BufferedInputStream(inputStream));
             DataLine.Info info = new DataLine.Info(Clip.class, audioInputStream.getFormat());
@@ -221,8 +217,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     public Session getNextSession(CALCubeTimerFrame calCubeTimerFrame) {
         Session nextSesh = getStatsModel().getCurrentSession();
         Profile p = profileDao.getSelectedProfile();
-        String customization = scramblesList.getCurrentScrambleCustomization().toString();
-        ProfileDatabase puzzleDatabase = p.getPuzzleDatabase();
+        ScrambleCustomization customization = scramblesList.getCurrentScrambleCustomization();
+        SessionsTableModel puzzleDatabase = p.getSessionsDatabase();
         PuzzleStatistics ps = puzzleDatabase.getPuzzleStatistics(customization);
         if (!ps.containsSession(nextSesh)) {
             //failed to find a session to continue, so load newest session
@@ -346,7 +342,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             default:
                 return;
         }
-        statsModel.getCurrentStatistics().add(protect);
+        statsModel.getCurrentSession().getStatistics().add(protect);
     }
 
     //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
@@ -367,7 +363,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     private void sayInspectionWarning(Duration seconds) {
         threadPool.submit(() -> {
             try {
-                numberSpeaker.getCurrentSpeaker().speak(false, seconds.getSeconds() * 100);
+                numberSpeaker.getCurrentSpeaker().speak(false, seconds);
             } catch (Exception e) {
                 LOG.info(e);
             }

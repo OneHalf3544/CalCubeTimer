@@ -1,6 +1,7 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
 import javax.swing.*;
@@ -11,7 +12,7 @@ import java.util.HashMap;
 
 public class MinimizableDesktop extends JDesktopPane implements ActionListener, KeyEventPostProcessor {
 
-	private static final Logger LOG = Logger.getLogger(MinimizableDesktop.class);
+	private static final Logger LOG = LogManager.getLogger(MinimizableDesktop.class);
 
 	private JToolBar windows;
 	public MinimizableDesktop() {

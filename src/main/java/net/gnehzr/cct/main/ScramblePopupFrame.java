@@ -43,7 +43,7 @@ public class ScramblePopupFrame extends JDialog {
 		this.setContentPane(pane);
 		this.configuration.addConfigurationChangeListener(this::configurationChanged);
 		addMouseListener(createMouseListener());
-		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
+// todo		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
 	}
 
 	@Inject

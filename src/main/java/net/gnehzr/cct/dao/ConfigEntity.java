@@ -17,20 +17,20 @@ public class ConfigEntity {
     @Id
     @GeneratedValue
     private Long id;
+    @Column(name = "PROFILE", nullable = false)
+    private Long profileId;
     @Column(name = "KEY", nullable = false)
     private String key;
-    @Column(name = "PROFILE", nullable = false)
-    private String profileName;
     @Column(name = "VALUE", length = 1000)
     private String value;
 
     public ConfigEntity() {
     }
 
-    public ConfigEntity(String profileName, String key, String value) {
+    public ConfigEntity(Long id, String key, String value) {
         this.key = key;
         this.value = value;
-        this.profileName = profileName;
+        this.profileId = id;
     }
 
     public String getKey() {
@@ -49,11 +49,11 @@ public class ConfigEntity {
         this.value = value;
     }
 
-    public String getProfileName() {
-        return profileName;
+    public Long getProfileId() {
+        return profileId;
     }
 
-    public void setProfileName(String profileName) {
-        this.profileName = profileName;
+    public void setProfileName(Long profileId) {
+        this.profileId = profileId;
     }
 }

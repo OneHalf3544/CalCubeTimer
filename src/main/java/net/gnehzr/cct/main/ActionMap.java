@@ -7,7 +7,8 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.Statistics;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -28,7 +29,7 @@ import java.util.Optional;
 @Singleton
 public class ActionMap {
 
-    private static final Logger LOG = Logger.getLogger(ActionMap.class);
+    private static final Logger LOG = LogManager.getLogger(ActionMap.class);
 
     public static final String NEWSESSION_ACTION = "newsession";
     public static final String CONNECT_TO_SERVER_ACTION = "connecttoserver";
@@ -104,14 +105,12 @@ public class ActionMap {
             case "sessionaverage":
                 return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION, 0, configuration);
             case TOGGLE_FULLSCREEN:
-                return new AbstractAction() {
-                    {
-                        putValue(Action.NAME, "+");
-                    }
-
+                return new AbstractAction("+") {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        calCubeTimerFrame.setFullScreen(!cubeTimerModel.isFullscreen());
+                        boolean newFullscreen = !cubeTimerModel.isFullscreen();
+                        LOG.info("toggle fullscreen. was {}, new: {}", !newFullscreen, newFullscreen);
+                        calCubeTimerFrame.setFullScreen(newFullscreen);
                     }
                 };
             case SHOW_CONFIGURATION_ACTION: {
@@ -157,7 +156,7 @@ public class ActionMap {
                     public void actionPerformed(ActionEvent e) {
                         if (calCubeTimerFrame.timesTable.isEditing())
                             return;
-                        if (statsModel.getCurrentStatistics().undo()) { //should decrement 1 from scramblenumber if possible
+                        if (statsModel.getCurrentSession().getStatistics().undo()) { //should decrement 1 from scramblenumber if possible
                             Object prev = calCubeTimerFrame.scrambleNumber.getPreviousValue();
                             if (prev != null) {
                                 calCubeTimerFrame.scrambleNumber.setValue(prev);
@@ -174,7 +173,7 @@ public class ActionMap {
                     public void actionPerformed(ActionEvent e) {
                         if (calCubeTimerFrame.timesTable.isEditing())
                             return;
-                        statsModel.getCurrentStatistics().redo();
+                        statsModel.getCurrentSession().getStatistics().redo();
                     }
                 };
             case SUBMIT_SUNDAY_CONTEST_ACTION:
@@ -182,7 +181,7 @@ public class ActionMap {
                 return new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        submitter.syncWithStats(statsModel.getCurrentStatistics(), Statistics.AverageType.CURRENT, 0);
+                        submitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), Statistics.AverageType.CURRENT, 0);
                         submitter.setVisible(true);
                     }
                 };

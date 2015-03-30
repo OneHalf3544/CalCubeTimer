@@ -1,9 +1,10 @@
 package net.gnehzr.cct.umts.cctbot;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.dao.ConfigurationDao;
-import org.apache.log4j.Logger;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jibble.pircbot.IrcException;
 import org.testng.annotations.Test;
 
@@ -17,7 +18,7 @@ import static org.mockito.Mockito.mock;
 
 public class CCTBotTest {
 
-    private static final Logger LOGGER = Logger.getLogger(CCTBotTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(CCTBotTest.class);
 
     @Test
     public void testMain() throws IOException, InstantiationException, IllegalAccessException {

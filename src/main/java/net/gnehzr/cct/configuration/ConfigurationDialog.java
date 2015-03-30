@@ -2,6 +2,7 @@ package net.gnehzr.cct.configuration;
 
 import com.google.common.collect.Iterables;
 import net.gnehzr.cct.configuration.SolveTypeTagEditorTableModel.TypeAndName;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.*;
@@ -12,10 +13,10 @@ import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import say.swing.JFontChooser;
 
@@ -27,13 +28,13 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ConfigurationDialog extends JDialog implements KeyListener, MouseListener, ActionListener, ItemListener, HyperlinkListener {
 
-	private static final Logger LOG = Logger.getLogger(ConfigurationDialog.class);
+	private static final Logger LOG = LogManager.getLogger(ConfigurationDialog.class);
 
 	private static final float DISPLAY_FONT_SIZE = 20;
 	private static final String[] FONT_SIZES = { "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36" };
@@ -377,7 +378,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			@Override
 			public void syncGUIWithConfig(boolean defaults) {
 				// makeStandardOptionsPanel2
-				minSplitTime.setValue(configuration.props.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, defaults));
+				minSplitTime.setValue(configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, defaults));
 				splits.setSelected(configuration.getBoolean(VariableKey.TIMING_SPLITS, defaults));
 				splitkey = configuration.getInt(VariableKey.SPLIT_KEY, defaults);
 				splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
@@ -805,12 +806,8 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			profileDao.setSelectedProfile(profile);
 			profileDao.loadDatabase(profile, scramblePluginManager);
 
-			try {
-				configuration.loadConfiguration(profile);
-				configuration.apply(profile);
-			} catch(IOException err) {
-				LOG.info("unexpected exception", err);
-			}
+			configuration.loadConfiguration(profile);
+			configuration.apply(profile);
 			syncGUIwithConfig(false);
 		}
 	}

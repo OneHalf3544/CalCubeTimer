@@ -1,14 +1,15 @@
 package net.gnehzr.cct.i18n;
 
 import net.gnehzr.cct.scrambles.ScramblePlugin;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 public class ScramblePluginMessages implements MessageAccessor {
 
-	private static final Logger LOG = Logger.getLogger(ScramblePluginMessages.class);
+	private static final Logger LOG = LogManager.getLogger(ScramblePluginMessages.class);
 
 	private final ResourceBundle resourceBundle;
 

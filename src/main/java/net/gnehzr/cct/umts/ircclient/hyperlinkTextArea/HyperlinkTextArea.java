@@ -1,6 +1,7 @@
 package net.gnehzr.cct.umts.ircclient.hyperlinkTextArea;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
 
 public class HyperlinkTextArea extends JTextArea implements DocumentListener, MouseMotionListener, MouseListener {
 
-	private static final Logger LOG = Logger.getLogger(HyperlinkTextArea.class);
+	private static final Logger LOG = LogManager.getLogger(HyperlinkTextArea.class);
 
 	// TODO - there may be some bug where coloring is getting lost
 	private Document doc;

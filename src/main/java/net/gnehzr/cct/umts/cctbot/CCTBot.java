@@ -6,7 +6,8 @@ import net.gnehzr.cct.main.Main;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.umts.IRCListener;
 import net.gnehzr.cct.umts.KillablePircBot;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 public class CCTBot {
 
-	private static final Logger LOGGER = Logger.getLogger(CCTBot.class);
+	private static final Logger LOGGER = LogManager.getLogger(CCTBot.class);
 
 	//max message length: 470 characters
 	static final int MAX_MESSAGE = 470;

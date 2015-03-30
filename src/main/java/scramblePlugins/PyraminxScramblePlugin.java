@@ -5,7 +5,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
 
 public class PyraminxScramblePlugin extends ScramblePlugin {
 
-	private static final Logger LOG = Logger.getLogger(PyraminxScramblePlugin.class);
+	private static final Logger LOG = LogManager.getLogger(PyraminxScramblePlugin.class);
 
 	private static final String regexp = "^[ULRBulrb]'?$";
 	private static final String FACES_ORDER = "FDLR";

@@ -21,7 +21,8 @@ package net.gnehzr.cct.speaking;
 
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
@@ -29,7 +30,7 @@ import java.util.Objects;
 
 public class MP3 {
 
-	private static final Logger LOG = Logger.getLogger(MP3.class);
+	private static final Logger LOG = LogManager.getLogger(MP3.class);
 
 	private Player player;
 

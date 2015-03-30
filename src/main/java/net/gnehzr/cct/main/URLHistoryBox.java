@@ -8,6 +8,7 @@ import org.jvnet.substance.utils.combo.SubstanceComboBoxEditor;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Collections;
 import java.util.List;
 
 public class URLHistoryBox extends JComboBox<String> implements KeyListener {
@@ -20,15 +21,18 @@ public class URLHistoryBox extends JComboBox<String> implements KeyListener {
 	public URLHistoryBox(VariableKey<List<String>> valuesKey, Configuration configuration) {
 		this.valuesKey = valuesKey;
 		this.configuration = configuration;
-		List<String> values = configuration.getStringArray(valuesKey, false);
-		
+
 		setEditor(new SubstanceComboBoxEditor() {
 			@Override
 			public void setItem(Object anObject) {} //we set the text from IncrementalComboBoxModel instead
 		});
 		editor = (JTextField) getEditor().getEditorComponent();
 		editor.addKeyListener(this);
+
+		// todo values = configuration.getStringArray(valuesKey, false); (it doesn't work at initialization stage, for unknown user)
+		List<String> values = Collections.emptyList();
 		model = new IncrementalComboBoxModel(values, editor);
+
 		setModel(model);
 		setEditable(true);
 		putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, true);

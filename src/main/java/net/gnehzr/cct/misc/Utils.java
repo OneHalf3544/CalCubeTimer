@@ -1,26 +1,23 @@
 package net.gnehzr.cct.misc;
 
-import com.google.common.base.Throwables;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.statistics.SolveTime;
-import org.apache.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.CharArrayWriter;
+import java.io.PrintWriter;
 import java.math.RoundingMode;
-import java.nio.channels.FileLock;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.util.Locale;
-import java.util.function.Consumer;
 
 public class Utils {
 
-	private static final Logger LOG = Logger.getLogger(Utils.class);
+	private static final Logger LOG = LogManager.getLogger(Utils.class);
 
 	private static DecimalFormat getDecimalFormat() {
 		DecimalFormat df = new DecimalFormat("0.00");
@@ -34,6 +31,14 @@ public class Utils {
 	}
 
 	private Utils() {}
+
+	public static <T extends Comparable<T>> boolean lessThan(T v1, T v2) {
+		return v1.compareTo(v2) < 0;
+	}
+
+	public static <T extends Comparable<T>> boolean moreThan(T v1, T v2) {
+		return v1.compareTo(v2) > 0;
+	}
 
 	public static boolean equalDouble(double a, double b) {
 		return round(a, 2) == round(b, 2);
@@ -182,42 +187,4 @@ public class Utils {
 		return JOptionPane.showOptionDialog(c, message, StringAccessor.getString("Utils.confirm"), JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE,
 				null, yesNo, yesNo[0]);
 	}
-
-	public static void doInWaitingState(CalCubeTimerGui calCubeTimerFrame, Runnable runnable) {
-        try {
-            calCubeTimerFrame.setWaiting(true);
-            runnable.run();
-
-        } finally {
-            calCubeTimerFrame.setWaiting(false);
-        }
-    }
-
-	/**
-     * @param file file to be locked. Lock is not released after method execution
-     * @param fileConsumer
-     * @return true, if file was processed. false, if file locked by another task
-     */
-    public static boolean doWithLockedFile(@NotNull File file,
-										   @NotNull Consumer<RandomAccessFile> fileConsumer) {
-        RandomAccessFile t;
-		try {
-			t = new RandomAccessFile(file, "rw");
-		} catch (FileNotFoundException e) {
-			throw Throwables.propagate(e);
-		}
-
-		try (FileLock fileLock = t.getChannel().tryLock()) {
-			if (fileLock != null) {
-				LOG.debug("lock file " + file);
-				fileConsumer.accept(t);
-                return true;
-            }
-            LOG.warn("cannot lock file " + file);
-            return false;
-
-        } catch (IOException e) {
-            throw Throwables.propagate(e);
-        }
-    }
 }

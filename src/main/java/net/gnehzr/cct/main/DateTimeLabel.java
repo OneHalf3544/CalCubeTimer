@@ -17,17 +17,18 @@ public class DateTimeLabel extends JLabel implements ActionListener, HierarchyLi
 		this.configuration = configuration;
 		updateTimer = new Timer(90, this);
 		this.addHierarchyListener(this);
-		updateDisplay();
 	}
 	
-	private void updateDisplay() {
+	void updateDisplay() {
 		this.setText(configuration.getDateFormat().format(LocalDateTime.now()));
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		updateDisplay();
 	}
 
+	@Override
 	public void hierarchyChanged(HierarchyEvent e) {
 		if((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
 			if(isDisplayable()) {

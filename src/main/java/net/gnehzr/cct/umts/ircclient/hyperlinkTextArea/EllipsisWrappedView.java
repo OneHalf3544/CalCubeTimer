@@ -1,6 +1,7 @@
 package net.gnehzr.cct.umts.ircclient.hyperlinkTextArea;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.text.*;
 import javax.swing.text.Highlighter.Highlight;
@@ -8,7 +9,7 @@ import java.awt.*;
 
 public class EllipsisWrappedView extends WrappedPlainView {
 
-	private static final Logger LOG = Logger.getLogger(EllipsisWrappedView.class);
+	private static final Logger LOG = LogManager.getLogger(EllipsisWrappedView.class);
 
 	private Highlighter highlighter;
 	public EllipsisWrappedView(Element e, boolean wrapWord, Highlighter highlighter) {

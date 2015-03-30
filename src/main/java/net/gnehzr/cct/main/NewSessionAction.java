@@ -2,6 +2,7 @@ package net.gnehzr.cct.main;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
@@ -42,7 +43,8 @@ public class NewSessionAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent arg0) {
         if (statsModel.getRowCount() > 0) { //only create a new session if we've added any times to the current one
-            statsModel.setSession(calCubeTimerFrame.createNewSession(profileDao.getSelectedProfile(), scramblesList.getCurrentScrambleCustomization().toString()));
+            ScrambleCustomization scrambleCustomization = scramblesList.getCurrentScrambleCustomization();
+            statsModel.setSession(calCubeTimerFrame.createNewSession(profileDao.getSelectedProfile(), scrambleCustomization));
             calCubeTimerFrame.getTimeLabel().reset();
             scramblesList.clear();
             calCubeTimerFrame.updateScramble();

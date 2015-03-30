@@ -5,7 +5,8 @@ import com.google.common.collect.Sets;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.ScramblePluginMessages;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -20,7 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public abstract class ScramblePlugin {
 
-	private static final Logger LOG = Logger.getLogger(ScramblePlugin.class);
+	private static final Logger LOG = LogManager.getLogger(ScramblePlugin.class);
 
 	private static final Random r = new Random();
 

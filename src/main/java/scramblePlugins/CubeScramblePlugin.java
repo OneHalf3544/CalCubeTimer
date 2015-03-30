@@ -5,7 +5,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.tuple.Tuple;
 import org.jooq.lambda.tuple.Tuple2;
@@ -14,7 +15,6 @@ import org.kociemba.twophase.Tools;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 public class CubeScramblePlugin extends ScramblePlugin {
 
-    private static final Logger LOG = Logger.getLogger(CubeScramblePlugin.class);
+    private static final Logger LOG = LogManager.getLogger(CubeScramblePlugin.class);
 
     public static final String PUZZLE_NAME = "Cube";
 
@@ -228,7 +228,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
     }
 
-    private ArrayList<String> getCrossSolutions(String scramble, char solveCrossFace, char solveCrossSide) {
+    private List<String> getCrossSolutions(String scramble, char solveCrossFace, char solveCrossSide) {
         return CrossSolver.solveCross(solveCrossFace, solveCrossSide, scramble);
     }
 

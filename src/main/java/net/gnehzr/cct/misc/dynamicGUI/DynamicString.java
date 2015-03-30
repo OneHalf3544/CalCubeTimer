@@ -98,16 +98,16 @@ public class DynamicString{
 		return rawString;
 	}
 
-	private String formatProgressTime(double progress, boolean parens) {
+	private String formatProgressTime(SolveTime progress, boolean parens) {
 		String r = "";
-		if(Double.isInfinite(progress)) {
+		if(progress.isInfiniteTime()) {
 			if(parens)
 				return r;
 			r = "\u221E"; //unicode for infinity
 		} else {
-			r = Utils.formatTime(Math.abs(progress), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+			r = Utils.formatTime(Math.abs(progress.secondsValue()), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 		}
-		r = (progress >= 0 ? "+" : "-") + r;
+		r = (progress.getTime().isNegative() ? "-" : "+") + r;
 		if(parens)
 			r = "(" + r + ")";
 		return r;
@@ -128,7 +128,7 @@ public class DynamicString{
 
 		s = s.toLowerCase();
 
-		Statistics stats = statsModel.getCurrentStatistics();
+		Statistics stats = statsModel.getCurrentSession().getStatistics();
 		if(stats == null)
 			return r;
 
@@ -222,8 +222,10 @@ public class DynamicString{
 						break;
 					case "average":
 						if (sessionMatcher.group(2).isEmpty()) {
-							double ave = stats.getSessionAvg(); //this method returns zero if there are no solves to allow the global stats to be computed nicely
-							if (ave == 0) ave = Double.POSITIVE_INFINITY;
+							SolveTime ave = stats.getSessionAvg(); //this method returns zero if there are no solves to allow the global stats to be computed nicely
+							if (ave.isZero()) {
+								ave = SolveTime.NA;
+							}
 							r = Utils.formatTime(ave, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
 						} else {
 							Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));

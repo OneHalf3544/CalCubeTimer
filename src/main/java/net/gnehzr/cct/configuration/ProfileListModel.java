@@ -34,7 +34,7 @@ public class ProfileListModel extends DraggableJTableModel {
 		public void executeAction() {
 			switch(act) {
 			case ADDED:
-				profileDao.createProfileDirectory(profile);
+				profileDao.saveProfile(profile);
 				break;
 			case RENAMED:
 				profileDao.commitRename(profile);
@@ -45,17 +45,21 @@ public class ProfileListModel extends DraggableJTableModel {
 			}
 		}
 	}
+
 	public void commitChanges() {
 		for(ProfileEditAction a : actions)
 			a.executeAction();
 	}
+
 	public void discardChanges() {
 		for(Profile p : contents)
 			p.discardRename();
 	}
 
 	private List<ProfileEditAction> actions;
+
 	private List<Profile> contents;
+
 	public void setContents(List<Profile> contents) {
 		this.contents = contents;
 		actions = new ArrayList<>();
@@ -65,6 +69,7 @@ public class ProfileListModel extends DraggableJTableModel {
 		return contents;
 	}
 
+	@Override
 	public void deleteRows(int[] indices) {
 		for(int i : indices) {
 			if(i >= 0 && i < contents.size())
@@ -72,34 +77,49 @@ public class ProfileListModel extends DraggableJTableModel {
 		}
 		removeRows(indices);
 	}
+
+	@Override
 	public String getColumnName(int column) {
 		return StringAccessor.getString("ProfileListModel.profiles");
 	}
+
+	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return Profile.class;
 	}
+
+	@Override
 	public int getColumnCount() {
 		return 1;
 	}
+
+	@Override
 	public int getRowCount() {
 		return (contents == null) ? 0 : contents.size();
 	}
+
+	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		return contents.get(rowIndex);
 	}
+
+	@Override
 	public void insertValueAt(Object value, int rowIndex) {
 		contents.add(rowIndex, (Profile) value);
 		fireTableRowsUpdated(rowIndex, rowIndex);
 	}
 
+	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return !contents.get(rowIndex).equals(profileDao.guestProfile) && contents.get(rowIndex).isSaveable();
+        return !contents.get(rowIndex).equals(profileDao.guestProfile);
     }
 
+	@Override
 	public boolean isRowDeletable(int rowIndex) {
 		return isCellEditable(rowIndex, 0);
 	}
 
+	@Override
 	public void removeRows(int[] indices) {
 		for(int ch = indices.length - 1; ch >= 0; ch--) {
 			int i = indices[ch];
@@ -110,6 +130,7 @@ public class ProfileListModel extends DraggableJTableModel {
 		}
 		fireTableRowsDeleted(indices[0], indices[indices.length - 1]);
 	}
+	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(value == null) //null if the name was equal to the addText
 			return;
@@ -125,5 +146,6 @@ public class ProfileListModel extends DraggableJTableModel {
 		fireTableDataChanged();
 	}
 
+	@Override
 	public void showPopup(MouseEvent e, DraggableJTable source, Component prevFocusOwner) {}
 }

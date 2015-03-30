@@ -5,7 +5,8 @@ package say.swing;
 
 import net.gnehzr.cct.configuration.JColorComponent;
 import net.gnehzr.cct.i18n.StringAccessor;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ import java.awt.event.*;
 
 public class JFontChooser extends JComponent implements MouseListener {
 
-	private static final Logger LOG = Logger.getLogger(JFontChooser.class);
+	private static final Logger LOG = LogManager.getLogger(JFontChooser.class);
 
 	/**
 	 * Return value from showDialog(Component parent).

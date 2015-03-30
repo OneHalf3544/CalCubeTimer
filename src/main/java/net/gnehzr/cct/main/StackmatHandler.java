@@ -24,7 +24,7 @@ public class StackmatHandler {
 		stackmatInterpreter.addPropertyChangeListener(this::stackmatStateChanged);
 		reset();
 	}
-	
+
 	public void reset() {
 		leftHandStart = null;
 		rightHandStart = null;
@@ -38,14 +38,14 @@ public class StackmatHandler {
 
 	private void stackmatStateChanged(PropertyChangeEvent evt) {
 		String event = evt.getPropertyName();
-		boolean stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
+		boolean stackmatEnabled = configuration.isPropertiesLoaded() && configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
 		timingListener.stackmatChanged();
 		if(!stackmatEnabled)
 			return;
 
 		if(evt.getNewValue() instanceof StackmatState) {
 			StackmatState current = (StackmatState) evt.getNewValue();
-			if(event.equals("Reset")) { 
+			if(event.equals("Reset")) {
 				if (current.oneHand()) {
 					processOneHandState(current);
 					return;

@@ -5,7 +5,8 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -17,7 +18,7 @@ import java.util.List;
 
 public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
-	private static final Logger LOG = Logger.getLogger(SolveTypeTagEditorTableModel.class);
+	private static final Logger LOG = LogManager.getLogger(SolveTypeTagEditorTableModel.class);
 
 	private JTable parent;
 	private final Configuration configuration;

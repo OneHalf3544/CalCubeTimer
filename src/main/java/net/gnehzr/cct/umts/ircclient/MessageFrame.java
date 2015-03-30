@@ -7,7 +7,8 @@ import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea.CCTLink;
 import net.gnehzr.cct.umts.ircclient.hyperlinkTextArea.HyperlinkTextArea.HyperlinkListener;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jibble.pircbot.Colors;
 import org.jvnet.substance.SubstanceLookAndFeel;
 
@@ -27,7 +28,7 @@ import java.util.List;
 
 public class MessageFrame extends JInternalFrame implements ActionListener, HyperlinkListener, KeyListener, DocumentListener {
 
-	private static final Logger LOG = Logger.getLogger(MessageFrame.class);
+	private static final Logger LOG = LogManager.getLogger(MessageFrame.class);
 
 	private static final boolean WRAP_WORD = true; //TODO - do we want this to be true or false?
 	private static final Timer messageAppender = new Timer(30, null);

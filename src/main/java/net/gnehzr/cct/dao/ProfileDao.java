@@ -1,25 +1,25 @@
 package net.gnehzr.cct.dao;
 
-import com.google.common.base.Throwables;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.main.CalCubeTimerGui;
-import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.ProfileSerializer.RandomInputStream;
-import org.apache.log4j.Logger;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.SessionsTableModel;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.jetbrains.annotations.NotNull;
-import org.xml.sax.SAXException;
 
-import javax.xml.transform.TransformerConfigurationException;
-import java.io.*;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * <p>
@@ -32,33 +32,35 @@ import java.util.Map;
 @Singleton
 public class ProfileDao extends HibernateDaoSupport {
 
-    private static final Logger LOG = Logger.getLogger(ProfileDao.class);
+    private static final Logger LOG = LogManager.getLogger(ProfileDao.class);
 
     private static final String GUEST_NAME = "Guest";
 
     private final static Map<String, Profile> profiles = new HashMap<>();
 
-    private final ProfileSerializer profileSerializer;
     private final Configuration configuration;
 
     public final Profile guestProfile;
 
-    private Session guestSession = null; //need this so we can load the guest's last session, since it doesn't have a file
-
-    private final StatisticsTableModel statsModel;
+    private final ConfigurationDao configurationDao;
+    private final StatisticsTableModel statisticsTableModel;
     private final ScramblePluginManager scramblePluginManager;
 
-    private CalCubeTimerGui calCubeTimerFrame;
+    @NotNull
+    private Profile currentProfile;
+    private SolutionDao solutionsDao;
 
     @Inject
-    public ProfileDao(ProfileSerializer profileSerializer, Configuration configuration, StatisticsTableModel statsModel,
-                      ScramblePluginManager scramblePluginManager, SessionFactory sessionFactory) {
+    public ProfileDao(Configuration configuration, ConfigurationDao configurationDao, StatisticsTableModel statisticsTableModel,
+                      ScramblePluginManager scramblePluginManager, SessionFactory sessionFactory, SolutionDao solutionsDao) {
         super(sessionFactory);
-        this.profileSerializer = profileSerializer;
         this.configuration = configuration;
-        this.statsModel = statsModel;
+        this.configurationDao = configurationDao;
+        this.statisticsTableModel = statisticsTableModel;
         this.scramblePluginManager = scramblePluginManager;
-        guestProfile = createGuestProfile();
+        this.solutionsDao = solutionsDao;
+        guestProfile = getOrCreateGuestProfile();
+        currentProfile = loadCurrentProfile();
     }
 
     public List<ProfileEntity> getAllProfiles() {
@@ -66,182 +68,86 @@ public class ProfileDao extends HibernateDaoSupport {
     }
 
     public Profile getProfileByName(String name) {
-        return profiles.computeIfAbsent(name, (n) -> new Profile(n,
-                getDirectory(n),
-                getConfiguration(configuration.getProfilesFolder(), n),
-                getStatistics(configuration.getProfilesFolder(), n),
-                configuration, this, statsModel, scramblePluginManager));
+        return profiles.computeIfAbsent(name, this::loadProfile);
     }
 
-    public Profile loadProfile(File directory) {
-        LOG.debug("load profile from " + directory);
-        String name = directory.getName();
-        File configurationFile = getConfiguration(directory, directory.getName());
-        File statistics = getStatistics(directory, directory.getName());
+    public Profile loadProfile(@NotNull String name) {
+        checkArgument(!Strings.isNullOrEmpty(name));
+        LOG.debug("load profile " + name);
 
-        Profile profile = new Profile(name, directory, configurationFile, statistics, configuration, this, statsModel, scramblePluginManager);
+        ProfileEntity profileEntity = queryFirst("from PROFILE where name = :name",
+                Collections.singletonMap("name", name));
+
+        SessionsTableModel sessionsTableModel = new SessionsTableModel(configuration, this, statisticsTableModel, scramblePluginManager);
+        Profile profile;
+        if (profileEntity != null) {
+            profile = new Profile(profileEntity.getProfileId(), name, sessionsTableModel);
+        } else {
+            profile = new Profile(null, name, sessionsTableModel);
+            saveProfile(profile);
+            return profile;
+        }
         profiles.put(profile.getName(), profile);
         return profile;
     }
 
-    public void createProfileDirectory(Profile profile) {
-        profile.getDirectory().mkdir();
+    public void saveProfile(Profile profile) {
+        if (profile.getId() == null) {
+            saveProfileWithoutSession(profile);
+        }
+        solutionsDao.saveSession(statisticsTableModel.getCurrentSession().toSessionEntity());
+    }
+
+    private void saveProfileWithoutSession(Profile profile) {
+        ProfileEntity entity = profile.toEntity();
+        insert(entity);
+        profile.setId(entity.getProfileId());
     }
 
     public void delete(Profile profile) {
-        if (profile.getStatisticsRandomAccessFile() != null) {
-            closeStatFileAndReleaseLock(profile);
-        }
-        profile.getConfigurationFile().delete();
-        profile.getStatistics().delete();
-        profile.getDirectory().delete();
+        super.delete(profile);
+
         if (getSelectedProfile() == profile) {
             setSelectedProfile(null);
         }
     }
 
-    // this can only be called once, until after saveDatabase() is called
-    public boolean loadDatabase(Profile profile, ScramblePluginManager scramblePluginManager) {
-        if (profile == guestProfile) { // disable logging for guest
-            // TODO - there is definitely a bug here where guestSession == null when switching profiles
-            if (profile.getPuzzleDatabase().getRowCount() > 0) {
-                statsModel.setSession(guestSession); //TODO - does this really need to be here?
-            }
-            return false;
-        }
-
-        return Utils.doWithLockedFile(profile.getStatistics(), file -> {
-            try {
-                ProfileDatabase puzzleDB = new ProfileDatabase(configuration, this, statsModel, scramblePluginManager); //reset the database
-                profile.setPuzzleDatabase(puzzleDB);
-                profile.setStatisticsRandomAccessFile(file);
-
-                if (file.length() == 0) {
-                    LOG.debug("file is empty. skip parsing");
-                } else { // if the file is empty, don't bother to parse it
-                    LOG.debug("parse file");
-                    DatabaseLoader handler = new DatabaseLoader(profile, configuration, statsModel, scramblePluginManager);
-                    profileSerializer.parseBySaxHandler(handler, new RandomInputStream(profile.getStatisticsRandomAccessFile()));
-                }
-                LOG.debug("file loading finished");
-
-            } catch (IOException e) {
-                throw Throwables.propagate(e);
-            }
-        });
+    public void loadDatabase(@NotNull Profile profile, ScramblePluginManager scramblePluginManager) {
+        profile.setPuzzleDatabase(new SessionsTableModel(configuration, this, statisticsTableModel, scramblePluginManager));
     }
 
-    public void saveDatabase(Profile profile) throws IOException, TransformerConfigurationException, SAXException {
+    public void saveDatabase(Profile profile) {
         LOG.debug("save database");
-        profile.getPuzzleDatabase().removeEmptySessions();
-        if (profile == guestProfile) {
-            guestSession = statsModel.getCurrentSession();
-        }
-
-        if (profile.getStatisticsRandomAccessFile() == null) {
-            LOG.warn("statisticsRandomAccessFile is null. skip saving");
-            return;
-        }
-
-        try {
-            profileSerializer.writeStatisticFile(profile);
-
-        } catch (IOException | SAXException | TransformerConfigurationException e) {
-            Throwables.propagate(e);
-        }
-
-        closeStatFileAndReleaseLock(profile);
-    }
-
-    private void openAndLockStatFile(Profile profile) {
-        LOG.debug("openAndLockStatFile + " + profile.getStatistics());
-        RandomAccessFile t = null;
-        try {
-            t = new RandomAccessFile(profile.getStatistics(), "rw");
-            t.getChannel().tryLock();
-        } catch (IOException e) {
-            LOG.info("unexpected exception", e);
-        } finally {
-            profile.setStatisticsRandomAccessFile(t);
-        }
-    }
-
-    void closeStatFileAndReleaseLock(Profile profile) {
-        LOG.debug("closeStatFileAndReleaseLock");
-        try {
-            profile.getStatisticsRandomAccessFile().close();
-        } catch (IOException e) {
-            LOG.info("unexpected exception", e);
-        } finally {
-            profile.setStatisticsRandomAccessFile(null);
-        }
-    }
-
-    @NotNull
-    public File getDirectory(String name) {
-        return new File(configuration.getProfilesFolder(), name + "/");
-    }
-
-    @NotNull
-    public File getConfiguration(File directory, String name) {
-        return new File(directory, name + ".properties");
-    }
-
-    @NotNull
-    public File getStatistics(File directory, String name) {
-        return new File(directory, name + ".xml");
+        profile.getSessionsDatabase().removeEmptySessions();
     }
 
     public void commitRename(Profile profile) {
         String newName = profile.getNewName();
-        File newDir = getDirectory(newName);
-
-        File oldConfig = getConfiguration(newDir, profile.getName());
-        File oldStats = getStatistics(newDir, profile.getName());
-
-        File configuration = getConfiguration(newDir, newName);
-        File statistics = getStatistics(newDir, newName);
-
-        boolean currentProfile = (profile.getStatisticsRandomAccessFile() != null);
-        if (currentProfile) {
-            closeStatFileAndReleaseLock(profile);
-        }
-        profile.getDirectory().renameTo(newDir);
-        profile.setDirectory(newDir);
-        profile.setStatistics(statistics);
-        profile.setConfigurationFile(configuration);
-
-        oldConfig.renameTo(configuration);
-        oldStats.renameTo(statistics);
-
-        if (currentProfile) {
-            openAndLockStatFile(profile);
-        }
-
         profiles.remove(profile.getName());
         profile.setName(newName);
         profiles.put(profile.getName(), profile);
     }
 
-    public Profile createGuestProfile() {
+    public Profile getOrCreateGuestProfile() {
         Profile temp = getProfileByName(GUEST_NAME);
-        createProfileDirectory(temp);
+        saveProfileWithoutSession(temp);
         return temp;
     }
 
     public List<Profile> getProfiles(Configuration configuration) {
-        String[] profDirs = configuration.getProfilesFolder().list((f, s) -> {
-            File temp = new File(f, s);
-            return !temp.isHidden() && temp.isDirectory() && !s.equalsIgnoreCase(GUEST_NAME);
-        });
-        List<Profile> profs = new ArrayList<>();
-        profs.add(guestProfile);
-        for(String profDir : profDirs) {
-            profs.add(getProfileByName(profDir));
-        }
-        if(configuration.props != null && configuration.profileOrdering != null) {
+        List<ProfileEntity> profilesExceptGuest = queryList("from PROFILE where name != '" + GUEST_NAME + "'");
+
+        List<Profile> profs = profilesExceptGuest.stream()
+                .map(profDir -> getProfileByName(profDir.getName()))
+                .collect(Collectors.toList());
+        profs.add(0, guestProfile);
+
+        if(configuration.isPropertiesLoaded() && configuration.profileOrdering != null) {
             String[] profiles = configuration.profileOrdering.split("\\|");
             for(int ch = profiles.length - 1; ch >= 0; ch--) {
+                if (Strings.isNullOrEmpty(profiles[ch])) {
+                    continue;
+                }
                 Profile temp = getProfileByName(profiles[ch]);
                 if(profs.contains(temp)) {
                     profs.remove(temp);
@@ -249,38 +155,33 @@ public class ProfileDao extends HibernateDaoSupport {
                 }
             }
         }
-        if(configuration.commandLineProfile != null)
-            profs.add(0, configuration.commandLineProfile);
+
         return profs;
     }
 
-    public Profile getProfile(String profileName, Configuration configuration) {
+    public Profile getProfile(@NotNull ProfileEntity profile, Configuration configuration) {
         return getProfiles(configuration).stream()
-                .filter(p -> p.getName().equalsIgnoreCase(profileName))
+                .filter(p -> p.getName().equalsIgnoreCase(profile.getName()))
                 .findFirst()
                 .orElse(guestProfile);
     }
 
-    private Profile profileCache;
-
-    public void setSelectedProfile(Profile p) {
-        profileCache = p;
+    public void setSelectedProfile(Profile profile) {
+        currentProfile = profile;
     }
 
     //this should always be up to date with the gui
     public Profile getSelectedProfile() {
-        if(profileCache == null) {
-            String profileName;
-            try(BufferedReader in = new BufferedReader(new FileReader(configuration.getStartupProfileFile()))) {
-                profileName = in.readLine();
-                configuration.profileOrdering = in.readLine();
-            } catch (IOException e) {
-                LOG.info("exception", e);
-                profileName = "";
-        }
-            profileCache = getProfile(profileName, configuration);
-        }
-        return profileCache;
+        return currentProfile;
+    }
+
+    @NotNull
+    private Profile loadCurrentProfile() {
+        SystemSettingsEntity systemSettings = configurationDao.getSystemSettingsEntity();
+        configuration.profileOrdering = systemSettings.getProfileOrdering();
+        ProfileEntity startupProfileEntity = systemSettings.getStartupProfile();
+
+        return startupProfileEntity == null ? guestProfile : getProfile(startupProfileEntity, configuration);
     }
 
 }

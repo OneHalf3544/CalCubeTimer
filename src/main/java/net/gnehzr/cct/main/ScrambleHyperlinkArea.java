@@ -6,11 +6,12 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.InvalidScrambleException;
+import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
 @Singleton
 public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListener, HyperlinkListener, MouseListener, MouseMotionListener {
 
-	private static final Logger LOG = Logger.getLogger(ScrambleHyperlinkArea.class);
+	private static final Logger LOG = LogManager.getLogger(ScrambleHyperlinkArea.class);
 	private static final Pattern NULL_SCRAMBLE_REGEX = Pattern.compile("^(.+)()$");
 
 	private ScramblePopupFrame scramblePopup;

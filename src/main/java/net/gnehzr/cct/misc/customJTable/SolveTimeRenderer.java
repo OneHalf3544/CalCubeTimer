@@ -41,7 +41,7 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color background = null;
 
 		if(value instanceof Solution) {
-			Statistics times = statsModel.getCurrentStatistics();
+			Statistics times = statsModel.getCurrentSession().getStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
 			Solution st = (Solution) value;

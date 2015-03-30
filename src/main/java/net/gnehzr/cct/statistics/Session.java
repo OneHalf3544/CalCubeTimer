@@ -1,88 +1,94 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 
 public class Session extends Commentable implements Comparable<Session> {
 
-	private Statistics s;
+	private Statistics statistics;
 
-	private PuzzleStatistics puzzStats;
+	private PuzzleStatistics puzzleStatistics;
 
 	private final Configuration configuration;
-	private final ScramblePluginManager scramblePluginManager;
-	private final StatisticsTableModel statsModel;
+	private final StatisticsTableModel statisticsTableModel;
 
 	//adds itself to the puzzlestatistics to which it belongs
 	public Session(LocalDateTime d, Configuration configuration,
-				   ScramblePluginManager scramblePluginManager, StatisticsTableModel statsModel) {
+				   StatisticsTableModel statisticsTableModel) {
 		this.configuration = configuration;
-		this.scramblePluginManager = scramblePluginManager;
-		this.statsModel = statsModel;
-		s = new Statistics(configuration, d);
+		this.statisticsTableModel = statisticsTableModel;
+		statistics = new Statistics(configuration, d);
 	}
 
 	public Statistics getStatistics() {
-		return s;
+		return statistics;
 	}
 
-	private ScrambleCustomization sc;
+	private ScrambleCustomization scrambleCustomization;
 
 	//this should only be called by PuzzleStatistics
-	public void setPuzzleStatistics(PuzzleStatistics puzzStats, Profile profile) {
-		sc = scramblePluginManager.getCustomizationFromString(profile, puzzStats.getCustomization());
-		s.setCustomization(sc);
-		this.puzzStats = puzzStats;
+	public void setPuzzleStatistics(PuzzleStatistics puzzleStatistics) {
+		scrambleCustomization = puzzleStatistics.getCustomization();
+		statistics.setCustomization(scrambleCustomization);
+		this.puzzleStatistics = puzzleStatistics;
 	}
 
 	public ScrambleCustomization getCustomization() {
-		return sc;
+		return scrambleCustomization;
 	}
 
 	public PuzzleStatistics getPuzzleStatistics() {
-		return puzzStats;
+		return puzzleStatistics;
 	}
 
 	public int hashCode() {
-		return s.getStartDate().hashCode();
+		return statistics.getStartDate().hashCode();
 	}
 
 	public boolean equals(Object obj) {
 		if (obj instanceof Session) {
 			Session o = (Session) obj;
-			return o.s.getStartDate().equals(this.s.getStartDate());
+			return o.statistics.getStartDate().equals(this.statistics.getStartDate());
 		}
 		return false;
 	}
 	@Override
 	public int compareTo(@NotNull Session o) {
-		return this.s.getStartDate().compareTo(o.s.getStartDate());
+		return Comparator.comparing((Session s) -> s.statistics.getStartDate()).compare(this, o);
 	}
 
 	public String toDateString() {
-		return configuration.getDateFormat().format(s.getStartDate());
+		return configuration.getDateFormat().format(statistics.getStartDate());
 	}
 
 	public String toString() {
 		return toDateString();
 	}
 
-	public void setCustomization(String customization, Profile profile) {
-		if(!customization.equals(puzzStats.getCustomization())) {
-			puzzStats.removeSession(this);
-			puzzStats = puzzStats.getPuzzleDatabase().getPuzzleStatistics(customization);
-			puzzStats.addSession(this, profile);
-			sc = scramblePluginManager.getCustomizationFromString(profile, puzzStats.getCustomization());
-			s.setCustomization(sc);
-
-			statsModel.fireStringUpdates();
+	public void setCustomization(@NotNull ScrambleCustomization customization, @NotNull Profile profile) {
+		if (customization.equals(puzzleStatistics.getCustomization())) {
+			return;
 		}
+		puzzleStatistics.removeSession(this);
+		puzzleStatistics = puzzleStatistics.getPuzzleDatabase().getPuzzleStatistics(customization);
+		puzzleStatistics.addSession(this);
+		scrambleCustomization = puzzleStatistics.getCustomization();
+		statistics.setCustomization(scrambleCustomization);
+
+		statisticsTableModel.fireStringUpdates();
 	}
 	public void delete() {
-		puzzStats.removeSession(this);
+		puzzleStatistics.removeSession(this);
+	}
+
+	public SessionEntity toSessionEntity() {
+		SessionEntity sessionEntity = new SessionEntity();
+		// todo
+		return sessionEntity;
 	}
 }

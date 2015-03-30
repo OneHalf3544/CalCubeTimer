@@ -10,7 +10,8 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.umts.ircclient.IRCClient;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -25,7 +26,7 @@ import java.time.Instant;
 */
 class TimingListenerImpl implements TimingListener {
 
-    private static final Logger LOG = Logger.getLogger(TimingListenerImpl.class);
+    private static final Logger LOG = LogManager.getLogger(TimingListenerImpl.class);
 
     @Inject
     private CalCubeTimerModel model;
@@ -40,10 +41,14 @@ class TimingListenerImpl implements TimingListener {
     private TimerLabel timeLabel;
     @Inject @Named("bigTimersDisplay")
     private TimerLabel bigTimersDisplay;
+    private boolean fullScreenTiming;
+    private boolean metronomeEnabled;
+    private boolean stackmatEnabled;
 
     @Inject
     public TimingListenerImpl(Configuration configuration) {
         this.configuration = configuration;
+        configuration.addConfigurationChangeListener(p -> configurationChanged());
     }
 
     private void updateTime(TimerState newTime) {
@@ -97,13 +102,20 @@ class TimingListenerImpl implements TimingListener {
         LOG.info("timer started");
         model.setTiming(true);
         model.stopInspection();
-        if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)) {
+
+        if(fullScreenTiming) {
 			calCubeTimerFrame.setFullScreen(true);
 		}
-        if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false)) {
+        if(metronomeEnabled) {
 			model.startMetronome();
 		}
         ircClient.sendUserstate();
+    }
+
+    void configurationChanged() {
+        stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
+        fullScreenTiming = configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false);
+        metronomeEnabled = configuration.getBoolean(VariableKey.METRONOME_ENABLED, false);
     }
 
     @Override
@@ -111,10 +123,10 @@ class TimingListenerImpl implements TimingListener {
         LOG.info("timer stopped: " + new SolveTime(newTime.getTime()));
         model.setTiming(false);
         model.addTime(newTime);
-        if(configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)) {
+        if(fullScreenTiming) {
             calCubeTimerFrame.setFullScreen(false);
         }
-        if(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false)) {
+        if(metronomeEnabled) {
             model.stopMetronome();
         }
         ircClient.sendUserstate();
@@ -122,17 +134,13 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void stackmatChanged() {
-        if(!configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+        if(!stackmatEnabled) {
 			calCubeTimerFrame.getOnLabel().setText("");
 		}
         else {
             boolean on = model.getStackmatInterpreter().isOn();
             timeLabel.setStackmatOn(on);
-            if(on) {
-                calCubeTimerFrame.getOnLabel().setText(StringAccessor.getString("CALCubeTimer.timerON"));
-            } else {
-                calCubeTimerFrame.getOnLabel().setText(StringAccessor.getString("CALCubeTimer.timerOFF"));
-            }
+            calCubeTimerFrame.getOnLabel().setText(StringAccessor.getString(on ? "CALCubeTimer.timerON" : "CALCubeTimer.timerOFF"));
         }
     }
 

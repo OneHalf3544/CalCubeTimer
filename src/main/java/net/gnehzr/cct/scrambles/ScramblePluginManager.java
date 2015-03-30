@@ -7,7 +7,8 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.Profile;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import scramblePlugins.*;
 
 import java.awt.*;
@@ -18,7 +19,7 @@ import java.util.List;
 @Singleton
 public class ScramblePluginManager {
 
-	private static final Logger LOG = Logger.getLogger(ScramblePluginManager.class);
+	private static final Logger LOG = LogManager.getLogger(ScramblePluginManager.class);
 
 	public static final ScramblePlugin NULL_SCRAMBLE_PLUGIN = new NullScramblePlugin();
 
@@ -27,8 +28,6 @@ public class ScramblePluginManager {
 	private ScrambleVariation[] scrambleVariations;
 
 	public static final ScrambleString NULL_IMPORTED_SCRUMBLE = new ScrambleString("", true, null, NULL_SCRAMBLE_PLUGIN, null);
-	public static final ScrambleString NULL_CREATED_SCRAMBLE = new ScrambleString("", false, null, NULL_SCRAMBLE_PLUGIN, null);
-
 
 	private final Configuration configuration;
 	private final Map<Class<? extends ScramblePlugin>, ScramblePlugin> scramblePlugins;
@@ -108,7 +107,7 @@ public class ScramblePluginManager {
 			return null;
 		}
 		for(ScrambleVariation var : getScrambleVariations()) {
-			if (var.getName().toLowerCase().startsWith(variation)) {
+			if (var.getName().toLowerCase().startsWith(variation.toLowerCase())) {
 				return var;
 			}
 		}
@@ -155,12 +154,12 @@ public class ScramblePluginManager {
 		if(customNames == null) {
 			customNames = Lists.newArrayList();
 		}
-		Iterator<String> databaseCustoms = selectedProfile.getPuzzleDatabase().getCustomizations().iterator();
+		Iterator<ScrambleCustomization> databaseCustoms = selectedProfile.getSessionsDatabase().getCustomizations().iterator();
 		int ch = customNames.size() - 1;
 		while(true) {
 			String name;
 			if(databaseCustoms.hasNext()) {
-				name = databaseCustoms.next();
+				name = databaseCustoms.next().toString();
 			} else {
 				if(ch < 0) {
 					break;

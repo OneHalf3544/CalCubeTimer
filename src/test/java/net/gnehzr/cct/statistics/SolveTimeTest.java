@@ -33,9 +33,9 @@ public class SolveTimeTest {
 
     @Test(enabled = false)
     public void testSplitsToString() {
-        Solution solveTime = new Solution(new TimerState(configuration, Duration.ofMinutes(2)), ScramblePluginManager.NULL_CREATED_SCRAMBLE, ImmutableList.of(
-                new SolveTime(30.02),
-                new SolveTime(89.98)
+        Solution solveTime = new Solution(new TimerState(configuration, Duration.ofMinutes(2)), ScramblePluginManager.NULL_IMPORTED_SCRUMBLE, ImmutableList.of(
+                new SolveTime("30.02"),
+                new SolveTime("89.98")
         ));
         assertThat(solveTime.toSplitsString(), containsString("jghhfug"));
     }

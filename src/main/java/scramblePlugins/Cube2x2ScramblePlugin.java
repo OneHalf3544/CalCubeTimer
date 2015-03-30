@@ -7,14 +7,15 @@ import net.gnehzr.cct.scrambles.InvalidScrambleException;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
 
-    private static final Logger LOG = Logger.getLogger(Cube2x2ScramblePlugin.class);
+    private static final Logger LOG = LogManager.getLogger(Cube2x2ScramblePlugin.class);
 
     private static final String REGEXP_2 = "^[LDBRUF][2']?$";
 

@@ -4,7 +4,8 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +21,7 @@ import java.util.Vector;
 
 public class DraggableJTable extends JTable implements MouseMotionListener, ActionListener {
 
-	private static final Logger LOG = Logger.getLogger(DraggableJTable.class);
+	private static final Logger LOG = LogManager.getLogger(DraggableJTable.class);
 
 	private final Configuration configuration;
 	String addText;

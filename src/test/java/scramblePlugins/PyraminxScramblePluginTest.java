@@ -4,7 +4,8 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -14,7 +15,7 @@ import static org.mockito.Mockito.mock;
 public class PyraminxScramblePluginTest {
 
 
-    private static final Logger LOG = Logger.getLogger(CubeScramblePluginTest.class);
+    private static final Logger LOG = LogManager.getLogger(CubeScramblePluginTest.class);
 
     private PyraminxScramblePlugin pyraminxScramblePlugin = new PyraminxScramblePlugin();
 

@@ -4,7 +4,8 @@ import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.umts.IRCListener;
 import net.gnehzr.cct.umts.KillablePircBot;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jibble.pircbot.User;
 
 /**
@@ -17,7 +18,7 @@ import org.jibble.pircbot.User;
  */
 class CctBotIrcListener implements IRCListener {
 
-    private static final Logger LOGGER = Logger.getLogger(CctBotIrcListener.class);
+    private static final Logger LOGGER = LogManager.getLogger(CctBotIrcListener.class);
 
     private final CCTBot cctBot;
     private final ScramblePluginManager scramblePluginManager;

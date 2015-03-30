@@ -1,13 +1,13 @@
 package net.gnehzr.cct.misc.customJTable;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.main.ScrambleChooserComboBox;
+import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.main.ScrambleCustomizationChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.statistics.ProfileDatabase;
 import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SessionsTableModel;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
 
 import javax.swing.*;
@@ -30,10 +30,10 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		this.setDefaultRenderer(Object.class, r);
 		this.setDefaultRenderer(Integer.class, r); //for some reason, Object.class is not capturing the Solve count row
 		
-		this.setDefaultEditor(ScrambleCustomization.class, new DefaultCellEditor(
-				new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao)));
-		this.setDefaultRenderer(ScrambleCustomization.class, new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao));
-		this.setRowHeight(new ScrambleChooserComboBox(false, true, scramblePluginManager, configuration, profileDao).getPreferredSize().height);
+		ScrambleCustomizationChooserComboBox chooserComboBox = new ScrambleCustomizationChooserComboBox(false, scramblePluginManager, configuration);
+		this.setDefaultEditor(ScrambleCustomization.class, new DefaultCellEditor(chooserComboBox));
+		this.setDefaultRenderer(ScrambleCustomization.class, chooserComboBox);
+		this.setRowHeight(chooserComboBox.getPreferredSize().height);
 		super.setSelectionListener(this);
 		configuration.addConfigurationChangeListener((p) -> refreshModel());
 		super.sortByColumn(new RowSorter.SortKey(0, SortOrder.DESCENDING));
@@ -47,12 +47,12 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		}
 	}
 	
-	private ProfileDatabase pd;
+	private SessionsTableModel pd;
 
 	public void refreshModel() {
 		if(pd != null)
 			pd.setSessionListener(null);
-		pd = profileDao.getSelectedProfile().getPuzzleDatabase();
+		pd = profileDao.getSelectedProfile().getSessionsDatabase();
 		pd.setSessionListener(l);
 		super.setModel(pd);
 	}

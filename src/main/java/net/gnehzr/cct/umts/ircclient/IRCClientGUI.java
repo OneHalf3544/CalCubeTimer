@@ -13,12 +13,15 @@ import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import net.gnehzr.cct.statistics.*;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.Statistics;
+import net.gnehzr.cct.statistics.StatisticsTableModel;
 import net.gnehzr.cct.umts.IRCUtils;
 import net.gnehzr.cct.umts.KillablePircBot;
 import net.gnehzr.cct.umts.cctbot.CCTUser;
 import net.gnehzr.cct.umts.ircclient.MessageFrame.CommandListener;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jibble.pircbot.ReplyConstants;
 import org.jibble.pircbot.User;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -41,7 +44,7 @@ import java.util.List;
 @Singleton
 public class IRCClientGUI implements CommandListener, DocumentListener, IRCClient {
 
-	private static final Logger LOG = Logger.getLogger(IRCClientGUI.class);
+	private static final Logger LOG = LogManager.getLogger(IRCClientGUI.class);
 
 	private static final String VERSION = IRCClientGUI.class.getPackage().getImplementationVersion();
 	private static final String FINGER_MSG = "This is the cct/irc client " + VERSION;
@@ -168,8 +171,8 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 		clientFrame.pack();
 		onDisconnect(); // this will add and set login visible & the title of serverFrame
 		configuration.addConfigurationChangeListener(this);
-		configurationChanged(profileDao.getSelectedProfile());
-		updateStrings();
+		// todo it will be called then we select user: configurationChanged(profileDao.getSelectedProfile());
+		// updateStrings();
 		this.profileDao = profileDao;
 		sendStateTimer = new Timer((int)SYNC_STATE_TIMEOUT.toMillis(), new ActionListener() {
             @Override
@@ -198,6 +201,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 
 	@Override
 	public void configurationChanged(Profile profile) {
+		updateStrings();
 		Dimension dimension = configuration.getDimension(VariableKey.IRC_FRAME_DIMENSION, false);
 		Point location = configuration.getPoint(VariableKey.IRC_FRAME_LOCATION, false);
 		if (location != null && dimension != null) {
@@ -993,7 +997,7 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 	void syncUserStateNOW(CALCubeTimerFrame calCubeTimerFrame, CCTUser myself) {
 		myself.setCustomization(calCubeTimerFrame.getScrambleCustomizationComboBox().getSelectedItem().toString());
 
-		myself.setLatestTime(statsModel.getCurrentStatistics().get(-1).getTime());
+		myself.setLatestTime(statsModel.getCurrentSession().getStatistics().get(-1).getTime());
 
 		TimerState state = calCubeTimerFrame.getTimeLabel().getTimerState();
 		if(!calCubeTimerModel.isTiming()) {
@@ -1001,10 +1005,10 @@ public class IRCClientGUI implements CommandListener, DocumentListener, IRCClien
 		}
 		myself.setTimingState(calCubeTimerModel.isInspecting(), state);
 
-		Statistics stats = statsModel.getCurrentStatistics();
+		Statistics stats = statsModel.getCurrentSession().getStatistics();
 		myself.setCurrentRA(stats.average(Statistics.AverageType.CURRENT, 0), stats.toTerseString(Statistics.AverageType.CURRENT, 0, true));
 		myself.setBestRA(stats.average(Statistics.AverageType.RA, 0), stats.toTerseString(Statistics.AverageType.RA, 0, false));
-		myself.setSessionAverage(new SolveTime(stats.getSessionAvg()));
+		myself.setSessionAverage(stats.getSessionAvg());
 
 		myself.setSolvesAttempts(stats.getSolveCount(), stats.getAttemptCount());
 

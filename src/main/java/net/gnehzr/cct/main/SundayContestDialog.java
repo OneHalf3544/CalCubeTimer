@@ -8,7 +8,8 @@ import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.Statistics;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -30,7 +31,7 @@ import static net.gnehzr.cct.i18n.StringAccessor.getString;
 
 public class SundayContestDialog extends JDialog implements ActionListener {
 
-	private static final Logger LOG = Logger.getLogger(SundayContestDialog.class);
+	private static final Logger LOG = LogManager.getLogger(SundayContestDialog.class);
 
 	private JTextField nameField, countryField, emailField, averageField, timesField;
 	private JTextAreaWithHistory quoteArea;

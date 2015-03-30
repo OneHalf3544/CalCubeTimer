@@ -3,8 +3,8 @@ package net.gnehzr.cct.stackmatInterpreter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -14,7 +14,7 @@ import java.util.List;
 @Singleton
 public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 
-    private static final Logger LOG = Logger.getLogger(StackmatInterpreter.class);
+    private static final Logger LOG = LogManager.getLogger(StackmatInterpreter.class);
 
 	private static final int BYTES_PER_SAMPLE = 2;
 	private static final int FRAMES = 64;
@@ -41,11 +41,11 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
     @Inject
 	public StackmatInterpreter(Configuration configuration) {
 		this.configuration = configuration;
-        int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, false);
+        /*int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, false);
         int mixerNumber = configuration.getInt(VariableKey.MIXER_NUMBER, false);
         boolean stackmat = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
         int switchThreshold = configuration.getInt(VariableKey.SWITCH_THRESHOLD, false);
-		initialize(samplingRate, mixerNumber, stackmat, switchThreshold);
+		initialize(samplingRate, mixerNumber, stackmat, switchThreshold);*/
 	}
 
     public void initialize(int samplingRate, int mixerNum, boolean enabled, int switchThreshold) {
@@ -73,6 +73,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                 }
             } catch (IllegalArgumentException e) {
                 //This is thrown when there is no configuration file
+                LOG.info("unexpected exception", e);
             } catch (LineUnavailableException e) {
                 LOG.info("unexpected exception", e);
                 cleanup();

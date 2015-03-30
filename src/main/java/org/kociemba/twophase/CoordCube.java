@@ -1,6 +1,7 @@
 package org.kociemba.twophase;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,7 +11,7 @@ import java.io.FileOutputStream;
  */
 class CoordCube {
 
-    private static final Logger LOG = Logger.getLogger(CoordCube.class);
+    private static final Logger LOG = LogManager.getLogger(CoordCube.class);
 
 	static final short N_TWIST = 2187;// 3^7 possible corner orientations
 	static final short N_FLIP = 2048;// 2^11 possible edge flips

@@ -1,7 +1,8 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.i18n.StringAccessor;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,7 +17,7 @@ import java.util.*;
  */
 public class SolveType {
 
-    private static final Logger LOG = Logger.getLogger(SolveType.class);
+    private static final Logger LOG = LogManager.getLogger(SolveType.class);
 
     private static final Map<String, SolveType> SOLVE_TYPES = new HashMap<>();
 

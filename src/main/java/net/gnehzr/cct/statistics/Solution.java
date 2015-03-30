@@ -2,13 +2,14 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -20,7 +21,7 @@ import java.util.List;
  */
 public class Solution extends Commentable {
 
-    private static final Logger LOG = Logger.getLogger(Solution.class);
+    private static final Logger LOG = LogManager.getLogger(Solution.class);
 
     private SolveTime solveTime = null;
     private ScrambleString scramble = null;
@@ -34,9 +35,9 @@ public class Solution extends Commentable {
         this.scramble = scramble;
     }
 
-    public Solution(double seconds, int whichRA) {
+    public Solution(SolveTime solveTime, int whichRA) {
         this.whichRA = whichRA;
-        this.solveTime = new SolveTime(seconds);
+        this.solveTime = solveTime;
     }
 
     public Solution(TimerState time, ScrambleString scramble, List<SolveTime> splits) {
@@ -59,7 +60,7 @@ public class Solution extends Commentable {
     }
 
     public ScrambleString getScramble() {
-        return scramble == null ? ScramblePluginManager.NULL_CREATED_SCRAMBLE : scramble;
+        return Objects.requireNonNull(scramble);
     }
 
     public String toSplitsString() {

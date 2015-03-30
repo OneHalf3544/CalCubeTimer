@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="error" name="RoutingTest" packages="org.apache.logging.log4j.test">
+
+    <Properties>
+        <Property name="filename">target/cct-0.9.5.log</Property>
+        <Property name="format">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %m%n</Property>
+    </Properties>
+    <ThresholdFilter level="DEBUG"/>
+
+    <Appenders>
+        <Console name="STDOUT">
+            <PatternLayout pattern="${format}"/>
+        </Console>
+        <File name="file" fileName="${filename}" append="true">
+            <PatternLayout pattern="${format}"/>
+        </File>
+        <RollingFile name="RollingFileAll" fileName="target/cct.log"
+                     filePattern="target/cctr-%d{yyyy-MM-dd-HH}-%i.log.gz">
+            <PatternLayout pattern="${format}" />
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB" />
+            </Policies>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <logger name="net.gnehzr" level="DEBUG"/>
+        <logger name="org.kociemba" level="ERROR"/>
+        <logger name="scramblePlugins" level="DEBUG"/>
+        <Root level="ERROR">
+            <AppenderRef ref="STDOUT"/>
+            <AppenderRef ref="FILE"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

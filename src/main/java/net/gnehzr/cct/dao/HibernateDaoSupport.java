@@ -2,9 +2,10 @@ package net.gnehzr.cct.dao;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import org.apache.log4j.Logger;
+import net.gnehzr.cct.dao.converters.DurationConverter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.*;
-import org.hibernate.Session;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -28,7 +29,7 @@ import java.util.function.Function;
  */
 public class HibernateDaoSupport {
 
-    private static final Logger LOG = Logger.getLogger(HibernateDaoSupport.class);
+    private static final Logger LOG = LogManager.getLogger(HibernateDaoSupport.class);
 
     // Configure the session factory
     private final SessionFactory sessionFactory;
@@ -39,16 +40,42 @@ public class HibernateDaoSupport {
 
     public static SessionFactory configureSessionFactory() throws HibernateException {
         Configuration configuration = new Configuration();
+        configuration.addAttributeConverter(DurationConverter.class);
         configuration.configure();
 
         Properties properties = configuration.getProperties();
 
         BootstrapServiceRegistry bootstrapServiceRegistry = new BootstrapServiceRegistryBuilder().enableAutoClose().build();
-        ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder(bootstrapServiceRegistry).applySettings(properties).build();
+        ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder(bootstrapServiceRegistry)
+                .enableAutoClose()
+                .applySettings(properties)
+                .build();
         return configuration.buildSessionFactory(serviceRegistry);
     }
 
-    public void update(Consumer<Session> updateFunction) {
+    protected void update(String updateQuery) {
+        update(updateQuery, Collections.emptyMap());
+    }
+
+    protected void insert(Object object) {
+        update(session ->  {
+            session.save(object);
+        });
+    }
+
+    protected void insertOrUpdate(Object object) {
+        update(session ->  {
+            session.saveOrUpdate(object);
+        });
+    }
+
+    protected void update(String updateQuery, Map<String, Object> args) {
+        update(s -> {
+            createQuery(s, updateQuery, args).executeUpdate();
+        });
+    }
+
+    protected void update(Consumer<Session> updateFunction) {
         doWithSession(session -> {
             Transaction tx = null;
             try {
@@ -67,6 +94,12 @@ public class HibernateDaoSupport {
                 throw Throwables.propagate(ex);
             }
 
+        });
+    }
+
+    protected void delete(Object o) {
+        update(s -> {
+            s.delete(o);
         });
     }
 
@@ -89,6 +122,10 @@ public class HibernateDaoSupport {
         }
     }
 
+    protected  <T> T queryFirst(String query) {
+        return queryFirst(query, Collections.emptyMap());
+    }
+
     protected  <T> T queryFirst(String query, Map<String, Object> args) {
         return doWithSession(session -> Iterables.getFirst(queryList(query, args), null));
     }
@@ -101,14 +138,19 @@ public class HibernateDaoSupport {
         return doWithSession(new Function<Session, List<T>>() {
             @Override
             public List<T> apply(Session session) {
-                Query queryObj = session.createQuery(query);
-                for (Map.Entry<String, Object> arg : args.entrySet()) {
-                    queryObj.setParameter(arg.getKey(), arg.getValue());
-                }
+                Query queryObj = createQuery(session, query, args);
                 //noinspection unchecked
                 return (List<T>) queryObj.list();
             }
         });
+    }
+
+    private Query createQuery(Session session, String query, Map<String, Object> args) {
+        Query queryObj = session.createQuery(query);
+        for (Map.Entry<String, Object> arg : args.entrySet()) {
+            queryObj.setParameter(arg.getKey(), arg.getValue());
+        }
+        return queryObj;
     }
 
 }

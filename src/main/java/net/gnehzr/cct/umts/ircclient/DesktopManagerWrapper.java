@@ -1,13 +1,14 @@
 package net.gnehzr.cct.umts.ircclient;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.beans.PropertyVetoException;
 
 public class DesktopManagerWrapper implements DesktopManager {
 
-	private static final Logger LOG = Logger.getLogger(DesktopManagerWrapper.class);
+	private static final Logger LOG = LogManager.getLogger(DesktopManagerWrapper.class);
 
 	private DesktopManager wrappedDM;
 

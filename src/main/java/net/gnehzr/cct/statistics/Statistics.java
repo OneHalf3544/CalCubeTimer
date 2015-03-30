@@ -6,6 +6,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import org.jooq.lambda.tuple.Tuple2;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -52,21 +53,21 @@ public class Statistics implements SolveCounter {
 	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<>();
 
 	List<Solution> times;
-	private ArrayList<Double>[] averages;
-	private ArrayList<Double>[] sds;
-	private ArrayList<Double> sessionavgs;
-	private ArrayList<Double> sessionsds;
+	private ArrayList<SolveTime>[] averages;
+	private ArrayList<SolveTime>[] sds;
+	private ArrayList<SolveTime> sessionavgs;
+	private ArrayList<SolveTime> sessionsds;
 
 	private int[] indexOfBestRA;
 
 	private SortedSet<SolveTime> sortedTimes;
 	private ArrayList<Integer>[] sortaverages;
-	private ArrayList<Double>[] sortsds;
+	private ArrayList<SolveTime>[] sortsds;
 
-	private double runningTotal;
-	private double curSessionAvg;
-	private double runningSquareTotal;
-	private	double curSessionSD;
+	private SolveTime runningTotal;
+	private SolveTime curSessionAvg;
+	private double runningTotalSquareSeconds;
+	private	SolveTime curSessionSD;
 	
 	private HashMap<SolveType, Integer> solveCounter;
 
@@ -138,9 +139,10 @@ public class Statistics implements SolveCounter {
 			indexOfBestRA[i] = -1;
 		}
 
-		runningTotal = runningSquareTotal = 0;
-		curSessionAvg = 0;
-		curSessionSD = Double.POSITIVE_INFINITY;
+		runningTotal = SolveTime.ZERO_TIME;
+		runningTotalSquareSeconds = 0;
+		curSessionAvg = SolveTime.ZERO_TIME;
+		curSessionSD = SolveTime.NA;
 		
 		//zero out solvetype counter
 		solveCounter.clear();
@@ -249,15 +251,15 @@ public class Statistics implements SolveCounter {
 		notifyListeners(true);
 	}
 
-	private void addHelper(Solution solveTime) {
-		times.add(solveTime);
-		sortedTimes.add(solveTime.getTime());
+	private void addHelper(Solution solution) {
+		times.add(solution);
+		sortedTimes.add(solution.getTime());
 
 		for(int k = 0; k < RA_SIZES_COUNT; k++)
 			if(times.size() >= curRASize[k])
 				calculateCurrentAverage(k);
 
-		for(SolveType t : solveTime.getTime().getTypes()) {
+		for(SolveType t : solution.getTime().getTypes()) {
 			Integer count = solveCounter.get(t);
 			if(count == null)
 				count = 0;
@@ -265,111 +267,115 @@ public class Statistics implements SolveCounter {
 			solveCounter.put(t, count);
 		}
 		Integer numDNFs = getSolveTypeCount(SolveType.DNF);
-		if(!solveTime.getTime().isInfiniteTime()) {
-			double t = solveTime.getTime().secondsValue();
-			runningTotal += t;
-			curSessionAvg = runningTotal / getSolveCount();
+		if(!solution.getTime().isInfiniteTime()) {
+			runningTotal = SolveTime.sum(runningTotal, solution.getTime());
+			curSessionAvg = SolveTime.divide(runningTotal, getSolveCount());
 			sessionavgs.add(curSessionAvg);
-			runningSquareTotal += t * t;
-			curSessionSD = Math.sqrt(runningSquareTotal
-					/ (times.size() - numDNFs) - curSessionAvg
-					* curSessionAvg);
+			runningTotalSquareSeconds += pow2(solution.getTime().getTime().toMillis());
+			curSessionSD = new SolveTime(Math.sqrt(
+					runningTotalSquareSeconds / (times.size() - numDNFs)
+					- pow2(curSessionAvg.getTime().toMillis())) / 1000.0);
 			sessionsds.add(curSessionSD);
 		}
 	}
 
+	private long pow2(long millis) {
+		return millis * millis;
+	}
+
 	private void calculateCurrentAverage(int k) {
-		double avg = calculateRA(times.size() - curRASize[k], times.size(), k, curRATrimmed[k]);
-		if(avg > 0) {
-			Double s;
+		SolveTime avg = calculateRA(times.size() - curRASize[k], times.size(), k, curRATrimmed[k]);
+		if(!avg.isInfiniteTime()) {
 			int i;
 
-			Double av = new Double(avg);
-			averages[k].add(av);
+			averages[k].add(avg);
 
-			if(avg == Double.POSITIVE_INFINITY) {
-				s = new Double(Double.POSITIVE_INFINITY);
+			if(avg == SolveTime.NA) {
+				SolveTime s = SolveTime.NA;
 				sds[k].add(s);
 				sortsds[k].add(s);
 			} else {
-				double sd = calculateRSD(times.size() - curRASize[k], k);
-				s = new Double(sd);
+				SolveTime s = calculateRSD(times.size() - curRASize[k], k);
 				sds[k].add(s);
 
 				for(i = 0; i < sortsds[k].size() && sortsds[k].get(i).compareTo(s) <= 0; i++) ;
 				sortsds[k].add(i, s);
 			}
 
-			for(i = 0; i < sortaverages[k].size() && averages[k].get(sortaverages[k].get(i)).compareTo(av) < 0; i++) ;
+			for(i = 0; i < sortaverages[k].size() && averages[k].get(sortaverages[k].get(i)).compareTo(avg) < 0; i++) ;
 			sortaverages[k].add(i, averages[k].size() - 1);
 			if(i == 0){
 				int newbest = averages[k].size() - 1;
-				if(indexOfBestRA[k] < 0 || !Utils.equalDouble(averages[k].get(indexOfBestRA[k]), averages[k].get(newbest))){
+				if(indexOfBestRA[k] < 0 || !Objects.equals(averages[k].get(indexOfBestRA[k]), averages[k].get(newbest))){
 					indexOfBestRA[k] = newbest;
 				}
 				else{
 					//in the event of a tie, we compare the 2 untrimmed averages
-					double newave = calculateRA(times.size() - curRASize[k], times.size(), k, false);
-					double oldave = calculateRA(indexOfBestRA[k], indexOfBestRA[k] + curRASize[k], k, false);
-					if(Utils.equalDouble(newave, oldave)) {
+					SolveTime newAverage = calculateRA(times.size() - curRASize[k], times.size(), k, false);
+					SolveTime oldAverage = calculateRA(indexOfBestRA[k], indexOfBestRA[k] + curRASize[k], k, false);
+					if(Objects.equals(newAverage, oldAverage)) {
 						if(bestTimeOfAverage(indexOfBestRA[k], k).compareTo(bestTimeOfAverage(newbest, k)) > 0)
 							indexOfBestRA[k] = newbest;
 						else if(bestTimeOfAverage(indexOfBestRA[k], k).equals(bestTimeOfAverage(newbest, k))){
 							if(worstTimeOfAverage(indexOfBestRA[k], k).compareTo(worstTimeOfAverage(newbest, k)) > 0)
 								indexOfBestRA[k] = newbest;
 						}
-					} else if(newave < oldave)
+					} else if(Utils.lessThan(newAverage, oldAverage)) {
 						indexOfBestRA[k] = newbest;
+					}
 				}
 			}
 		}
 	}
 
-	private double calculateRA(int a, int b, int num, boolean trimmed) {
-		if(a < 0)
-			return -1;
+	private SolveTime calculateRA(int a, int b, int num, boolean trimmed) {
+		if(a < 0) {
+			return SolveTime.NA;
+		}
 		SolveTime best = null, worst = null;
 		int ignoredSolves = 0;
 		if(trimmed) {
-			SolveTime[] bestWorst = getBestAndWorstTimes(a, b);
-			best = bestWorst[0];
-			worst = bestWorst[1];
+			Tuple2<SolveTime, SolveTime> bestWorst = getBestAndWorstTimes(a, b);
+			best = bestWorst.v1;
+			worst = bestWorst.v2;
 			ignoredSolves = 2;
 		}
-		double total = 0;
+		SolveTime total = SolveTime.ZERO_TIME;
 		int multiplier = 1;
 		for(int i = a; i < b; i++) {
 			SolveTime time = times.get(i).getTime();
 			if(time != best && time != worst) {
 				if(time.isInfiniteTime()) {
 					if(trimmed)
-						return Double.POSITIVE_INFINITY;
+						return SolveTime.NA;
 					
 					multiplier = -1;
 				} else
-					total += time.secondsValue();
+					total = SolveTime.sum(total, time);
 			}
 		}
 		//if we're calling this method with trimmed == false, we know the RA is valid, and we will return the negative of the true average if there was one infinite time
-		return multiplier * total / (curRASize[num] - ignoredSolves);
+		return SolveTime.divide(SolveTime.multiply(total, multiplier),  curRASize[num] - ignoredSolves);
 	}
 
-	private double calculateRSD(int start, int num) {
-		if(start < 0)
-			return -1;
+	private SolveTime calculateRSD(int start, int num) {
+		if(start < 0) {
+			return SolveTime.NA;
+		}
 		int end = start + getRASize(num);
-		double average = averages[num].get(start);
-		if(average == Double.POSITIVE_INFINITY)
-			return Double.POSITIVE_INFINITY;
-		SolveTime[] best_worst = getBestAndWorstTimes(start, end);
-		double deviation = 0;
+		SolveTime average = averages[num].get(start);
+		if(average == SolveTime.NA) {
+			return SolveTime.NA;
+		}
+		Tuple2<SolveTime, SolveTime> best_worst = getBestAndWorstTimes(start, end);
+		long deviation = 0;
 		for(int i = start; i < end; i++) {
-			if(times.get(i).getTime() != best_worst[0] && times.get(i).getTime() != best_worst[1]) {
-				double diff = times.get(i).getTime().secondsValue() - average;
-				deviation += diff*diff;
+			if(times.get(i).getTime() != best_worst.v1 && times.get(i).getTime() != best_worst.v2) {
+				SolveTime diff = SolveTime.substruct(times.get(i).getTime(), average);
+				deviation += pow2(diff.getTime().toMillis());
 			}
 		}
-		return Math.sqrt(deviation / getRASize(num));
+		return new SolveTime(Math.sqrt(deviation / (double)getRASize(num)) / 1000.0);
 	}
 
 	void refresh() {
@@ -397,9 +403,9 @@ public class Statistics implements SolveCounter {
 	
 	public Solution getRA(int num, int whichRA) {
 		int RAnum = 1 + num - curRASize[whichRA];
-		double seconds;
+		SolveTime seconds;
 		if(RAnum < 0)
-			seconds = -1;
+			seconds = SolveTime.NA;
 		else
 			seconds = averages[whichRA].get(RAnum);
 		return new Solution(seconds, whichRA);
@@ -420,7 +426,7 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime average(AverageType type, int num) {
-		double average;
+		SolveTime average;
 		try {
 			if(type == AverageType.SESSION)
 				average = curSessionAvg;
@@ -434,17 +440,17 @@ public class Statistics implements SolveCounter {
 			return SolveTime.NULL_TIME;
 		}
 
-		if(average == 0)
+		if(average.isZero())
 			return SolveTime.NULL_TIME;
 
-		if(average == Double.POSITIVE_INFINITY)
+		if(average == SolveTime.NA)
 			return SolveTime.NULL_TIME;
 
-		return new SolveTime(average);
+		return average;
 	}
 
 	public boolean isValid(AverageType type, int num) {
-		double average;
+		SolveTime average;
 		try {
 			if(type == AverageType.SESSION)
 				average = curSessionAvg;
@@ -458,7 +464,7 @@ public class Statistics implements SolveCounter {
 			return false;
 		}
 
-		if(average == 0 || average == Double.POSITIVE_INFINITY) {
+		if(average.isZero() || average == SolveTime.NA) {
 			return false;
 		}
 		return true;
@@ -502,7 +508,7 @@ public class Statistics implements SolveCounter {
 		return indexOfSolve >= bounds[0] && indexOfSolve < bounds[1];
 	}
 
-	public SolveTime[] getBestAndWorstTimes(int a, int b) {
+	public Tuple2<SolveTime, SolveTime> getBestAndWorstTimes(int a, int b) {
 		SolveTime best = SolveTime.WORST;
 		SolveTime worst = SolveTime.BEST;
 		for(Solution time : getSublist(a, b)){
@@ -512,7 +518,7 @@ public class Statistics implements SolveCounter {
 			if(worst.compareTo(time.getTime()) < 0)
 				worst = time.getTime();
 		}
-		return new SolveTime[] { best, worst };
+		return new Tuple2<>(best, worst);
 	}
 
 	public SolveTime[] getBestAndWorstTimes(AverageType type, int num) {
@@ -564,12 +570,12 @@ public class Statistics implements SolveCounter {
 		if(num < 0) num = 0;
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
-		SolveTime[] bestAndWorst = getBestAndWorstTimes(n, n + curRASize[num]);
+		Tuple2<SolveTime, SolveTime> bestAndWorst = getBestAndWorstTimes(n, n + curRASize[num]);
 		List<Solution> list = getSublist(n, n + curRASize[num]);
 		if(list.size() == 0)
 			return "N/A";
 		
-		return toTerseStringHelper(list, bestAndWorst[0], bestAndWorst[1]);
+		return toTerseStringHelper(list, bestAndWorst.v1, bestAndWorst.v2);
 	}
 
 	public String toTerseString(AverageType type, int num, boolean showincomplete) {
@@ -599,22 +605,24 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime standardDeviation(AverageType type, int num) {
-		double sd = Double.POSITIVE_INFINITY;
-		if(type == AverageType.SESSION)
-			sd = curSessionSD;
-		else if(type == AverageType.RA)
-			sd = sds[num].get(indexOfBestRA[num]).doubleValue();
-		else if(type == AverageType.CURRENT)
-			sd = sds[num].get(sds[num].size() - 1).doubleValue();
-		return new SolveTime(sd);
+		switch (type) {
+			case SESSION:
+				return getSessionSD();
+			case RA:
+				return sds[num].get(indexOfBestRA[num]);
+			case CURRENT:
+				return sds[num].get(sds[num].size() - 1);
+			default:
+				return SolveTime.NA;
+		}
 	}
 
 	private SolveTime bestTimeOfAverage(int n, int num) {
-		return getBestAndWorstTimes(n, n + curRASize[num])[0];
+		return getBestAndWorstTimes(n, n + curRASize[num]).v1;
 	}
 
 	private SolveTime worstTimeOfAverage(int n, int num) {
-		return getBestAndWorstTimes(n, n + curRASize[num])[1];
+		return getBestAndWorstTimes(n, n + curRASize[num]).v2;
 	}
 
 	public int getIndexOfBestRA(int num){
@@ -622,11 +630,11 @@ public class Statistics implements SolveCounter {
 	}
 
 	// access methods
-	public double getSessionAvg() {
+	public SolveTime getSessionAvg() {
 		return curSessionAvg;
 	}
 
-	public double getSessionSD() {
+	public SolveTime getSessionSD() {
 		return curSessionSD;
 	}
 
@@ -650,17 +658,17 @@ public class Statistics implements SolveCounter {
 		return c;
 	}
 
-	public double getTime(int n) {
+	public SolveTime getTime(int n) {
 		if(n < 0)
 			n = times.size() + n;
 
 		if(times.size() == 0 || n < 0 || n >= times.size())
-			return Double.POSITIVE_INFINITY;
-		
-		return times.get(n).getTime().secondsValue();
+			return SolveTime.NA;
+
+		return times.get(n).getTime();
 	}
 
-	public double getAverage(int n, int num) {
+	public SolveTime getAverage(int n, int num) {
 		if(num < 0) num = 0;
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
@@ -668,12 +676,12 @@ public class Statistics implements SolveCounter {
 			n = averages[num].size() + n;
 
 		if(averages[num].size() == 0 || n < 0 || n >= averages[num].size())
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 
-		return averages[num].get(n).doubleValue();
+		return averages[num].get(n);
 	}
 
-	public double getSD(int n, int num) {
+	public SolveTime getSD(int n, int num) {
 		if(num < 0) num = 0;
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
@@ -681,9 +689,9 @@ public class Statistics implements SolveCounter {
 			n = sds[num].size() + n;
 
 		if(sds[num].size() == 0 || n < 0 || n >= sds[num].size())
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		
-		return sds[num].get(n).doubleValue();
+		return sds[num].get(n);
 	}
 
 	/**
@@ -701,7 +709,7 @@ public class Statistics implements SolveCounter {
 		return Iterables.get(sortedTimes, n);
 	}
 
-	public double getSortAverage(int n, int num) {
+	public SolveTime getSortAverage(int n, int num) {
 		if(num < 0) num = 0;
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
@@ -709,12 +717,12 @@ public class Statistics implements SolveCounter {
 			n = sortaverages[num].size() + n;
 
 		if(sortaverages[num].size() == 0 || n < 0 || n >= sortaverages[num].size())
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		
 		return averages[num].get(sortaverages[num].get(n));
 	}
 
-	public double getSortSD(int n, int num) {
+	public SolveTime getSortSD(int n, int num) {
 		if(num < 0) num = 0;
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
@@ -722,12 +730,12 @@ public class Statistics implements SolveCounter {
 			n = sortsds[num].size() + n;
 
 		if(sortsds[num].size() == 0 || n < 0 || n >= sortsds[num].size())
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		
 		return sortsds[num].get(n);
 	}
 
-	public double getSortAverageSD(int n, int num) {
+	public SolveTime getSortAverageSD(int n, int num) {
 		if(num < 0) num = 0;
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
@@ -735,7 +743,7 @@ public class Statistics implements SolveCounter {
 			n = sortaverages[num].size() + n;
 
 		if(sortaverages[num].size() == 0 || n < 0 || n >= sortaverages[num].size()) {
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		}
 		return sds[num].get(sortaverages[num].get(n));
 	}
@@ -788,98 +796,100 @@ public class Statistics implements SolveCounter {
 		return worstTimeOfAverage(sortaverages[num].get(n), num);
 	}
 
-	public double getSessionAverage(int n) {
+	public SolveTime getSessionAverage(int n) {
 		if(n < 0)
 			n = sessionavgs.size() + n;
 
 		if(sessionavgs.size() == 0 || n < 0 || n >= sessionavgs.size())
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		return sessionavgs.get(n);
 	}
 
-	public double getSessionSD(int n) {
-		if(n < 0)
+	public SolveTime getSessionSD(int n) {
+		if(n < 0) {
 			n = sessionsds.size() + n;
+		}
 
-		if(sessionsds.size() == 0 || n < 0 || n >= sessionsds.size())
-			return Double.POSITIVE_INFINITY;
+		if(sessionsds.size() == 0 || n < 0 || n >= sessionsds.size()) {
+			return SolveTime.NA;
+		}
 		return sessionsds.get(n);
 	}
 
-	public double getProgressTime() {
+	public SolveTime getProgressTime() {
 		if(times.size() < 2)
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		
-		double t1 = getTime(-1);
-		if(t1 == Double.POSITIVE_INFINITY)
-			return Double.POSITIVE_INFINITY;
-		double t2 = getTime(-2);
-		if(t2 == Double.POSITIVE_INFINITY)
-			return Double.NEGATIVE_INFINITY;
-		return t1 - t2;
+		SolveTime t1 = getTime(-1);
+		if(t1 == SolveTime.NA)
+			return SolveTime.NA;
+		SolveTime t2 = getTime(-2);
+		if(t2 == SolveTime.NA)
+			return SolveTime.NA;
+		return SolveTime.substruct(t1, t2);
 	}
 
-	public double getProgressAverage(int num) {
+	public SolveTime getProgressAverage(int num) {
 		if(num < 0) num = 0;
 		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
 
 		if(averages[num].size() == 0) {
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		} else if(averages[num].size() == 1) {
-			return Double.NEGATIVE_INFINITY;
+			return SolveTime.NA;
 		} else {
-			double t1 = getAverage(-1, num);
-			if(t1 == Double.POSITIVE_INFINITY)
-				return Double.POSITIVE_INFINITY;
-			double t2 = getAverage(-2, num);
-			if(t2 == Double.POSITIVE_INFINITY)
-				return Double.NEGATIVE_INFINITY;
-			return t1 - t2;
+			SolveTime t1 = getAverage(-1, num);
+			if(t1 == SolveTime.NA)
+				return SolveTime.NA;
+			SolveTime t2 = getAverage(-2, num);
+			if(t2 == SolveTime.NA)
+				return SolveTime.NA;
+			return SolveTime.substruct(t1, t2);
 		}
 	}
 
-	public double getProgressSessionAverage() {
+	public SolveTime getProgressSessionAverage() {
 		if(sessionavgs.size() == 0) {
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		} else if(sessionavgs.size() == 1) {
-			return Double.NEGATIVE_INFINITY;
+			return SolveTime.NA;
 		} else {
-			double t1 = getSessionAverage(-1);
-			if(t1 == Double.POSITIVE_INFINITY)
-				return Double.POSITIVE_INFINITY;
-			double t2 = getSessionAverage(-2);
-			if(t2 == Double.POSITIVE_INFINITY)
-				return Double.NEGATIVE_INFINITY;
-			return t1 - t2;
+			SolveTime t1 = getSessionAverage(-1);
+			if(t1 == SolveTime.NA)
+				return SolveTime.NA;
+			SolveTime t2 = getSessionAverage(-2);
+			if(t2 == SolveTime.NA)
+				return SolveTime.NA;
+			return SolveTime.substruct(t1, t2);
 		}
 	}
 
-	public double getProgressSessionSD() {
+	public SolveTime getProgressSessionSD() {
 		if(sessionsds.size() < 2)
-			return Double.POSITIVE_INFINITY;
+			return SolveTime.NA;
 		
-		double t1 = getSessionSD(-1);
-		if(t1 == Double.POSITIVE_INFINITY)
-			return Double.POSITIVE_INFINITY;
-		double t2 = getSessionSD(-2);
-		if(t2 == Double.POSITIVE_INFINITY)
-			return Double.POSITIVE_INFINITY;
-		return t1 - t2;
+		SolveTime t1 = getSessionSD(-1);
+		if(t1 == SolveTime.NA)
+			return SolveTime.NA;
+		SolveTime t2 = getSessionSD(-2);
+		if(t2 == SolveTime.NA)
+			return SolveTime.NA;
+		return SolveTime.substruct(t1, t2);
 	}
 
 	public SolveTime getBestTime() {
 		return sortedTimes.isEmpty() ? SolveTime.NULL_TIME : sortedTimes.first();
 	}
 
-	public double getBestAverage(int num) {
+	public SolveTime getBestAverage(int num) {
 		return getSortAverage(0, num);
 	}
 
-	public double getBestSD(int num) {
+	public SolveTime getBestSD(int num) {
 		return getSortSD(0, num);
 	}
 
-	public double getBestAverageSD(int num) {
+	public SolveTime getBestAverageSD(int num) {
 		return getSortAverageSD(0, num);
 	}
 
@@ -891,39 +901,39 @@ public class Statistics implements SolveCounter {
 		return t == null ? SolveTime.NULL_TIME : t;
 	}
 
-	public double getWorstAverage(int num) {
+	public SolveTime getWorstAverage(int num) {
 		return getSortAverage(-1, num);
 	}
 
-	public double getWorstSD(int num) {
+	public SolveTime getWorstSD(int num) {
 		return getSortSD(-1, num);
 	}
 
-	public double getWorstAverageSD(int num) {
+	public SolveTime getWorstAverageSD(int num) {
 		return getSortAverageSD(-1, num);
 	}
 
-	public double getCurrentTime() {
+	public SolveTime getCurrentTime() {
 		return getTime(-1);
 	}
 
-	public double getCurrentAverage(int num) {
+	public SolveTime getCurrentAverage(int num) {
 		return getAverage(-1, num);
 	}
 
-	public double getCurrentSD(int num) {
+	public SolveTime getCurrentSD(int num) {
 		return getSD(-1, num);
 	}
 
-	public double getLastTime() {
+	public SolveTime getLastTime() {
 		return getTime(-2);
 	}
 
-	public double getLastAverage(int num) {
+	public SolveTime getLastAverage(int num) {
 		return getAverage(-2, num);
 	}
 
-	public double getLastSD(int num) {
+	public SolveTime getLastSD(int num) {
 		return getSD(-2, num);
 	}
 

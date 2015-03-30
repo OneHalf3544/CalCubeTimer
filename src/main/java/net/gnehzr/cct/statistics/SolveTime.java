@@ -1,50 +1,34 @@
 package net.gnehzr.cct.statistics;
 
+import com.google.common.collect.ImmutableSet;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class SolveTime implements Comparable<SolveTime> {
 
-	private static final Logger LOG = Logger.getLogger(SolveTime.class);
+	private static final Logger LOG = LogManager.getLogger(SolveTime.class);
 
-	public static final SolveTime NULL_TIME = new SolveTime() {
-		@Override
-		protected void setTime(String toParse) throws Exception {
-			throw new AssertionError();
-		}
-	};
-
-	public static final SolveTime BEST = new SolveTime(Duration.ZERO) {
-		@Override
-		public void setTime(String toParse) { throw new AssertionError(); }
-	};
-	public static final SolveTime WORST = new SolveTime() {
-		@Override
-		public void setTime(String toParse) { throw new AssertionError(); }
-	};
-
+	public static final SolveTime NULL_TIME = new SolveTime((Duration)null);
+	public static final SolveTime ZERO_TIME = new SolveTime(Duration.ZERO);
+	public static final SolveTime BEST = ZERO_TIME;
+	public static final SolveTime WORST = new SolveTime((Duration)null);
 	public static final SolveTime NA = WORST;
 
-	private Set<SolveType> types = new HashSet<>();
+	private final Set<SolveType> types = new HashSet<>();
 
-	private Duration time;
-
-	private SolveTime() {
-		time = null;
-	}
+	private final Duration time;
 
 	@Deprecated
 	public SolveTime(double seconds) {
-		this.time = Duration.ofMillis(10 * (long) (100 * seconds + .5));
-		LOG.trace("new SolveTime " + seconds);
+		this(Duration.ofMillis(10 * (long) (100 * seconds + .5)));
 	}
 
 	public SolveTime(Duration time) {
@@ -52,19 +36,14 @@ public class SolveTime implements Comparable<SolveTime> {
 		LOG.trace("new SolveTime " + time);
 	}
 
-	public SolveTime(String time) throws Exception {
-		setTime(time);
+	public SolveTime(String time) {
+		this(parseTime(time, ImmutableSet.of()));
 	}
 
-	public static SolveTime parseTime(String toParse) throws Exception {
-		return new SolveTime(toParse);
-	}
-
-	protected void setTime(String toParse) throws Exception {
-		time = Duration.ZERO; //don't remove this
+	protected static Duration parseTime(String toParse, Set<SolveType> types) {
 		toParse = toParse.trim();
 		if(toParse.isEmpty()) {
-			throw new Exception(StringAccessor.getString("SolveTime.noemptytimes"));
+			throw new IllegalArgumentException(StringAccessor.getString("SolveTime.noemptytimes"));
 		}
 		
 		String[] split = toParse.split(",");
@@ -79,7 +58,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		String time = split[c];
 		if(time.equals(SolveType.DNF.toString())) { //this indicated a pure dnf (no time associated with it)
 			types.add(SolveType.DNF);
-			return;
+			return Duration.ZERO;
 		}
 		
 		//parse time to determine raw seconds
@@ -87,44 +66,18 @@ public class SolveTime implements Comparable<SolveTime> {
 			types.add(SolveType.PLUS_TWO);
 			time = time.substring(0, time.length() - 1);
 		}
-		time = toUSFormatting(time);
-		String[] temp = time.split(":");
-		if(temp.length > 3 || time.lastIndexOf(":") == time.length() - 1) {
-			throw new Exception(StringAccessor.getString("SolveTime.invalidcolons"));
-		}
-		if(time.indexOf(".") != time.lastIndexOf(".")) {
-			throw new Exception(StringAccessor.getString("SolveTime.toomanydecimals"));
-		}
-		if(time.contains(".") && time.contains(":") && time.indexOf(".") < time.lastIndexOf(":")) {
-			throw new Exception(StringAccessor.getString("SolveTime.invaliddecimal"));
-		}
-		if(time.contains("-")) {
-			throw new Exception(StringAccessor.getString("SolveTime.nonpositive"));
+
+		Duration seconds = parseSeconds(time, types);
+		if(seconds.compareTo(Duration.ofDays(210)) > 0) {
+			throw new IllegalArgumentException(StringAccessor.getString("SolveTime.toolarge"));
 		}
 
-		double seconds = 0;
-		for(int i = 0; i < temp.length; i++) {
-			seconds *= 60;
-			double d;
-			try {
-				d = Double.parseDouble(temp[i]); //we want this to handle only "." as a decimal separator
-			} catch(NumberFormatException e) {
-				throw new Exception(StringAccessor.getString("SolveTime.invalidnumerals"));
-			}
-			if(i != 0 && d >= 60) throw new Exception(StringAccessor.getString("SolveTime.toolarge"));
-			seconds += d;
-		}
-		seconds -= (isType(SolveType.PLUS_TWO) ? 2 : 0);
-		if(seconds < 0) {
-			throw new Exception(StringAccessor.getString("SolveTime.nonpositive"));
-		}
-		if(seconds > 21000000) {
-			throw new Exception(StringAccessor.getString("SolveTime.toolarge"));
-		}
-		this.time = Duration.ofMillis(10 * (int)(100 * seconds + .5));
+		return seconds;
 	}
-	static String toUSFormatting(String time) {
-		return time.replaceAll(Pattern.quote(Utils.getDecimalSeparator()), ".");
+
+	private static Duration parseSeconds(String temp, Set<SolveType> types) {
+		Duration parse = Duration.parse(temp);
+		return types.contains(SolveType.PLUS_TWO) ? parse.minusSeconds(2) : parse;
 	}
 
 	public Duration getTime() {
@@ -136,11 +89,10 @@ public class SolveTime implements Comparable<SolveTime> {
 		if(time == null || time.isNegative()) {
 			return "N/A";
 		}
-		return types.stream()
-				.filter(t -> !t.isSolved())
-				.findFirst()
-				.map(Object::toString)
-				.orElseGet(() -> Utils.formatTime(this, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
+		boolean useClockFormat = configuration.isPropertiesLoaded()
+				&& configuration.getBoolean(VariableKey.CLOCK_FORMAT, false);
+
+		return toString(useClockFormat);
 	}
 
 	//this is for display by CCT
@@ -149,31 +101,22 @@ public class SolveTime implements Comparable<SolveTime> {
 		if(time == null || time.isNegative()) {
 			return "N/A";
 		}
+		return toString(true);
+	}
+
+	private String toString(boolean useClockFormat) {
 		return types.stream()
 				.filter(t -> !t.isSolved())
 				.findFirst()
 				.map(Object::toString)
-				.orElseGet(() -> Utils.formatTime(this, true) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
+				.orElseGet(() -> Utils.formatTime(this, useClockFormat) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
 	}
 
-	//this is for use by the database, and will save the raw time if the solve was a POP or DNF
-	public String toExternalizableString() {
-		String time = "" + (value() / 100.); //this must work for +2 and DNF
-		String typeString = "";
-		boolean plusTwo = false;
-		for(SolveType t : types) {
-			if(t == SolveType.PLUS_TWO) //no need to append plus two, since we will append + later
-				plusTwo = true;
-			else
-				typeString += t.toString() + ",";
-		}
-		
-		if(plusTwo) time += "+";
-		return typeString + time;
-	}
-
+	@Deprecated
 	public double secondsValue() {
-		if(isInfiniteTime()) return Double.POSITIVE_INFINITY;
+		if(isInfiniteTime()) {
+			return Double.POSITIVE_INFINITY;
+		}
 		return value() / 100.;
 	}
 
@@ -190,19 +133,29 @@ public class SolveTime implements Comparable<SolveTime> {
 	}
 
 	public boolean equals(Object obj) {
-		return obj == this;
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != SolveTime.class) {
+			return false;
+		}
+		return this.value() == ((SolveTime)obj).value();
 	}
 
 	@Override
 	public int compareTo(@NotNull SolveTime o) {
-		if(o == WORST)
+		if(o == WORST) {
 			return -1;
-		if(this == WORST)
+		}
+		if(this == WORST) {
 			return 1;
-		if(o.isInfiniteTime())
+		}
+		if(o.isInfiniteTime()) {
 			return -1;
-		if(this.isInfiniteTime())
+		}
+		if(this.isInfiniteTime()) {
 			return 1;
+		}
 		return this.value() - o.value();
 	}
 
@@ -219,7 +172,8 @@ public class SolveTime implements Comparable<SolveTime> {
 	}
 
 	public void setTypes(Collection<SolveType> newTypes) {
-		types = new HashSet<>(newTypes);
+		types.clear();
+		types.addAll(newTypes);
 	}
 
 	public boolean isPenalty() {
@@ -235,4 +189,32 @@ public class SolveTime implements Comparable<SolveTime> {
 		return time.isZero() && isInfiniteTime();
 	}
 
+	public static SolveTime sum(SolveTime a, SolveTime b) {
+		if (a.isInfiniteTime() || b.isInfiniteTime()) {
+			return SolveTime.WORST;
+		}
+		return new SolveTime(a.getTime().plus(b.getTime()));
+	}
+
+	public static SolveTime divide(SolveTime a, long divisor) {
+		if (a.isInfiniteTime()) {
+			return SolveTime.WORST;
+		}
+		return new SolveTime(a.getTime().dividedBy(divisor));
+	}
+
+	public static SolveTime multiply(SolveTime a, long multiplier) {
+		if (a.isInfiniteTime()) {
+			return SolveTime.WORST;
+		}
+		return new SolveTime(a.getTime().multipliedBy(multiplier));
+	}
+
+	public static SolveTime substruct(SolveTime time1, SolveTime time2) {
+		return new SolveTime(time1.getTime().minus(time2.getTime()));
+	}
+
+	public boolean isZero() {
+		return getTime().isZero();
+	}
 }

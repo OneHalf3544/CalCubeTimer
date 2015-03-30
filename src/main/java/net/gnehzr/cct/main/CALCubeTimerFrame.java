@@ -22,8 +22,8 @@ import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicDestroyable;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -32,7 +32,8 @@ import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.api.SubstanceConstants;
@@ -65,7 +66,7 @@ import java.util.List;
 @Singleton
 public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableModelListener {
 
-	private static final Logger LOG = Logger.getLogger(CALCubeTimerFrame.class);
+	private static final Logger LOG = LogManager.getLogger(CALCubeTimerFrame.class);
 
 	public static final String CCT_VERSION = CALCubeTimerFrame.class.getPackage().getImplementationVersion();
 	public static final ImageIcon CUBE_ICON = new ImageIcon(CALCubeTimerFrame.class.getResource("cube.png"));
@@ -82,7 +83,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	private JScrollPane timesScroller = null;
 	private SessionsTable sessionsTable = null;
 	ScrambleHyperlinkArea scrambleHyperlinkArea = null;
-	private ScrambleChooserComboBox<ScrambleCustomization> scrambleCustomizationComboBox;
+	private ScrambleCustomizationChooserComboBox scrambleCustomizationComboBox;
 	private JPanel scrambleAttributesPanel = null;
 	@Inject
 	private JTextField generatorTextField;
@@ -91,9 +92,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	JComboBox<Profile> profilesComboBox = null;
 	JComboBox<LocaleAndIcon> languages = null;
 	@Inject @Named("timeLabel")
-	private TimerLabel timeLabel = null;
+	private TimerLabel timeLabel;
 	@Inject @Named("bigTimersDisplay")
-	TimerLabel bigTimersDisplay = null;
+	TimerLabel bigTimersDisplay;
 	//all of the above components belong in this HashMap, so we can find them
 	//when they are referenced in the xml gui (type="blah...blah")
 	//we also reset their attributes before parsing the xml gui
@@ -132,12 +133,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 				profileDao.setSelectedProfile(affectedProfile);
 				profileDao.loadDatabase(affectedProfile, scramblePluginManager);
 
-				try {
-					configuration.loadConfiguration(affectedProfile);
-					configuration.apply(affectedProfile);
-				} catch (IOException err) {
-					LOG.info("unexpected exception", err);
-				}
+				configuration.loadConfiguration(affectedProfile);
+				configuration.apply(affectedProfile);
+
 				model.sessionSelected(model.getNextSession(CALCubeTimerFrame.this)); //we want to load this profile's startup session
 				statsModel.addTableModelListener(CALCubeTimerFrame.this); //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
 				repaintTimes(); //this needs to be here in the event that we loaded times from database
@@ -152,7 +150,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 				return;
 			}
 
-			Statistics s = statsModel.getCurrentStatistics();
+			Statistics s = statsModel.getCurrentSession().getStatistics();
 			if (!model.getCustomizationEditsDisabled() && s != null) {
 				//TODO - changing session? //TODO - deleted customization?
 				s.editActions.add(new CustomizationEdit(model, model.getScramblesList().getCurrentScrambleCustomization(),
@@ -164,10 +162,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 			ircClient.sendUserstate();
 
 			//change current session's scramble customization
-			if (statsModel.getCurrentSession() != null) {
-				statsModel.getCurrentSession().setCustomization(
-						model.getScramblesList().getCurrentScrambleCustomization().toString(), profileDao.getSelectedProfile());
-			}
+			statsModel.getCurrentSession().setCustomization(
+                    model.getScramblesList().getCurrentScrambleCustomization(), profileDao.getSelectedProfile());
+
 			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getCurrentScrambleCustomization().getScrambleVariation());
 			String generator = model.getScramblesList().getCurrentScrambleCustomization().getGenerator();
 			updateGeneratorField(generatorEnabled, generator);
@@ -214,7 +211,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	JFrame fullscreenFrame;
 
 	@Inject
-	private StatisticsTableModel statsModel;
+	StatisticsTableModel statsModel;
 
 	@Inject
 	private IRCClientGUI ircClient;
@@ -251,8 +248,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	private void initializeGUIComponents() {
 		//NOTE: all internationalizable text must go in the loadStringsFromDefaultLocale() method
 		DateTimeLabel currentTimeLabel = new DateTimeLabel(configuration);
+		configuration.addConfigurationChangeListener(p -> currentTimeLabel.updateDisplay());
 
-		scrambleCustomizationComboBox = new ScrambleChooserComboBox<>(true, true, scramblePluginManager, configuration, profileDao);
+		scrambleCustomizationComboBox = new ScrambleCustomizationChooserComboBox(true, scramblePluginManager, configuration);
 		scrambleCustomizationComboBox.addItemListener(scrambleChooserListener);
 
 		scrambleNumber = new JSpinner(new SpinnerNumberModel(1,	1, 1, 1));
@@ -298,7 +296,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		bigTimersDisplay.setKeyboardHandler(keyHandler);
 
 		fullscreenPanel = new JLayeredPane();
-		final JButton fullScreenButton = new JButton(actionMap.getAction("togglefullscreen", this, model));
+		final JButton fullScreenButton = new JButton(actionMap.getAction(ActionMap.TOGGLE_FULLSCREEN, this, model));
 
 		fullscreenPanel.add(bigTimersDisplay, new Integer(0));
 		fullscreenPanel.add(fullScreenButton, new Integer(1));
@@ -501,7 +499,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	 */
 	@Override
 	public void repaintTimes() {
-		Statistics stats = statsModel.getCurrentStatistics();
+		Statistics stats = statsModel.getCurrentSession().getStatistics();
 		ircClient.sendUserstate();
 
 		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT);
@@ -520,15 +518,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	public void dispose() {
 		super.dispose();
 		Main.exit(0);
-	}
-
-	void setLookAndFeel() {
-		try {
-			UIManager.setLookAndFeel(new org.jvnet.substance.skin.SubstanceModerateLookAndFeel());
-			updateWatermark();
-		} catch (Exception e1) {
-			throw Throwables.propagate(e1);
-		}
 	}
 
 	void updateWatermark() {
@@ -590,12 +579,12 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	}
 
 	@Override
-	public void setFullScreen(boolean b) {
-		model.setFullscreen(fullscreenFrame.isVisible());
-		if(b == model.isFullscreen()) {
+	public void setFullScreen(boolean value) {
+		if(value == model.isFullscreen()) {
+			model.setFullscreen(fullscreenFrame.isVisible());
 			return;
 		}
-		model.setFullscreen(b);
+		model.setFullscreen(value);
 		if(model.isFullscreen()) {
 			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			GraphicsDevice[] gs = ge.getScreenDevices();
@@ -610,7 +599,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 	@Override
 	public void tableChanged(TableModelEvent event) {
-		final Solution latestSolution = statsModel.getCurrentStatistics().get(-1);
+		final Solution latestSolution = statsModel.getCurrentSession().getStatistics().get(-1);
 		if(latestSolution != null) {
 			ircClient.sendUserstate();
 		}
@@ -707,7 +696,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 			bigTimersDisplay.reset();
 			model.getScramblesList().clear();
 			updateScramble();
-			statsModel.getCurrentStatistics().clear();
+			statsModel.getCurrentSession().getStatistics().clear();
 		}
 	}
 
@@ -739,11 +728,11 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	}
 
 	@NotNull
-	Session createNewSession(Profile p, String customization) {
-		PuzzleStatistics ps = p.getPuzzleDatabase().getPuzzleStatistics(customization);
-		Session s = new Session(LocalDateTime.now(), configuration, scramblePluginManager, statsModel);
-		ps.addSession(s, p);
-		return s;
+	Session createNewSession(Profile p, ScrambleCustomization customization) {
+		PuzzleStatistics puzzleStatistics = p.getSessionsDatabase().getPuzzleStatistics(customization);
+		Session session = new Session(LocalDateTime.now(), configuration, statsModel);
+		puzzleStatistics.addSession(session);
+		return session;
 	}
 
 	public void statusLightAction(){
@@ -810,7 +799,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	public void createScrambleAttributesPanel() {
 		ScrambleCustomization sc = model.getScramblesList().getCurrentScrambleCustomization();
 		scrambleAttributesPanel.removeAll();
-		if (sc == null) {
+		if (sc == scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION) {
 			return;
 		}
 		List<String> attrs = scramblePluginManager.getAvailablePuzzleAttributes(sc.getScramblePlugin().getClass());

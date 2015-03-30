@@ -1,7 +1,7 @@
 package net.gnehzr.cct.dao;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.util.List;
 
 /**
 * <p>
@@ -15,7 +15,19 @@ import javax.persistence.Id;
 public class ProfileEntity {
 
     @Id
+    @GeneratedValue
+    private Long profileId;
+
+    @Column(unique = true, nullable = false)
     private String name;
+
+    @OneToMany(orphanRemoval = true)
+    private List<ConfigEntity> configEntity;
+
+    @OneToMany(orphanRemoval = true)
+    @JoinColumn
+    private List<SessionEntity> sessionEntities;
+
 
     public ProfileEntity() {
     }
@@ -30,5 +42,29 @@ public class ProfileEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<ConfigEntity> getConfigEntity() {
+        return configEntity;
+    }
+
+    public void setConfigEntity(List<ConfigEntity> configEntity) {
+        this.configEntity = configEntity;
+    }
+
+    public Long getProfileId() {
+        return profileId;
+    }
+
+    public void setProfileId(Long id) {
+        this.profileId = id;
+    }
+
+    public List<SessionEntity> getSessionEntities() {
+        return sessionEntities;
+    }
+
+    public void setSessionEntities(List<SessionEntity> sessionEntities) {
+        this.sessionEntities = sessionEntities;
     }
 }

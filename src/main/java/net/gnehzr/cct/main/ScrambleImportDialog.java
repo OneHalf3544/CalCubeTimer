@@ -2,17 +2,17 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.InvalidScrambleException;
+import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jvnet.lafwidget.LafWidget;
 
 import javax.swing.*;
@@ -29,7 +29,7 @@ import java.util.List;
 
 public class ScrambleImportDialog extends JDialog {
 
-	private static final Logger LOG = Logger.getLogger(ScrambleImportDialog.class);
+	private static final Logger LOG = LogManager.getLogger(ScrambleImportDialog.class);
 	private URLHistoryBox urlField;
 
 	private final Configuration configuration;
@@ -40,7 +40,7 @@ public class ScrambleImportDialog extends JDialog {
 
 	private List<ScrambleString> scrambles = new ArrayList<>();
 
-	public ScrambleImportDialog(ProfileDao profileDao, CALCubeTimerFrame calCubeTimerFrame, ScrambleImporter scrambleImporter,
+	public ScrambleImportDialog(CALCubeTimerFrame calCubeTimerFrame, ScrambleImporter scrambleImporter,
 								ScrambleCustomization sc,
 								ScramblePluginManager scramblePluginManager, Configuration configuration) {
 		super(calCubeTimerFrame, StringAccessor.getString("ScrambleImportDialog.importscrambles"), true);
@@ -66,7 +66,7 @@ public class ScrambleImportDialog extends JDialog {
 		sideBySide.add(addToAreaButton);
 		topBot.add(sideBySide);
 
-		scrambleChooser = new ScrambleChooserComboBox<>(false, true, scramblePluginManager, configuration, profileDao);
+		scrambleChooser = new ScrambleCustomizationChooserComboBox(false, scramblePluginManager, configuration);
 		scrambleChooser.addItem(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION);
 		scrambleChooser.setSelectedItem(sc);
 		scrambleChooser.addActionListener(e -> this.validateScrambles());
