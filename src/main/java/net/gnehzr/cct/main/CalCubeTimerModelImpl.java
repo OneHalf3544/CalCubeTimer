@@ -199,6 +199,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void setFullscreen(boolean fullscreen) {
+        LOG.info("toggle fullscreen. was {}, new: {}", this.fullscreen, fullscreen);
         this.fullscreen = fullscreen;
     }
 

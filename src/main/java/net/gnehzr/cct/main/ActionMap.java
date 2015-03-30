@@ -55,6 +55,8 @@ public class ActionMap {
 	private Configuration configuration;
     @Inject
     private StatisticsTableModel statsModel;
+    @Inject
+    private ToggleFullscreenAction toggleFullscreenAction;
 
     @Inject
 	public ActionMap() {
@@ -105,14 +107,7 @@ public class ActionMap {
             case "sessionaverage":
                 return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION, 0, configuration);
             case TOGGLE_FULLSCREEN:
-                return new AbstractAction("+") {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        boolean newFullscreen = !cubeTimerModel.isFullscreen();
-                        LOG.info("toggle fullscreen. was {}, new: {}", !newFullscreen, newFullscreen);
-                        calCubeTimerFrame.setFullScreen(newFullscreen);
-                    }
-                };
+                return toggleFullscreenAction;
             case SHOW_CONFIGURATION_ACTION: {
                 AbstractAction a = new ShowConfigurationDialogAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
@@ -212,4 +207,22 @@ public class ActionMap {
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)));
     }
 
+    @Singleton
+    static class ToggleFullscreenAction extends AbstractAction {
+        private final CalCubeTimerModel cubeTimerModel;
+        private final CalCubeTimerGui calCubeTimerFrame;
+
+        @Inject
+        public ToggleFullscreenAction(CalCubeTimerModel cubeTimerModel, CalCubeTimerGui calCubeTimerFrame) {
+            super("+");
+            this.cubeTimerModel = cubeTimerModel;
+            this.calCubeTimerFrame = calCubeTimerFrame;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            boolean newFullscreen = !cubeTimerModel.isFullscreen();
+            calCubeTimerFrame.setFullScreen(newFullscreen);
+        }
+    }
 }
