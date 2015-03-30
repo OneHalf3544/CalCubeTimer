@@ -107,7 +107,9 @@ public class ActionMap {
             case "sessionaverage":
                 return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION, 0, configuration);
             case TOGGLE_FULLSCREEN:
+                // action to stop timing during fullscreen
                 return toggleFullscreenAction;
+
             case SHOW_CONFIGURATION_ACTION: {
                 AbstractAction a = new ShowConfigurationDialogAction(calCubeTimerFrame);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
@@ -116,31 +118,20 @@ public class ActionMap {
                 return a;
             }
             case "exit": {
-                AbstractAction a = new ExitAction(calCubeTimerFrame);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_X);
-                a.putValue(Action.ACCELERATOR_KEY,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_MASK));
-                return a;
+                return new ExitAction(calCubeTimerFrame);
             }
             case TOGGLE_STATUS_LIGHT_ACTOIN: {
-                AbstractAction a = new StatusLightAction(calCubeTimerFrame);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_L);
-                return a;
+                return new StatusLightAction(calCubeTimerFrame);
             }
             case TOGGLE_HIDE_SCRAMBLES: {
-                AbstractAction a = new HideScramblesAction(calCubeTimerFrame);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_H);
-                return a;
+                return new HideScramblesAction(calCubeTimerFrame);
             }
             case TOGGLE_SPACEBAR_STARTS_TIMER_ACTION: {
-                AbstractAction a = new SpacebarOptionAction(configuration);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_S);
-                return a;
+                return new SpacebarOptionAction(configuration);
             }
             case TOGGLE_FULLSCREEN_TIMING_ACTION: {
-                AbstractAction a = new FullScreenTimingAction(configuration);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);
-                return a;
+                // action to change settings
+                return new FullScreenTimingAction(configuration);
             }
             case UNDO_ACTION:
                 return new AbstractAction() {
@@ -149,8 +140,9 @@ public class ActionMap {
                     }
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        if (calCubeTimerFrame.timesTable.isEditing())
+                        if (calCubeTimerFrame.timesTable.isEditing()) {
                             return;
+                        }
                         if (statsModel.getCurrentSession().getStatistics().undo()) { //should decrement 1 from scramblenumber if possible
                             Object prev = calCubeTimerFrame.scrambleNumber.getPreviousValue();
                             if (prev != null) {

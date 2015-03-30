@@ -5,6 +5,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * <p>
@@ -19,6 +20,7 @@ class FullScreenTimingAction extends AbstractAction {
 
 	public FullScreenTimingAction(Configuration configuration){
 		this.configuration = configuration;
+		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);
 	}
 
 	@Override

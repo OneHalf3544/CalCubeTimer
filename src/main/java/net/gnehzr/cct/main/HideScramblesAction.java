@@ -2,6 +2,7 @@ package net.gnehzr.cct.main;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * <p>
@@ -12,9 +13,12 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class HideScramblesAction extends AbstractAction {
+
 	private CALCubeTimerFrame cct;
+
 	public HideScramblesAction(CALCubeTimerFrame cct){
 		this.cct = cct;
+		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_H);
 	}
 
 	@Override

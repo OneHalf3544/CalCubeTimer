@@ -2,6 +2,7 @@ package net.gnehzr.cct.main;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * <p>
@@ -16,6 +17,8 @@ class StatusLightAction extends AbstractAction {
 
 	public StatusLightAction(CALCubeTimerFrame cct){
 		this.cct = cct;
+		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_L);
+
 	}
 
 	@Override
