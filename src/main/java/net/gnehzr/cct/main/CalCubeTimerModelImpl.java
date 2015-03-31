@@ -162,10 +162,10 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
             @Override
             public void refresh() {
-                actionMap.getAction("undo", calCubeTimerGui.getMainFrame(), CalCubeTimerModelImpl.this).setEnabled(undoable != 0);
-                actionMap.getAction("redo", calCubeTimerGui.getMainFrame(), CalCubeTimerModelImpl.this).setEnabled(redoable != 0);
-                actionMap.getAction("undo", calCubeTimerGui.getMainFrame(), CalCubeTimerModelImpl.this).putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.undo") + undoable);
-                actionMap.getAction("redo", calCubeTimerGui.getMainFrame(), CalCubeTimerModelImpl.this).putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.redo") + redoable);
+                actionMap.getAction("undo", calCubeTimerGui.getMainFrame()).setEnabled(undoable != 0);
+                actionMap.getAction("redo", calCubeTimerGui.getMainFrame()).setEnabled(redoable != 0);
+                actionMap.getAction("undo", calCubeTimerGui.getMainFrame()).putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.undo") + undoable);
+                actionMap.getAction("redo", calCubeTimerGui.getMainFrame()).putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.redo") + redoable);
             }
         });
         return actionMap;

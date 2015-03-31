@@ -296,7 +296,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		bigTimersDisplay.setKeyboardHandler(keyHandler);
 
 		fullscreenPanel = new JLayeredPane();
-		final JButton fullScreenButton = new JButton(actionMap.getAction(ActionMap.TOGGLE_FULLSCREEN, this, model));
+		final JButton fullScreenButton = new JButton(actionMap.getAction(ActionMap.ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN, this));
 
 		fullscreenPanel.add(bigTimersDisplay, new Integer(0));
 		fullscreenPanel.add(fullScreenButton, new Integer(1));
@@ -710,7 +710,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	}
 
 	public void keyboardTimingAction() {
-		boolean selected = (Boolean)actionMap.getAction(KeyboardTimingAction.KEYBOARD_TIMING_ACTION, this, model).getValue(Action.SELECTED_KEY);
+		boolean selected = (Boolean)actionMap.getAction(KeyboardTimingAction.KEYBOARD_TIMING_ACTION, this).getValue(Action.SELECTED_KEY);
 		configuration.setBoolean(VariableKey.STACKMAT_ENABLED, !selected);
 		getTimeLabel().configurationChanged(profileDao.getSelectedProfile());
 		bigTimersDisplay.configurationChanged(profileDao.getSelectedProfile());
@@ -736,12 +736,12 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	}
 
 	public void statusLightAction(){
-		configuration.setBoolean(VariableKey.LESS_ANNOYING_DISPLAY, (Boolean) actionMap.getAction("togglestatuslight", this, model).getValue(Action.SELECTED_KEY));
+		configuration.setBoolean(VariableKey.LESS_ANNOYING_DISPLAY, (Boolean) actionMap.getAction("togglestatuslight", this).getValue(Action.SELECTED_KEY));
 		getTimeLabel().repaint();
 	}
 
 	public void hideScramblesAction(){
-		configuration.setBoolean(VariableKey.HIDE_SCRAMBLES, (Boolean) actionMap.getAction("togglehidescrambles", this, model).getValue(Action.SELECTED_KEY));
+		configuration.setBoolean(VariableKey.HIDE_SCRAMBLES, (Boolean) actionMap.getAction("togglehidescrambles", this).getValue(Action.SELECTED_KEY));
 		scrambleHyperlinkArea.refresh();
 	}
 

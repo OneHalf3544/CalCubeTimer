@@ -15,10 +15,10 @@ import java.awt.event.KeyEvent;
  *
  * @author OneHalf
  */
-class FullScreenTimingAction extends AbstractAction {
+class FullScreenDuringTimingChangeSettingAction extends AbstractAction {
 	private final Configuration configuration;
 
-	public FullScreenTimingAction(Configuration configuration){
+	public FullScreenDuringTimingChangeSettingAction(Configuration configuration){
 		this.configuration = configuration;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);
 	}

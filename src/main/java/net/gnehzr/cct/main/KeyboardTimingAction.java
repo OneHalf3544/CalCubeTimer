@@ -1,7 +1,10 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.i18n.StringAccessor;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * <p>
@@ -19,6 +22,8 @@ class KeyboardTimingAction extends AbstractAction {
 
 	public KeyboardTimingAction(CALCubeTimerFrame cct){
 		this.cct = cct;
+		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_K);
+		this.putValue(Action.SHORT_DESCRIPTION, StringAccessor.getString("CALCubeTimer.stackmatnote"));
 	}
 
 	@Override

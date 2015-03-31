@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.Statistics;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
 import org.apache.logging.log4j.LogManager;
@@ -38,7 +37,6 @@ public class ActionMap {
     public static final String TOGGLE_STATUS_LIGHT_ACTOIN = "togglestatuslight";
     public static final String TOGGLE_HIDE_SCRAMBLES = "togglehidescrambles";
     public static final String TOGGLE_SPACEBAR_STARTS_TIMER_ACTION = "togglespacebarstartstimer";
-    public static final String TOGGLE_FULLSCREEN = "togglefullscreen";
     public static final String ADD_TIME_ACTION = "addtime";
     public static final String RESET_ACTION = "reset";
     public static final String SHOW_DOCUMENTATION_ACTION = "showdocumentation";
@@ -56,7 +54,7 @@ public class ActionMap {
     @Inject
     private StatisticsTableModel statsModel;
     @Inject
-    private ToggleFullscreenAction toggleFullscreenAction;
+    private ToggleFullscreenTimingAction toggleFullscreenTimingAction;
 
     @Inject
 	public ActionMap() {
@@ -65,23 +63,21 @@ public class ActionMap {
 
     void registerAction(String actionName, AbstractAction abstractAction) {
         LOG.debug("register action " + actionName);
-        actionMap.put(actionName, abstractAction);
+        actionMap.put(actionName.toLowerCase(), abstractAction);
     }
 
-    public AbstractAction getAction(String s, CALCubeTimerFrame calCubeTimerFrame, CalCubeTimerModel calCubeTimerModel) {
-        return actionMap.computeIfAbsent(s.toLowerCase(), (k) -> initializeAction(k, calCubeTimerFrame, calCubeTimerModel));
+    public AbstractAction getAction(String s, CALCubeTimerFrame calCubeTimerFrame) {
+        return actionMap.computeIfAbsent(s.toLowerCase(), (k) -> initializeAction(k, calCubeTimerFrame));
     }
 
     public Optional<AbstractAction> getActionIfExist(String s){
         return Optional.ofNullable(actionMap.get(s.toLowerCase()));
     }
 
-    private AbstractAction initializeAction(String s, final CALCubeTimerFrame calCubeTimerFrame, CalCubeTimerModel cubeTimerModel){
+    private AbstractAction initializeAction(String s, final CALCubeTimerFrame calCubeTimerFrame){
         switch (s) {
             case KEYBOARDTIMING_ACTION: {
                 AbstractAction a = new KeyboardTimingAction(calCubeTimerFrame);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_K);
-                a.putValue(Action.SHORT_DESCRIPTION, StringAccessor.getString("CALCubeTimer.stackmatnote"));
                 return a;
             }
             case ADD_TIME_ACTION: {
@@ -106,9 +102,9 @@ public class ActionMap {
                 return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.RA, 1, configuration);
             case "sessionaverage":
                 return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION, 0, configuration);
-            case TOGGLE_FULLSCREEN:
+            case ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN:
                 // action to stop timing during fullscreen
-                return toggleFullscreenAction;
+                return toggleFullscreenTimingAction;
 
             case SHOW_CONFIGURATION_ACTION: {
                 AbstractAction a = new ShowConfigurationDialogAction(calCubeTimerFrame);
@@ -131,7 +127,7 @@ public class ActionMap {
             }
             case TOGGLE_FULLSCREEN_TIMING_ACTION: {
                 // action to change settings
-                return new FullScreenTimingAction(configuration);
+                return new FullScreenDuringTimingChangeSettingAction(configuration);
             }
             case UNDO_ACTION:
                 return new AbstractAction() {
@@ -195,17 +191,20 @@ public class ActionMap {
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false)));
         getActionIfExist(TOGGLE_SPACEBAR_STARTS_TIMER_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false)));
-        getActionIfExist(TOGGLE_FULLSCREEN)
+        getActionIfExist(TOGGLE_FULLSCREEN_TIMING_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)));
     }
 
     @Singleton
-    static class ToggleFullscreenAction extends AbstractAction {
+    static class ToggleFullscreenTimingAction extends AbstractAction {
+
+        public static final String TOGGLE_FULLSCREEN = "togglefullscreen";
+
         private final CalCubeTimerModel cubeTimerModel;
         private final CalCubeTimerGui calCubeTimerFrame;
 
         @Inject
-        public ToggleFullscreenAction(CalCubeTimerModel cubeTimerModel, CalCubeTimerGui calCubeTimerFrame) {
+        public ToggleFullscreenTimingAction(CalCubeTimerModel cubeTimerModel, CalCubeTimerGui calCubeTimerFrame) {
             super("+");
             this.cubeTimerModel = cubeTimerModel;
             this.calCubeTimerFrame = calCubeTimerFrame;
@@ -213,8 +212,7 @@ public class ActionMap {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            boolean newFullscreen = !cubeTimerModel.isFullscreen();
-            calCubeTimerFrame.setFullScreen(newFullscreen);
+            calCubeTimerFrame.setFullScreen(!cubeTimerModel.isFullscreen());
         }
     }
 }
