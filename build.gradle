@@ -37,12 +37,18 @@ dependencies {
     compile('javazoom:jlayer:1.0.1')
     compile('org.java.net.substance:substance:5.3')
     compile('com.google.guava:guava:18.0')
-    compile('log4j:log4j:1.2.17')
+    compile('org.apache.logging.log4j:log4j-api:2.2')
+    compile('org.apache.logging.log4j:log4j-core:2.2')
     compile('org.jetbrains:annotations:13.0')
     compile('com.h2database:h2:1.4.182')
     compile('org.hibernate:hibernate-entitymanager:4.3.7.Final')
-    compile('org.hibernate:hibernate-core:4.3.7.Final')
+    compile('org.hibernate:hibernate-core:4.3.8.Final') {
+        exclude module: 'jboss-logging'
+    }
+    compile 'org.jboss.logging:jboss-logging:3.2.0.Final'
     compile('com.google.inject:guice:4.0-beta5')
+    compile('org.jooq:jool:0.9.4')
+    compile('commons-io:commons-io:2.4')
 
     testCompile('org.testng:testng:6.8.8')
     testCompile('org.hamcrest:hamcrest-all:1.3')
