@@ -138,13 +138,13 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			return session.getStatistics().get(rowIndex).getTime();
 		case 1: //falls through
 		case 2: //get the RA for this index in this column
-			return session.getStatistics().getRA(rowIndex, columnIndex - 1).getTime();
+			return session.getStatistics().getRA(rowIndex, columnIndex - 1);
 		case 3:
 			return session.getStatistics().get(rowIndex).getComment();
 		case 4: //tags
 			return Joiner.on(", ").join(session.getStatistics().get(rowIndex).getTime().getTypes());
 		case 5: // scramble variation
-			return session.getStatistics().get(rowIndex).getScramble().getVariation().getName();
+			return session.getStatistics().get(rowIndex).getScrambleString().getVariation().getName();
 		default:
 			return null;
 		}

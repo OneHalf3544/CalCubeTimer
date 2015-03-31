@@ -49,7 +49,7 @@ public class SortedProperties {
 		return new SortedProperties(configurationDao.getParametersForProfile(profileName), loadDefaultProperties(defaultsFile));
 	}
 
-	public void saveConfiguration(Profile profile, ConfigurationDao configurationDao) throws IOException {
+	public void saveConfiguration(@NotNull Profile profile, @NotNull ConfigurationDao configurationDao) {
 		configurationDao.storeParameters(profile, this.properties);
 	}
 

@@ -131,7 +131,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         profileDao.saveDatabase(profile);
         calCubeTimerGui.saveToConfiguration();
         try {
-            configuration.saveConfigurationToFile(profile);
+            configuration.saveConfiguration(profile);
         } catch (Exception e) {
             LOG.info("unexpected exception", e);
         }
@@ -236,7 +236,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         scramblesList.clear();
         Statistics stats = s.getStatistics();
         for (int ch = 0; ch < stats.getAttemptCount(); ch++) {
-            scramblesList.addScramble(stats.get(ch).getScramble());
+            scramblesList.addScramble(stats.get(ch).getScrambleString());
         }
         scramblesList.setScrambleNumber(scramblesList.size() + 1);
 
@@ -302,20 +302,21 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void addTime(TimerState addMe) {
-        Solution protect = addMe.toSolution(null, splits);
+        Solution protect = addMe.toSolution(scramblesList.getCurrent(), splits);
         if(penalty == null) {
             protect.getTime().clearType();
         }
         else {
-            protect.getTime().setTypes(Arrays.asList(penalty));
+            protect.getTime().setTypes(Collections.singletonList(penalty));
         }
         penalty = null;
         splits = new ArrayList<>();
         boolean sameAsLast = addMe.compareTo(lastAccepted) == 0;
         if(sameAsLast) {
             int choice = Utils.showYesNoDialog(calCubeTimerGui.getMainFrame(), addMe.toString() + "\n" + StringAccessor.getString("CALCubeTimer.confirmduplicate"));
-            if(choice != JOptionPane.YES_OPTION)
+            if(choice != JOptionPane.YES_OPTION) {
                 return;
+            }
         }
         int choice = JOptionPane.YES_OPTION;
         if(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME, false) && !sameAsLast) {

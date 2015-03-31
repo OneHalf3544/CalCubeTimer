@@ -203,7 +203,7 @@ public class Statistics implements SolveCounter {
 			editActions.add(new StatisticsEdit(this, new int[]{pos}, null, solution));
 			notifyListeners(true);
 		} else {
-			solution.setScramble(times.get(pos).getScramble());
+			// todo remove? solution.setScrambleString(times.get(pos).getScrambleString());
 			editActions.add(new StatisticsEdit(this, new int[]{pos}, new Solution[]{times.get(pos)}, solution));
 			times.set(pos, solution);
 			refresh(); //this will fire table data changed
@@ -388,11 +388,13 @@ public class Statistics implements SolveCounter {
 	}
 
 	public Solution get(int n) {
-		if(n < 0)
+		if(n < 0) {
 			n = times.size() + n;
+		}
 
-		if(times.size() == 0 || n < 0 || n >= times.size())
+		if(times.size() == 0 || n < 0 || n >= times.size()) {
 			return null;
+		}
 		
 		return times.get(n);
 	}
@@ -401,14 +403,14 @@ public class Statistics implements SolveCounter {
 		return curRASize[num];
 	}
 	
-	public Solution getRA(int num, int whichRA) {
+	public RollingAverageTime getRA(int num, int whichRA) {
 		int RAnum = 1 + num - curRASize[whichRA];
 		SolveTime seconds;
 		if(RAnum < 0)
 			seconds = SolveTime.NA;
 		else
 			seconds = averages[whichRA].get(RAnum);
-		return new Solution(seconds, whichRA);
+		return new RollingAverageTime(seconds, whichRA);
 	}
 
 	private boolean loadRAs() {
@@ -558,7 +560,7 @@ public class Statistics implements SolveCounter {
 			ret.append(next.getTime().toString());
 			if(parens) ret.append(")\t");
 			else ret.append("\t");
-			ret.append(next.getScramble());
+			ret.append(next.getScrambleString());
 			if(showSplits) ret.append(StringAccessor.getString("Statistics.splits")).append(next.toSplitsString());
 			ret.append(comment);
 			ret.append("\n");

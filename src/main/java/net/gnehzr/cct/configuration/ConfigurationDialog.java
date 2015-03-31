@@ -25,7 +25,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1202,12 +1201,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		}
 		items[configuration.getInt(VariableKey.MIXER_NUMBER, false)].setInUse(true);
 
-		try {
-			configuration.saveConfigurationToFile(profileDao.getSelectedProfile());
-		} catch(IOException e) {
-			//this could happen when the current profile was deleted
-			LOG.info("ignored exception", e);
-		}
+		configuration.saveConfiguration(profileDao.getSelectedProfile());
 	}
 
 	@Override

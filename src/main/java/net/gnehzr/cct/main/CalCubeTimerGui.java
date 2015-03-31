@@ -42,8 +42,6 @@ public interface CalCubeTimerGui {
 
     void saveToConfiguration();
 
-    void setWaiting(boolean wait);
-
     void addSplit(TimerState newSplit);
 
     void setFullScreen(boolean b);

@@ -44,7 +44,6 @@ public class ActionMap {
     public static final String SHOW_ABOUT_ACTION = "showabout";
     public static final String UNDO_ACTION = "undo";
     public static final String REDO_ACTION = "redo";
-    public static final String TOGGLE_FULLSCREEN_TIMING_ACTION = "togglefullscreentiming";
     public static final String SHOW_CONFIGURATION_ACTION = "showconfiguration";
 
     private Map<String, AbstractAction> actionMap;
@@ -125,10 +124,6 @@ public class ActionMap {
             case TOGGLE_SPACEBAR_STARTS_TIMER_ACTION: {
                 return new SpacebarOptionAction(configuration);
             }
-            case TOGGLE_FULLSCREEN_TIMING_ACTION: {
-                // action to change settings
-                return new FullScreenDuringTimingChangeSettingAction(configuration);
-            }
             case UNDO_ACTION:
                 return new AbstractAction() {
                     {
@@ -191,7 +186,7 @@ public class ActionMap {
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false)));
         getActionIfExist(TOGGLE_SPACEBAR_STARTS_TIMER_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false)));
-        getActionIfExist(TOGGLE_FULLSCREEN_TIMING_ACTION)
+        getActionIfExist(FullScreenDuringTimingChangeSettingAction.TOGGLE_FULLSCREEN_TIMING_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false)));
     }
 

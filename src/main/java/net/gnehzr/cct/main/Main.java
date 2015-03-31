@@ -48,6 +48,7 @@ public class Main implements Module {
         binder.bind(ConnectToIRCServerAction.class).asEagerSingleton();
         binder.bind(ExportScramblesAction.class).asEagerSingleton();
         binder.bind(ImportScramblesAction.class).asEagerSingleton();
+        binder.bind(FullScreenDuringTimingChangeSettingAction.class).asEagerSingleton();
 
         binder.bind(TimingListener.class).to(TimingListenerImpl.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class).asEagerSingleton();

@@ -106,7 +106,7 @@ public class KeyboardHandler {
 
 	public void stop() {
 		current = Instant.now();
-		if (scheduledFuture != null) {
+		if (isRunning()) {
 			scheduledFuture.cancel(true);
 			scheduledFuture = null;
 		} else {

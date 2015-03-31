@@ -223,7 +223,7 @@ public class Configuration {
 		return voicesFolder;
 	}
 
-	public void saveConfigurationToFile(Profile profile) throws IOException {
+	public void saveConfiguration(@NotNull Profile profile) {
 		userProperties.saveConfiguration(profile, configurationDao);
 	}
 

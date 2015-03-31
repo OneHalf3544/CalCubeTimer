@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import net.gnehzr.cct.configuration.Configuration;
@@ -372,12 +373,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	}
 
 	@Override
-	public void setWaiting(boolean loading) {
-		model.setLoading(loading);
-		setCursor(null);
-	}
-
-	@Override
 	public void loadStringsFromDefaultLocale() {
 		//this loads the strings for the swing components we use (JColorChooser and JFileChooser)
 		UIManager.getDefaults().setDefaultLocale(Locale.getDefault());
@@ -585,16 +580,18 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 			return;
 		}
 		model.setFullscreen(value);
-		if(model.isFullscreen()) {
-			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			GraphicsDevice[] gs = ge.getScreenDevices();
-			GraphicsDevice gd = gs[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
-			DisplayMode screenSize = gd.getDisplayMode();
-			fullscreenFrame.setSize(screenSize.getWidth(), screenSize.getHeight());
-			fullscreenFrame.validate();
-			bigTimersDisplay.requestFocusInWindow();
-		}
-		fullscreenFrame.setVisible(model.isFullscreen());
+		SwingUtilities.invokeLater(() -> {
+			if (model.isFullscreen()) {
+				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+				GraphicsDevice[] gs = ge.getScreenDevices();
+				GraphicsDevice gd = gs[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
+				DisplayMode screenSize = gd.getDisplayMode();
+				fullscreenFrame.setSize(screenSize.getWidth(), screenSize.getHeight());
+				fullscreenFrame.validate();
+				bigTimersDisplay.requestFocusInWindow();
+			}
+			fullscreenFrame.setVisible(model.isFullscreen());
+		});
 	}
 
 	@Override
@@ -605,7 +602,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		}
 		if(event != null && event.getType() == TableModelEvent.INSERT) {
 			ScrambleString currentScramble = model.getScramblesList().getCurrent();
-			latestSolution.setScramble(currentScramble);
+			// todo remove? latestSolution.setScrambleString(currentScramble);
 			boolean outOfScrambles = currentScramble.isImported(); //This is tricky, think before you change it
 			outOfScrambles = !model.getScramblesList().getNext().isImported() && outOfScrambles;
 			if(outOfScrambles) {
@@ -761,7 +758,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 				hands += ((StackmatState) state).leftHand() ? StringAccessor.getString("CALCubeTimer.lefthand")
 														    : StringAccessor.getString("CALCubeTimer.righthand");
 			}
-			model.getSplits().add(state.toSolution(null, null).getTime());
+			model.getSplits().add(state.toSolution(model.getScramblesList().getCurrent(), ImmutableList.of()).getTime());
 			model.setLastSplit(currentTime);
 		}
 	}

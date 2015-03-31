@@ -2,11 +2,8 @@ package net.gnehzr.cct.misc.customJTable;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.statistics.Solution;
-import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.statistics.Statistics;
+import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -40,21 +37,23 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color foreground = null;
 		Color background = null;
 
-		if(value instanceof Solution) {
+		if(value instanceof SolveTime || value instanceof RollingAverageTime) {
 			Statistics times = statsModel.getCurrentSession().getStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
-			Solution st = (Solution) value;
-			int whichRA;
-			if((whichRA = st.getWhichRA()) != -1) { //this indicates we're dealing with an average, not a solve time
+			SolveTime solveTime;
+			if (value instanceof RollingAverageTime) { //this indicates we're dealing with an average, not a solve time
+				solveTime = ((RollingAverageTime)value).getTime();
+				int whichRA = ((RollingAverageTime)value).getWhichRA();
 				int raSize = times.getRASize(whichRA);
 				int indexOfBestRA = times.getIndexOfBestRA(whichRA);
 				memberOfBestRA = indexOfBestRA != -1 && (indexOfBestRA + raSize == row + 1);
 			} else {
+				solveTime = (SolveTime)value;
 				SolveTime[] bestAndWorst = times.getBestAndWorstTimes(AverageType.SESSION, 0);
-				if(bestAndWorst[0] == value) {
+				if(bestAndWorst[0] == solveTime) {
 					foreground = configuration.getColor(VariableKey.BEST_TIME, false);
-				} else if(bestAndWorst[1] == value) {
+				} else if(bestAndWorst[1] == solveTime) {
 					foreground = configuration.getColor(VariableKey.WORST_TIME, false);
 				}
 				memberOfBestRA = times.containsTime(row, AverageType.RA, 0);

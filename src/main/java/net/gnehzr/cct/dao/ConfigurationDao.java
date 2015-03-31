@@ -65,7 +65,7 @@ public class ConfigurationDao extends HibernateDaoSupport {
         ));
     }
 
-    public void storeParameters(Profile profile, Map<String, String> properties) {
+    public void storeParameters(@NotNull Profile profile, @NotNull Map<String, String> properties) {
         LOGGER.info("store properties for " + profile);
 
         List<ConfigEntity> oldParameters = getConfigEntities(profile);

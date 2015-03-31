@@ -11,11 +11,8 @@
         <Console name="STDOUT">
             <PatternLayout pattern="${format}"/>
         </Console>
-        <File name="file" fileName="${filename}" append="true">
-            <PatternLayout pattern="${format}"/>
-        </File>
-        <RollingFile name="RollingFileAll" fileName="target/cct.log"
-                     filePattern="target/cctr-%d{yyyy-MM-dd-HH}-%i.log.gz">
+        <RollingFile name="RollingFile" fileName="target/cct.log"
+                     filePattern="${filename}-%d{yyyy-MM-dd-HH}-%i.log.gz">
             <PatternLayout pattern="${format}" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="10 MB" />
@@ -29,7 +26,7 @@
         <logger name="scramblePlugins" level="DEBUG"/>
         <Root level="ERROR">
             <AppenderRef ref="STDOUT"/>
-            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>
 
