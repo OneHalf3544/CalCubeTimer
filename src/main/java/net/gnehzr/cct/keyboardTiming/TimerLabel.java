@@ -2,7 +2,6 @@ package net.gnehzr.cct.keyboardTiming;
 
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.JColorComponent;
@@ -31,7 +30,6 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-@Singleton
 public class TimerLabel extends JColorComponent implements ComponentListener, ConfigurationChangeListener {
 
 	private static final Logger LOG = LogManager.getLogger(TimerLabel.class);
@@ -72,6 +70,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	@Inject
 	public TimerLabel(ScrambleHyperlinkArea scrambleHyperlinkArea, Configuration configuration) {
 		super("");
+		LOG.debug("TimerLabel created");
 		this.scrambleHyperlinkArea = scrambleHyperlinkArea;
 		this.configuration = configuration;
 		addComponentListener(this);
@@ -124,7 +123,9 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		return new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) return;
+				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+					return;
+				}
 				int code = e.getKeyCode();
 				if (e.getWhen() - getTime(code) < 10) {
 					timeup.put(code, (long) 0);
@@ -398,5 +399,14 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			return key != KeyEvent.VK_SPACE;
 		}
 		return key != KeyEvent.VK_ENTER && (key > 123 || key < 23 || e.isAltDown() || e.isControlDown() || key == KeyEvent.VK_ESCAPE);
+	}
+
+	@Override
+	public String toString() {
+		return "TimerLabel{" +
+				"time=" + time +
+				", leftHand=" + leftHand +
+				", rightHand=" + rightHand +
+				'}';
 	}
 }

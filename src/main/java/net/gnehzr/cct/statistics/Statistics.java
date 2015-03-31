@@ -203,7 +203,6 @@ public class Statistics implements SolveCounter {
 			editActions.add(new StatisticsEdit(this, new int[]{pos}, null, solution));
 			notifyListeners(true);
 		} else {
-			// todo remove? solution.setScrambleString(times.get(pos).getScrambleString());
 			editActions.add(new StatisticsEdit(this, new int[]{pos}, new Solution[]{times.get(pos)}, solution));
 			times.set(pos, solution);
 			refresh(); //this will fire table data changed

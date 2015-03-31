@@ -54,8 +54,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.*;
@@ -101,7 +99,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	//we also reset their attributes before parsing the xml gui
 	ComponentsMap persistentComponents;
 
-	JLayeredPane fullscreenPanel = null;
 	@Inject
 	ScramblePopupFrame scramblePopup;
 
@@ -209,7 +206,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	@Inject
 	private SolveTimeEditor solveTimeEditor;
 
-	JFrame fullscreenFrame;
+	@Inject
+	private FullscreenFrame fullscreenFrame;
 
 	@Inject
 	StatisticsTableModel statsModel;
@@ -295,21 +293,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 		getTimeLabel().setKeyboardHandler(keyHandler);
 		bigTimersDisplay.setKeyboardHandler(keyHandler);
-
-		fullscreenPanel = new JLayeredPane();
-		final JButton fullScreenButton = new JButton(actionMap.getAction(ActionMap.ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN, this));
-
-		fullscreenPanel.add(bigTimersDisplay, new Integer(0));
-		fullscreenPanel.add(fullScreenButton, new Integer(1));
-
-		fullscreenPanel.addComponentListener(new ComponentAdapter() {
-			private static final int LENGTH = 30;
-			@Override
-			public void componentResized(ComponentEvent e) {
-				bigTimersDisplay.setBounds(0, 0, e.getComponent().getWidth(), e.getComponent().getHeight());
-				fullScreenButton.setBounds(e.getComponent().getWidth() - LENGTH, 0, LENGTH, LENGTH);
-			}
-		});
 
 		customGUIMenu = new JMenu();
 
@@ -582,12 +565,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		model.setFullscreen(value);
 		SwingUtilities.invokeLater(() -> {
 			if (model.isFullscreen()) {
-				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-				GraphicsDevice[] gs = ge.getScreenDevices();
-				GraphicsDevice gd = gs[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
-				DisplayMode screenSize = gd.getDisplayMode();
-				fullscreenFrame.setSize(screenSize.getWidth(), screenSize.getHeight());
-				fullscreenFrame.validate();
+				fullscreenFrame.resizeFrame();
 				bigTimersDisplay.requestFocusInWindow();
 			}
 			fullscreenFrame.setVisible(model.isFullscreen());
@@ -602,7 +580,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		}
 		if(event != null && event.getType() == TableModelEvent.INSERT) {
 			ScrambleString currentScramble = model.getScramblesList().getCurrent();
-			// todo remove? latestSolution.setScrambleString(currentScramble);
 			boolean outOfScrambles = currentScramble.isImported(); //This is tricky, think before you change it
 			outOfScrambles = !model.getScramblesList().getNext().isImported() && outOfScrambles;
 			if(outOfScrambles) {
@@ -652,28 +629,11 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
                 scrambleHyperlinkArea.requestFocusInWindow();
             getTimeLabel().componentResized(null);
 
-            //dispose the old fullscreen frame, and create a new one
-            if(fullscreenFrame != null) {
-				fullscreenFrame.dispose();
-			}
-			GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment()
-					.getScreenDevices()[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
-			createFullscreenFrame(gd);
-            setFullScreen(model.isFullscreen());
+			setFullScreen(model.isFullscreen());
 
             repaintTimes();
             actionMap.refreshActions();
         });
-	}
-
-	private void createFullscreenFrame(GraphicsDevice gd) {
-		fullscreenFrame = new JFrame(gd.getDefaultConfiguration());
-		fullscreenFrame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-		fullscreenFrame.setResizable(false);
-		fullscreenFrame.setUndecorated(true);
-		fullscreenFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		fullscreenPanel.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
-		fullscreenFrame.add(fullscreenPanel);
 	}
 
 	public void addTimeAction() {
