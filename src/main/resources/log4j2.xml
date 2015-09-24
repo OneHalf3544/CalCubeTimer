@@ -11,8 +11,8 @@
         <Console name="STDOUT">
             <PatternLayout pattern="${format}"/>
         </Console>
-        <RollingFile name="RollingFile" fileName="target/cct.log"
-                     filePattern="${filename}-%d{yyyy-MM-dd-HH}-%i.log.gz">
+        <RollingFile name="RollingFile" fileName="target/${filename}"
+                     filePattern="${filename}-%d{yyyy-dd-MM-HH}.gz">
             <PatternLayout pattern="${format}" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="10 MB" />

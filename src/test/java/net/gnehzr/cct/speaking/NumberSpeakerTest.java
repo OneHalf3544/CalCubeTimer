@@ -15,7 +15,7 @@ public class NumberSpeakerTest {
 
     private NumberSpeaker numberSpeaker = new NumberSpeaker(mock(Configuration.class));
 
-    @Test
+    @Test(enabled = false)
     public void testPlay() throws Exception {
         NumberSpeaker carrie = numberSpeaker.getSpeaker("carrie");
         for(int ch = 12000; ch < 13000; ch+=10) {

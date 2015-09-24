@@ -34,10 +34,10 @@ public class Profile {
         newName = null;
     }
 
-    public ProfileEntity toEntity() {
+    public ProfileEntity toEntity(Long lastSessionId) {
         ProfileEntity profileEntity = new ProfileEntity(name);
         profileEntity.setProfileId(id);
-        //profileEntity.setSessionEntities(sessionsTableModel.toEntityList());
+        profileEntity.setLastSessionId(lastSessionId);
         return profileEntity;
     }
 

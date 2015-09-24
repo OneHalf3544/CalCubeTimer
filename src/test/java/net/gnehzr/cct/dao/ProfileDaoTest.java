@@ -16,7 +16,7 @@ public class ProfileDaoTest {
 
     private static final Logger LOG = LogManager.getLogger(ProfileDaoTest.class);
 
-    @Test
+    @Test(enabled = false)
     public void main() {
         SessionFactory sessionFactory = ProfileDao.configureSessionFactory();
         ProfileDao profileDao = new ProfileDao(mock(Configuration.class), mock(ConfigurationDao.class),

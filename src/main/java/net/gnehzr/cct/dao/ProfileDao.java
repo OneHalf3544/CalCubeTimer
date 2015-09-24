@@ -82,6 +82,7 @@ public class ProfileDao extends HibernateDaoSupport {
         Profile profile;
         if (profileEntity != null) {
             profile = new Profile(profileEntity.getProfileId(), name, sessionsTableModel);
+            //statisticsTableModel.getCurrentSession().setCustomization();
         } else {
             profile = new Profile(null, name, sessionsTableModel);
             saveProfile(profile);
@@ -99,7 +100,7 @@ public class ProfileDao extends HibernateDaoSupport {
     }
 
     private void saveProfileWithoutSession(Profile profile) {
-        ProfileEntity entity = profile.toEntity();
+        ProfileEntity entity = profile.toEntity(statisticsTableModel.getCurrentSession().getSessionId());
         insert(entity);
         profile.setId(entity.getProfileId());
     }

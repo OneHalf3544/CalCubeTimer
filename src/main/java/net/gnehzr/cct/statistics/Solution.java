@@ -2,12 +2,14 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import net.gnehzr.cct.dao.SolutionEntity;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -65,5 +67,17 @@ public class Solution extends Commentable {
     @Override
     public String toString() {
         return "Solution{" + solveTime  + ", " + scrambleString + "}";
+    }
+
+    public SolutionEntity toEntity() {
+        return new SolutionEntity()
+                .withPluginName(getScrambleString().getScramblePlugin().getPuzzleName())
+                .withComment(getComment())
+                .withScramble(getScrambleString().getScramble())
+                .withSolveStart(LocalDateTime.now())
+                .withSolveTime(getTime().getTime())
+                .withVariationName(getScrambleString().getVariation().getName())
+                // todo .withSplits(getSplits())
+                ;
     }
 }

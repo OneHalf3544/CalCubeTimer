@@ -1,25 +1,16 @@
 package net.gnehzr.cct.misc;
 
-import java.awt.BorderLayout;
-import java.awt.Toolkit;
-import java.awt.Window;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import org.jvnet.lafwidget.LafWidget;
+import org.jvnet.substance.SubstanceLookAndFeel;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Date;
-
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-
-import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimerFrame;
-
-import org.jvnet.lafwidget.LafWidget;
-import org.jvnet.substance.SubstanceLookAndFeel;
 
 public class DialogWithDetails extends JDialog implements ActionListener {
 	private JButton copy, ok;
@@ -68,6 +59,7 @@ public class DialogWithDetails extends JDialog implements ActionListener {
 		setLocationRelativeTo(getOwner());
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if(source == copy) {

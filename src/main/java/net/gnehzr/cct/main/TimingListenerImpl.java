@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -24,6 +25,7 @@ import java.time.Instant;
 *
 * @author OneHalf
 */
+@Singleton
 class TimingListenerImpl implements TimingListener {
 
     private static final Logger LOG = LogManager.getLogger(TimingListenerImpl.class);
@@ -41,6 +43,7 @@ class TimingListenerImpl implements TimingListener {
     private TimerLabel timeLabel;
     @Inject @Named("bigTimersDisplay")
     private TimerLabel bigTimersDisplay;
+
     private boolean fullScreenTiming;
     private boolean metronomeEnabled;
     private boolean stackmatEnabled;

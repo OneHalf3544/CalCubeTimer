@@ -105,4 +105,44 @@ public class SolutionEntity {
     public void setComment(String comment) {
         this.comment = comment;
     }
+
+    public SolutionEntity withId(Long id) {
+        this.id = id;
+        return this;
+    }
+
+    public SolutionEntity withSolveStart(LocalDateTime solveStart) {
+        this.solveStart = solveStart;
+        return this;
+    }
+
+    public SolutionEntity withSolveTime(Duration solveTime) {
+        this.solveTime = solveTime;
+        return this;
+    }
+
+    public SolutionEntity withScramble(String scramble) {
+        this.scramble = scramble;
+        return this;
+    }
+
+    public SolutionEntity withPluginName(String pluginName) {
+        this.pluginName = pluginName;
+        return this;
+    }
+
+    public SolutionEntity withVariationName(String variationName) {
+        this.variationName = variationName;
+        return this;
+    }
+
+    public SolutionEntity withSplits(List<SplitTimesEntity> splits) {
+        this.splits = splits;
+        return this;
+    }
+
+    public SolutionEntity withComment(String comment) {
+        this.comment = comment;
+        return this;
+    }
 }

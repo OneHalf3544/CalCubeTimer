@@ -75,8 +75,36 @@ public class SolveTime implements Comparable<SolveTime> {
 		return seconds;
 	}
 
-	private static Duration parseSeconds(String temp, Set<SolveType> types) {
-		Duration parse = Duration.parse(temp);
+	private static Duration parseSeconds(String time, Set<SolveType> types) {
+		String[] temp = time.split(":");
+		if(temp.length > 3 || time.lastIndexOf(":") == time.length() - 1) {
+			throw new IllegalArgumentException(StringAccessor.getString("SolveTime.invalidcolons"));
+		}
+		if(time.indexOf(".") != time.lastIndexOf(".")) {
+			throw new IllegalArgumentException(StringAccessor.getString("SolveTime.toomanydecimals"));
+		}
+		if(time.contains(".") && time.contains(":") && time.indexOf(".") < time.lastIndexOf(":")) {
+			throw new IllegalArgumentException(StringAccessor.getString("SolveTime.invaliddecimal"));
+		}
+		if(time.contains("-")) {
+			throw new IllegalArgumentException(StringAccessor.getString("SolveTime.nonpositive"));
+		}
+
+		double seconds = 0;
+		for(int i = 0; i < temp.length; i++) {
+			seconds *= 60;
+			double d;
+			try {
+				d = Double.parseDouble(temp[i]); //we want this to handle only "." as a decimal separator
+			} catch(NumberFormatException e) {
+				throw new IllegalArgumentException(StringAccessor.getString("SolveTime.invalidnumerals"));
+			}
+			if(i != 0 && d >= 60) {
+				throw new IllegalArgumentException(StringAccessor.getString("SolveTime.toolarge"));
+			}
+			seconds += d;
+		}
+		Duration parse = Duration.ofMillis((long) (seconds * 1000));
 		return types.contains(SolveType.PLUS_TWO) ? parse.minusSeconds(2) : parse;
 	}
 

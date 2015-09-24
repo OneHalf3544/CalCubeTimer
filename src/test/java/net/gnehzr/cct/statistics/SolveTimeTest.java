@@ -20,14 +20,20 @@ public class SolveTimeTest {
     Configuration configuration = new Configuration(new SortedProperties(ImmutableMap.<String, String>of(), ImmutableMap.<String, String>of()));
 
     @Test
-    public void testConstructor() throws Exception {
+    public void testParseDouble() {
         SolveTime solveTime = new SolveTime(123.45);
         assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
     }
 
     @Test
-    public void testParseTime() throws Exception {
+    public void testParseString() {
         SolveTime solveTime = new SolveTime("123.45");
+        assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
+    }
+
+    @Test
+    public void testParseStringWithMinutes() {
+        SolveTime solveTime = new SolveTime("2:03.45");
         assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
     }
 
@@ -42,6 +48,6 @@ public class SolveTimeTest {
 
     @Test
     public void testEmptySplitsTimeToString() {
-        assertThat(new Solution(new SolveTime(123.22), null).toSplitsString(), isEmptyString());
+        assertThat(new Solution(new SolveTime(123.22), ScramblePluginManager.NULL_IMPORTED_SCRUMBLE).toSplitsString(), isEmptyString());
     }
 }

@@ -18,6 +18,9 @@ public class ProfileEntity {
     @GeneratedValue
     private Long profileId;
 
+    @Column
+    private Long lastSessionId;
+
     @Column(unique = true, nullable = false)
     private String name;
 
@@ -42,6 +45,14 @@ public class ProfileEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getLastSessionId() {
+        return lastSessionId;
+    }
+
+    public void setLastSessionId(Long lastSessionId) {
+        this.lastSessionId = lastSessionId;
     }
 
     public List<ConfigEntity> getConfigEntity() {
