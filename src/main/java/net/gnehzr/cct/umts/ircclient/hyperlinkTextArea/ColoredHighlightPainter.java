@@ -1,31 +1,29 @@
 package net.gnehzr.cct.umts.ircclient.hyperlinkTextArea;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Rectangle;
-import java.awt.Shape;
-
 import javax.swing.text.BadLocationException;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.Highlighter.HighlightPainter;
+import javax.swing.text.JTextComponent;
+import java.awt.*;
 
 public class ColoredHighlightPainter implements HighlightPainter {
-	private boolean isClickable, underline;
+
+	private boolean underline;
 	private Color color;
+
 	public ColoredHighlightPainter(boolean underline, boolean isClickable, Color color) {
 		this.underline = underline;
-		this.isClickable = isClickable;
 		this.color = color;
 	}
-	public boolean isClickable() {
-		return isClickable;
-	}
+
 	public Color getColor() {
 		return color;
 	}
+
+	@Override
 	public void paint(Graphics g, int p0, int p1, Shape bounds, JTextComponent c) {
 		if(underline) {
-			Rectangle r0 = null, r1 = null;
+			Rectangle r0 = null;
+			Rectangle r1 = null;
 			try {
 				r0 = c.modelToView(p0);
 				r1 = c.modelToView(p1);

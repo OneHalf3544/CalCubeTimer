@@ -101,9 +101,6 @@
 				<checkboxmenuitem action="toggleFullscreenTiming">Fullscreen while timing</checkboxmenuitem>
 			</menu>
 		</menu>
-		<menu>Network Timer
-			<menuitem action="connectToServer">Connect to server</menuitem>
-		</menu>
 		<menu mnemonic="h">Help
 			<menuitem action="showAbout">About</menuitem>
 		</menu>

@@ -133,6 +133,7 @@ public class SortedProperties {
 	public boolean getBoolean(VariableKey<Boolean> key, boolean defaultValue) {
 		return Boolean.parseBoolean(getValue(key, defaultValue));
 	}
+
 	public void setBoolean(VariableKey<Boolean> key, boolean newValue) {
 		setValue(key, Boolean.toString(newValue));
 	}

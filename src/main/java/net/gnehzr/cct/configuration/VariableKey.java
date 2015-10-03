@@ -17,8 +17,8 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class VariableKey<H> {
-	public static final VariableKey<Integer> SCRAMBLE_PLUGIN_TIMEOUT = new VariableKey<Integer>("Scramble_Plugins_timeout"); 
-	public static final VariableKey<Integer> STATS_DIALOG_FONT_SIZE = new VariableKey<Integer>("GUI_StatsDialog_fontSize"); 
+
+	public static final VariableKey<Integer> STATS_DIALOG_FONT_SIZE = new VariableKey<Integer>("GUI_StatsDialog_fontSize");
 	public static final VariableKey<Duration> DELAY_UNTIL_INSPECTION = new VariableKey<>("GUI_Timer_delayUntilInspection");
 	public static final VariableKey<Integer> DELAY_BETWEEN_SOLVES = new VariableKey<Integer>("GUI_Timer_delayBetweenSolves"); 
 	public static final VariableKey<Integer> SWITCH_THRESHOLD = new VariableKey<Integer>("Stackmat_switchThreshold"); 
@@ -61,9 +61,7 @@ public class VariableKey<H> {
 		return new VariableKey<Integer[]>("GUI_xmlLayout_" + componentID + "_columns");  
 	}
 	
-	public static final VariableKey<String> IRC_NAME = new VariableKey<String>("IRC_name"); 
-	public static final VariableKey<String> IRC_NICK = new VariableKey<String>("IRC_nick"); 
-	public static final VariableKey<String> LANGUAGE = new VariableKey<String>("GUI_I18N_language"); 
+	public static final VariableKey<String> LANGUAGE = new VariableKey<String>("GUI_I18N_language");
 	public static final VariableKey<String> REGION = new VariableKey<String>("GUI_I18N_region"); 
 	public static final VariableKey<String> VOICE = new VariableKey<String>("Misc_Voices_person"); 
 	public static final VariableKey<String> DATE_FORMAT = new VariableKey<String>("Misc_dateFormat"); 
@@ -83,8 +81,7 @@ public class VariableKey<H> {
 	public static final VariableKey<String> LAST_VIEWED_FOLDER = new VariableKey<String>("Misc_lastViewedFolder"); 
 	public static final VariableKey<String> WATERMARK_FILE = new VariableKey<String>("Watermark_file"); 
 	public static final VariableKey<String> DEFAULT_SCRAMBLE_URL = new VariableKey<String>("Misc_defaultScrambleURL"); 
-	public static final VariableKey<String> METRONOME_CLICK_FILE = new VariableKey<String>("Misc_Metronome_clickFile"); 
-	public static final VariableKey<String> XML_LAYOUT = new VariableKey<String>("GUI_xmlLayout_file"); 
+	public static final VariableKey<String> XML_LAYOUT = new VariableKey<String>("GUI_xmlLayout_file");
 	public static final VariableKey<String> DEFAULT_SCRAMBLE_CUSTOMIZATION = new VariableKey<String>("Scramble_Default_scrambleCustomization"); 
 
 	public static VariableKey<String> scrambleGeneratorKey(ScrambleCustomization sc) {
@@ -93,7 +90,6 @@ public class VariableKey<H> {
 
 	public static final VariableKey<List<String>> SOLVE_TAGS = new VariableKey<>("Misc_solveTags");
 	public static final VariableKey<List<String>> IMPORT_URLS = new VariableKey<>("Misc_scrambleURLs");
-	public static final VariableKey<List<String>> IRC_SERVERS = new VariableKey<>("IRC_Client_serverURLs");
 	public static final VariableKey<List<String>> SCRAMBLE_CUSTOMIZATIONS = new VariableKey<>("Scramble_customizations");
 	public static VariableKey<List<String>> PUZZLE_ATTRIBUTES(ScramblePlugin plugin) {
 		return new VariableKey<>("Puzzle_Attributes_" + plugin.getPuzzleName());
@@ -111,7 +107,6 @@ public class VariableKey<H> {
 	public static final VariableKey<Font> TIMER_FONT = new VariableKey<>("Timer_font");
 	public static final VariableKey<Font> SCRAMBLE_FONT = new VariableKey<>("Scramble_font");
 
-	public static final VariableKey<Boolean> IDENT_SERVER = new VariableKey<>("IRC_identserver");
 	public static final VariableKey<Boolean> SIDE_BY_SIDE_SCRAMBLE = new VariableKey<>("GUI_ScrambleView_sideBySide");
 	public static final VariableKey<Boolean> SCRAMBLE_PLUGINS_SECURE = new VariableKey<>("Scramble_Plugins_secure");
 	public static final VariableKey<Boolean> SPEAK_INSPECTION = new VariableKey<>("Misc_Voices_readInspection");
@@ -150,11 +145,9 @@ public class VariableKey<H> {
 	public static final VariableKey<Dimension> STATS_DIALOG_DIMENSION = new VariableKey<Dimension>("GUI_StatsDialog_dimension"); 
 	public static final VariableKey<Dimension> MAIN_FRAME_DIMENSION = new VariableKey<Dimension>("GUI_MainFrame_dimension"); 
 	public static final VariableKey<Dimension> KEYBOARD_TIMER_DIMENSION = new VariableKey<Dimension>("GUI_KeyboardTimer_dimension"); 
-	public static final VariableKey<Dimension> IRC_FRAME_DIMENSION = new VariableKey<Dimension>("GUI_IRCFrame_dimension"); 
 
 	public static final VariableKey<Point> SCRAMBLE_VIEW_LOCATION = new VariableKey<Point>("GUI_ScrambleView_location"); 
 	public static final VariableKey<Point> MAIN_FRAME_LOCATION = new VariableKey<Point>("GUI_MainFrame_location"); 
-	public static final VariableKey<Point> IRC_FRAME_LOCATION = new VariableKey<Point>("GUI_IRCFrame_location"); 
 
 	public static final VariableKey<Color> TIMER_BG = new VariableKey<Color>("GUI_Timer_Color_background"); 
 	public static final VariableKey<Color> TIMER_FG = new VariableKey<Color>("GUI_Timer_Color_foreground"); 

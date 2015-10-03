@@ -32,7 +32,6 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
-import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -156,8 +155,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 			}
 
 			model.getScramblesList().setCurrentScrambleCustomization((ScrambleCustomization) getScrambleCustomizationComboBox().getSelectedItem());
-			//send current customization to irc, if connected
-			ircClient.sendUserstate();
 
 			//change current session's scramble customization
 			statsModel.getCurrentSession().setCustomization(
@@ -213,22 +210,18 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	StatisticsTableModel statsModel;
 
 	@Inject
-	private IRCClientGUI ircClient;
-
-	@Inject
 	private KeyboardHandler keyHandler;
 
 	@Inject
 	public CALCubeTimerFrame(CalCubeTimerModel calCubeTimerModel, StackmatInterpreter stackmatInterpreter,
 							 Configuration configuration, ProfileDao profileDao, ScramblePluginManager scramblePluginManager,
 							 DynamicBorderSetter dynamicBorderSetter,
-							 XMLGuiMessages xmlGuiMessages, ActionMap actionMap, IRCClientGUI ircClient) {
+							 XMLGuiMessages xmlGuiMessages, ActionMap actionMap) {
 		this.model = calCubeTimerModel;
 		this.stackmatInterpreter = stackmatInterpreter;
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
 		this.actionMap = actionMap;
-		ircClient.setCalCubeTimer(this);
 		this.profileDao = profileDao;
 		this.dynamicBorderSetter = dynamicBorderSetter;
 		this.xmlGuiMessages = xmlGuiMessages;
@@ -478,7 +471,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	@Override
 	public void repaintTimes() {
 		Statistics stats = statsModel.getCurrentSession().getStatistics();
-		ircClient.sendUserstate();
 
 		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT);
 		updateActionStatus(stats, "bestaverage0", AverageType.RA);
@@ -575,9 +567,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	@Override
 	public void tableChanged(TableModelEvent event) {
 		final Solution latestSolution = statsModel.getCurrentSession().getStatistics().get(-1);
-		if(latestSolution != null) {
-			ircClient.sendUserstate();
-		}
+
 		if(event != null && event.getType() == TableModelEvent.INSERT) {
 			ScrambleString currentScramble = model.getScramblesList().getCurrent();
 			boolean outOfScrambles = currentScramble.isImported(); //This is tricky, think before you change it
@@ -827,7 +817,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		configuration.setPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, scramblePopup.getLocation());
 		configuration.setDimension(VariableKey.MAIN_FRAME_DIMENSION, getSize());
 		configuration.setPoint(VariableKey.MAIN_FRAME_LOCATION, getLocation());
-		ircClient.saveToConfiguration();
 
 		for (JSplitPane jsp : splitPanes) {
 			configuration.setLong(VariableKey.JCOMPONENT_VALUE(jsp.getName(), true, configuration.getXMLGUILayout()), jsp.getDividerLocation());

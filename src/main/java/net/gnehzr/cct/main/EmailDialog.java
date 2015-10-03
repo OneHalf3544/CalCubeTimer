@@ -243,13 +243,16 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 				setVisible(false);
 			}
 		}
+
 		public boolean isCanceled() {
 			return canceled;
 		}
+
 		public char[] getPassword() {
 			return pass.getPassword();
 		}
 	}
+
 	@Override
 	public void caretUpdate(CaretEvent e) {
 		setTitle(StringAccessor.getString("EmailDialog.emailto") + toAddress.getText()); 

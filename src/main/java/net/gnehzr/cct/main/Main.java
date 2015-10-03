@@ -11,8 +11,6 @@ import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.umts.ircclient.IRCClient;
-import net.gnehzr.cct.umts.ircclient.IRCClientGUI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -39,13 +37,11 @@ public class Main implements Module {
     public void configure(Binder binder) {
         binder.bind(CalCubeTimerModel.class).to(CalCubeTimerModelImpl.class).asEagerSingleton();
         binder.bind(StackmatHandler.class).asEagerSingleton();
-        binder.bind(IRCClient.class).to(IRCClientGUI.class);
 
         binder.bind(CalCubeTimerGui.class).to(CALCubeTimerFrame.class).asEagerSingleton();
 
         binder.bind(NewSessionAction.class).asEagerSingleton();
         binder.bind(ToggleScramblePopupAction.class).asEagerSingleton();
-        binder.bind(ConnectToIRCServerAction.class).asEagerSingleton();
         binder.bind(ExportScramblesAction.class).asEagerSingleton();
         binder.bind(ImportScramblesAction.class).asEagerSingleton();
         binder.bind(FullScreenDuringTimingChangeSettingAction.class).asEagerSingleton();

@@ -31,7 +31,6 @@ public class ActionMap {
     private static final Logger LOG = LogManager.getLogger(ActionMap.class);
 
     public static final String NEWSESSION_ACTION = "newsession";
-    public static final String CONNECT_TO_SERVER_ACTION = "connecttoserver";
     public static final String TOGGLE_SCRAMBLE_POPUP_ACTION = "togglescramblepopup";
     public static final String KEYBOARDTIMING_ACTION = "keyboardtiming";
     public static final String TOGGLE_STATUS_LIGHT_ACTOIN = "togglestatuslight";

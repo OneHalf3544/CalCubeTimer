@@ -15,7 +15,6 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.umts.ircclient.IRCClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -63,9 +62,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     private StackmatInterpreter stackmatInterpreter;
-
-    @Inject
-    private IRCClient ircClient;
 
     @Inject
     private TimingListener timingListener;
@@ -243,8 +239,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         customizationEditsDisabled = true;
         calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(s.getCustomization()); //this will update the scramble
         customizationEditsDisabled = false;
-
-        ircClient.sendUserstate();
     }
 
     @Override
@@ -336,10 +330,10 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             case JOptionPane.YES_OPTION:
                 break;
             case JOptionPane.NO_OPTION:
-                protect.getTime().setTypes(Arrays.asList(SolveType.PLUS_TWO));
+                protect.getTime().setTypes(Collections.singletonList(SolveType.PLUS_TWO));
                 break;
             case JOptionPane.CANCEL_OPTION:
-                protect.getTime().setTypes(Arrays.asList(SolveType.DNF));
+                protect.getTime().setTypes(Collections.singletonList(SolveType.DNF));
                 break;
             default:
                 return;
