@@ -11,7 +11,6 @@ import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.StatisticsTableModel;
 
-import javax.swing.*;
 import java.time.Instant;
 import java.util.List;
 
@@ -64,7 +63,7 @@ public interface CalCubeTimerModel extends SessionListener {
 
     void setPenalty(SolveType plusTwo);
 
-    Timer getTickTock();
+    Metronome getMetronome();
 
     NumberSpeaker getNumberSpeaker();
 

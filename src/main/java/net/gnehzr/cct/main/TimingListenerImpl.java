@@ -42,7 +42,6 @@ class TimingListenerImpl implements TimingListener {
     private TimerLabel bigTimersDisplay;
 
     private boolean fullScreenTiming;
-    private boolean metronomeEnabled;
     private boolean stackmatEnabled;
 
     @Inject
@@ -105,29 +104,27 @@ class TimingListenerImpl implements TimingListener {
         if(fullScreenTiming) {
 			calCubeTimerFrame.setFullScreen(true);
 		}
-        if(metronomeEnabled) {
-			model.startMetronome();
-		}
+        model.startMetronome();
     }
 
     void configurationChanged() {
         stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
         fullScreenTiming = configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false);
-        metronomeEnabled = configuration.getBoolean(VariableKey.METRONOME_ENABLED, false);
+        model.getMetronome().setEnabled(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false));
     }
 
     @Override
     public void timerStopped(TimerState newTime) {
         LOG.info("timer stopped: " + new SolveTime(newTime.getTime()));
         model.setTiming(false);
+        model.stopMetronome();
+
         model.addTime(newTime);
 
         if(fullScreenTiming) {
             calCubeTimerFrame.setFullScreen(false);
         }
-        if(metronomeEnabled) {
-            model.stopMetronome();
-        }
+
     }
 
     @Override

@@ -123,7 +123,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		return new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+				if (configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
 					return;
 				}
 				int code = e.getKeyCode();
@@ -171,6 +171,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	private boolean keysDown;
 	private boolean on;
+
 	public void setStackmatOn(boolean on) {
 		this.on = on;
 		if(!on) {
@@ -188,11 +189,6 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		leftHand = rightHand = greenLight = on = false;
 		keyHandler.reset();
 		refreshTimer();
-	}
-
-
-	public TimerState getTimerState() {
-		return time;
 	}
 
 	@Override
@@ -379,7 +375,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 		if(stackmatEmulation && stackmatKeysDownCount() == 1 && (e.getKeyCode() == sekey1 || e.getKeyCode() == sekey2) || !stackmatEmulation && atMostKeysDown(0)){
 			keysDown = false;
-			if(!keyHandler.isRunning() || keyHandler.isInspecting()) {
+			if (!keyHandler.isRunning() || keyHandler.isInspecting()) {
 				if(!keyHandler.isReset()) {
 					keyHandler.fireStop();
 				} else if(!ignoreKey(e, configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false), stackmatEmulation, sekey1, sekey2)) {

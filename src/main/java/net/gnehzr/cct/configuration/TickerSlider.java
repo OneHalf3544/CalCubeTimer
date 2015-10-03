@@ -1,6 +1,7 @@
 package net.gnehzr.cct.configuration;
 
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.Metronome;
 
 import javax.swing.*;
 import javax.swing.JSpinner.NumberEditor;
@@ -10,13 +11,13 @@ import java.awt.event.MouseEvent;
 
 public class TickerSlider extends JPanel {
 
-	final Timer tickTock;
+	final Metronome tickTock;
 
 	JSlider slider;
 
 	private JSpinner spinner;
 
-	public TickerSlider(Timer ticker) {
+	public TickerSlider(Metronome ticker) {
 		this.tickTock = ticker;
 
         slider = new JSlider(SwingConstants.HORIZONTAL);
@@ -28,12 +29,12 @@ public class TickerSlider extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if(slider.isEnabled()) {
-					tickTock.start();
+					tickTock.startMetronome();
 				}
 			}
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				tickTock.stop();
+				tickTock.stopMetronome();
 			}
 		});
 	}

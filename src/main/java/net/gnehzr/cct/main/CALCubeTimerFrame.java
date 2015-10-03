@@ -794,7 +794,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
         if(configurationDialog == null) {
             configurationDialog = new ConfigurationDialog(
 					this, true, configuration, profileDao, scramblePluginManager, statsModel,
-                    calCubeTimerModel.getNumberSpeaker(), stackmatInterpreter, model.getTickTock(), timesTable);
+                    calCubeTimerModel.getNumberSpeaker(), stackmatInterpreter, model.getMetronome(), timesTable);
         }
         SwingUtilities.invokeLater(() -> {
             configurationDialog.syncGUIwithConfig(false);

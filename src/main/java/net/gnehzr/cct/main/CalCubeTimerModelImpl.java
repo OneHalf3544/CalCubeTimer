@@ -19,12 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.inject.Singleton;
-import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -71,7 +67,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     final NumberSpeaker numberSpeaker;
     ActionMap actionMap;
-    Timer tickTock;
+    Metronome metronome;
 
     boolean customizationEditsDisabled = false;
     private boolean loading = false;
@@ -118,7 +114,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     void initializeModel() {
-        tickTock = createTickTockTimer("406__TicTacShutUp__click_1_d.wav"); // todo configuration.getString(VariableKey.METRONOME_CLICK_FILE, false));
+        metronome = Metronome.createTickTockTimer(Duration.ofSeconds(1));
     }
 
     @Override
@@ -165,27 +161,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             }
         });
         return actionMap;
-    }
-
-    private Timer createTickTockTimer(String methronomeResourceName) {
-        try {
-            InputStream inputStream = getClass().getResourceAsStream(methronomeResourceName);
-            Objects.requireNonNull(inputStream);
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new BufferedInputStream(inputStream));
-            DataLine.Info info = new DataLine.Info(Clip.class, audioInputStream.getFormat());
-            Clip clip = (Clip) AudioSystem.getLine(info);
-            clip.open(audioInputStream);
-            Timer timer = new Timer(1000, arg0 -> {
-                clip.stop();
-                clip.setFramePosition(0);
-                clip.start();
-            });
-            timer.setInitialDelay(0);
-            return timer;
-
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e1) {
-            throw new IllegalStateException(e1);
-        }
     }
 
     @Override
@@ -284,12 +259,12 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void startMetronome() {
-        tickTock.setDelay(configuration.getInt(VariableKey.METRONOME_DELAY, false));
-        tickTock.start();
+        metronome.setDelay(configuration.getInt(VariableKey.METRONOME_DELAY, false));
+        metronome.startMetronome();
     }
     @Override
     public void stopMetronome() {
-        tickTock.stop();
+        metronome.stopMetronome();
     }
 
     private List<SolveTime> splits = new ArrayList<>();
@@ -312,6 +287,13 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
                 return;
             }
         }
+
+        if (promptNewTime(protect, sameAsLast)) {
+            statsModel.getCurrentSession().getStatistics().add(protect);
+        }
+    }
+
+    private boolean promptNewTime(Solution protect, boolean sameAsLast) {
         int choice = JOptionPane.YES_OPTION;
         if(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME, false) && !sameAsLast) {
             String[] OPTIONS = { StringAccessor.getString("CALCubeTimer.accept"), SolveType.PLUS_TWO.toString(), SolveType.DNF.toString() };
@@ -326,19 +308,19 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
                     OPTIONS,
                     OPTIONS[0]);
         }
+
         switch (choice) {
             case JOptionPane.YES_OPTION:
-                break;
+                return true;
             case JOptionPane.NO_OPTION:
                 protect.getTime().setTypes(Collections.singletonList(SolveType.PLUS_TWO));
-                break;
+                return true;
             case JOptionPane.CANCEL_OPTION:
                 protect.getTime().setTypes(Collections.singletonList(SolveType.DNF));
-                break;
+                return true;
             default:
-                return;
+                return false;
         }
-        statsModel.getCurrentSession().getStatistics().add(protect);
     }
 
     //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
@@ -388,8 +370,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     }
 
     @Override
-    public Timer getTickTock() {
-        return tickTock;
+    public Metronome getMetronome() {
+        return metronome;
     }
 
     @Override

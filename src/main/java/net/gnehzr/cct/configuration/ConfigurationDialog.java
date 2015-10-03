@@ -5,6 +5,7 @@ import net.gnehzr.cct.configuration.SolveTypeTagEditorTableModel.TypeAndName;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
+import net.gnehzr.cct.main.Metronome;
 import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.ProfileEditor;
@@ -54,11 +55,12 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	private ArrayList<SyncGUIListener> resetListeners = new ArrayList<>();
 	private ComboItem[] items;
 	private StackmatInterpreter stackmat;
-	private Timer tickTock;
+	private Metronome tickTock;
 	JTable timesTable;
 
 	public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
-							   ScramblePluginManager scramblePluginManager, StatisticsTableModel statsModel, NumberSpeaker numberSpeaker, StackmatInterpreter stackmat, Timer tickTock, JTable timesTable) {
+							   ScramblePluginManager scramblePluginManager, StatisticsTableModel statsModel,
+							   NumberSpeaker numberSpeaker, StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
 		super(parent, modal);
 		this.configuration = configuration;
 		this.profileDao = profileDao;
