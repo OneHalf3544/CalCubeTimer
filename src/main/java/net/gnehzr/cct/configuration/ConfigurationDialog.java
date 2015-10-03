@@ -755,9 +755,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				password.setText(configuration.getString(VariableKey.SMTP_PASSWORD, defaults));
 				password.setEnabled(SMTPauth.isSelected());
 				showEmail.setSelected(configuration.getBoolean(VariableKey.SHOW_EMAIL, defaults));
-				ircname.setText(configuration.getString(VariableKey.IRC_NAME, defaults));
-				ircnick.setText(configuration.getString(VariableKey.IRC_NICK, defaults));
-				identserver.setSelected(configuration.getBoolean(VariableKey.IDENT_SERVER, defaults));
 			}
 		};
 		resetListeners.add(sl);
@@ -1146,10 +1143,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		configuration.setString(VariableKey.SMTP_PASSWORD, new String(password.getPassword()));
 		configuration.setBoolean(VariableKey.SMTP_ENABLED, useSMTPServer.isSelected());
 		configuration.setString(VariableKey.SMTP_FROM_ADDRESS, smtpEmailAddress.getText());
-		
-		configuration.setString(VariableKey.IRC_NAME, ircname.getText());
-		configuration.setString(VariableKey.IRC_NICK, ircnick.getText());
-		configuration.setBoolean(VariableKey.IDENT_SERVER, identserver.isSelected());
 
 		configuration.setString(VariableKey.SESSION_STATISTICS, sessionStats.getText());
 		configuration.setString(VariableKey.CURRENT_AVERAGE_STATISTICS, currentAverageStats.getText());

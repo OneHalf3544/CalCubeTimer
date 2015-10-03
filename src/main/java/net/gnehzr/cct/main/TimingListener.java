@@ -6,19 +6,19 @@ public interface TimingListener {
 	/**
 	 * Set 0.00 value for time labels
 	 */
-	public void initializeDisplay();
+	void initializeDisplay();
 
-	public void refreshDisplay(TimerState currTime);
+	void refreshDisplay(TimerState currTime);
 
-	public void inspectionStarted();
+	void inspectionStarted();
 
-	public void timerStarted();
+	void timerStarted();
 
-	public void timerAccidentlyReset(TimerState lastTimeRead);
+	void timerAccidentlyReset(TimerState lastTimeRead);
 
-	public void timerStopped(TimerState newTime);
+	void timerStopped(TimerState newTime);
 
-	public void timerSplit(TimerState newSplit);
+	void timerSplit(TimerState newSplit);
 
-	public void stackmatChanged();
+	void stackmatChanged();
 }

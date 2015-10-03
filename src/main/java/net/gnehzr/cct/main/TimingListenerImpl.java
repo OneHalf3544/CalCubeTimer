@@ -10,7 +10,6 @@ import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.umts.ircclient.IRCClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,8 +36,6 @@ class TimingListenerImpl implements TimingListener {
 
     private final Configuration configuration;
 
-    @Inject
-    private IRCClient ircClient;
     @Inject @Named("timeLabel")
     private TimerLabel timeLabel;
     @Inject @Named("bigTimersDisplay")
@@ -87,7 +84,6 @@ class TimingListenerImpl implements TimingListener {
     public void timerAccidentlyReset(TimerState lastTimeRead) {
         model.setPenalty(null);
         model.setTiming(false);
-        ircClient.sendUserstate();
     }
 
     @Override
@@ -112,7 +108,6 @@ class TimingListenerImpl implements TimingListener {
         if(metronomeEnabled) {
 			model.startMetronome();
 		}
-        ircClient.sendUserstate();
     }
 
     void configurationChanged() {
@@ -126,25 +121,24 @@ class TimingListenerImpl implements TimingListener {
         LOG.info("timer stopped: " + new SolveTime(newTime.getTime()));
         model.setTiming(false);
         model.addTime(newTime);
+
         if(fullScreenTiming) {
             calCubeTimerFrame.setFullScreen(false);
         }
         if(metronomeEnabled) {
             model.stopMetronome();
         }
-        ircClient.sendUserstate();
     }
 
     @Override
     public void stackmatChanged() {
-        if(!stackmatEnabled) {
-			calCubeTimerFrame.getOnLabel().setText("");
-		}
-        else {
+        if (stackmatEnabled) {
             boolean on = model.getStackmatInterpreter().isOn();
             timeLabel.setStackmatOn(on);
             calCubeTimerFrame.getOnLabel().setText(StringAccessor.getString(on ? "CALCubeTimer.timerON" : "CALCubeTimer.timerOFF"));
-        }
+        } else {
+			calCubeTimerFrame.getOnLabel().setText("");
+		}
     }
 
     @Override
@@ -152,6 +146,5 @@ class TimingListenerImpl implements TimingListener {
         LOG.info("inspection started");
         model.setInspectionStart(Instant.now());
         model.startUpdateInspectionTimer();
-        ircClient.sendUserstate();
     }
 }

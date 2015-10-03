@@ -72,8 +72,6 @@
 			<separator/>
 			<menuitem action="addTime">%%addtime%%</menuitem>
 			<separator/>
-			<menuitem action="connectToServer">%%connect%%</menuitem>
-			<separator/>
 			<menuitem action="showConfiguration">%%configuration%%</menuitem>
 			<separator/>
 			<menuitem action="exit">%%exit%%</menuitem>
