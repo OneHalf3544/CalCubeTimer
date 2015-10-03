@@ -60,15 +60,15 @@ public class Metronome {
     }
 
     public void startMetronome() {
-        log.debug("start metronome");
         if (enabled) {
+            log.debug("start metronome");
             timer.start();
         }
     }
 
     public void stopMetronome() {
-        log.debug("stop metronome");
         if (enabled) {
+            log.debug("stop metronome");
             timer.stop();
         }
     }

@@ -14,6 +14,7 @@ import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
+import org.jetbrains.annotations.Nullable;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.lafwidget.utils.LafConstants;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -33,6 +34,12 @@ public class Main implements Module {
     private static final Logger LOG = LogManager.getLogger(Main.class);
     private static Injector injector;
 
+    private final SessionFactory sessionFactory;
+
+    public Main(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
     @Override
     public void configure(Binder binder) {
         binder.bind(CalCubeTimerModel.class).to(CalCubeTimerModelImpl.class).asEagerSingleton();
@@ -50,16 +57,16 @@ public class Main implements Module {
         binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("bigTimersDisplay")).to(TimerLabel.class).asEagerSingleton();
 
-        binder.bind(SessionFactory.class).toProvider(HibernateDaoSupport::configureSessionFactory);
+        binder.bind(SessionFactory.class).toInstance(sessionFactory);
     }
 
     public static void main(String[] args) {
         LOG.info("start CalCubeTimer");
+
         DefaultUncaughtExceptionHandler.initialize();
 
         JDialog.setDefaultLookAndFeelDecorated(false);
         JFrame.setDefaultLookAndFeelDecorated(false);
-
 
         //The error messages are not internationalized because I want people to
         //be able to google the following messages
@@ -69,17 +76,12 @@ public class Main implements Module {
             return;
         }
 
+        SessionFactory sessionFactory = createSessionFactory();
 
         ProfileDao profileDao;
-        CALCubeTimerFrame calCubeTimerFrame;
-        CalCubeTimerModel calCubeTimerModel;
-        Configuration configuration;
         try {
-            injector = Guice.createInjector(new Main());
-            configuration = injector.getInstance(Configuration.class);
+            injector = Guice.createInjector(new Main(sessionFactory));
             profileDao = injector.getInstance(ProfileDao.class);
-            calCubeTimerFrame = injector.getInstance(CALCubeTimerFrame.class);
-            calCubeTimerModel = injector.getInstance(CalCubeTimerModel.class);
 
             if(args.length == 1) {
                 String startupProfile = args[0];
@@ -94,14 +96,16 @@ public class Main implements Module {
 
         } catch (Exception e) {
             LOG.error("initialisation error", e);
+            Utils.showErrorDialog(null, e, "initialisation error", "Couldn't start CCT!");
             Main.exit(1);
-            throw new RuntimeException(e);
         }
 
         SwingUtilities.invokeLater(() -> {
 
             try {
-                String errors = configuration.getStartupErrors();
+                CalCubeTimerModel calCubeTimerModel = injector.getInstance(CalCubeTimerModel.class);
+                Configuration configuration1 = injector.getInstance(Configuration.class);
+                String errors = configuration1.getStartupErrors();
                 if (!errors.isEmpty()) {
                     Utils.showErrorDialog(null, errors, "Couldn't start CCT!");
                     Main.exit(1);
@@ -116,11 +120,14 @@ public class Main implements Module {
                 UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
                 UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
 
+                CALCubeTimerFrame calCubeTimerFrame = injector.getInstance(CALCubeTimerFrame.class);
                 calCubeTimerFrame.setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
                 calCubeTimerFrame.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
                 calCubeTimerFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                calCubeTimerFrame.setSelectedProfile(profileDao.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
-                configuration.loadConfiguration(profileDao.getSelectedProfile());
+
+                ProfileDao profileDao2 = injector.getInstance(ProfileDao.class);
+                calCubeTimerFrame.setSelectedProfile(profileDao2.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
+                configuration1.loadConfiguration(profileDao2.getSelectedProfile());
 
                 calCubeTimerFrame.setVisible(true);
 
@@ -128,7 +135,7 @@ public class Main implements Module {
 
                 calCubeTimerModel.sessionSelected(calCubeTimerModel.getNextSession(calCubeTimerFrame));
 
-                configuration.apply(profileDao.getSelectedProfile());
+                configuration1.apply(profileDao2.getSelectedProfile());
                 calCubeTimerFrame.repaintTimes();
             }
             catch (Exception e) {
@@ -136,6 +143,20 @@ public class Main implements Module {
                 Main.exit(1);
             }
         });
+    }
+
+    @Nullable
+    private static SessionFactory createSessionFactory() {
+        SessionFactory sessionFactory = null;
+        try {
+            sessionFactory = HibernateDaoSupport.configureSessionFactory();
+
+        } catch (Exception e) {
+            LOG.fatal("cannot connect to database", e);
+            Utils.showErrorDialog(null, e, "Cannot connect to database. Second instance running?", "Couldn't start CCT!");
+            Main.exit(1);
+        }
+        return sessionFactory;
     }
 
     public static void exit(int code) {
