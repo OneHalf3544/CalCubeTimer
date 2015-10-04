@@ -178,10 +178,10 @@ public class EmailDialog extends JDialog implements ActionListener, CaretListene
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if (source == sendButton) {
-			if(configuration.getBoolean(VariableKey.SMTP_ENABLED, false)) {
+			if(configuration.getBoolean(VariableKey.SMTP_ENABLED)) {
 				char[] pass = null;
-				if(configuration.getBoolean(VariableKey.SMTP_ENABLED, false) &&
-						configuration.getString(VariableKey.SMTP_PASSWORD, false).isEmpty()) {
+				if(configuration.getBoolean(VariableKey.SMTP_ENABLED) &&
+						configuration.getString(VariableKey.SMTP_PASSWORD).isEmpty()) {
 					PasswordPrompt prompt = new PasswordPrompt(this);
 					prompt.setVisible(true);
 					if(prompt.isCanceled()) {

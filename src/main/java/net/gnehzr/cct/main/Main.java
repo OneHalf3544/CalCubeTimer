@@ -140,6 +140,7 @@ public class Main implements Module {
             }
             catch (Exception e) {
                 LOG.error("unexpected exception", e);
+                Utils.showErrorDialog(null, e, "Couldn't start CCT!");
                 Main.exit(1);
             }
         });

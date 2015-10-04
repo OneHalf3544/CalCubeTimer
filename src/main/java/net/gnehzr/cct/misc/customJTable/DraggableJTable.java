@@ -503,19 +503,19 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 		
 		for(TableColumn tc : Collections.list(this.getColumnModel().getColumns())) {
 			int index = tc.getModelIndex();
-			Integer width = configuration.getInt(VariableKey.JCOMPONENT_VALUE(this.getName() + index + "_width", false, configuration.getXMLGUILayout()), false);
+			Integer width = configuration.getInt(VariableKey.JCOMPONENT_VALUE(this.getName() + index + "_width", false, configuration.getXMLGUILayout()));
 			if(width != null) {
 				tc.setPreferredWidth(width);
 			}
 			if(index != 0) {
-				this.setColumnVisible(index, configuration.getBoolean(VariableKey.COLUMN_VISIBLE(this, index), false));
+				this.setColumnVisible(index, configuration.getBoolean(VariableKey.COLUMN_VISIBLE(this, index)));
 			}
 		}
 		this.sortByColumn(getSortKeyFromConfig());
 	}
 
 	private SortKey getSortKeyFromConfig() {
-		Integer sortCol = configuration.getInt(VariableKey.JCOMPONENT_VALUE(this.getName() + "_sortBy", false, configuration.getXMLGUILayout()), false);
+		Integer sortCol = configuration.getInt(VariableKey.JCOMPONENT_VALUE(this.getName() + "_sortBy", false, configuration.getXMLGUILayout()));
 		if (sortCol == 0) {
 			return null;
 		}

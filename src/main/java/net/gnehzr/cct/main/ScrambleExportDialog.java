@@ -168,7 +168,7 @@ public class ScrambleExportDialog extends JDialog {
 		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
 			ScrambleCustomization scrambleCustomization = new ScrambleCustomization(configuration, scrambleVariation, null, scramblePluginManager);
-			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP, false);
+			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP);
 			fileWriter.println("<html><head><title>Exported Scrambles</title></head><body><table>");
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
 				ScrambleString scramble = scrambleCustomization.generateScramble();

@@ -227,12 +227,20 @@ public class Configuration {
 		userProperties.saveConfiguration(profile, configurationDao);
 	}
 
+	public boolean getBoolean(VariableKey<Boolean> key) {
+		return userProperties.getBoolean(key, false);
+	}
+
 	public boolean getBoolean(VariableKey<Boolean> key, boolean defaultValue) {
 		return userProperties.getBoolean(key, defaultValue);
 	}
 
 	public String getString(String substring) {
 		return userProperties.getString(new VariableKey<>(substring), false);
+	}
+
+	public String getString(VariableKey<String> key) {
+		return getString(key, false);
 	}
 
 	public List<String> getStringArray(VariableKey<List<String>> solveTags, boolean defaultValue) {
@@ -245,6 +253,10 @@ public class Configuration {
 
 	public void setBoolean(VariableKey<Boolean> booleanVariableKey, boolean newValue) {
 		userProperties.setBoolean(booleanVariableKey, newValue);
+	}
+
+	public Integer getInt(VariableKey<Integer> integerVariableKey) {
+		return getInt(integerVariableKey, false);
 	}
 
 	public Integer getInt(VariableKey<Integer> integerVariableKey, boolean defaultValue) {

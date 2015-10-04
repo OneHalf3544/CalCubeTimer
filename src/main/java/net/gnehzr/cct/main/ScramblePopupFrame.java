@@ -43,7 +43,7 @@ public class ScramblePopupFrame extends JDialog {
 		this.setContentPane(pane);
 		this.configuration.addConfigurationChangeListener(this::configurationChanged);
 		addMouseListener(createMouseListener());
-// todo		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
+// todo		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE));
 	}
 
 	@Inject
@@ -56,7 +56,7 @@ public class ScramblePopupFrame extends JDialog {
 
 	public void refreshPopup() {
 		pack();
-		setVisible(incrementalScrambleView.scrambleHasImage() && configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, false));
+		setVisible(incrementalScrambleView.scrambleHasImage() && configuration.getBoolean(VariableKey.SCRAMBLE_POPUP));
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class ScramblePopupFrame extends JDialog {
 		super.setVisible(c);
 	}
 	public void configurationChanged(Profile profile) {
-		setFinalViewVisible(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, false));
+		setFinalViewVisible(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE));
 		incrementalScrambleView.syncColorScheme(false);
 		refreshPopup();
 		Point location = configuration.getPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, false);

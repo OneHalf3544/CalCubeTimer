@@ -38,7 +38,7 @@ public class StackmatHandler {
 
 	private void stackmatStateChanged(PropertyChangeEvent evt) {
 		String event = evt.getPropertyName();
-		boolean stackmatEnabled = configuration.isPropertiesLoaded() && configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
+		boolean stackmatEnabled = configuration.isPropertiesLoaded() && configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
 		timingListener.stackmatChanged();
 		if(!stackmatEnabled)
 			return;
@@ -108,7 +108,7 @@ public class StackmatHandler {
 	}
 
 	private boolean itsTimeToStartAfterInspection(Instant startTime) {
-		if(startTime == null || !configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false)) {
+		if(startTime == null || !configuration.getBoolean(VariableKey.COMPETITION_INSPECTION)) {
 			return false;
 		}
 		Instant endInspectionTime = startTime.plus(configuration.getDuration(VariableKey.DELAY_UNTIL_INSPECTION, false));

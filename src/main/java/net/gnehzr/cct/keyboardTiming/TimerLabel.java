@@ -123,7 +123,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		return new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if (configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED)) {
 					return;
 				}
 				int code = e.getKeyCode();
@@ -138,7 +138,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 			@Override
 			public void keyReleased(final KeyEvent e) {
-				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) {
+				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED)) {
 					return;
 				}
 				int keyCode = e.getKeyCode();
@@ -171,7 +171,6 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	private boolean keysDown;
 	private boolean on;
-
 	public void setStackmatOn(boolean on) {
 		this.on = on;
 		if(!on) {
@@ -229,7 +228,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	@Override
 	public void paintComponent(Graphics g) {
-		if(configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY, false)) {
+		if(configuration.getBoolean(VariableKey.LESS_ANNOYING_DISPLAY)) {
 			g.drawImage(currentStatusImage, 10, 20, null);
 		}
 		g.drawImage(getImageForHand(leftHand), 10, getHeight() - 50, null);
@@ -253,17 +252,21 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	}
 
 	private boolean canStartTimer() {
-		boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION, false);
-		boolean spacebarOnly = configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false);
+		boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION);
+		boolean spacebarOnly = configuration.getBoolean(VariableKey.SPACEBAR_ONLY);
 		return keyHandler.canStartTimer() && keyHandler.isReset() && //checking if we are in a position to start the timer
-			(stackmatEmulation && stackmatKeysDown() && atMostKeysDown(2) || //checking if the right keys are down for starting a "stackmat"
-					!stackmatEmulation && atMostKeysDown(1) && (spacebarOnly && isKeyDown(KeyEvent.VK_SPACE) || !spacebarOnly)); //checking if the right keys are down to start the timer
+				toggleStartKeysPressed(stackmatEmulation, spacebarOnly); //checking if the right keys are down to start the timer
+	}
+
+	private boolean toggleStartKeysPressed(boolean stackmatEmulation, boolean spacebarOnly) {
+		return stackmatEmulation && stackmatKeysDown() && atMostKeysDown(2) || //checking if the right keys are down for starting a "stackmat"
+                !stackmatEmulation && atMostKeysDown(1) && (spacebarOnly && isKeyDown(KeyEvent.VK_SPACE) || !spacebarOnly);
 	}
 
 	private void refreshTimer() {
-		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false);
+		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION);
 		String title;
-		boolean keyboard = !configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
+		boolean keyboard = !configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
 
 		Color borderColor;
 		boolean lowered = false;
@@ -272,18 +275,21 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			scrambleHyperlinkArea.setTimerFocused(focused);
 			if(focused) {
 				currentStatusImage = GREEN_STATUS_IMAGE;
-				if(keysDown)
+				if(keysDown) {
 					lowered = true;
-				if(keysDown && canStartTimer())
-					borderColor = Color.GREEN;
-				else
-					borderColor = Color.RED;
-				if(keyHandler.isRunning())
-					title = StringAccessor.getString("TimerLabel.stoptimer"); 
-				else if(keyHandler.isInspecting() || !inspectionEnabled)
-					title = StringAccessor.getString("TimerLabel.starttimer"); 
-				else
-					title = StringAccessor.getString("TimerLabel.startinspection"); 
+				}
+
+				borderColor = keysDown && canStartTimer() ? Color.GREEN : Color.RED;
+
+				if(keyHandler.isRunning()) {
+					title = StringAccessor.getString("TimerLabel.stoptimer");
+				}
+				else if(keyHandler.isInspecting() || !inspectionEnabled) {
+					title = StringAccessor.getString("TimerLabel.starttimer");
+				}
+				else {
+					title = StringAccessor.getString("TimerLabel.startinspection");
+				}
 			} else {
 				currentStatusImage = RED_STATUS_IMAGE;
 				title = StringAccessor.getString("TimerLabel.clickme"); 
@@ -328,13 +334,13 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	}
 
 	private int stackmatKeysDownCount(){
-		return (isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false)) ? 1 : 0) +
-			(isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false)) ? 1 : 0);
+		return (isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1)) ? 1 : 0) +
+			(isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2)) ? 1 : 0);
 	}
 
 	private boolean stackmatKeysDown(){
-		return isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false)) &&
-			isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false));
+		return isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1)) &&
+			isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2));
 	}
 
 	//called when a key is physically pressed
@@ -342,11 +348,11 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		int key = e.getKeyCode();
 
 		if (key != 0) {
-			boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION, false);
+			boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION);
 		 	//ignore unrecognized keys, such as media buttons
 			if(keyHandler.isRunning() && !keyHandler.isInspecting()) {
-				if(configuration.getBoolean(VariableKey.TIMING_SPLITS, false)
-						&& key == configuration.getInt(VariableKey.SPLIT_KEY, false)) {
+				if(configuration.getBoolean(VariableKey.TIMING_SPLITS)
+						&& key == configuration.getInt(VariableKey.SPLIT_KEY)) {
 					keyHandler.split();
 				} else if(!stackmatEmulation || stackmatKeysDown()){
 					keyHandler.stop();
@@ -369,16 +375,16 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	//called when a key is physically released
 	void keyReallyReleased(KeyEvent e) {
-		boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION, false);
-		int sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, false);
-		int sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, false);
+		boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION);
+		int sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1);
+		int sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2);
 
 		if(stackmatEmulation && stackmatKeysDownCount() == 1 && (e.getKeyCode() == sekey1 || e.getKeyCode() == sekey2) || !stackmatEmulation && atMostKeysDown(0)){
 			keysDown = false;
 			if (!keyHandler.isRunning() || keyHandler.isInspecting()) {
 				if(!keyHandler.isReset()) {
 					keyHandler.fireStop();
-				} else if(!ignoreKey(e, configuration.getBoolean(VariableKey.SPACEBAR_ONLY, false), stackmatEmulation, sekey1, sekey2)) {
+				} else if(!ignoreKey(e, configuration.getBoolean(VariableKey.SPACEBAR_ONLY), stackmatEmulation, sekey1, sekey2)) {
 					keyHandler.startTimer();
 				}
 			}

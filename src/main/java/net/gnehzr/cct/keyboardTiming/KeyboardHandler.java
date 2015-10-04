@@ -63,18 +63,18 @@ public class KeyboardHandler {
 	}
 	
 	public boolean canStartTimer() {
-		return Duration.between(current, Instant.now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES, false);
+		return Duration.between(current, Instant.now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES);
 	}
 
 	public void startTimer() {
-		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false);
+		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION);
 		if(!canStartTimer()) {
 			return;
 		}
 		current = start = Instant.now();
 		if(!inspectionEnabled || inspecting) {
 			scheduledFuture = EXECUTOR.scheduleAtFixedRate(
-					this::fireActionPerformed, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
+					this::refreshTime, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
 			inspecting = false;
 			reset = false;
 			timingListener.timerStarted();
@@ -84,7 +84,7 @@ public class KeyboardHandler {
 		}
 	}
 
-	protected void fireActionPerformed() {
+	protected void refreshTime() {
 		current = Instant.now();
 		timingListener.refreshDisplay(getTimerState());
 	}

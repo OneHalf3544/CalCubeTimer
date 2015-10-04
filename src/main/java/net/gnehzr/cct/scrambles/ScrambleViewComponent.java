@@ -163,7 +163,7 @@ public class ScrambleViewComponent extends JComponent {
 
 	private ConfigurationChangeListener createConfigurationListener(final Configuration configuration) {
 		return profile -> {
-			GAP = configuration.getInt(VariableKey.POPUP_GAP, false);
+			GAP = configuration.getInt(VariableKey.POPUP_GAP);
 			if(GAP == null) {
 				GAP = DEFAULT_GAP;
 			}

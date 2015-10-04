@@ -208,8 +208,8 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		resetRA.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				raSize.setValue(configuration.getInt(VariableKey.RA_SIZE(index, null), false));
-				trimmed.setSelected(configuration.getBoolean(VariableKey.RA_TRIMMED(index, null), false));
+				raSize.setValue(configuration.getInt(VariableKey.RA_SIZE(index, null)));
+				trimmed.setSelected(configuration.getBoolean(VariableKey.RA_TRIMMED(index, null)));
 			}
 		});
 		temp.add(resetRA);
@@ -229,7 +229,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		if(custom.getCustomization() != null) {
 			scrambleVariations = new ScrambleVariationChooserComboBox(false, scramblePluginManager, configuration);
 			scrambleVariations.addItem(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation());
-			scrambleVariations.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS, false));
+			scrambleVariations.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 			scrambleVariations.setSelectedItem(custom.getScrambleVariation());
 			scrambleVariations.addItemListener(e -> {
                 if(e.getStateChange() == ItemEvent.SELECTED)

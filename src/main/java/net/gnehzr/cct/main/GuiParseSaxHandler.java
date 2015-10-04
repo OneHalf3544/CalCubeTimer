@@ -115,11 +115,11 @@ class GuiParseSaxHandler extends DefaultHandler {
                 break;
             case "button":
                 com = new DynamicButton(configuration);
-                com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
+                com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
                 break;
             case "checkbox":
                 com = new DynamicCheckBox(configuration);
-                com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
+                com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
                 break;
             case "panel":
                 com = new JPanel() {
@@ -455,7 +455,7 @@ class GuiParseSaxHandler extends DefaultHandler {
             }
             if(componentTree.get(level) instanceof JTabbedPane) {
                 JTabbedPane temp = (JTabbedPane) componentTree.get(level);
-                Integer t = configuration.getInt(VariableKey.JCOMPONENT_VALUE(temp.getName(), true, configuration.getXMLGUILayout()), false);
+                Integer t = configuration.getInt(VariableKey.JCOMPONENT_VALUE(temp.getName(), true, configuration.getXMLGUILayout()));
                 if(t != null)
                     temp.setSelectedIndex(t);
             }

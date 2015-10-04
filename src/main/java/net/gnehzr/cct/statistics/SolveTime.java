@@ -118,7 +118,7 @@ public class SolveTime implements Comparable<SolveTime> {
 			return "N/A";
 		}
 		boolean useClockFormat = configuration.isPropertiesLoaded()
-				&& configuration.getBoolean(VariableKey.CLOCK_FORMAT, false);
+				&& configuration.getBoolean(VariableKey.CLOCK_FORMAT);
 
 		return toString(useClockFormat);
 	}

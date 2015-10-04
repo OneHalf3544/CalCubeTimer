@@ -980,7 +980,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 					fg = configuration.getColor(VariableKey.SCRAMBLE_SELECTED, true);
 				}
 
-				int maxFontSize = configuration.getInt(VariableKey.MAX_FONTSIZE, false);
+				int maxFontSize = configuration.getInt(VariableKey.MAX_FONTSIZE);
 				JFontChooser font = new JFontChooser(FONT_SIZES, f, source == scrambleFontChooser, maxFontSize, toDisplay, bg, fg, source == timerFontChooser);
 				font.setSelectedFont(label.getFont());
 				font.setFontForeground(label.getForeground());
@@ -1072,7 +1072,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			GraphicsDevice gd = gs[ch];
 			DisplayMode screenSize = gd.getDisplayMode();
 			JRadioButton temp = new JRadioButton((ch+1) + ":" + screenSize.getWidth() + "x" + screenSize.getHeight() + " (" + StringAccessor.getString("ConfigurationDialog.desktopresolution") + ")");
-			if(ch == configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false))
+			if(ch == configuration.getInt(VariableKey.FULLSCREEN_DESKTOP))
 				temp.setSelected(true);
 			g.add(temp);
 			temp.setActionCommand("" + ch);
@@ -1194,7 +1194,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		for (ComboItem item : items) {
 			item.setInUse(false);
 		}
-		items[configuration.getInt(VariableKey.MIXER_NUMBER, false)].setInUse(true);
+		items[configuration.getInt(VariableKey.MIXER_NUMBER)].setInUse(true);
 
 		configuration.saveConfiguration(profileDao.getSelectedProfile());
 	}

@@ -338,7 +338,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
                 CALCubeTimerFrame.this.setLocationRelativeTo(null);
                 for (JSplitPane pane : splitPanes) { //the call to pack() is messing up the jsplitpanes
                     pane.setDividerLocation(pane.getResizeWeight());
-                    Integer divide = configuration.getInt(VariableKey.JCOMPONENT_VALUE(pane.getName(), true, configuration.getXMLGUILayout()), false);
+                    Integer divide = configuration.getInt(VariableKey.JCOMPONENT_VALUE(pane.getName(), true, configuration.getXMLGUILayout()));
                     if (divide != null)
                         pane.setDividerLocation(divide);
                 }
@@ -447,7 +447,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 		sessionsTable.loadFromConfiguration();
 
 		for(JSplitPane pane : splitPanes) {
-			Integer divide = configuration.getInt(VariableKey.JCOMPONENT_VALUE(pane.getName(), true, configuration.getXMLGUILayout()), false);
+			Integer divide = configuration.getInt(VariableKey.JCOMPONENT_VALUE(pane.getName(), true, configuration.getXMLGUILayout()));
 			if(divide != null)
 				pane.setDividerLocation(divide);
 		}
@@ -492,7 +492,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 	void updateWatermark() {
 		SubstanceWatermark sw;
-		if(configuration.getBoolean(VariableKey.WATERMARK_ENABLED, false)) {
+		if(configuration.getBoolean(VariableKey.WATERMARK_ENABLED)) {
 			InputStream in;
 			try {
 				in = new FileInputStream(configuration.getString(VariableKey.WATERMARK_FILE, false));
@@ -611,7 +611,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
             }
             CALCubeTimerFrame.this.validate(); //this is needed to get the dividers to show up in the right place
 
-            if(!configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false)) //This is to ensure that the keyboard is focused
+            if(!configuration.getBoolean(VariableKey.STACKMAT_ENABLED)) //This is to ensure that the keyboard is focused
                 getTimeLabel().requestFocusInWindow();
             else if(focusedComponent != null)
                 focusedComponent.requestFocusInWindow();
@@ -761,7 +761,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 			}
 			attributes[ch] = new DynamicCheckBox(new DynamicString(attrs.get(ch), statsModel, sc.getScramblePlugin().getMessageAccessor(), configuration), configuration);
 			attributes[ch].setSelected(selected);
-			attributes[ch].setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS, false));
+			attributes[ch].setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
 			attributes[ch].setActionCommand(CalCubeTimerModel.SCRAMBLE_ATTRIBUTE_CHANGED);
 			attributes[ch].addActionListener(e -> {
 				ArrayList<String> attrs1 = new ArrayList<>();

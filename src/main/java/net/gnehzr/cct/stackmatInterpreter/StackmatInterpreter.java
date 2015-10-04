@@ -41,10 +41,10 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
     @Inject
 	public StackmatInterpreter(Configuration configuration) {
 		this.configuration = configuration;
-        /*int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, false);
-        int mixerNumber = configuration.getInt(VariableKey.MIXER_NUMBER, false);
-        boolean stackmat = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
-        int switchThreshold = configuration.getInt(VariableKey.SWITCH_THRESHOLD, false);
+        /*int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE);
+        int mixerNumber = configuration.getInt(VariableKey.MIXER_NUMBER);
+        boolean stackmat = configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
+        int switchThreshold = configuration.getInt(VariableKey.SWITCH_THRESHOLD);
 		initialize(samplingRate, mixerNumber, stackmat, switchThreshold);*/
 	}
 

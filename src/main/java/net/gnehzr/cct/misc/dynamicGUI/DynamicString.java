@@ -105,7 +105,7 @@ public class DynamicString{
 				return r;
 			r = "\u221E"; //unicode for infinity
 		} else {
-			r = Utils.formatTime(Math.abs(progress.secondsValue()), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+			r = Utils.formatTime(Math.abs(progress.secondsValue()), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 		}
 		r = (progress.getTime().isNegative() ? "-" : "+") + r;
 		if(parens)
@@ -186,14 +186,14 @@ public class DynamicString{
 							else {
 								String avg = args[1].trim();
 								if (avg.equals("best"))
-									r = Utils.formatTime(ps.getBestRA(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+									r = Utils.formatTime(ps.getBestRA(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 								else {
 									r = "Unimplemented: " + avg + " : " + sorig;
 								}
 							}
 							break;
 						case "average":
-							r = Utils.formatTime(ps.getGlobalAverage(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+							r = Utils.formatTime(ps.getGlobalAverage(), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 							break;
 						case "solvecount":
 							r = handleSolveCount(globalMatcher.group(2), ps);
@@ -226,7 +226,7 @@ public class DynamicString{
 							if (ave.isZero()) {
 								ave = SolveTime.NA;
 							}
-							r = Utils.formatTime(ave, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+							r = Utils.formatTime(ave, configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 						} else {
 							Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));
 							if (progressMatcher.matches()) {
@@ -239,7 +239,7 @@ public class DynamicString{
 						break;
 					case "sd":
 						if (sessionMatcher.group(2).isEmpty()) {
-							r = Utils.formatTime(stats.getSessionSD(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+							r = Utils.formatTime(stats.getSessionSD(), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 						} else {
 							Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));
 							if (progressMatcher.matches()) {
@@ -273,10 +273,10 @@ public class DynamicString{
 									r = stats.getWorstTime().toString(configuration);
 									break;
 								case "recent":
-									r = Utils.formatTime(stats.getCurrentTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+									r = Utils.formatTime(stats.getCurrentTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 									break;
 								case "last":
-									r = Utils.formatTime(stats.getLastTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+									r = Utils.formatTime(stats.getLastTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 									break;
 								default:
 									r = "Unimplemented: " + u + " : " + sorig;
@@ -314,9 +314,9 @@ public class DynamicString{
 							Matcher sdArgMatcher = argPattern.matcher(arg1Matcher.group(2));
 							if (sdArgMatcher.matches()) {
 								if (sdArgMatcher.group(1).equals("best"))
-									r = Utils.formatTime(stats.getBestSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+									r = Utils.formatTime(stats.getBestSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 								else if (sdArgMatcher.group(1).equals("worst"))
-									r = Utils.formatTime(stats.getWorstSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+									r = Utils.formatTime(stats.getWorstSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 							}
 						}
 						if (arg1Matcher.group(1).equals("progress")) {
@@ -356,16 +356,16 @@ public class DynamicString{
 							case "sd":
 								switch (avg) {
 									case "best":
-										r = Utils.formatTime(stats.getBestAverageSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+										r = Utils.formatTime(stats.getBestAverageSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 										break;
 									case "worst":
-										r = Utils.formatTime(stats.getWorstAverageSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+										r = Utils.formatTime(stats.getWorstAverageSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 										break;
 									case "recent":
-										r = Utils.formatTime(stats.getCurrentSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+										r = Utils.formatTime(stats.getCurrentSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 										break;
 									case "last":
-										r = Utils.formatTime(stats.getLastSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+										r = Utils.formatTime(stats.getLastSD(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 										break;
 									default:
 										r = "Unimplemented: " + avg + " : " + sorig;
@@ -456,16 +456,16 @@ public class DynamicString{
 					} else {
 						switch (avg) {
 							case "best":
-								r = Utils.formatTime(stats.getBestAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+								r = Utils.formatTime(stats.getBestAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 								break;
 							case "worst":
-								r = Utils.formatTime(stats.getWorstAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+								r = Utils.formatTime(stats.getWorstAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 								break;
 							case "recent":
-								r = Utils.formatTime(stats.getCurrentAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+								r = Utils.formatTime(stats.getCurrentAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 								break;
 							case "last":
-								r = Utils.formatTime(stats.getLastAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+								r = Utils.formatTime(stats.getLastAverage(num), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 								break;
 							default:
 								r = "Unimplemented: " + avg + " : " + sorig;

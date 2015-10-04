@@ -65,15 +65,15 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
         //we need to notify the stackmatinterpreter package because it has been rewritten to
         //avoid configuration entirely (which makes it easier to separate & use as a library)
         StackmatState.setInverted(
-                configuration.getBoolean(VariableKey.INVERTED_MINUTES, false),
-                configuration.getBoolean(VariableKey.INVERTED_SECONDS, false),
-                configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS, false));
+                configuration.getBoolean(VariableKey.INVERTED_MINUTES),
+                configuration.getBoolean(VariableKey.INVERTED_SECONDS),
+                configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS));
 
         calCubeTimerModel.getStackmatInterpreter().initialize(
-                configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, false),
-                configuration.getInt(VariableKey.MIXER_NUMBER, false),
-                configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false),
-                configuration.getInt(VariableKey.SWITCH_THRESHOLD, false));
+                configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE),
+                configuration.getInt(VariableKey.MIXER_NUMBER),
+                configuration.getBoolean(VariableKey.STACKMAT_ENABLED),
+                configuration.getInt(VariableKey.SWITCH_THRESHOLD));
 
         configuration.setLong(VariableKey.MIXER_NUMBER, calCubeTimerModel.getStackmatInterpreter().getSelectedMixerIndex());
 

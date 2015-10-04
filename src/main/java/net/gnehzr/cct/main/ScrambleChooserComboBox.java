@@ -43,7 +43,7 @@ public abstract class ScrambleChooserComboBox<T> extends JComboBox<T> implements
 	@Override
 	public void configurationChanged(Profile profile) {
 		this.setModel(new DefaultComboBoxModel<>(getScramblesTypeArray(profile)));
-		this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS, false));
+		this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 	}
 
 	protected abstract T[] getScramblesTypeArray(Profile profile);

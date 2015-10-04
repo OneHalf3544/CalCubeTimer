@@ -74,11 +74,11 @@ public class SendMailUsingAuthentication {
 
 		props.setProperty("mail.smtp.host", configuration.getString(VariableKey.SMTP_HOST, false));
 		props.setProperty("mail.smtp.port", configuration.getString(VariableKey.SMTP_PORT, false));
-		props.setProperty("mail.smtp.auth", Boolean.toString(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, false)));
+		props.setProperty("mail.smtp.auth", Boolean.toString(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION)));
 		props.put("mail.smtp.starttls.enable", "true");
 
-		Session session = null;
-		if(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, false)) {
+		Session session;
+		if(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION)) {
 			Authenticator auth = new SMTPAuthenticator();
 			session = Session.getInstance(props, auth);
 		} else {

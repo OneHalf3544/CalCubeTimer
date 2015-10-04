@@ -238,7 +238,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 	//this will be called by the KeyboardTimer to hide scrambles when necessary
 	public void setTimerFocused(boolean focused) {
 		this.focused = focused;
-		backgroundColor = (!focused && configuration.getBoolean(VariableKey.HIDE_SCRAMBLES, false)) ? "black" : null;
+		backgroundColor = (!focused && configuration.getBoolean(VariableKey.HIDE_SCRAMBLES)) ? "black" : null;
 		updateScramblePane();
 	}
 

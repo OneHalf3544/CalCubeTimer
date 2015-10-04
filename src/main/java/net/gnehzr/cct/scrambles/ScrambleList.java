@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedList;
 import java.util.List;
 
+@Deprecated // todo get list from solutions in the current session
 @Singleton
 public class ScrambleList {
 

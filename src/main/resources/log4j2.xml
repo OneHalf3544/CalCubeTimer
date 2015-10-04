@@ -15,7 +15,7 @@
                      filePattern="${filename}-%d{yyyy-dd-MM-HH}.gz">
             <PatternLayout pattern="${format}" />
             <Policies>
-                <SizeBasedTriggeringPolicy size="10 MB" />
+                <SizeBasedTriggeringPolicy size="1 MB" />
             </Policies>
         </RollingFile>
     </Appenders>

@@ -224,7 +224,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		else if(selectedSolves.length == 1) {
 			Solution selectedSolve = session.getStatistics().get(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
-					+ Utils.formatTime(selectedSolve.getTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ));
+					+ Utils.formatTime(selectedSolve.getTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT) ));
 			rawTime.setEnabled(false);
 			jpopup.add(rawTime);
 

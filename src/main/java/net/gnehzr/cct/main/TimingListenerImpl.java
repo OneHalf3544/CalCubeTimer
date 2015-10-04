@@ -50,7 +50,8 @@ class TimingListenerImpl implements TimingListener {
         configuration.addConfigurationChangeListener(p -> configurationChanged());
     }
 
-    private void updateTime(TimerState newTime) {
+    @Override
+    public void refreshDisplay(TimerState newTime) {
         updateHandsState(newTime);
         if(!model.isInspecting()) {
             setTimeLabels(newTime);
@@ -86,11 +87,6 @@ class TimingListenerImpl implements TimingListener {
     }
 
     @Override
-    public void refreshDisplay(TimerState currTime) {
-        updateTime(currTime);
-    }
-
-    @Override
     public void timerSplit(TimerState newSplit) {
         calCubeTimerFrame.addSplit(newSplit);
     }
@@ -108,9 +104,9 @@ class TimingListenerImpl implements TimingListener {
     }
 
     void configurationChanged() {
-        stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED, false);
-        fullScreenTiming = configuration.getBoolean(VariableKey.FULLSCREEN_TIMING, false);
-        model.getMetronome().setEnabled(configuration.getBoolean(VariableKey.METRONOME_ENABLED, false));
+        stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
+        fullScreenTiming = configuration.getBoolean(VariableKey.FULLSCREEN_TIMING);
+        model.getMetronome().setEnabled(configuration.getBoolean(VariableKey.METRONOME_ENABLED));
     }
 
     @Override

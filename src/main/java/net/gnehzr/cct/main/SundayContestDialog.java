@@ -145,7 +145,7 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 		averageField.setText(stats.average(type, aveNum).toString());
 		timesField.setText(stats.toTerseString(type, aveNum, true));
 		quoteArea.setText(configuration.getString(VariableKey.SUNDAY_QUOTE, false));
-		showEmailBox.setSelected(configuration.getBoolean(VariableKey.SHOW_EMAIL, false));
+		showEmailBox.setSelected(configuration.getBoolean(VariableKey.SHOW_EMAIL));
 	}
 
 	private static class FindResultsHandler extends DefaultHandler {

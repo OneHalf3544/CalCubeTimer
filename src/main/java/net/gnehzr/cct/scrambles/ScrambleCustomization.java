@@ -40,9 +40,9 @@ public class ScrambleCustomization {
 	}
 
 	public int getRASize(int index) {
-		Integer size = configuration.getInt(VariableKey.RA_SIZE(index, this), false);
+		Integer size = configuration.getInt(VariableKey.RA_SIZE(index, this));
 		if(size == null || size <= 0)
-			size = configuration.getInt(VariableKey.RA_SIZE(index, null), false);
+			size = configuration.getInt(VariableKey.RA_SIZE(index, null));
 		return size;
 	}
 	public boolean isTrimmed(int index) {

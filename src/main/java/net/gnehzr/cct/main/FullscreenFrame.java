@@ -33,7 +33,7 @@ public class FullscreenFrame extends JFrame {
     }
 
     private static GraphicsConfiguration getGraphicsConfiguration(Configuration configuration) {
-        int index = configuration.isPropertiesLoaded() ? configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false) : 0;
+        int index = configuration.isPropertiesLoaded() ? configuration.getInt(VariableKey.FULLSCREEN_DESKTOP) : 0;
         GraphicsDevice[] screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
         return screenDevices[index].getDefaultConfiguration();
     }
@@ -41,7 +41,7 @@ public class FullscreenFrame extends JFrame {
     void resizeFrame() {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
-        GraphicsDevice gd = gs[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP, false)];
+        GraphicsDevice gd = gs[configuration.getInt(VariableKey.FULLSCREEN_DESKTOP)];
         DisplayMode screenSize = gd.getDisplayMode();
         setSize(screenSize.getWidth(), screenSize.getHeight());
         validate();

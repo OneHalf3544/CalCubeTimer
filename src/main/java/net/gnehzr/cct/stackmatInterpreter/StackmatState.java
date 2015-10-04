@@ -6,6 +6,7 @@ import net.gnehzr.cct.misc.Utils;
 
 import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.statistics.SolveTime;
 
 import java.time.Duration;
 import java.util.List;
@@ -128,6 +129,6 @@ public class StackmatState extends TimerState {
 	}
 
 	public String toString() {
-		return Utils.formatTime(getTime().toMillis() / 1000.0, configuration.getBoolean(VariableKey.CLOCK_FORMAT, false));
+		return Utils.formatTime(new SolveTime(getTime()), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
 	}
 }

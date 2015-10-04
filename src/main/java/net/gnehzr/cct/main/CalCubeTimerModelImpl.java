@@ -122,11 +122,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         Profile profile = profileDao.getSelectedProfile();
         profileDao.saveDatabase(profile);
         calCubeTimerGui.saveToConfiguration();
-        try {
-            configuration.saveConfiguration(profile);
-        } catch (Exception e) {
-            LOG.info("unexpected exception", e);
-        }
+        configuration.saveConfiguration(profile);
     }
 
     @Override
@@ -191,8 +187,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         Profile p = profileDao.getSelectedProfile();
         ScrambleCustomization customization = scramblesList.getCurrentScrambleCustomization();
         SessionsTableModel puzzleDatabase = p.getSessionsDatabase();
-        PuzzleStatistics ps = puzzleDatabase.getPuzzleStatistics(customization);
-        if (!ps.containsSession(nextSesh)) {
+        PuzzleStatistics puzzleStatistics = puzzleDatabase.getPuzzleStatistics(customization);
+        if (!puzzleStatistics.containsSession(nextSesh)) {
             //failed to find a session to continue, so load newest session
             nextSesh = puzzleDatabase.getSessions().stream()
                     .max(Comparator.comparing(session -> session.getStatistics().getStartDate()))
@@ -230,7 +226,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void speakTime(SolveTime latestTime, CALCubeTimerFrame calCubeTimerFrame) {
-        if (!configuration.getBoolean(VariableKey.SPEAK_TIMES, false)) {
+        if (!configuration.getBoolean(VariableKey.SPEAK_TIMES)) {
             return;
         }
         threadPool.submit(() -> {
@@ -259,7 +255,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void startMetronome() {
-        metronome.setDelay(configuration.getInt(VariableKey.METRONOME_DELAY, false));
+        metronome.setDelay(configuration.getInt(VariableKey.METRONOME_DELAY));
         metronome.startMetronome();
     }
     @Override
@@ -295,7 +291,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     private boolean promptNewTime(Solution protect, boolean sameAsLast) {
         int choice = JOptionPane.YES_OPTION;
-        if(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME, false) && !sameAsLast) {
+        if(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME) && !sameAsLast) {
             String[] OPTIONS = { StringAccessor.getString("CALCubeTimer.accept"), SolveType.PLUS_TWO.toString(), SolveType.DNF.toString() };
             //This leaves +2 and DNF enabled, even if the user just got a +2 or DNF from inspection.
             //I don't really care however, since I doubt that anyone even uses this feature. --Jeremy
@@ -327,7 +323,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public long getInpectionValue() {
         long inspectionDone = Duration.between(inspectionStart, Instant.now()).getSeconds();
-        if(inspectionDone != previousInpection && configuration.getBoolean(VariableKey.SPEAK_INSPECTION, false)) {
+        if(inspectionDone != previousInpection && configuration.getBoolean(VariableKey.SPEAK_INSPECTION)) {
             previousInpection = inspectionDone;
             if(inspectionDone == FIRST_WARNING.getSeconds()) {
                 sayInspectionWarning(FIRST_WARNING);
