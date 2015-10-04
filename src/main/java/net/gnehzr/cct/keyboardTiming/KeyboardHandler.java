@@ -5,12 +5,15 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.TimingListener;
+import net.gnehzr.cct.stackmatInterpreter.InspectionState;
+import net.gnehzr.cct.stackmatInterpreter.KeyboardTimerState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -67,20 +70,23 @@ public class KeyboardHandler {
 	}
 
 	public void startTimer() {
-		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION);
 		if(!canStartTimer()) {
 			return;
 		}
-		current = start = Instant.now();
-		if(!inspectionEnabled || inspecting) {
+		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION);
+		current = Instant.now();
+		start = current;
+
+		if (inspectionEnabled && !inspecting) {
+			inspecting = true;
+			timingListener.inspectionStarted();
+		}
+		else {
 			scheduledFuture = EXECUTOR.scheduleAtFixedRate(
 					this::refreshTime, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
 			inspecting = false;
 			reset = false;
 			timingListener.timerStarted();
-		} else {
-			inspecting = true;
-			timingListener.inspectionStarted();
 		}
 	}
 
@@ -90,7 +96,11 @@ public class KeyboardHandler {
 	}
 	
 	private TimerState getTimerState() {
-		return new TimerState(configuration, getElapsedTimeSeconds());
+		return new KeyboardTimerState(getElapsedTimeSeconds(), getInspectionState());
+	}
+
+	private Optional<InspectionState> getInspectionState() {
+		return inspecting ? Optional.of(new InspectionState(start, current)) : Optional.<InspectionState>empty();
 	}
 
 	private Duration getElapsedTimeSeconds() {

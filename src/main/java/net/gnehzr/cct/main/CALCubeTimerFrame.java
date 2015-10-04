@@ -27,6 +27,8 @@ import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.speaking.NumberSpeaker;
+import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
@@ -62,7 +64,7 @@ import java.util.*;
 import java.util.List;
 
 @Singleton
-public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableModelListener {
+public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	private static final Logger LOG = LogManager.getLogger(CALCubeTimerFrame.class);
 
@@ -93,6 +95,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	private TimerLabel timeLabel;
 	@Inject @Named("bigTimersDisplay")
 	TimerLabel bigTimersDisplay;
+
+	@Inject
+	NumberSpeaker numberSpeaker;
 	//all of the above components belong in this HashMap, so we can find them
 	//when they are referenced in the xml gui (type="blah...blah")
 	//we also reset their attributes before parsing the xml gui
@@ -119,25 +124,62 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 
 	final ItemListener profileComboboxListener = new ItemListener() {
+
+		private final TableModelListener newSolutionAddedListener = this::newSolutionAdded;
+
 		@Override
 		public void itemStateChanged(ItemEvent e) {
 			Profile affectedProfile = (Profile) e.getItem();
+
 			if (e.getStateChange() == ItemEvent.DESELECTED) {
 				model.prepareForProfileSwitch();
-			} else if (e.getStateChange() == ItemEvent.SELECTED) {
-				statsModel.removeTableModelListener(CALCubeTimerFrame.this); //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
-
-				profileDao.setSelectedProfile(affectedProfile);
-				profileDao.loadDatabase(affectedProfile, scramblePluginManager);
-
-				configuration.loadConfiguration(affectedProfile);
-				configuration.apply(affectedProfile);
-
-				model.sessionSelected(model.getNextSession(CALCubeTimerFrame.this)); //we want to load this profile's startup session
-				statsModel.addTableModelListener(CALCubeTimerFrame.this); //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
-				repaintTimes(); //this needs to be here in the event that we loaded times from database
+				return;
 			}
+
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+                //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
+                statsModel.removeTableModelListener(newSolutionAddedListener);
+
+                profileDao.setSelectedProfile(affectedProfile);
+                profileDao.loadDatabase(affectedProfile, scramblePluginManager);
+
+                configuration.loadConfiguration(affectedProfile);
+                configuration.apply(affectedProfile);
+
+				//we want to load this profile's startup session
+                model.sessionSelected(model.getNextSession(CALCubeTimerFrame.this));
+                //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
+                statsModel.addTableModelListener(newSolutionAddedListener);
+
+				//this needs to be here in the event that we loaded times from database
+				repaintTimes();
+            }
 		}
+
+
+		private void newSolutionAdded(TableModelEvent event) {
+			final Solution latestSolution = statsModel.getCurrentSession().getStatistics().get(-1);
+
+			if(event != null && event.getType() == TableModelEvent.INSERT) {
+				ScrambleString currentScramble = model.getScramblesList().getCurrent();
+				boolean outOfScrambles = currentScramble.isImported(); //This is tricky, think before you change it
+				outOfScrambles = !model.getScramblesList().getNext().isImported() && outOfScrambles;
+				if (outOfScrambles) {
+					Utils.showWarningDialog(CALCubeTimerFrame.this,
+							StringAccessor.getString("CALCubeTimer.outofimported") +
+									StringAccessor.getString("CALCubeTimer.generatedscrambles"));
+				}
+				updateScramble();
+				//make the new time visible
+				timesTable.invalidate(); //the table needs to be invalidated to force the new time to "show up"!!!
+				Rectangle newTimeRect = timesTable.getCellRect(statsModel.getRowCount(), 0, true);
+				timesTable.scrollRectToVisible(newTimeRect);
+
+				numberSpeaker.speakTime(latestSolution.getTime());
+			}
+			repaintTimes();
+		}
+
 	};
 
 	private final ItemListener scrambleChooserListener = new ItemListener() {
@@ -565,30 +607,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 	}
 
 	@Override
-	public void tableChanged(TableModelEvent event) {
-		final Solution latestSolution = statsModel.getCurrentSession().getStatistics().get(-1);
-
-		if(event != null && event.getType() == TableModelEvent.INSERT) {
-			ScrambleString currentScramble = model.getScramblesList().getCurrent();
-			boolean outOfScrambles = currentScramble.isImported(); //This is tricky, think before you change it
-			outOfScrambles = !model.getScramblesList().getNext().isImported() && outOfScrambles;
-			if(outOfScrambles) {
-				Utils.showWarningDialog(this,
-						StringAccessor.getString("CALCubeTimer.outofimported") +
-								StringAccessor.getString("CALCubeTimer.generatedscrambles"));
-			}
-			updateScramble();
-			//make the new time visible
-			timesTable.invalidate(); //the table needs to be invalidated to force the new time to "show up"!!!
-			Rectangle newTimeRect = timesTable.getCellRect(statsModel.getRowCount(), 0, true);
-			timesTable.scrollRectToVisible(newTimeRect);
-
-			model.speakTime(latestSolution.getTime(), this);
-		}
-		repaintTimes();
-	}
-
-	@Override
 	public void loadXMLGUI() {
 		SwingUtilities.invokeLater(() -> {
             refreshCustomGUIMenu();
@@ -715,18 +733,24 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui, TableM
 
 	@Override
 	public void updateInspection() {
-		long inspection = model.getInpectionValue();
+		InspectionState inspection = model.getInspectionValue();
 		String time;
-		if(inspection <= -2) {
+		if(inspection.isDisqualification()) {
 			model.setPenalty(SolveType.DNF);
 			time = StringAccessor.getString("CALCubeTimer.disqualification");
-		} else if(inspection <= 0) {
+		} else if(inspection.isPenalty()) {
 			model.setPenalty(SolveType.PLUS_TWO);
 			time = StringAccessor.getString("CALCubeTimer.+2penalty");
-		} else
-			time = "" + inspection;
+		} else {
+			time = String.valueOf(inspection.getElapsedTime().getSeconds());
+		}
+
+		setTextToTimeLabels(time);
+	}
+
+	private void setTextToTimeLabels(String time) {
 		getTimeLabel().setText(time);
-		if(model.isFullscreen()) {
+		if (model.isFullscreen()) {
 			bigTimersDisplay.setText(time);
 		}
 	}

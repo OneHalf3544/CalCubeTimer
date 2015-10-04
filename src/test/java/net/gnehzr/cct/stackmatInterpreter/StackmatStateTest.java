@@ -29,6 +29,6 @@ public class StackmatStateTest {
                 .map(operand -> operand - '0')
                 .collect(ArrayList::new, (integers, value) -> integers.add((int) value), ArrayList::addAll);
 
-        return new StackmatState(null, periodData, configuration);
+        return new StackmatState(null, periodData);
     }
 }

@@ -4,6 +4,7 @@ import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.speaking.NumberSpeaker;
+import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.Session;
@@ -51,13 +52,11 @@ public interface CalCubeTimerModel extends SessionListener {
     void setLastSplit(long lastSplit);
 
     //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
-    long getInpectionValue();
+    InspectionState getInspectionValue();
 
     boolean isInspecting();
 
     List<SolveTime> getSplits();
-
-    void speakTime(SolveTime latestTime, CALCubeTimerFrame calCubeTimerFrame);
 
     void stopInspection();
 

@@ -30,8 +30,6 @@ public class SortedProperties {
 	static SortedProperties NOT_LOADED_PROPERTIES = new SortedProperties(ImmutableMap.of(), ImmutableMap.of()) {
 		@Override
 		public String getValue(VariableKey<?> key, boolean defaultValue) {
-			// LOG.error("get value from uninitialized properties. key=" + key);
-			// return super.getValue(key, defaultValue);
 			throw new IllegalStateException("get value from uninitialized properties. key=" + key);
 		}
 	};

@@ -83,16 +83,7 @@ public class Main implements Module {
             injector = Guice.createInjector(new Main(sessionFactory));
             profileDao = injector.getInstance(ProfileDao.class);
 
-            if(args.length == 1) {
-                String startupProfile = args[0];
-                Profile commandedProfile = profileDao.loadProfile(startupProfile);
-                if(commandedProfile == null) {
-                    LOG.info("Couldn't find directory " + startupProfile);
-                    profileDao.setSelectedProfile(profileDao.guestProfile);
-                } else {
-                    profileDao.setSelectedProfile(commandedProfile);
-                }
-            }
+            profileDao.setSelectedProfile(getProfileToLoad(args, profileDao));
 
         } catch (Exception e) {
             LOG.error("initialisation error", e);
@@ -144,6 +135,21 @@ public class Main implements Module {
                 Main.exit(1);
             }
         });
+    }
+
+    private static Profile getProfileToLoad(String[] args, ProfileDao profileDao) {
+        if (args.length != 1) {
+            return profileDao.guestProfile;
+        }
+
+        String startupProfile = args[0];
+        Profile profileFromCommandLine = profileDao.loadProfile(startupProfile);
+        if(profileFromCommandLine == null) {
+            LOG.info("Couldn't find directory " + startupProfile);
+            return profileDao.guestProfile;
+        } else {
+            return profileFromCommandLine;
+        }
     }
 
     @Nullable

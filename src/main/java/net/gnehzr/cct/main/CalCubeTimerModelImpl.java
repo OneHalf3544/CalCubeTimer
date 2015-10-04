@@ -1,7 +1,6 @@
 package net.gnehzr.cct.main;
 
 import com.google.inject.Inject;
-import javazoom.jl.decoder.JavaLayerException;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
@@ -11,6 +10,7 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.speaking.NumberSpeaker;
+import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
@@ -24,8 +24,6 @@ import javax.swing.Timer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * <p>
@@ -40,18 +38,11 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     private static final Logger LOG = LogManager.getLogger(CalCubeTimerModelImpl.class);
 
-    private static final Duration INSPECTION_TIME = Duration.ofSeconds(15);
-    private static final Duration FIRST_WARNING = Duration.ofSeconds(8);
-    private static final Duration FINAL_WARNING = Duration.ofSeconds(12);
-
-
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(5);
-
     private /*final */ CalCubeTimerGui calCubeTimerGui;
     private final StatisticsTableModel statsModel; //used in ProfileDatabase
     private final Configuration configuration;
 
-    private long previousInpection = -1;
+    private InspectionState previousInpectionState = new InspectionState(Instant.now(), Instant.now());
 
     @Inject
     private ScrambleList scramblesList;
@@ -73,16 +64,16 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     private boolean loading = false;
 
     SolveType penalty = null;
-    Instant inspectionStart = null;
+
     Timer updateInspectionTimer;
     private long lastSplit;
 
     private LocaleAndIcon loadedLocale;
 
-    @Inject
-    private StackmatState lastAccepted;
+    private StackmatState lastAccepted = new StackmatState(null, Collections.emptyList());
 
     private boolean fullscreen = false;
+    private Instant inspectionStart = null;
 
     @Inject
     public CalCubeTimerModelImpl(CalCubeTimerGui calCubeTimerGui, Configuration configuration, ProfileDao profileDao,
@@ -225,20 +216,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     }
 
     @Override
-    public void speakTime(SolveTime latestTime, CALCubeTimerFrame calCubeTimerFrame) {
-        if (!configuration.getBoolean(VariableKey.SPEAK_TIMES)) {
-            return;
-        }
-        threadPool.submit(() -> {
-            try {
-                numberSpeaker.getCurrentSpeaker().speak(latestTime);
-            } catch (JavaLayerException e) {
-                LOG.info("unexpected exception", e);
-            }
-        });
-    }
-
-    @Override
     public long getLastSplit() {
         return lastSplit;
     }
@@ -321,27 +298,18 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
     @Override
-    public long getInpectionValue() {
-        long inspectionDone = Duration.between(inspectionStart, Instant.now()).getSeconds();
-        if(inspectionDone != previousInpection && configuration.getBoolean(VariableKey.SPEAK_INSPECTION)) {
-            previousInpection = inspectionDone;
-            if(inspectionDone == FIRST_WARNING.getSeconds()) {
-                sayInspectionWarning(FIRST_WARNING);
-            } else if(inspectionDone == FINAL_WARNING.getSeconds()) {
-                sayInspectionWarning(FINAL_WARNING);
+    public InspectionState getInspectionValue() {
+        InspectionState inspectionState = new InspectionState(inspectionStart, Instant.now());
+
+        if(configuration.getBoolean(VariableKey.SPEAK_INSPECTION) && !Objects.equals(inspectionState, previousInpectionState)) {
+            previousInpectionState = inspectionState;
+            if(inspectionState.getElapsedTime().getSeconds() == InspectionState.FIRST_WARNING.getSeconds()) {
+                numberSpeaker.sayInspectionWarning(InspectionState.FIRST_WARNING);
+            } else if(inspectionState.getElapsedTime().getSeconds() == InspectionState.FINAL_WARNING.getSeconds()) {
+                numberSpeaker.sayInspectionWarning(InspectionState.FINAL_WARNING);
             }
         }
-        return INSPECTION_TIME.getSeconds() - inspectionDone;
-    }
-
-    private void sayInspectionWarning(Duration seconds) {
-        threadPool.submit(() -> {
-            try {
-                numberSpeaker.getCurrentSpeaker().speak(false, seconds);
-            } catch (Exception e) {
-                LOG.info(e);
-            }
-        });
+        return inspectionState;
     }
 
     @Override

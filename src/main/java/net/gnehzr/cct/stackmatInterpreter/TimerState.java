@@ -1,6 +1,7 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.statistics.Solution;
 import net.gnehzr.cct.statistics.SolveTime;
@@ -9,18 +10,18 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Duration;
 import java.util.List;
 
-public class TimerState implements Comparable<TimerState> {
+public abstract class TimerState implements Comparable<TimerState> {
 
-	protected final Configuration configuration;
+	public static final TimerState ZERO = new TimerState(Duration.ZERO) {
+		@Override
+		public boolean isInspecting() {
+			return false;
+		}
+	};
 
-	private Duration time;
+	private final Duration time;
 
-	public TimerState(Configuration configuration) {
-		this.configuration = configuration;
-	}
-
-	public TimerState(Configuration configuration, @NotNull Duration time) {
-		this.configuration = configuration;
+	public TimerState(@NotNull Duration time) {
 		this.time = time;
 	}
 
@@ -31,6 +32,8 @@ public class TimerState implements Comparable<TimerState> {
 	public Duration getTime() {
 		return time;
 	}
+
+	public abstract boolean isInspecting();
 
 	public int hashCode() {
 		return this.getTime().hashCode();
@@ -51,12 +54,13 @@ public class TimerState implements Comparable<TimerState> {
 		}
 		return this.getTime().compareTo(o.getTime());
 	}
-	@Override
-	public String toString() {
+
+	public String toString(Configuration configuration) {
 		return new SolveTime(getTime()).toString(configuration);
 	}
 
-	public void setTime(Duration value) {
-		this.time = value;
+	@Override
+	public String toString() {
+		return Utils.formatTime(new SolveTime(getTime()), true);
 	}
 }

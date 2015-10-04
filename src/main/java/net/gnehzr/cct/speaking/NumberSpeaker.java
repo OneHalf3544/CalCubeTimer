@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -22,6 +24,8 @@ import java.util.zip.ZipFile;
 public class NumberSpeaker implements Comparable<NumberSpeaker> {
 
 	private static final Logger LOG = LogManager.getLogger(NumberSpeaker.class);
+
+	private final ExecutorService threadPool = Executors.newFixedThreadPool(5);
 
 	private static final String ZIP_EXTENSION = ".zip";
 
@@ -38,7 +42,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 
 		private String desc;
 
-		private TalkerType(String desc) {
+		TalkerType(String desc) {
 			this.desc = desc;
 		}
 		public String toString() {
@@ -103,7 +107,32 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 		clips = new ZipFile(zip);
 		this.name = name;
 	}
-    
+
+
+	public void sayInspectionWarning(Duration seconds) {
+		threadPool.submit(() -> {
+			try {
+				getCurrentSpeaker().speak(false, new SolveTime(seconds));
+			} catch (Exception e) {
+				LOG.error("error during speak warning time", e);
+			}
+		});
+	}
+
+
+	public void speakTime(SolveTime latestTime) {
+		if (!configuration.getBoolean(VariableKey.SPEAK_TIMES)) {
+			return;
+		}
+		threadPool.submit(() -> {
+			try {
+				getCurrentSpeaker().speak(latestTime);
+			} catch (JavaLayerException e) {
+				LOG.error("unexpected exception", e);
+			}
+		});
+	}
+
 	public String toString() {
 		return name;
 	}
@@ -127,23 +156,26 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
     
     public void speak(SolveTime time) throws JavaLayerException {
     	if(time.isType(SolveType.DNF)) {
+			LOG.debug("speak dnf");
 			getMP3FromName("dnf").play();
 		}
     	else {
-			speak(false, time.getTime());
+			speak(false, time);
 		}
     }
     
     //"Your time is " + lastin.toSolveTime(null, null).value() / 100. + " seconds"
     //Speaks something of the form "xyz.ab seconds"
-    public void speak(boolean yourTime, Duration hundredths) throws JavaLayerException {
-    	Objects.requireNonNull(clips, "Failed to open " + name + ".zip!");
-    	if(yourTime) {
+    void speak(boolean yourTime, SolveTime time) throws JavaLayerException {
+		Objects.requireNonNull(clips, "Failed to open " + name + ".zip!");
+		LOG.debug("speak time: {}", time);
+
+		if(yourTime) {
     		getMP3FromName("your_time_is").play();
     	}
 		Boolean clockFormat = configuration.getBoolean(VariableKey.CLOCK_FORMAT);
 
-		List<String> wordFileNamesList = breakItDown(hundredths, clockFormat);
+		List<String> wordFileNamesList = breakItDown(time.getTime(), clockFormat);
     	for(String file : wordFileNamesList) {
     		getMP3FromName(file).play();
     	}

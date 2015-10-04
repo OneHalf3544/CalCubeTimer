@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Singleton
@@ -18,8 +19,6 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 
 	private static final int BYTES_PER_SAMPLE = 2;
 	private static final int FRAMES = 64;
-
-    private final Configuration configuration;
 
     private int samplingRate = 0;
     private int noiseSpikeThreshold;
@@ -40,8 +39,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 
     @Inject
 	public StackmatInterpreter(Configuration configuration) {
-		this.configuration = configuration;
-        /*int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE);
+		/*int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE);
         int mixerNumber = configuration.getInt(VariableKey.MIXER_NUMBER);
         boolean stackmat = configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
         int switchThreshold = configuration.getInt(VariableKey.SWITCH_THRESHOLD);
@@ -176,9 +174,9 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
         byte[] buffer = new byte[BYTES_PER_SAMPLE * FRAMES];
 
         List<Integer> currentPeriod = new ArrayList<>(100);
-		StackmatState old = new StackmatState(configuration);
-        boolean previousWasSplit = false;
-        StackmatValue stackmatValue = new StackmatValue(timeSinceLastFlip, lastSample, lastBit, buffer, currentPeriod, old, false);
+        StackmatValue stackmatValue = new StackmatValue(
+                timeSinceLastFlip, lastSample, lastBit, buffer, currentPeriod,
+                new StackmatState(null, currentPeriod), /*previousWasSplit*/false);
 
         while (!isCancelled()) {
             if (!enabled || line == null) {
@@ -216,7 +214,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                 stackmatValue.timeSinceLastFlip++;
             }
             else if (stackmatValue.timeSinceLastFlip == newPeriod * 4) {
-                state = new StackmatState(configuration);
+                state = new StackmatState(state, Collections.<Integer>emptyList());
                 stackmatValue.timeSinceLastFlip++;
                 on = false;
                 firePropertyChange("Off", null, null);
@@ -230,13 +228,14 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
                         continue;
                     }
 
-                    StackmatState newState = new StackmatState(state, stackmatValue.currentPeriod, configuration);
+                    StackmatState newState = new StackmatState(state, stackmatValue.currentPeriod);
                     if (state != null && state.isRunning() && newState.isReset()) { //this is indicative of an "accidental reset"
                         firePropertyChange("Accident Reset", state, newState);
                     }
+                    StackmatState oldState = this.state;
                     state = newState;
                     //This is to be able to identify new times when they are "equal" to the last time
-                    if(state.isReset() || state.isRunning()) stackmatValue.old = new StackmatState(configuration);
+                    if(state.isReset() || state.isRunning()) stackmatValue.old = oldState;
 
                     boolean thisIsSplit = state.isRunning() && state.oneHand();
                     if (thisIsSplit && !stackmatValue.previousWasSplit) {

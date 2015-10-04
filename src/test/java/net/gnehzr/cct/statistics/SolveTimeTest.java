@@ -5,10 +5,12 @@ import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.SortedProperties;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import net.gnehzr.cct.stackmatInterpreter.InspectionState;
+import net.gnehzr.cct.stackmatInterpreter.KeyboardTimerState;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
@@ -39,9 +41,10 @@ public class SolveTimeTest {
 
     @Test(enabled = false)
     public void testSplitsToString() {
-        Solution solveTime = new Solution(new TimerState(configuration, Duration.ofMinutes(2)), ScramblePluginManager.NULL_IMPORTED_SCRUMBLE, ImmutableList.of(
-                new SolveTime("30.02"),
-                new SolveTime("89.98")
+        Solution solveTime = new Solution(new KeyboardTimerState(Duration.ofMinutes(2), Optional.<InspectionState>empty()),
+                ScramblePluginManager.NULL_IMPORTED_SCRUMBLE, ImmutableList.of(
+                        new SolveTime("30.02"),
+                        new SolveTime("89.98")
         ));
         assertThat(solveTime.toSplitsString(), containsString("jghhfug"));
     }

@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -24,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Singleton
-public class StatisticsTableModel extends DraggableJTableModel implements ActionListener {
+public class StatisticsTableModel extends DraggableJTableModel {
 
 	private static final Logger LOG = LogManager.getLogger(StatisticsTableModel.class);
 
@@ -49,7 +48,6 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			String.class,
 	};
 
-	private JMenuItem edit, discard;
 	private DraggableJTable timesTable;
 	private Component prevFocusOwner;
 	private Map<SolveType, JMenuItem> typeButtons;
@@ -192,24 +190,29 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 		return t.isEmpty() ? null : t;
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Object source = e.getSource();
-		if(source == edit) {
-			timesTable.editCellAt(timesTable.getSelectedRow(), 0);
-		} else {
-			if(source == discard) {
-				timesTable.deleteSelectedRows(false);
-			} else {
-			 	//one of the jradio buttons
-				List<SolveType> types = typeButtons.keySet().stream()
-						.filter(key -> typeButtons.get(key).isSelected())
-						.collect(Collectors.toList());
-				session.getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
-			}
-		}
-		if(prevFocusOwner != null)
+	private void editTimeMenuItemClicked(ActionEvent e) {
+		timesTable.editCellAt(timesTable.getSelectedRow(), 0);
+		if(prevFocusOwner != null) {
 			prevFocusOwner.requestFocusInWindow();
+		}
+	}
+
+	private void discardSolution(ActionEvent e) {
+		timesTable.deleteSelectedRows(false);
+		if(prevFocusOwner != null) {
+			prevFocusOwner.requestFocusInWindow();
+		}
+	}
+
+	private void setTagRadioButton(ActionEvent e) {
+		//one of the jradio buttons
+		List<SolveType> types = typeButtons.keySet().stream()
+                .filter(key -> typeButtons.get(key).isSelected())
+				.collect(Collectors.toList());
+		session.getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
+		if(prevFocusOwner != null) {
+			prevFocusOwner.requestFocusInWindow();
+		}
 	}
 
 	@Override
@@ -230,8 +233,8 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 
 			addSplitsPopup(jpopup, selectedSolve);
 
-			edit = new JMenuItem(StringAccessor.getString("StatisticsTableModel.edittime"));
-			edit.addActionListener(this);
+			JMenuItem edit = new JMenuItem(StringAccessor.getString("StatisticsTableModel.edittime"));
+			edit.addActionListener(this::editTimeMenuItemClicked);
 			jpopup.add(edit);
 
 			jpopup.addSeparator();
@@ -240,7 +243,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			ButtonGroup independent = new ButtonGroup();
 			JMenuItem attr = new JRadioButtonMenuItem("<html><b>" + StringAccessor.getString("StatisticsTableModel.nopenalty") + "</b></html>", !selectedSolve.getTime().isPenalty());
 			attr.setEnabled(!selectedSolve.getTime().isTrueWorstTime());
-			attr.addActionListener(this);
+			attr.addActionListener(this::setTagRadioButton);
 			jpopup.add(attr);
 			independent.add(attr);
 			List<String> solveTagsArray = configuration.getStringArray(VariableKey.SOLVE_TAGS, false);
@@ -253,7 +256,7 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 				} else {
 					attr = new JCheckBoxMenuItem(type.toString(), selectedSolve.getTime().isType(type));
 				}
-				attr.addActionListener(this);
+				attr.addActionListener(this::setTagRadioButton);
 				jpopup.add(attr);
 				typeButtons.put(type, attr);
 			}
@@ -261,8 +264,8 @@ public class StatisticsTableModel extends DraggableJTableModel implements Action
 			jpopup.addSeparator();
 		}
 
-		discard = new JMenuItem(StringAccessor.getString("StatisticsTableModel.discard"));
-		discard.addActionListener(this);
+		JMenuItem discard = new JMenuItem(StringAccessor.getString("StatisticsTableModel.discard"));
+		discard.addActionListener(this::discardSolution);
 		jpopup.add(discard);
 		timesTable.requestFocusInWindow();
 		jpopup.show(e.getComponent(), e.getX(), e.getY());

@@ -98,7 +98,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	public void setTime(TimerState time) {
 		this.time = time;
-		super.setText(time.toString());
+		super.setText(time.toString(configuration));
 		componentResized(null);
 	}
 

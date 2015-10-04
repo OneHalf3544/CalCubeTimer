@@ -1,17 +1,13 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
-import com.google.inject.Singleton;
+import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
-
-import com.google.inject.Inject;
-import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.statistics.SolveTime;
 
 import java.time.Duration;
 import java.util.List;
 
-@Singleton
 public class StackmatState extends TimerState {
 
 	private Boolean rightHand = false;
@@ -31,32 +27,37 @@ public class StackmatState extends TimerState {
 		invertedHun = hundredths;
 	}
 
-	@Inject
-	public StackmatState(Configuration configuration) {
-		super(configuration);
-	}
+	public StackmatState(StackmatState previous, List<Integer> periodData) {
+		super(getCurrentTime(periodData, previous));
 
-	public StackmatState(StackmatState previous, List<Integer> periodData, Configuration configuration) {
-		this(configuration);
 		if (periodData.size() == 89) { //all data present
 			isValid = true;
-			Duration value = parseTime(periodData);
-			setTime(value);
-			running = previous == null || this.compareTo(previous) > 0 && !value.isZero();
-			reset = value.isZero();
-		} else if (previous != null) { //if corrupt and previous not null, make time equal to previous
-			this.rightHand = previous.rightHand;
-			this.leftHand = previous.leftHand;
-			this.running = previous.running;
-			this.reset = previous.reset;
-			this.isValid = previous.isValid;
-			this.greenLight = previous.greenLight;
-			setTime(previous.getTime());
+			parseHeader(periodData);
+			reset = getTime().isZero();
+			running = previous == null || this.compareTo(previous) > 0 && !reset;
+		} else {
+			if (previous != null) { //if corrupt and previous not null, make time equal to previous
+				this.rightHand = previous.rightHand;
+				this.leftHand = previous.leftHand;
+				this.running = previous.running;
+				this.reset = previous.reset;
+				this.isValid = previous.isValid;
+				this.greenLight = previous.greenLight;
+			}
 		}
 	}
 
-	private Duration parseTime(List<Integer> periodData){
-		parseHeader(periodData);
+	private static Duration getCurrentTime(List<Integer> periodData, StackmatState previous) {
+		if (periodData.size() == 89) { //all data present
+			return parseTime(periodData);
+
+		} else {
+		 	//if corrupt and previous not null, make time equal to previous
+			return previous != null ? previous.getTime() : Duration.ZERO;
+		}
+	}
+
+	private static Duration parseTime(List<Integer> periodData){
 		return Duration
                 .ofMinutes(parseDigit(periodData, 1, invertedMin))
                 .plus(Duration.ofSeconds(parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec)))
@@ -79,7 +80,7 @@ public class StackmatState extends TimerState {
 		greenLight = temp == 16;
 	}
 
-	private int parseDigit(List<Integer> periodData, int position, boolean invert){
+	private static int parseDigit(List<Integer> periodData, int position, boolean invert){
 		int temp = 0;
 		for(int i = 1; i <= 4; i++) {
 			temp += periodData.get(position * 10 + i) << (i - 1);
@@ -128,7 +129,18 @@ public class StackmatState extends TimerState {
 		return greenLight;
 	}
 
-	public String toString() {
+	@Override
+	public boolean isInspecting() {
+		return false;
+	}
+
+	@Override
+	public String toString(Configuration configuration) {
 		return Utils.formatTime(new SolveTime(getTime()), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
+	}
+
+	@Override
+	public String toString() {
+		return Utils.formatTime(new SolveTime(getTime()), true);
 	}
 }

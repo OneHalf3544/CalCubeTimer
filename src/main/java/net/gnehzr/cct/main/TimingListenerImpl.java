@@ -13,7 +13,6 @@ import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -61,7 +60,7 @@ class TimingListenerImpl implements TimingListener {
     @Override
     // todo move to TimerLabel?
     public void initializeDisplay() {
-        TimerState zeroTimerState = new TimerState(configuration, Duration.ZERO);
+        TimerState zeroTimerState = TimerState.ZERO;
         updateHandsState(zeroTimerState);
         setTimeLabels(zeroTimerState);
     }
