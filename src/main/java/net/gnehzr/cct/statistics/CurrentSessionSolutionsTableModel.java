@@ -229,7 +229,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		else if(selectedSolves.length == 1) {
 			Solution selectedSolve = currentSession.getStatistics().get(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
-					+ Utils.formatTime(selectedSolve.getTime(), configuration.getBoolean(VariableKey.CLOCK_FORMAT) ));
+					+ Utils.formatTime(selectedSolve.getTime(), configuration.useClockFormat() ));
 			rawTime.setEnabled(false);
 			jpopup.add(rawTime);
 

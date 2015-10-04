@@ -6,6 +6,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
@@ -32,7 +33,8 @@ public class SessionsListTableModel extends DraggableJTableModel {
 
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
-	private final CurrentSessionSolutionsTableModel statsModel;
+	private final CalCubeTimerModel cubeTimerModel;
+	private final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 	private final ScramblePluginManager scramblePluginManager;
 
 	private List<Session> sessionCache = new ArrayList<>();
@@ -62,10 +64,11 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	};
 
 	public SessionsListTableModel(Configuration configuration, ProfileDao profileDao,
-								  CurrentSessionSolutionsTableModel statsModel, ScramblePluginManager scramblePluginManager) {
+								  CalCubeTimerModel cubeTimerModel, CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel, ScramblePluginManager scramblePluginManager) {
 		this.configuration = configuration;
 		this.profileDao = profileDao;
-		this.statsModel = statsModel;
+		this.cubeTimerModel = cubeTimerModel;
+		this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
 		this.scramblePluginManager = scramblePluginManager;
 	}
 
@@ -80,7 +83,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	public PuzzleStatistics getPuzzleStatisticsForType(ScrambleCustomization customization) {
 		PuzzleStatistics puzzleStatistics = mapScrambleTypeStatistics.get(customization);
 		if(puzzleStatistics == null) {
-			puzzleStatistics = new PuzzleStatistics(customization, this, configuration, statsModel);
+			puzzleStatistics = new PuzzleStatistics(customization, this, configuration, currentSessionSolutionsTableModel);
 			mapScrambleTypeStatistics.put(customization, puzzleStatistics);
 		}
 		return puzzleStatistics;
@@ -203,7 +206,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 			ScrambleCustomization sc = (ScrambleCustomization) value;
 			Session s = getNthSession(rowIndex);
 			if(!s.getCustomization().equals(sc)) { //we're not interested in doing anything if they select the same customization
-				s.setCustomization(sc, profileDao.getSelectedProfile());
+				s.setCustomization(sc, cubeTimerModel.getSelectedProfile());
 				updateSessionCache();
 				rowIndex = indexOf(s); //changing the customization will change the index in the model
 				fireTableRowsUpdated(rowIndex, rowIndex);
@@ -258,8 +261,8 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		jpopup.add(discard);
 		
 		JMenu sendTo = new JMenu(StringAccessor.getString("ProfileDatabase.sendto"));
-		for(Profile profile : profileDao.getProfiles(configuration)) {
-			if(profile == profileDao.getSelectedProfile()) {
+		for(Profile profile : profileDao.getProfiles()) {
+			if(profile == cubeTimerModel.getSelectedProfile()) {
 				continue;
 			}
 			sendTo.add(createProfileMenuItem(source, profile));
@@ -280,7 +283,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	}
 
 	public void switchProfile(ActionEvent e) {
-		Profile to = profileDao.getProfileByName(((JMenuItem) e.getSource()).getText());
+		Profile to = profileDao.loadProfile(((JMenuItem) e.getSource()).getText());
 		profileDao.loadDatabase(to, scramblePluginManager);
 
 		String[] rows = e.getActionCommand().substring(SEND_TO_PROFILE.length()).split(",");
@@ -300,6 +303,6 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	}
 
 	public List<SessionEntity> toEntityList() {
-		return Collections.singletonList(statsModel.getCurrentSession().toSessionEntity());
+		return Collections.singletonList(currentSessionSolutionsTableModel.getCurrentSession().toSessionEntity());
 	}
 }

@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.dao.ProfileDao;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -24,10 +23,10 @@ class FullScreenDuringTimingChangeSettingAction extends AbstractAction {
 	public static final String TOGGLE_FULLSCREEN_TIMING_ACTION = "togglefullscreentiming";
 
 	private final Configuration configuration;
-	private final ProfileDao profileDao;
+	private final CalCubeTimerModel profileDao;
 
 	@Inject
-	public FullScreenDuringTimingChangeSettingAction(Configuration configuration, ProfileDao profileDao){
+	public FullScreenDuringTimingChangeSettingAction(Configuration configuration, CalCubeTimerModel profileDao){
 		this.configuration = configuration;
 		this.profileDao = profileDao;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);

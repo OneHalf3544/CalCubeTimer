@@ -140,7 +140,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
                 //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
                 statsModel.removeTableModelListener(newSolutionAddedListener);
 
-                profileDao.setSelectedProfile(affectedProfile);
+                model.setSelectedProfile(affectedProfile);
                 profileDao.loadDatabase(affectedProfile, scramblePluginManager);
 
                 configuration.loadConfiguration(affectedProfile);
@@ -200,7 +200,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 			//change current session's scramble customization
 			statsModel.getCurrentSession().setCustomization(
-                    model.getScramblesList().getCurrentScrambleCustomization(), profileDao.getSelectedProfile());
+                    model.getScramblesList().getCurrentScrambleCustomization(), model.getSelectedProfile());
 
 			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getCurrentScrambleCustomization().getScrambleVariation());
 			String generator = model.getScramblesList().getCurrentScrambleCustomization().getGenerator();
@@ -316,7 +316,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		timesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		timesScroller = new JScrollPane(timesTable);
 
-		sessionsTable = new SessionsTable(statsModel, configuration, scramblePluginManager, profileDao);
+		sessionsTable = new SessionsTable(statsModel, configuration, scramblePluginManager, model);
 		sessionsTable.setName("sessionsTable");
 		//TODO - this wastes space, probably not easy to fix...
 		sessionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -427,9 +427,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void setCursor(Cursor cursor) {
-		if(model.isLoading())
-			super.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-		else if(cursor == null)
+		if(cursor == null)
 			super.setCursor(Cursor.getDefaultCursor());
 		else
 			super.setCursor(cursor);
@@ -459,8 +457,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		timesScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		scrambleHyperlinkArea.resetPreferredSize();
 		getTimeLabel().setAlignmentX(.5f);
-		getTimeLabel().configurationChanged(profileDao.getSelectedProfile());
-		bigTimersDisplay.configurationChanged(profileDao.getSelectedProfile());
+		getTimeLabel().configurationChanged(model.getSelectedProfile());
+		bigTimersDisplay.configurationChanged(model.getSelectedProfile());
 
 		xmlGuiMessages.reloadResources();
 
@@ -612,7 +610,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
             refreshCustomGUIMenu();
             Component focusedComponent = CALCubeTimerFrame.this.getFocusOwner();
             parseXML_GUI(configuration.getXMLGUILayout());
-            Dimension size = configuration.getDimension(VariableKey.MAIN_FRAME_DIMENSION, false);
+            Dimension size = configuration.getDimension(VariableKey.MAIN_FRAME_DIMENSION);
             if(size == null) {
 				CALCubeTimerFrame.this.pack();
 			}
@@ -677,8 +675,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	public void keyboardTimingAction() {
 		boolean selected = (Boolean)actionMap.getAction(KeyboardTimingAction.KEYBOARD_TIMING_ACTION, this).getValue(Action.SELECTED_KEY);
 		configuration.setBoolean(VariableKey.STACKMAT_ENABLED, !selected);
-		getTimeLabel().configurationChanged(profileDao.getSelectedProfile());
-		bigTimersDisplay.configurationChanged(profileDao.getSelectedProfile());
+		getTimeLabel().configurationChanged(model.getSelectedProfile());
+		bigTimersDisplay.configurationChanged(model.getSelectedProfile());
 		model.getStackmatInterpreter().enableStackmat(!selected);
 		model.stopInspection();
 		getTimeLabel().reset();
@@ -818,7 +816,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
         if(configurationDialog == null) {
             configurationDialog = new ConfigurationDialog(
 					this, true, configuration, profileDao, scramblePluginManager, statsModel,
-                    calCubeTimerModel.getNumberSpeaker(), stackmatInterpreter, model.getMetronome(), timesTable);
+                    calCubeTimerModel.getNumberSpeaker(), calCubeTimerModel, stackmatInterpreter, model.getMetronome(), timesTable);
         }
         SwingUtilities.invokeLater(() -> {
             configurationDialog.syncGUIwithConfig(false);

@@ -1,7 +1,7 @@
 package net.gnehzr.cct.configuration;
 
-import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.main.ScrambleChooserComboBox;
 import net.gnehzr.cct.main.ScrambleVariationChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
@@ -29,9 +29,9 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 	private List<ScrambleCustomization> customizations;
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
-	private final ProfileDao profileDao;
+	private final CalCubeTimerModel profileDao;
 
-	public ScrambleCustomizationListModel(Configuration configuration, ScramblePluginManager scramblePluginManager, ProfileDao profileDao) {
+	public ScrambleCustomizationListModel(Configuration configuration, ScramblePluginManager scramblePluginManager, CalCubeTimerModel profileDao) {
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
 		this.profileDao = profileDao;

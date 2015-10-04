@@ -601,9 +601,13 @@ public class Statistics implements SolveCounter {
 		for(Solution next : printMe){
 			ret.append(nextAppend);
 			boolean parens = next.getTime() == best || next.getTime() == worst;
-			if(parens) ret.append("(");
-			ret.append(next.toString());
-			if(parens) ret.append(")");
+			if(parens) {
+				ret.append("(");
+			}
+			ret.append(next.getTime().toString());
+			if(parens) {
+				ret.append(")");
+			}
 			nextAppend = ", ";
 		}
 		return ret.toString();

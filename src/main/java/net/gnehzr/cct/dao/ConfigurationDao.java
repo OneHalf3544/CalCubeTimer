@@ -33,21 +33,6 @@ public class ConfigurationDao extends HibernateDaoSupport {
         super(sessionFactory);
     }
 
-    public SystemSettingsEntity getSystemSettingsEntity() {
-        SystemSettingsEntity storedSettings = queryFirst("from SystemSettingsEntity");
-        if (storedSettings == null) {
-            SystemSettingsEntity systemSettingsEntity = new SystemSettingsEntity();
-            systemSettingsEntity.setProfileOrdering("");
-            systemSettingsEntity.setStartupProfile(null);
-            return systemSettingsEntity;
-        }
-        return storedSettings;
-    }
-
-    public void saveSystemSettings(SystemSettingsEntity systemSettings) {
-        insertOrUpdate(systemSettings);
-    }
-
     public Map<String, String> getParametersForProfile(@NotNull Profile profileName) {
         LOGGER.info("get parameters for " + profileName);
         List<ConfigEntity> objects = getConfigEntities(profileName);

@@ -18,6 +18,5 @@
         <mapping class="net.gnehzr.cct.dao.SolutionEntity"/>
         <mapping class="net.gnehzr.cct.dao.SessionEntity"/>
         <mapping class="net.gnehzr.cct.dao.SplitTimesEntity"/>
-        <mapping class="net.gnehzr.cct.dao.SystemSettingsEntity"/>
     </session-factory>
 </hibernate-configuration>

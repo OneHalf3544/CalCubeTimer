@@ -1,14 +1,14 @@
 package net.gnehzr.cct.dao;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 import static org.mockito.Mockito.mock;
 
@@ -19,8 +19,9 @@ public class ProfileDaoTest {
     @Test(enabled = false)
     public void main() {
         SessionFactory sessionFactory = ProfileDao.configureSessionFactory();
-        ProfileDao profileDao = new ProfileDao(mock(Configuration.class), mock(ConfigurationDao.class),
-                mock(CurrentSessionSolutionsTableModel.class), mock(ScramblePluginManager.class), sessionFactory, mock(SolutionDao.class));
+        ProfileDao profileDao = new ProfileDao(mock(Configuration.class),
+                mock(CurrentSessionSolutionsTableModel.class), mock(ScramblePluginManager.class),
+                sessionFactory, mock(SolutionDao.class), mock(CalCubeTimerModel.class));
 
         profileDao.update(session1 -> {
             // Creating Contact entity that will be save to the sqlite database
@@ -30,11 +31,9 @@ public class ProfileDaoTest {
             session1.save(myProfile);
         });
 
-        List<ProfileEntity> contactList = profileDao.getAllProfiles();
+        Profile contact = profileDao.loadProfile("OneHalf");
 
-        for (ProfileEntity contact : contactList) {
-            LOG.info("Name: " + contact.getName());
-        }
+        LOG.info("Name: " + contact.getName());
         sessionFactory.close();
     }
 

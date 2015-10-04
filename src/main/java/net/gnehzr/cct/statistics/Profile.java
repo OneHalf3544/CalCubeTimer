@@ -75,7 +75,7 @@ public class Profile {
         return sessionsListTableModel;
     }
 
-    public void setPuzzleDatabase(SessionsListTableModel puzzleDatabase) {
+    public void setSessionsListTableModel(SessionsListTableModel puzzleDatabase) {
         this.sessionsListTableModel = puzzleDatabase;
     }
 

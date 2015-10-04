@@ -1,27 +1,30 @@
 package net.gnehzr.cct.misc.customJTable;
 
+import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.main.ScrambleCustomizationChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SessionsListTableModel;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import java.awt.*;
 
 public class SessionsTable extends DraggableJTable implements SelectionListener {
-	private final CurrentSessionSolutionsTableModel statsModel;
-	private final ProfileDao profileDao;
 
-	public SessionsTable(CurrentSessionSolutionsTableModel statsModel, Configuration configuration, ScramblePluginManager scramblePluginManager, ProfileDao profileDao) {
+	private final CurrentSessionSolutionsTableModel statsModel;
+	private final CalCubeTimerModel timerModel;
+
+	public SessionsTable(CurrentSessionSolutionsTableModel statsModel, Configuration configuration,
+						 ScramblePluginManager scramblePluginManager, CalCubeTimerModel timerModel) {
 		super(configuration, false, true);
 		this.statsModel = statsModel;
-		this.profileDao = profileDao;
+		this.timerModel = timerModel;
 		this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		//for some reason, the default preferred size is huge
 		this.setPreferredScrollableViewportSize(new Dimension(0, 0));
@@ -37,8 +40,8 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		super.setSelectionListener(this);
 		configuration.addConfigurationChangeListener((p) -> refreshModel());
 		super.sortByColumn(new RowSorter.SortKey(0, SortOrder.DESCENDING));
-		refreshModel();
 	}
+
 	@Override
 	public void rowSelected(int row) {
 		Session selected = (Session) getValueAt(row, convertColumnIndexToView(0));
@@ -47,14 +50,16 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		}
 	}
 	
-	private SessionsListTableModel pd;
+	private SessionsListTableModel sessionsListTableModel;
 
+	@Inject
 	public void refreshModel() {
-		if(pd != null)
-			pd.setSessionListener(null);
-		pd = profileDao.getSelectedProfile().getSessionsDatabase();
-		pd.setSessionListener(l);
-		super.setModel(pd);
+		if(sessionsListTableModel != null) {
+			sessionsListTableModel.setSessionListener(null);
+		}
+		sessionsListTableModel = timerModel.getSelectedProfile().getSessionsDatabase();
+		sessionsListTableModel.setSessionListener(l);
+		super.setModel(sessionsListTableModel);
 	}
 	
 	@Override
@@ -62,7 +67,7 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		int modelRow = event.getFirstRow();
 		boolean oneRowSelected = (modelRow == event.getLastRow());
 		if(modelRow != -1 && event.getType() == TableModelEvent.UPDATE && oneRowSelected) {
-			Session s = pd.getNthSession(modelRow);
+			Session s = sessionsListTableModel.getNthSession(modelRow);
 			if(s != null && s == statsModel.getCurrentSession()) {
 				//this indicates that the ScrambleCustomization of the currently selected profile has been changed
 				//we deal with this by simply reselecting the current session

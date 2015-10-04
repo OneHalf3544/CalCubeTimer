@@ -3,7 +3,6 @@ package net.gnehzr.cct.main;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.scrambles.ScrambleList;
-import net.gnehzr.cct.dao.ProfileDao;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -23,17 +22,17 @@ class ExportScramblesAction extends AbstractAction {
 
 	public static final String ACTION_NAME = "exportscrambles";
 
-	private final ProfileDao profileDao;
+	private final CalCubeTimerModel cubeTimerModel;
 	private final ScrambleImporter scrambleImporter;
 	private final ScrambleList scramblesList;
 
 	@Inject
-	public ExportScramblesAction(ScrambleImporter scrambleImporter, ProfileDao profileDao,
+	public ExportScramblesAction(ScrambleImporter scrambleImporter, CalCubeTimerModel cubeTimerModel,
 								 ScrambleList scramblesList) {
 		putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_E);
 		this.scrambleImporter = scrambleImporter;
-		this.profileDao = profileDao;
+		this.cubeTimerModel = cubeTimerModel;
 		this.scramblesList = scramblesList;
 
 	}
@@ -45,6 +44,6 @@ class ExportScramblesAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		scrambleImporter.exportScramblesAction(profileDao.getSelectedProfile(), scramblesList);
+		scrambleImporter.exportScramblesAction(cubeTimerModel.getSelectedProfile(), scramblesList);
 	}
 }

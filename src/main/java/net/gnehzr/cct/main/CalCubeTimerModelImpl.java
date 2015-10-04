@@ -74,6 +74,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     private boolean fullscreen = false;
     private Instant inspectionStart = null;
+    private Profile currentProfile;
 
     @Inject
     public CalCubeTimerModelImpl(CalCubeTimerGui calCubeTimerGui, Configuration configuration, ProfileDao profileDao,
@@ -86,31 +87,19 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         this.numberSpeaker = numberSpeaker;
         this.actionMap = initializeActionMap(actionMap);
         configuration.addConfigurationChangeListener(cctModelConfigChangeListener);
+        LOG.debug("model created");
     }
 
     @Inject
     void initialize() {
         updateInspectionTimer = new Timer(90, e -> calCubeTimerGui.updateInspection());
-    }
-
-    @Override
-    public boolean isLoading() {
-        return loading;
-    }
-
-    @Override
-    public void setLoading(boolean loading) {
-        this.loading = loading;
-    }
-
-    @Inject
-    void initializeModel() {
         metronome = Metronome.createTickTockTimer(Duration.ofSeconds(1));
+        LOG.debug("model initialized");
     }
 
     @Override
     public void prepareForProfileSwitch() {
-        Profile profile = profileDao.getSelectedProfile();
+        Profile profile = getSelectedProfile();
         profileDao.saveDatabase(profile);
         profileDao.saveProfile(profile);
         calCubeTimerGui.saveToConfiguration();
@@ -176,7 +165,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public Session getNextSession(CALCubeTimerFrame calCubeTimerFrame) {
         Session nextSesh = getStatsModel().getCurrentSession();
-        Profile p = profileDao.getSelectedProfile();
+        Profile p = getSelectedProfile();
         ScrambleCustomization customization = scramblesList.getCurrentScrambleCustomization();
         SessionsListTableModel puzzleDatabase = p.getSessionsDatabase();
         PuzzleStatistics puzzleStatistics = puzzleDatabase.getPuzzleStatisticsForType(customization);
@@ -187,6 +176,16 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
                     .orElseGet(() -> calCubeTimerFrame.createNewSession(p, customization));
         }
         return nextSesh;
+    }
+
+    @Override
+    public void setSelectedProfile(Profile currentProfile) {
+        this.currentProfile = currentProfile;
+    }
+
+    @Override
+    public Profile getSelectedProfile() {
+        return currentProfile;
     }
 
     @Override

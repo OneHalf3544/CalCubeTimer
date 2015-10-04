@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScrambleList;
-import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
@@ -22,17 +21,17 @@ import java.awt.event.ActionEvent;
 public class NewSessionAction extends AbstractAction {
 
     private final CALCubeTimerFrame calCubeTimerFrame;
+    private final CalCubeTimerModel calCubeTimerModel;
 
     @Inject
     private CurrentSessionSolutionsTableModel statsModel;
     @Inject
-    private ProfileDao profileDao;
-    @Inject
     private ScrambleList scramblesList;
 
     @Inject
-    public NewSessionAction(CALCubeTimerFrame calCubeTimerFrame) {
+    public NewSessionAction(CALCubeTimerFrame calCubeTimerFrame, CalCubeTimerModel calCubeTimerModel) {
         this.calCubeTimerFrame = calCubeTimerFrame;
+        this.calCubeTimerModel = calCubeTimerModel;
     }
 
     @Inject
@@ -44,7 +43,7 @@ public class NewSessionAction extends AbstractAction {
     public void actionPerformed(ActionEvent arg0) {
         if (statsModel.getRowCount() > 0) { //only create a new session if we've added any times to the current one
             ScrambleCustomization scrambleCustomization = scramblesList.getCurrentScrambleCustomization();
-            statsModel.setCurrentSession(calCubeTimerFrame.createNewSession(profileDao.getSelectedProfile(), scrambleCustomization));
+            statsModel.setCurrentSession(calCubeTimerFrame.createNewSession(calCubeTimerModel.getSelectedProfile(), scrambleCustomization));
             calCubeTimerFrame.getTimeLabel().reset();
             scramblesList.clear();
             calCubeTimerFrame.updateScramble();

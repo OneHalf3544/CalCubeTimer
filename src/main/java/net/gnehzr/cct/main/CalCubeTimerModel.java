@@ -7,10 +7,7 @@ import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import net.gnehzr.cct.statistics.Session;
-import net.gnehzr.cct.statistics.SolveTime;
-import net.gnehzr.cct.statistics.SolveType;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.*;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,10 +23,6 @@ import java.util.List;
 public interface CalCubeTimerModel extends SessionListener {
 
     String SCRAMBLE_ATTRIBUTE_CHANGED = "Scramble Attribute Changed";
-
-    boolean isLoading();
-
-    void setLoading(boolean loading);
 
     boolean isTiming();
 
@@ -87,4 +80,8 @@ public interface CalCubeTimerModel extends SessionListener {
     void prepareForProfileSwitch();
 
     Session getNextSession(CALCubeTimerFrame calCubeTimerFrame);
+
+    void setSelectedProfile(Profile currentProfile);
+
+    Profile getSelectedProfile();
 }

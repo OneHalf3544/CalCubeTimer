@@ -136,7 +136,7 @@ public class StackmatState extends TimerState {
 
 	@Override
 	public String toString(Configuration configuration) {
-		return Utils.formatTime(new SolveTime(getTime()), configuration.getBoolean(VariableKey.CLOCK_FORMAT));
+		return Utils.formatTime(new SolveTime(getTime()), configuration.useClockFormat());
 	}
 
 	@Override

@@ -52,9 +52,9 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
         //Configuration for the cctbot to work.
         actionMap.refreshActions();
 
-        List<Profile> profiles = profileDao.getProfiles(configuration);
+        List<Profile> profiles = profileDao.getProfiles();
         calCubeTimerGui.getMainFrame().profilesComboBox.setModel(new DefaultComboBoxModel<>(profiles.toArray(new Profile[profiles.size()])));
-        calCubeTimerGui.getMainFrame().selectProfileWithoutListenersNotify(calCubeTimerGui.getMainFrame().profilesComboBox, profileDao.getSelectedProfile(), calCubeTimerGui.getMainFrame().profileComboboxListener);
+        calCubeTimerGui.getMainFrame().selectProfileWithoutListenersNotify(calCubeTimerGui.getMainFrame().profilesComboBox, calCubeTimerModel.getSelectedProfile(), calCubeTimerGui.getMainFrame().profileComboboxListener);
         calCubeTimerGui.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
         calCubeTimerGui.getMainFrame().updateWatermark();
 

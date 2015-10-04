@@ -78,7 +78,7 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
 	
 	public void setVisible(boolean b) {
 		if(b) {
-			setSize(configuration.getDimension(VariableKey.STATS_DIALOG_DIMENSION, false));
+			setSize(configuration.getDimension(VariableKey.STATS_DIALOG_DIMENSION));
 			sizeSpinner.setValue(configuration.getInt(VariableKey.STATS_DIALOG_FONT_SIZE).intValue());
 			setLocationRelativeTo(getParent());
 		} else

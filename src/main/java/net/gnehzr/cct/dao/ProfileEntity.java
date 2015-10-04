@@ -1,6 +1,7 @@
 package net.gnehzr.cct.dao;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -23,6 +24,9 @@ public class ProfileEntity {
 
     @Column(unique = true, nullable = false)
     private String name;
+
+    @Column
+    private LocalDateTime lastLoad;
 
     @OneToMany(orphanRemoval = true)
     private List<ConfigEntity> configEntity;
@@ -77,5 +81,13 @@ public class ProfileEntity {
 
     public void setSessionEntities(List<SessionEntity> sessionEntities) {
         this.sessionEntities = sessionEntities;
+    }
+
+    public LocalDateTime getLastLoad() {
+        return lastLoad;
+    }
+
+    public void setLastLoad(LocalDateTime lastLoad) {
+        this.lastLoad = lastLoad;
     }
 }

@@ -2,7 +2,6 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.collect.ImmutableSet;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import org.apache.logging.log4j.LogManager;
@@ -118,7 +117,7 @@ public class SolveTime implements Comparable<SolveTime> {
 			return "N/A";
 		}
 		boolean useClockFormat = configuration.isPropertiesLoaded()
-				&& configuration.getBoolean(VariableKey.CLOCK_FORMAT);
+				&& configuration.useClockFormat();
 
 		return toString(useClockFormat);
 	}
@@ -244,5 +243,9 @@ public class SolveTime implements Comparable<SolveTime> {
 
 	public boolean isZero() {
 		return getTime().isZero();
+	}
+
+	public boolean isNegative() {
+		return time != null && time.isNegative();
 	}
 }

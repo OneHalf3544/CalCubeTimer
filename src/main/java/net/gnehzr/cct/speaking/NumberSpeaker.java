@@ -173,7 +173,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 		if(yourTime) {
     		getMP3FromName("your_time_is").play();
     	}
-		Boolean clockFormat = configuration.getBoolean(VariableKey.CLOCK_FORMAT);
+		Boolean clockFormat = configuration.useClockFormat();
 
 		List<String> wordFileNamesList = breakItDown(time.getTime(), clockFormat);
     	for(String file : wordFileNamesList) {

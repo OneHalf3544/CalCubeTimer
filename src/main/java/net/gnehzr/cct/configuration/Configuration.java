@@ -1,6 +1,5 @@
 package net.gnehzr.cct.configuration;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -154,12 +153,6 @@ public class Configuration {
 
 	//********* Start of specialized methods ***************//
 
-	public void setProfileOrdering(List<Profile> profiles) {
-        profileOrdering = Joiner.on("|").join(profiles);
-	}
-
-	public String profileOrdering;
-
 	//returns file stored in props file, if available
 	//otherwise, returns any available layout
 	//otherwise, returns null
@@ -310,8 +303,8 @@ public class Configuration {
 		return userProperties.getColor(timerFg, b);
 	}
 
-	public Dimension getDimension(VariableKey<Dimension> ircFrameDimension, boolean b) {
-		return userProperties.getDimension(ircFrameDimension);
+	public Dimension getDimension(VariableKey<Dimension> dimension) {
+		return userProperties.getDimension(dimension);
 	}
 
 	public float getFloat(VariableKey<Float> opacity, boolean b) {
@@ -349,6 +342,10 @@ public class Configuration {
 
 	public boolean keyExists(VariableKey<Boolean> key) {
 		return userProperties.keyExists(key);
+	}
+
+	public boolean useClockFormat() {
+		return getBoolean(VariableKey.CLOCK_FORMAT);
 	}
 
 	static class SubstanceFontPolicy implements FontPolicy {

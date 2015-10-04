@@ -111,7 +111,7 @@ public class ProfileListModel extends DraggableJTableModel {
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return !contents.get(rowIndex).equals(profileDao.guestProfile);
+        return !contents.get(rowIndex).getName().equals(ProfileDao.GUEST_NAME);
     }
 
 	@Override

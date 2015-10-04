@@ -78,12 +78,12 @@ public class Main implements Module {
 
         SessionFactory sessionFactory = createSessionFactory();
 
-        ProfileDao profileDao;
         try {
+            LOG.debug("create injector");
             injector = Guice.createInjector(new Main(sessionFactory));
-            profileDao = injector.getInstance(ProfileDao.class);
 
-            profileDao.setSelectedProfile(getProfileToLoad(args, profileDao));
+            CalCubeTimerModel calCubeTimerModel = injector.getInstance(CalCubeTimerModel.class);
+            calCubeTimerModel.setSelectedProfile(loadProfile(args, injector.getInstance(ProfileDao.class)));
 
         } catch (Exception e) {
             LOG.error("initialisation error", e);
@@ -116,9 +116,7 @@ public class Main implements Module {
                 calCubeTimerFrame.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
                 calCubeTimerFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-                ProfileDao profileDao2 = injector.getInstance(ProfileDao.class);
-                calCubeTimerFrame.setSelectedProfile(profileDao2.getSelectedProfile()); //this will eventually cause sessionSelected() and configurationChanged() to be called
-                configuration1.loadConfiguration(profileDao2.getSelectedProfile());
+                configuration1.loadConfiguration(calCubeTimerModel.getSelectedProfile());
 
                 calCubeTimerFrame.setVisible(true);
 
@@ -126,7 +124,7 @@ public class Main implements Module {
 
                 calCubeTimerModel.sessionSelected(calCubeTimerModel.getNextSession(calCubeTimerFrame));
 
-                configuration1.apply(profileDao2.getSelectedProfile());
+                configuration1.apply(calCubeTimerModel.getSelectedProfile());
                 calCubeTimerFrame.repaintTimes();
             } catch (Exception e) {
                 LOG.error("unexpected exception", e);
@@ -136,16 +134,16 @@ public class Main implements Module {
         });
     }
 
-    private static Profile getProfileToLoad(String[] args, ProfileDao profileDao) {
+    private static Profile loadProfile(String[] args, ProfileDao profileDao) {
         if (args.length != 1) {
-            return profileDao.guestProfile;
+            return profileDao.loadLastProfile();
         }
 
         String startupProfile = args[0];
         Profile profileFromCommandLine = profileDao.loadProfile(startupProfile);
-        if(profileFromCommandLine == null) {
-            LOG.info("Couldn't find directory " + startupProfile);
-            return profileDao.guestProfile;
+        if (profileFromCommandLine == null) {
+            LOG.info("Couldn't find profile {}", startupProfile);
+            return profileDao.getOrCreateGuestProfile();
         } else {
             return profileFromCommandLine;
         }
@@ -153,6 +151,7 @@ public class Main implements Module {
 
     @Nullable
     private static SessionFactory createSessionFactory() {
+        LOG.debug("create SessionFactory");
         SessionFactory sessionFactory = null;
         try {
             sessionFactory = HibernateDaoSupport.configureSessionFactory();

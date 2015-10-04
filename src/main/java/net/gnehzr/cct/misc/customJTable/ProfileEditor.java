@@ -28,7 +28,7 @@ public class ProfileEditor extends DefaultCellEditor {
 	@Override
 	public boolean stopCellEditing() {
 		String s = (String) super.getCellEditorValue();
-		value = profileDao.getProfileByName(s);
+		value = profileDao.loadProfile(s);
 		if(!value.toString().equals(originalValue)) {
 			String error = null;
 			if(stringContainsCharacters(s, INVALID_CHARACTERS))

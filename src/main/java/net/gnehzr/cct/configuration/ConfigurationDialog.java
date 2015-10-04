@@ -5,6 +5,7 @@ import net.gnehzr.cct.configuration.SolveTypeTagEditorTableModel.TypeAndName;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
+import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.main.Metronome;
 import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
@@ -43,6 +44,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	private final ScramblePluginManager scramblePluginManager;
 	private final CurrentSessionSolutionsTableModel statsModel;
 	private final NumberSpeaker numberSpeaker;
+	private final CalCubeTimerModel cubeTimerModel;
 
 	private static abstract class SyncGUIListener implements ActionListener {
 		@Override
@@ -60,17 +62,19 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 
 	public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
 							   ScramblePluginManager scramblePluginManager, CurrentSessionSolutionsTableModel statsModel,
-							   NumberSpeaker numberSpeaker, StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
+							   NumberSpeaker numberSpeaker, CalCubeTimerModel cubeTimerModel,
+							   StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
 		super(parent, modal);
 		this.configuration = configuration;
 		this.profileDao = profileDao;
 		this.scramblePluginManager = scramblePluginManager;
 		this.statsModel = statsModel;
 		this.numberSpeaker = numberSpeaker;
+		this.cubeTimerModel = cubeTimerModel;
 		this.stackmat = stackmat;
 		this.tickTock = tickTock;
 		this.timesTable = timesTable;
-		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePluginManager, profileDao);
+		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePluginManager, cubeTimerModel);
 		profilesModel = new ProfileListModel(this.profileDao);
 		createGUI();
 		setLocationRelativeTo(parent);
@@ -446,8 +450,8 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			public void syncGUIWithConfig(boolean defaults) {
 				// profile settings
 				scramblePluginManager.reloadLengthsFromConfiguration(defaults);
-				puzzlesModel.setContents(scramblePluginManager.getScrambleCustomizations(profileDao.getSelectedProfile(), defaults));
-				profilesModel.setContents(profileDao.getProfiles(configuration));
+				puzzlesModel.setContents(scramblePluginManager.getScrambleCustomizations(cubeTimerModel.getSelectedProfile(), defaults));
+				profilesModel.setContents(profileDao.getProfiles());
 			}
 		};
 		resetListeners.add(sl);
@@ -783,7 +787,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			password.setEnabled(useSMTP && SMTPauth.isSelected());
 		} else if(source == inspectionCountdown) {
 			speakInspection.setEnabled(inspectionCountdown.isSelected());
-		} else if(e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(profileDao.getSelectedProfile())) {
+		} else if(e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(cubeTimerModel.getSelectedProfile())) {
 			int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("ConfigurationDialog.saveprofile"));
 			switch (choice) {
 				case JOptionPane.YES_OPTION:
@@ -792,7 +796,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 				case JOptionPane.NO_OPTION:
 					break;
 				default:
-					profiles.setSelectedItem(profileDao.getSelectedProfile());
+					profiles.setSelectedItem(cubeTimerModel.getSelectedProfile());
 					return;
 			}
 			Profile profile = (Profile) profiles.getSelectedItem();
@@ -801,7 +805,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			} catch(Exception e1) {
 				LOG.info("unexpected exception", e1);
 			}
-			profileDao.setSelectedProfile(profile);
+			cubeTimerModel.setSelectedProfile(profile);
 			profileDao.loadDatabase(profile, scramblePluginManager);
 
 			configuration.loadConfiguration(profile);
@@ -1085,9 +1089,9 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	}
 	
 	public void syncGUIwithConfig(boolean defaults) {
-		setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + profileDao.getSelectedProfile().getName());
-		profiles.setModel(new DefaultComboBoxModel<>(Iterables.toArray(profileDao.getProfiles(configuration), Profile.class)));
-		profiles.setSelectedItem(profileDao.getSelectedProfile());
+		setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + cubeTimerModel.getSelectedProfile().getName());
+		profiles.setModel(new DefaultComboBoxModel<>(Iterables.toArray(profileDao.getProfiles(), Profile.class)));
+		profiles.setSelectedItem(cubeTimerModel.getSelectedProfile());
 		for(SyncGUIListener sl : resetListeners) {
 			sl.syncGUIWithConfig(defaults);
 		}
@@ -1150,9 +1154,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		configuration.setString(VariableKey.CURRENT_AVERAGE_STATISTICS, currentAverageStats.getText());
 		configuration.setString(VariableKey.BEST_RA_STATISTICS, bestRAStats.getText());
 
-		for(ScrambleViewComponent puzzle : solvedPuzzles) {
-			puzzle.commitColorSchemeToConfiguration();
-		}
+		solvedPuzzles.forEach(ScrambleViewComponent::commitColorSchemeToConfiguration);
 
 		configuration.setBoolean(VariableKey.TIMING_SPLITS, splits.isSelected());
 		configuration.setDouble(VariableKey.MIN_SPLIT_DIFFERENCE, (Double) minSplitTime.getValue());
@@ -1185,18 +1187,17 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			sc.scramblePluginManager.saveGeneratorToConfiguration(sc);
 
 		profilesModel.commitChanges();
-		configuration.setProfileOrdering(profilesModel.getContents());
 
 		tagsModel.apply();
 		
-		configuration.apply(profileDao.getSelectedProfile());
+		configuration.apply(cubeTimerModel.getSelectedProfile());
 
 		for (ComboItem item : items) {
 			item.setInUse(false);
 		}
 		items[configuration.getInt(VariableKey.MIXER_NUMBER)].setInUse(true);
 
-		configuration.saveConfiguration(profileDao.getSelectedProfile());
+		configuration.saveConfiguration(cubeTimerModel.getSelectedProfile());
 	}
 
 	@Override
