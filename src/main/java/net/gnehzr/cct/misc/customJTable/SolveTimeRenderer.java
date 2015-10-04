@@ -12,10 +12,10 @@ import java.awt.*;
 
 public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 	// Will highlight times from current average and from best rolling average
-	private StatisticsTableModel statsModel;
+	private CurrentSessionSolutionsTableModel statsModel;
 	private final Configuration configuration;
 
-	public SolveTimeRenderer(StatisticsTableModel statsModel, Configuration configuration) {
+	public SolveTimeRenderer(CurrentSessionSolutionsTableModel statsModel, Configuration configuration) {
 		this.statsModel = statsModel;
 		this.configuration = configuration;
 		setOpaque(true);

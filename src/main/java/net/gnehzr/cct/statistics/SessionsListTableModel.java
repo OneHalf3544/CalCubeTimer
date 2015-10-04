@@ -22,19 +22,47 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class SessionsTableModel extends DraggableJTableModel {
+public class SessionsListTableModel extends DraggableJTableModel {
 
-	private static final Logger LOG = LogManager.getLogger(SessionsTableModel.class);
+	private static final Logger LOG = LogManager.getLogger(SessionsListTableModel.class);
 
-	private Map<ScrambleCustomization, PuzzleStatistics> database = new HashMap<>();
+	private static final String SEND_TO_PROFILE = "sendToProfile";
+
+	private Map<ScrambleCustomization, PuzzleStatistics> mapScrambleTypeStatistics = new HashMap<>();
 
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
-	private final StatisticsTableModel statsModel;
+	private final CurrentSessionSolutionsTableModel statsModel;
 	private final ScramblePluginManager scramblePluginManager;
 
-	public SessionsTableModel(Configuration configuration, ProfileDao profileDao,
-							  StatisticsTableModel statsModel, ScramblePluginManager scramblePluginManager) {
+	private List<Session> sessionCache = new ArrayList<>();
+	private SessionListener l;
+
+	private String[] columnNames = new String[] {
+			"ProfileDatabase.datestarted",
+			"ProfileDatabase.customization",
+			"ProfileDatabase.sessionaverage",
+			"ProfileDatabase.bestra0",
+			"ProfileDatabase.bestra1",
+			"ProfileDatabase.besttime",
+			"ProfileDatabase.stdev",
+			"ProfileDatabase.solvecount",
+			"ProfileDatabase.comment" };
+
+	private Class<?>[] columnClasses = new Class<?>[] {
+			Session.class,
+			ScrambleCustomization.class,
+			SolveTime.class,
+			SolveTime.class,
+			SolveTime.class,
+			SolveTime.class,
+			SolveTime.class,
+			Integer.class,
+			String.class
+	};
+
+	public SessionsListTableModel(Configuration configuration, ProfileDao profileDao,
+								  CurrentSessionSolutionsTableModel statsModel, ScramblePluginManager scramblePluginManager) {
 		this.configuration = configuration;
 		this.profileDao = profileDao;
 		this.statsModel = statsModel;
@@ -42,18 +70,18 @@ public class SessionsTableModel extends DraggableJTableModel {
 	}
 
 	private List<PuzzleStatistics> getPuzzlesStatistics() {
-		return new ArrayList<>(database.values());
+		return new ArrayList<>(mapScrambleTypeStatistics.values());
 	}
 
 	public List<ScrambleCustomization> getCustomizations() {
-		return new ArrayList<>(database.keySet());
+		return new ArrayList<>(mapScrambleTypeStatistics.keySet());
 	}
 
-	public PuzzleStatistics getPuzzleStatistics(ScrambleCustomization customization) {
-		PuzzleStatistics puzzleStatistics = database.get(customization);
+	public PuzzleStatistics getPuzzleStatisticsForType(ScrambleCustomization customization) {
+		PuzzleStatistics puzzleStatistics = mapScrambleTypeStatistics.get(customization);
 		if(puzzleStatistics == null) {
 			puzzleStatistics = new PuzzleStatistics(customization, this, configuration, statsModel);
-			database.put(customization, puzzleStatistics);
+			mapScrambleTypeStatistics.put(customization, puzzleStatistics);
 		}
 		return puzzleStatistics;
 	}
@@ -70,7 +98,7 @@ public class SessionsTableModel extends DraggableJTableModel {
 
 	public int getDatabaseTypeCount(SolveType t) {
 		int c = 0;
-		for(PuzzleStatistics ps : database.values())
+		for(PuzzleStatistics ps : mapScrambleTypeStatistics.values())
 			c += ps.getSolveTypeCount(t);
 		return c;
 	}
@@ -95,8 +123,7 @@ public class SessionsTableModel extends DraggableJTableModel {
 		}
 		return -1;
 	}
-	
-	private SessionListener l;
+
 	public void setSessionListener(SessionListener sl) {
 		l = sl;
 	}
@@ -115,8 +142,6 @@ public class SessionsTableModel extends DraggableJTableModel {
 		super.fireTableDataChanged();
 	}
 
-	private List<Session> sessionCache = new ArrayList<>();
-
 	private void updateSessionCache() {
 		sessionCache.clear();
 		for(PuzzleStatistics ps : getPuzzlesStatistics()) {
@@ -125,29 +150,6 @@ public class SessionsTableModel extends DraggableJTableModel {
 			}
 		}
 	}
-	
-	private String[] columnNames = new String[] {
-			"ProfileDatabase.datestarted",
-			"ProfileDatabase.customization",
-			"ProfileDatabase.sessionaverage",
-			"ProfileDatabase.bestra0",
-			"ProfileDatabase.bestra1",
-			"ProfileDatabase.besttime",
-			"ProfileDatabase.stdev",
-			"ProfileDatabase.solvecount",
-			"ProfileDatabase.comment" };
-
-	private Class<?>[] columnClasses = new Class<?>[] {
-			Session.class,
-			ScrambleCustomization.class,
-			SolveTime.class,
-			SolveTime.class,
-			SolveTime.class,
-			SolveTime.class,
-			SolveTime.class,
-			Integer.class,
-			String.class
-	};
 
 	@Override
 	public String getColumnName(int column) {
@@ -247,8 +249,6 @@ public class SessionsTableModel extends DraggableJTableModel {
 		return t.isEmpty() ? null : t;
 	}
 
-	private static final String SEND_TO_PROFILE = "sendToProfile";
-
 	@Override
 	public void showPopup(MouseEvent e, final DraggableJTable source, Component prevFocusOwner) {
 		JPopupMenu jpopup = new JPopupMenu();
@@ -293,7 +293,7 @@ public class SessionsTableModel extends DraggableJTableModel {
 		for(Session session : sessions) {
             ScrambleCustomization custom = session.getCustomization();
             session.delete();
-            to.getSessionsDatabase().getPuzzleStatistics(custom).addSession(session);
+            to.getSessionsDatabase().getPuzzleStatisticsForType(custom).addSession(session);
         }
 		fireSessionsDeleted();
 		profileDao.saveDatabase(to);

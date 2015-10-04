@@ -17,7 +17,7 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 
 	private ScrambleCustomization customization;
 
-	private SessionsTableModel sessionsTableModel;
+	private SessionsListTableModel sessionsListTableModel;
 
 	private final Configuration configuration;
 
@@ -30,10 +30,10 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 
 	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<>();
 
-	public PuzzleStatistics(ScrambleCustomization customization, SessionsTableModel sessionsTableModel,
-							Configuration configuration, StatisticsTableModel statsModel) {
+	public PuzzleStatistics(ScrambleCustomization customization, SessionsListTableModel sessionsListTableModel,
+							Configuration configuration, CurrentSessionSolutionsTableModel statsModel) {
 		this.customization = customization;
-		this.sessionsTableModel = sessionsTableModel;
+		this.sessionsListTableModel = sessionsListTableModel;
 		this.configuration = configuration;
 		//We need some way for each profile database to listen for updates,
 		//this seems fine to me, although nasty
@@ -56,21 +56,21 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 		sessions.add(session);
 		session.setPuzzleStatistics(this);
 		refreshStats();
-		sessionsTableModel.fireTableDataChanged();
+		sessionsListTableModel.fireTableDataChanged();
 	}
 
 	public void removeSession(Session s) {
 		sessions.remove(s);
 		refreshStats();
-		sessionsTableModel.fireTableDataChanged();
+		sessionsListTableModel.fireTableDataChanged();
 	}
 
 	public boolean containsSession(Session s) {
 		return sessions.contains(s);
 	}
 
-	public SessionsTableModel getPuzzleDatabase() {
-		return sessionsTableModel;
+	public SessionsListTableModel getPuzzleDatabase() {
+		return sessionsListTableModel;
 	}
 
 	public String toString() {
@@ -80,7 +80,7 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 	@Override
 	public void update() {
 		refreshStats();
-		sessionsTableModel.fireTableDataChanged();
+		sessionsListTableModel.fireTableDataChanged();
 	}
 
 	private void refreshStats() {

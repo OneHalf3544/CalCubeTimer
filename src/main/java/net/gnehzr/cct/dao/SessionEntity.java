@@ -20,7 +20,7 @@ public class SessionEntity {
     @Column(name = "SESSION_ID")
     private Long sessionId;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     private List<SolutionEntity> solutions;
 
     @Column

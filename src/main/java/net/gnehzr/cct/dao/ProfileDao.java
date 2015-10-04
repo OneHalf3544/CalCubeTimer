@@ -6,8 +6,8 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.SessionsTableModel;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.SessionsListTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -43,7 +43,7 @@ public class ProfileDao extends HibernateDaoSupport {
     public final Profile guestProfile;
 
     private final ConfigurationDao configurationDao;
-    private final StatisticsTableModel statisticsTableModel;
+    private final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
     private final ScramblePluginManager scramblePluginManager;
 
     @NotNull
@@ -51,12 +51,12 @@ public class ProfileDao extends HibernateDaoSupport {
     private SolutionDao solutionsDao;
 
     @Inject
-    public ProfileDao(Configuration configuration, ConfigurationDao configurationDao, StatisticsTableModel statisticsTableModel,
+    public ProfileDao(Configuration configuration, ConfigurationDao configurationDao, CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel,
                       ScramblePluginManager scramblePluginManager, SessionFactory sessionFactory, SolutionDao solutionsDao) {
         super(sessionFactory);
         this.configuration = configuration;
         this.configurationDao = configurationDao;
-        this.statisticsTableModel = statisticsTableModel;
+        this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
         this.scramblePluginManager = scramblePluginManager;
         this.solutionsDao = solutionsDao;
         guestProfile = getOrCreateGuestProfile();
@@ -73,34 +73,37 @@ public class ProfileDao extends HibernateDaoSupport {
 
     public Profile loadProfile(@NotNull String name) {
         checkArgument(!Strings.isNullOrEmpty(name));
-        LOG.debug("load profile " + name);
+        LOG.info("load profile {}", name);
 
         ProfileEntity profileEntity = queryFirst("from PROFILE where name = :name",
                 Collections.singletonMap("name", name));
 
-        SessionsTableModel sessionsTableModel = new SessionsTableModel(configuration, this, statisticsTableModel, scramblePluginManager);
+        SessionsListTableModel sessionsListTableModel = new SessionsListTableModel(configuration, this, currentSessionSolutionsTableModel, scramblePluginManager);
         Profile profile;
         if (profileEntity != null) {
-            profile = new Profile(profileEntity.getProfileId(), name, sessionsTableModel);
+            profile = new Profile(profileEntity.getProfileId(), name, sessionsListTableModel);
             //statisticsTableModel.getCurrentSession().setCustomization();
+            profiles.put(profile.getName(), profile);
+            return profile;
         } else {
-            profile = new Profile(null, name, sessionsTableModel);
+            profile = new Profile(null, name, sessionsListTableModel);
             saveProfile(profile);
+            profile.setPuzzleDatabase(sessionsListTableModel);
             return profile;
         }
-        profiles.put(profile.getName(), profile);
-        return profile;
     }
 
     public void saveProfile(Profile profile) {
         if (profile.getId() == null) {
+            LOG.info("save profile for {}", profile);
             saveProfileWithoutSession(profile);
         }
-        solutionsDao.saveSession(statisticsTableModel.getCurrentSession().toSessionEntity());
+        LOG.info("save current session for {}", profile);
+        solutionsDao.saveSession(currentSessionSolutionsTableModel.getCurrentSession().toSessionEntity());
     }
 
     private void saveProfileWithoutSession(Profile profile) {
-        ProfileEntity entity = profile.toEntity(statisticsTableModel.getCurrentSession().getSessionId());
+        ProfileEntity entity = profile.toEntity(currentSessionSolutionsTableModel.getCurrentSession().getSessionId());
         insert(entity);
         profile.setId(entity.getProfileId());
     }
@@ -114,11 +117,11 @@ public class ProfileDao extends HibernateDaoSupport {
     }
 
     public void loadDatabase(@NotNull Profile profile, ScramblePluginManager scramblePluginManager) {
-        profile.setPuzzleDatabase(new SessionsTableModel(configuration, this, statisticsTableModel, scramblePluginManager));
+        profile.setPuzzleDatabase(new SessionsListTableModel(configuration, this, currentSessionSolutionsTableModel, scramblePluginManager));
     }
 
     public void saveDatabase(Profile profile) {
-        LOG.debug("save database");
+        LOG.debug("save database for profile {}", profile);
         profile.getSessionsDatabase().removeEmptySessions();
     }
 

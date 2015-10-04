@@ -8,7 +8,7 @@ import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -86,7 +86,7 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
 		super.setVisible(b);
 	}
 
-	public void syncWithStats(StatisticsTableModel statsModel, AverageType type, int avgNum) {
+	public void syncWithStats(CurrentSessionSolutionsTableModel statsModel, AverageType type, int avgNum) {
 		sundaySubmitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), type, avgNum);
 		setTitle(StringAccessor.getString("StatsDialogHandler.detailedstats") + " " + type.toString());
 		switch(type) {

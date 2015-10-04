@@ -1,7 +1,9 @@
 package net.gnehzr.cct.dao;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import net.gnehzr.cct.statistics.Session;
 import org.hibernate.SessionFactory;
 
 /**
@@ -22,5 +24,10 @@ public class SolutionDao extends HibernateDaoSupport {
 
     public void saveSession(SessionEntity session) {
         insertOrUpdate(session);
+    }
+
+    public SessionEntity loadSession(Session session) {
+        return queryFirst("FROM SessionEntity WHERE sessionId = :id", ImmutableMap.of(
+                "id", session.getSessionId()));
     }
 }

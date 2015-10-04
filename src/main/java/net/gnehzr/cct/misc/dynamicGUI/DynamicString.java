@@ -23,11 +23,11 @@ public class DynamicString{
 
 	private String rawString;
 	private String[] splitText;
-	private StatisticsTableModel statsModel;
+	private CurrentSessionSolutionsTableModel statsModel;
 	private MessageAccessor accessor;
 	private final Configuration configuration;
 
-	public DynamicString(String s, StatisticsTableModel statsModel, MessageAccessor accessor, Configuration configuration){
+	public DynamicString(String s, CurrentSessionSolutionsTableModel statsModel, MessageAccessor accessor, Configuration configuration){
 		rawString = s;
 		this.statsModel = statsModel;
 		this.accessor = accessor;
@@ -58,7 +58,7 @@ public class DynamicString{
 		splitText = splitUp.toArray(splitText);
 	}
 
-	public StatisticsTableModel getStatisticsModel() {
+	public CurrentSessionSolutionsTableModel getStatisticsModel() {
 		return statsModel;
 	}
 

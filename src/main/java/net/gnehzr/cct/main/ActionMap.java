@@ -5,7 +5,7 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.Statistics;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +50,7 @@ public class ActionMap {
     @Inject
 	private Configuration configuration;
     @Inject
-    private StatisticsTableModel statsModel;
+    private CurrentSessionSolutionsTableModel statsModel;
     @Inject
     private ToggleFullscreenTimingAction toggleFullscreenTimingAction;
 

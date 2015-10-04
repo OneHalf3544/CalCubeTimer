@@ -12,6 +12,7 @@
         <property name="hibernate.show_sql">false</property>
 
         <mapping class="net.gnehzr.cct.dao.converters.DurationConverter"/>
+        <mapping class="net.gnehzr.cct.dao.converters.LocalDateTimeConverter"/>
         <mapping class="net.gnehzr.cct.dao.ProfileEntity"/>
         <mapping class="net.gnehzr.cct.dao.ConfigEntity"/>
         <mapping class="net.gnehzr.cct.dao.SolutionEntity"/>

@@ -15,7 +15,7 @@ import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SolveType;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -41,7 +41,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
 	private final ScramblePluginManager scramblePluginManager;
-	private final StatisticsTableModel statsModel;
+	private final CurrentSessionSolutionsTableModel statsModel;
 	private final NumberSpeaker numberSpeaker;
 
 	private static abstract class SyncGUIListener implements ActionListener {
@@ -59,7 +59,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	JTable timesTable;
 
 	public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
-							   ScramblePluginManager scramblePluginManager, StatisticsTableModel statsModel,
+							   ScramblePluginManager scramblePluginManager, CurrentSessionSolutionsTableModel statsModel,
 							   NumberSpeaker numberSpeaker, StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
 		super(parent, modal);
 		this.configuration = configuration;

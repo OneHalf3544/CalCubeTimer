@@ -128,8 +128,7 @@ public class Main implements Module {
 
                 configuration1.apply(profileDao2.getSelectedProfile());
                 calCubeTimerFrame.repaintTimes();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 LOG.error("unexpected exception", e);
                 Utils.showErrorDialog(null, e, "Couldn't start CCT!");
                 Main.exit(1);
@@ -170,7 +169,11 @@ public class Main implements Module {
         if (injector == null) {
             System.exit(code);
         }
-        injector.getInstance(CalCubeTimerModel.class).prepareForProfileSwitch();
+        try {
+            injector.getInstance(CalCubeTimerModel.class).prepareForProfileSwitch();
+        } catch (Exception e){
+            LOG.error("save profile error", e);
+        }
         injector.getInstance(SessionFactory.class).close();
         System.exit(code);
     }

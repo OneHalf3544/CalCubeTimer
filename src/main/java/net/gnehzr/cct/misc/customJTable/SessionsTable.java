@@ -7,18 +7,18 @@ import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
 import net.gnehzr.cct.scrambles.ScrambleCustomization;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Session;
-import net.gnehzr.cct.statistics.SessionsTableModel;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.SessionsListTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import java.awt.*;
 
 public class SessionsTable extends DraggableJTable implements SelectionListener {
-	private final StatisticsTableModel statsModel;
+	private final CurrentSessionSolutionsTableModel statsModel;
 	private final ProfileDao profileDao;
 
-	public SessionsTable(StatisticsTableModel statsModel, Configuration configuration, ScramblePluginManager scramblePluginManager, ProfileDao profileDao) {
+	public SessionsTable(CurrentSessionSolutionsTableModel statsModel, Configuration configuration, ScramblePluginManager scramblePluginManager, ProfileDao profileDao) {
 		super(configuration, false, true);
 		this.statsModel = statsModel;
 		this.profileDao = profileDao;
@@ -47,7 +47,7 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		}
 	}
 	
-	private SessionsTableModel pd;
+	private SessionsListTableModel pd;
 
 	public void refreshModel() {
 		if(pd != null)

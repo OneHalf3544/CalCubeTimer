@@ -4,7 +4,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateListener, DynamicDestroyable {
 
-	private final StatisticsTableModel statsModel;
+	private final CurrentSessionSolutionsTableModel statsModel;
 	private final Configuration configuration;
 	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
         @Override
@@ -30,7 +30,7 @@ public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateLi
 	private List<DynamicString> tabNames = new ArrayList<>();
 	private final XMLGuiMessages xmlGuiMessages;
 
-	public DynamicTabbedPane(StatisticsTableModel statsModel, Configuration configuration, XMLGuiMessages xmlGuiMessages) {
+	public DynamicTabbedPane(CurrentSessionSolutionsTableModel statsModel, Configuration configuration, XMLGuiMessages xmlGuiMessages) {
 		this.statsModel = statsModel;
 		this.configuration = configuration;
 		this.xmlGuiMessages = xmlGuiMessages;

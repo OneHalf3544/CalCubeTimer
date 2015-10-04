@@ -249,7 +249,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private FullscreenFrame fullscreenFrame;
 
 	@Inject
-	StatisticsTableModel statsModel;
+	CurrentSessionSolutionsTableModel statsModel;
 
 	@Inject
 	private KeyboardHandler keyHandler;
@@ -694,7 +694,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@NotNull
 	Session createNewSession(Profile p, ScrambleCustomization customization) {
-		PuzzleStatistics puzzleStatistics = p.getSessionsDatabase().getPuzzleStatistics(customization);
+		PuzzleStatistics puzzleStatistics = p.getSessionsDatabase().getPuzzleStatisticsForType(customization);
 		Session session = new Session(LocalDateTime.now(), configuration, statsModel);
 		puzzleStatistics.addSession(session);
 		return session;

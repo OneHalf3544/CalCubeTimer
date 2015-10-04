@@ -39,7 +39,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     private static final Logger LOG = LogManager.getLogger(CalCubeTimerModelImpl.class);
 
     private /*final */ CalCubeTimerGui calCubeTimerGui;
-    private final StatisticsTableModel statsModel; //used in ProfileDatabase
+    private final CurrentSessionSolutionsTableModel statsModel; //used in ProfileDatabase
     private final Configuration configuration;
 
     private InspectionState previousInpectionState = new InspectionState(Instant.now(), Instant.now());
@@ -77,7 +77,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     public CalCubeTimerModelImpl(CalCubeTimerGui calCubeTimerGui, Configuration configuration, ProfileDao profileDao,
-                                 StatisticsTableModel statsModel1, NumberSpeaker numberSpeaker,
+                                 CurrentSessionSolutionsTableModel statsModel1, NumberSpeaker numberSpeaker,
                                  ActionMap actionMap, CctModelConfigChangeListener cctModelConfigChangeListener) {
         this.calCubeTimerGui = calCubeTimerGui;
         statsModel = statsModel1;
@@ -112,6 +112,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     public void prepareForProfileSwitch() {
         Profile profile = profileDao.getSelectedProfile();
         profileDao.saveDatabase(profile);
+        profileDao.saveProfile(profile);
         calCubeTimerGui.saveToConfiguration();
         configuration.saveConfiguration(profile);
     }
@@ -167,7 +168,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     }
 
     @Override
-    public StatisticsTableModel getStatsModel() {
+    public CurrentSessionSolutionsTableModel getStatsModel() {
         return statsModel;
     }
 
@@ -177,8 +178,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         Session nextSesh = getStatsModel().getCurrentSession();
         Profile p = profileDao.getSelectedProfile();
         ScrambleCustomization customization = scramblesList.getCurrentScrambleCustomization();
-        SessionsTableModel puzzleDatabase = p.getSessionsDatabase();
-        PuzzleStatistics puzzleStatistics = puzzleDatabase.getPuzzleStatistics(customization);
+        SessionsListTableModel puzzleDatabase = p.getSessionsDatabase();
+        PuzzleStatistics puzzleStatistics = puzzleDatabase.getPuzzleStatisticsForType(customization);
         if (!puzzleStatistics.containsSession(nextSesh)) {
             //failed to find a session to continue, so load newest session
             nextSesh = puzzleDatabase.getSessions().stream()
@@ -190,7 +191,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void sessionSelected(Session s) {
-        statsModel.setSession(s);
+        statsModel.setCurrentSession(s);
         scramblesList.clear();
         Statistics stats = s.getStatistics();
         for (int ch = 0; ch < stats.getAttemptCount(); ch++) {
@@ -206,7 +207,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public void sessionsDeleted() {
         Session s = getNextSession(calCubeTimerGui.getMainFrame());
-        statsModel.setSession(s);
+        statsModel.setCurrentSession(s);
         calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(s.getCustomization());
     }
 

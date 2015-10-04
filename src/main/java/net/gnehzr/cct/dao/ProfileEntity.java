@@ -27,7 +27,7 @@ public class ProfileEntity {
     @OneToMany(orphanRemoval = true)
     private List<ConfigEntity> configEntity;
 
-    @OneToMany(orphanRemoval = true)
+    @OneToMany(orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn
     private List<SessionEntity> sessionEntities;
 

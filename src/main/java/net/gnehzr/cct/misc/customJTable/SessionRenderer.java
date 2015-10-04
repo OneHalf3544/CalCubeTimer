@@ -1,7 +1,7 @@
 package net.gnehzr.cct.misc.customJTable;
 
 import net.gnehzr.cct.statistics.Session;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -10,9 +10,9 @@ import java.util.Date;
 
 public class SessionRenderer extends JLabel implements TableCellRenderer {
 
-	private final StatisticsTableModel statsModel;
+	private final CurrentSessionSolutionsTableModel statsModel;
 
-	public SessionRenderer(StatisticsTableModel statsModel) {
+	public SessionRenderer(CurrentSessionSolutionsTableModel statsModel) {
 		this.statsModel = statsModel;
 	}
 

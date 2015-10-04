@@ -5,7 +5,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.*;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -41,13 +41,13 @@ class GuiParseSaxHandler extends DefaultHandler {
     private List<String> elementNames;
     private JFrame frame;
     private final Configuration configuration;
-    private final StatisticsTableModel statsModel;
+    private final CurrentSessionSolutionsTableModel statsModel;
     private final DynamicBorderSetter dynamicBorderSetter;
     private final XMLGuiMessages xmlGuiMessages;
     private final ActionMap actionMap;
 
     public GuiParseSaxHandler(CALCubeTimerFrame calCubeTimerFrame, JFrame frame, Configuration configuration,
-                              StatisticsTableModel statsModel, DynamicBorderSetter dynamicBorderSetter,
+                              CurrentSessionSolutionsTableModel statsModel, DynamicBorderSetter dynamicBorderSetter,
                               XMLGuiMessages xmlGuiMessages, ActionMap actionMap){
         this.calCubeTimerFrame = calCubeTimerFrame;
         this.frame = frame;

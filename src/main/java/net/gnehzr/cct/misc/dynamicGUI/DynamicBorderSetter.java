@@ -5,7 +5,7 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -15,12 +15,12 @@ import java.awt.*;
 @Singleton
 public class DynamicBorderSetter {
 
-	private final StatisticsTableModel statsModel;
+	private final CurrentSessionSolutionsTableModel statsModel;
 	private final Configuration configuration;
 	private final XMLGuiMessages xmlGuiMessages;
 
 	@Inject
-	public DynamicBorderSetter(StatisticsTableModel statsModel, Configuration configuration, XMLGuiMessages xmlGuiMessages) {
+	public DynamicBorderSetter(CurrentSessionSolutionsTableModel statsModel, Configuration configuration, XMLGuiMessages xmlGuiMessages) {
 		this.statsModel = statsModel;
 		this.configuration = configuration;
 		this.xmlGuiMessages = xmlGuiMessages;

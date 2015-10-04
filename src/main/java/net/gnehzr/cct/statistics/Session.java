@@ -15,13 +15,13 @@ public class Session extends Commentable implements Comparable<Session> {
 	private Statistics statistics;
 	private PuzzleStatistics puzzleStatistics;
 	private final Configuration configuration;
-	private final StatisticsTableModel statisticsTableModel;
+	private final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 
 	//adds itself to the puzzlestatistics to which it belongs
 	public Session(LocalDateTime dateTime, Configuration configuration,
-				   StatisticsTableModel statisticsTableModel) {
+				   CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel) {
 		this.configuration = configuration;
-		this.statisticsTableModel = statisticsTableModel;
+		this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
 		statistics = new Statistics(configuration, dateTime);
 	}
 
@@ -85,12 +85,12 @@ public class Session extends Commentable implements Comparable<Session> {
 			return;
 		}
 		puzzleStatistics.removeSession(this);
-		puzzleStatistics = puzzleStatistics.getPuzzleDatabase().getPuzzleStatistics(customization);
+		puzzleStatistics = puzzleStatistics.getPuzzleDatabase().getPuzzleStatisticsForType(customization);
 		puzzleStatistics.addSession(this);
 		scrambleCustomization = puzzleStatistics.getCustomization();
 		statistics.setCustomization(scrambleCustomization);
 
-		statisticsTableModel.fireStringUpdates();
+		currentSessionSolutionsTableModel.fireStringUpdates();
 	}
 
 	public void delete() {

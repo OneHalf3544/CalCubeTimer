@@ -10,7 +10,7 @@ import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SolveTime;
 import net.gnehzr.cct.statistics.SolveType;
-import net.gnehzr.cct.statistics.StatisticsTableModel;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import java.time.Instant;
 import java.util.List;
@@ -41,7 +41,7 @@ public interface CalCubeTimerModel extends SessionListener {
 
     ScrambleList getScramblesList();
 
-    StatisticsTableModel getStatsModel();
+    CurrentSessionSolutionsTableModel getStatsModel();
 
     TimingListener getTimingListener();
 
