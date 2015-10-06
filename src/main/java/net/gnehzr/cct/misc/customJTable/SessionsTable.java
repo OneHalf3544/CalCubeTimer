@@ -5,7 +5,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.main.ScrambleCustomizationChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Session;
@@ -34,8 +34,8 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		this.setDefaultRenderer(Integer.class, r); //for some reason, Object.class is not capturing the Solve count row
 		
 		ScrambleCustomizationChooserComboBox chooserComboBox = new ScrambleCustomizationChooserComboBox(false, scramblePluginManager, configuration);
-		this.setDefaultEditor(ScrambleCustomization.class, new DefaultCellEditor(chooserComboBox));
-		this.setDefaultRenderer(ScrambleCustomization.class, chooserComboBox);
+		this.setDefaultEditor(PuzzleType.class, new DefaultCellEditor(chooserComboBox));
+		this.setDefaultRenderer(PuzzleType.class, chooserComboBox);
 		this.setRowHeight(chooserComboBox.getPreferredSize().height);
 		super.setSelectionListener(this);
 		configuration.addConfigurationChangeListener((p) -> refreshModel());

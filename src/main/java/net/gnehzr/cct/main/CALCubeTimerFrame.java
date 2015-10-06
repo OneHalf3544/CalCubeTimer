@@ -23,7 +23,7 @@ import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicDestroyable;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
@@ -36,7 +36,6 @@ import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.api.SubstanceConstants;
 import org.jvnet.substance.watermark.SubstanceImageWatermark;
@@ -138,7 +137,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 			if (e.getStateChange() == ItemEvent.SELECTED) {
                 //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
-                statsModel.removeTableModelListener(newSolutionAddedListener);
+                currentSessionSolutionsTableModel.removeTableModelListener(newSolutionAddedListener);
 
                 model.setSelectedProfile(affectedProfile);
                 profileDao.loadDatabase(affectedProfile, scramblePluginManager);
@@ -149,7 +148,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				//we want to load this profile's startup session
                 model.sessionSelected(model.getNextSession(CALCubeTimerFrame.this));
                 //we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
-                statsModel.addTableModelListener(newSolutionAddedListener);
+                currentSessionSolutionsTableModel.addTableModelListener(newSolutionAddedListener);
 
 				//this needs to be here in the event that we loaded times from database
 				repaintTimes();
@@ -158,7 +157,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 
 		private void newSolutionAdded(TableModelEvent event) {
-			final Solution latestSolution = statsModel.getCurrentSession().getStatistics().get(-1);
+			final Solution latestSolution = currentSessionSolutionsTableModel.getCurrentSession().getStatistics().get(-1);
 
 			if(event != null && event.getType() == TableModelEvent.INSERT) {
 				ScrambleString currentScramble = model.getScramblesList().getCurrent();
@@ -172,7 +171,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				updateScramble();
 				//make the new time visible
 				timesTable.invalidate(); //the table needs to be invalidated to force the new time to "show up"!!!
-				Rectangle newTimeRect = timesTable.getCellRect(statsModel.getRowCount(), 0, true);
+				Rectangle newTimeRect = timesTable.getCellRect(currentSessionSolutionsTableModel.getRowCount(), 0, true);
 				timesTable.scrollRectToVisible(newTimeRect);
 
 				numberSpeaker.speakTime(latestSolution.getTime());
@@ -189,18 +188,21 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				return;
 			}
 
-			Statistics s = statsModel.getCurrentSession().getStatistics();
+			Statistics s = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
+			PuzzleType newPuzzleType = (PuzzleType) getScrambleCustomizationComboBox().getSelectedItem();
 			if (!model.getCustomizationEditsDisabled() && s != null) {
 				//TODO - changing session? //TODO - deleted customization?
 				s.editActions.add(new CustomizationEdit(model, model.getScramblesList().getCurrentScrambleCustomization(),
-						(ScrambleCustomization) getScrambleCustomizationComboBox().getSelectedItem(), getScrambleCustomizationComboBox()));
+						newPuzzleType, getScrambleCustomizationComboBox()));
 			}
 
-			model.getScramblesList().setCurrentScrambleCustomization((ScrambleCustomization) getScrambleCustomizationComboBox().getSelectedItem());
+			model.getScramblesList().setCurrentScrambleCustomization(newPuzzleType);
 
 			//change current session's scramble customization
-			statsModel.getCurrentSession().setCustomization(
-                    model.getScramblesList().getCurrentScrambleCustomization(), model.getSelectedProfile());
+			if (!currentSessionSolutionsTableModel.getCurrentSession().getCustomization().equals(newPuzzleType)) {
+				currentSessionSolutionsTableModel.setCurrentSession(model.getSelectedProfile(), new Session(
+						LocalDateTime.now(), configuration, newPuzzleType));
+			}
 
 			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getCurrentScrambleCustomization().getScrambleVariation());
 			String generator = model.getScramblesList().getCurrentScrambleCustomization().getGenerator();
@@ -249,7 +251,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private FullscreenFrame fullscreenFrame;
 
 	@Inject
-	CurrentSessionSolutionsTableModel statsModel;
+	CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 
 	@Inject
 	private KeyboardHandler keyHandler;
@@ -274,7 +276,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 
 	@Override
-	public ScrambleChooserComboBox<ScrambleCustomization> getScrambleCustomizationComboBox() {
+	public ScrambleChooserComboBox<PuzzleType> getScrambleCustomizationComboBox() {
 		return scrambleCustomizationComboBox;
 	}
 
@@ -309,14 +311,14 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		timesTable = new DraggableJTable(configuration, false, true);
 		timesTable.setName("timesTable");
 		timesTable.setDefaultEditor(SolveTime.class, solveTimeEditor);
-		timesTable.setDefaultRenderer(SolveTime.class, new SolveTimeRenderer(statsModel, configuration));
+		timesTable.setDefaultRenderer(SolveTime.class, new SolveTimeRenderer(currentSessionSolutionsTableModel, configuration));
 		timesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		timesTable.setModel(statsModel);
+		timesTable.setModel(currentSessionSolutionsTableModel);
 		//TODO - this wastes space, probably not easy to fix...
 		timesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		timesScroller = new JScrollPane(timesTable);
 
-		sessionsTable = new SessionsTable(statsModel, configuration, scramblePluginManager, model);
+		sessionsTable = new SessionsTable(currentSessionSolutionsTableModel, configuration, scramblePluginManager, model);
 		sessionsTable.setName("sessionsTable");
 		//TODO - this wastes space, probably not easy to fix...
 		sessionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -404,7 +406,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 		StringAccessor.clearResources();
 		xmlGuiMessages.reloadResources();
-		statsModel.fireStringUpdates(); //this is necessary to update the undo-redo actions
+		currentSessionSolutionsTableModel.fireStringUpdates(); //this is necessary to update the undo-redo actions
 
 		customGUIMenu.setText(StringAccessor.getString("CALCubeTimer.loadcustomgui"));
 		timesTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
@@ -462,7 +464,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 		xmlGuiMessages.reloadResources();
 
-		DefaultHandler handler = new GuiParseSaxHandler(this, this, configuration, statsModel, dynamicBorderSetter, xmlGuiMessages, actionMap);
+		DefaultHandler handler = new GuiParseSaxHandler(this, this, configuration, currentSessionSolutionsTableModel, dynamicBorderSetter, xmlGuiMessages, actionMap);
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try {
 			SAXParser saxParser = factory.newSAXParser();
@@ -510,7 +512,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	 */
 	@Override
 	public void repaintTimes() {
-		Statistics stats = statsModel.getCurrentSession().getStatistics();
+		Statistics stats = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
 
 		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT);
 		updateActionStatus(stats, "bestaverage0", AverageType.RA);
@@ -646,7 +648,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		SwingUtilities.invokeLater(() -> {
             if(timesTable.isFocusOwner() || timesTable.requestFocusInWindow()) { //if the timestable is hidden behind a tab, we don't want to let the user add times
                 timesTable.promptForNewRow();
-                Rectangle newTimeRect = timesTable.getCellRect(statsModel.getRowCount(), 0, true);
+                Rectangle newTimeRect = timesTable.getCellRect(currentSessionSolutionsTableModel.getRowCount(), 0, true);
                 timesTable.scrollRectToVisible(newTimeRect);
             }
         });
@@ -659,7 +661,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			bigTimersDisplay.reset();
 			model.getScramblesList().clear();
 			updateScramble();
-			statsModel.getCurrentSession().getStatistics().clear();
+			currentSessionSolutionsTableModel.getCurrentSession().getStatistics().clear();
 		}
 	}
 
@@ -688,14 +690,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		else {
 			model.getTimingListener().timerAccidentlyReset(null); //when the keyboard timer is disabled, we reset the timer
 		}
-	}
-
-	@NotNull
-	Session createNewSession(Profile p, ScrambleCustomization customization) {
-		PuzzleStatistics puzzleStatistics = p.getSessionsDatabase().getPuzzleStatisticsForType(customization);
-		Session session = new Session(LocalDateTime.now(), configuration, statsModel);
-		puzzleStatistics.addSession(session);
-		return session;
 	}
 
 	public void statusLightAction(){
@@ -766,7 +760,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void createScrambleAttributesPanel() {
-		ScrambleCustomization sc = model.getScramblesList().getCurrentScrambleCustomization();
+		PuzzleType sc = model.getScramblesList().getCurrentScrambleCustomization();
 		scrambleAttributesPanel.removeAll();
 		if (sc == scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION) {
 			return;
@@ -781,7 +775,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 					break;
 				}
 			}
-			attributes[ch] = new DynamicCheckBox(new DynamicString(attrs.get(ch), statsModel, sc.getScramblePlugin().getMessageAccessor(), configuration), configuration);
+			attributes[ch] = new DynamicCheckBox(new DynamicString(attrs.get(ch), currentSessionSolutionsTableModel, sc.getScramblePlugin().getMessageAccessor(), configuration), configuration);
 			attributes[ch].setSelected(selected);
 			attributes[ch].setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
 			attributes[ch].setActionCommand(CalCubeTimerModel.SCRAMBLE_ATTRIBUTE_CHANGED);
@@ -815,7 +809,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
         saveToConfiguration();
         if(configurationDialog == null) {
             configurationDialog = new ConfigurationDialog(
-					this, true, configuration, profileDao, scramblePluginManager, statsModel,
+					this, true, configuration, profileDao, scramblePluginManager, currentSessionSolutionsTableModel,
                     calCubeTimerModel.getNumberSpeaker(), calCubeTimerModel, stackmatInterpreter, model.getMetronome(), timesTable);
         }
         SwingUtilities.invokeLater(() -> {

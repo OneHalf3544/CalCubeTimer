@@ -436,8 +436,8 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		scramTable.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		scramTable.setShowGrid(false);
 		scramTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		scramTable.setDefaultRenderer(ScrambleCustomization.class, puzzlesModel);
-		scramTable.setDefaultEditor(ScrambleCustomization.class, puzzlesModel);
+		scramTable.setDefaultRenderer(PuzzleType.class, puzzlesModel);
+		scramTable.setDefaultEditor(PuzzleType.class, puzzlesModel);
 		scramTable.setDefaultEditor(String.class, puzzlesModel);
 		scramTable.setModel(puzzlesModel);
 
@@ -1180,10 +1180,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		configuration.setStringArray(
 				VariableKey.SCRAMBLE_CUSTOMIZATIONS,
 				puzzlesModel.getContents().stream()
-						.map(ScrambleCustomization::toString)
+						.map(PuzzleType::toString)
 						.collect(Collectors.<String>toList()));
 		scramblePluginManager.saveLengthsToConfiguration();
-		for(ScrambleCustomization sc : puzzlesModel.getContents())
+		for(PuzzleType sc : puzzlesModel.getContents())
 			sc.scramblePluginManager.saveGeneratorToConfiguration(sc);
 
 		profilesModel.commitChanges();

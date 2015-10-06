@@ -7,7 +7,7 @@ import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.InvalidScrambleException;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.commons.io.IOUtils;
@@ -36,12 +36,12 @@ public class ScrambleImportDialog extends JDialog {
 	private JButton importButton;
 	private JTextAreaWithHistory scramblesTextArea;
 	private JEditorPane qualityControl;
-	private ScrambleChooserComboBox<ScrambleCustomization> scrambleChooser;
+	private ScrambleChooserComboBox<PuzzleType> scrambleChooser;
 
 	private List<ScrambleString> scrambles = new ArrayList<>();
 
 	public ScrambleImportDialog(CALCubeTimerFrame calCubeTimerFrame, ScrambleImporter scrambleImporter,
-								ScrambleCustomization sc,
+								PuzzleType sc,
 								ScramblePluginManager scramblePluginManager, Configuration configuration) {
 		super(calCubeTimerFrame, StringAccessor.getString("ScrambleImportDialog.importscrambles"), true);
 		this.configuration = configuration;
@@ -162,12 +162,12 @@ public class ScrambleImportDialog extends JDialog {
         }
 	}
 
-	private ScrambleCustomization getSelectedCustomization() {
-		return (ScrambleCustomization) scrambleChooser.getSelectedItem();
+	private PuzzleType getSelectedCustomization() {
+		return (PuzzleType) scrambleChooser.getSelectedItem();
 	}
 
 	private void validateScrambles() {
-		ScrambleCustomization sc = getSelectedCustomization();
+		PuzzleType sc = getSelectedCustomization();
 		
 		Font font = scramblesTextArea.getFont();
 		String fontStyle = ""; 

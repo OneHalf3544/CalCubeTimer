@@ -7,13 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @Deprecated // todo get list from solutions in the current session
 @Singleton
 public class ScrambleList {
 
 	private final ScramblePluginManager scramblePluginManager;
 	private LinkedList<ScrambleString> scrambles = new LinkedList<>();
-	private ScrambleCustomization currentScrambleCustomisation;
+	private PuzzleType currentScrambleCustomisation;
 	private int scrambleNumber = 0;
 
 	@Inject
@@ -23,23 +25,25 @@ public class ScrambleList {
 	}
 
 	@NotNull
-	public ScrambleCustomization getCurrentScrambleCustomization() {
+	public PuzzleType getCurrentScrambleCustomization() {
 		return currentScrambleCustomisation;
 	}
 
 	//this should only be called if we're on the last scramble in this list
-	public void setCurrentScrambleCustomization(ScrambleCustomization scrambleCustomization) {
-		if(scrambleCustomization == null) {
-			scrambleCustomization = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
+	public void setCurrentScrambleCustomization(PuzzleType puzzleType) {
+		checkArgument(isLastScrambleInList());
+
+		if(puzzleType == null) {
+			puzzleType = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
 		}
-		if(currentScrambleCustomisation == null || !scrambleCustomization.getScrambleVariation().equals(currentScrambleCustomisation.getScrambleVariation())) {
+		if(currentScrambleCustomisation == null || !puzzleType.getScrambleVariation().equals(currentScrambleCustomisation.getScrambleVariation())) {
 			removeLatestAndFutureScrambles();
 		}
-		if(!scrambleCustomization.equals(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION)) {
-			currentScrambleCustomisation = scrambleCustomization;
+		if(!puzzleType.equals(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION)) {
+			currentScrambleCustomisation = puzzleType;
 		}
 	}
-	
+
 	public void removeLatestAndFutureScrambles() {
 		int removeNumber = scrambles.size() - scrambleNumber;
 		for(int c = 0; c < removeNumber; c++) {
@@ -81,12 +85,16 @@ public class ScrambleList {
 	}
 	
 	public ScrambleString getCurrent() {
-		if(scrambleNumber == scrambles.size()) {
+		if(isLastScrambleInList()) {
 			scrambles.add(scrambleNumber, currentScrambleCustomisation.generateScramble());
 		}
 		return scrambles.get(scrambleNumber);
 	}
-	
+
+	private boolean isLastScrambleInList() {
+		return scrambleNumber == scrambles.size();
+	}
+
 	public void importScrambles(List<ScrambleString> scrambles) {
 		removeLatestAndFutureScrambles();
 		this.scrambles.addAll(scrambles);

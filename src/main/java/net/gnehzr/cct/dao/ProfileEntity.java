@@ -25,14 +25,13 @@ public class ProfileEntity {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @Column
+    @Column(nullable = false)
     private LocalDateTime lastLoad;
 
     @OneToMany(orphanRemoval = true)
     private List<ConfigEntity> configEntity;
 
-    @OneToMany(orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn
+    @OneToMany(orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "profile")
     private List<SessionEntity> sessionEntities;
 
 

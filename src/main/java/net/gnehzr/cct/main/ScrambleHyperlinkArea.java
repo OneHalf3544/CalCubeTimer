@@ -7,7 +7,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.InvalidScrambleException;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +45,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 	private ScrambleString currentScramble;
 	private String incrementScramble;
 	private ScrambleString fullScramble;
-	private ScrambleCustomization currentCustomization;
+	private PuzzleType currentCustomization;
 	private StringBuilder part1, part2, part3;
 	private int moveNum;
 	private String backgroundColor;
@@ -130,7 +130,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 		setPreferredSize(new Dimension(0, 100));
 	}
 
-	public void setScramble(ScrambleString newScramble, ScrambleCustomization sc) {
+	public void setScramble(ScrambleString newScramble, PuzzleType sc) {
 		currentCustomization = sc;
 		fullScramble = newScramble;
 		currentScramble = fullScramble;

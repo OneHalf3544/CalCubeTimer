@@ -23,7 +23,7 @@ public class ScramblePluginManager {
 
 	public static final ScramblePlugin NULL_SCRAMBLE_PLUGIN = new NullScramblePlugin();
 
-	public final ScrambleCustomization NULL_SCRAMBLE_CUSTOMIZATION;
+	public final PuzzleType NULL_SCRAMBLE_CUSTOMIZATION;
 
 	private ScrambleVariation[] scrambleVariations;
 
@@ -55,7 +55,7 @@ public class ScramblePluginManager {
 		this.scramblePlugins = createScramblePlugins();
 
 		ScrambleVariation NULL_SCRAMBLE_VARIATION = new ScrambleVariation(NULL_SCRAMBLE_PLUGIN, "", this.configuration, this);
-		NULL_SCRAMBLE_CUSTOMIZATION = new ScrambleCustomization(configuration, NULL_SCRAMBLE_VARIATION, null, this);
+		NULL_SCRAMBLE_CUSTOMIZATION = new PuzzleType(configuration, NULL_SCRAMBLE_VARIATION, null, this);
 	}
 
 	public Map<Class<? extends ScramblePlugin>, ScramblePlugin> createScramblePlugins() throws IllegalAccessException, InstantiationException {
@@ -114,9 +114,9 @@ public class ScramblePluginManager {
 		return null;
 	}
 
-	public ScrambleCustomization getCurrentScrambleCustomization(Profile currentProfile) {
+	public PuzzleType getCurrentScrambleCustomization(Profile currentProfile) {
 		String scName = configuration.getString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, false);
-		ScrambleCustomization sc = getCustomizationFromString(currentProfile, scName);
+		PuzzleType sc = getCustomizationFromString(currentProfile, scName);
 
 		//now we'll try to match the variation, if we couldn't match the customization
 		if(sc == null && scName.indexOf(':') != -1) {
@@ -124,37 +124,38 @@ public class ScramblePluginManager {
 			sc = getCustomizationFromString(currentProfile, scName);
 		}
 		if(sc == null) {
-			List<ScrambleCustomization> scs = getScrambleCustomizations(currentProfile, false);
+			List<PuzzleType> scs = getScrambleCustomizations(currentProfile, false);
 			if(scs.size() > 0)
 				sc = scs.get(0);
 		}
 		return sc;
 	}
 
-	public ScrambleCustomization getCustomizationFromVariation(ScrambleVariation sv, Profile profile) {
+	public PuzzleType getCustomizationFromVariation(ScrambleVariation sv, Profile profile) {
 		if(sv == null) {
 			return null;
 		}
 		return getCustomizationFromString(profile, sv.toString());
 	}
 
-	public ScrambleCustomization getCustomizationFromString(Profile profile, String customName) {
+	public PuzzleType getCustomizationFromString(Profile profile, String customName) {
 		return getScrambleCustomizations(profile, false).stream()
 				.filter(c -> c.toString().equals(customName))
 				.findAny()
 				.orElse(null);
 	}
 
-	public List<ScrambleCustomization> getScrambleCustomizations(Profile selectedProfile, boolean defaults) {
-		ArrayList<ScrambleCustomization> scrambleCustomizations = new ArrayList<>();
+	public List<PuzzleType> getScrambleCustomizations(Profile selectedProfile, boolean defaults) {
+		ArrayList<PuzzleType> puzzleTypes = new ArrayList<>();
 		for(ScrambleVariation variation : getScrambleVariations()) {
-			scrambleCustomizations.add(new ScrambleCustomization(configuration, variation, null, this));
+			puzzleTypes.add(new PuzzleType(configuration, variation, null, this));
 		}
+
 		List<String> customNames = configuration.getStringArray(VariableKey.SCRAMBLE_CUSTOMIZATIONS, defaults);
 		if(customNames == null) {
 			customNames = Lists.newArrayList();
 		}
-		Iterator<ScrambleCustomization> databaseCustoms = selectedProfile.getSessionsDatabase().getCustomizations().iterator();
+		Iterator<PuzzleType> databaseCustoms = selectedProfile.getSessionsDatabase().getCustomizations().iterator();
 		int ch = customNames.size() - 1;
 		while(true) {
 			String name;
@@ -176,23 +177,23 @@ public class ScramblePluginManager {
 			}
 			String variationName = name.substring(0, delimeter);
 
-			ScrambleCustomization scramCustomization = searchCustomizationByName(scrambleCustomizations, variationName);
-			ScrambleCustomization sc = new ScrambleCustomization(configuration, scramCustomization.getVariation(), customizationName, this);
+			PuzzleType scramCustomization = searchCustomizationByName(puzzleTypes, variationName);
+			PuzzleType sc = new PuzzleType(configuration, scramCustomization.getVariation(), customizationName, this);
 			if (!variationName.isEmpty()) {
-				if(scrambleCustomizations.contains(sc)) {
+				if(puzzleTypes.contains(sc)) {
 					if(ch == customNames.size() - 1) {
 						//we don't want to move this customization to the front of the list if it's from the database
 						continue;
 					}
-					scrambleCustomizations.remove(sc);
+					puzzleTypes.remove(sc);
 				}
-				scrambleCustomizations.add(0, sc);
+				puzzleTypes.add(0, sc);
 			}
 		}
-		return scrambleCustomizations;
+		return puzzleTypes;
 	}
 
-	private ScrambleCustomization searchCustomizationByName(List<ScrambleCustomization> customizations, String variationName) {
+	private PuzzleType searchCustomizationByName(List<PuzzleType> customizations, String variationName) {
 		return customizations.stream()
 				.filter(variationName::equals)
 				.findAny()
@@ -251,20 +252,20 @@ public class ScramblePluginManager {
 		return String.format("ScramblePluginManager{has %d plugins (%d variations)}", pluginClasses.size(), variationsCount);
 	}
 
-	public String loadGeneratorFromConfig(ScrambleCustomization scrambleCustomization, boolean defaults) {
-		if (!isGeneratorEnabled(scrambleCustomization.getScrambleVariation())) {
+	public String loadGeneratorFromConfig(PuzzleType puzzleType, boolean defaults) {
+		if (!isGeneratorEnabled(puzzleType.getScrambleVariation())) {
 			return null;
 		}
-		String generatorConfig = configuration.getNullableString(VariableKey.scrambleGeneratorKey(scrambleCustomization), defaults);
-		return generatorConfig == null ? getDefaultGeneratorGroup(scrambleCustomization.getVariation()) : generatorConfig;
+		String generatorConfig = configuration.getNullableString(VariableKey.scrambleGeneratorKey(puzzleType), defaults);
+		return generatorConfig == null ? getDefaultGeneratorGroup(puzzleType.getVariation()) : generatorConfig;
 	}
 
 	// todo scramble generator not save without configuration dialog
-	public void saveGeneratorToConfiguration(ScrambleCustomization scrambleCustomization) {
-		if(isGeneratorEnabled(scrambleCustomization.getScrambleVariation())) {
+	public void saveGeneratorToConfiguration(PuzzleType puzzleType) {
+		if(isGeneratorEnabled(puzzleType.getScrambleVariation())) {
 			configuration.setString(
-					VariableKey.scrambleGeneratorKey(scrambleCustomization),
-					scrambleCustomization.getGenerator() == null ? "" : scrambleCustomization.getGenerator());
+					VariableKey.scrambleGeneratorKey(puzzleType),
+					puzzleType.getGenerator() == null ? "" : puzzleType.getGenerator());
 		}
 	}
 }

@@ -5,7 +5,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.time.LocalDateTime;
@@ -80,12 +80,12 @@ public class Statistics implements SolveCounter {
 
 	private LocalDateTime dateStarted;
 
-	public LocalDateTime getStartDate() {
+	public LocalDateTime getStartTime() {
 		return dateStarted;
 	}
 
-	public Statistics(Configuration configuration, LocalDateTime d) {
-		dateStarted = d;
+	public Statistics(Configuration configuration, LocalDateTime dateStarted, PuzzleType puzzleType) {
+		this.dateStarted = dateStarted;
 		configuration.addConfigurationChangeListener(this::onConfigurationChange);
 
 		//we'll initialized these arrays when our scramble customization is set
@@ -100,32 +100,32 @@ public class Statistics implements SolveCounter {
 
 		sessionavgs = new ArrayList<>();
 		sessionsds = new ArrayList<>();
-		
+
 		for(int i = 0; i < RA_SIZES_COUNT; i++){
 			averages.add(i, new ArrayList<>());
 			sds.add(i, new ArrayList<>());
 			sortaverages.add(i, new ArrayList<>());
 			sortsds.add(i, new ArrayList<>());
 		}
-		
+
 		solveCounter = new HashMap<>();
-		
+
 		times = new ArrayList<>();
 		sortedTimes = new TreeSet<>();
+
 		initialize();
+
+		customization = puzzleType;
+		onConfigurationChange(null);
 	}
 
 	private void onConfigurationChange(Profile profile) {
-		if(loadRAs()) {
+		if(loadRollingAverages()) {
 			refresh();
 		}
 	}
 
-	private ScrambleCustomization customization;
-	public void setCustomization(ScrambleCustomization sc) {
-		customization = sc;
-		onConfigurationChange(null);
-	}
+	private PuzzleType customization;
 
 	private void initialize() {
 		times.clear();
@@ -409,21 +409,23 @@ public class Statistics implements SolveCounter {
 	public RollingAverageTime getRA(int num, int whichRA) {
 		int RAnum = 1 + num - curRASize[whichRA];
 		SolveTime seconds;
-		if(RAnum < 0)
+		if(RAnum < 0) {
 			seconds = SolveTime.NA;
-		else
+		}
+		else {
 			seconds = averages.get(whichRA).get(RAnum);
+		}
 		return new RollingAverageTime(seconds, whichRA);
 	}
 
-	private boolean loadRAs() {
+	private boolean loadRollingAverages() {
 		boolean refresh = false;
-		for(int c = 0; c < curRASize.length && customization != null; c++) {
+		for (int c = 0; c < curRASize.length && !customization.isNullScramble(); c++) {
 			int raSize = customization.getRASize(c);
-			boolean raTrimmed = customization.isTrimmed(c);
-			if(raSize != curRASize[c] || raTrimmed != curRATrimmed[c]) {
+			boolean rollingAverageTrimmed = customization.isTrimmed(c);
+			if (raSize != curRASize[c] || rollingAverageTrimmed != curRATrimmed[c]) {
 				curRASize[c] = raSize;
-				curRATrimmed[c] = raTrimmed;
+				curRATrimmed[c] = rollingAverageTrimmed;
 				refresh = true;
 			}
 		}

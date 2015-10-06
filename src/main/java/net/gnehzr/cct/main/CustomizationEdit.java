@@ -1,6 +1,6 @@
 package net.gnehzr.cct.main;
 
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.statistics.CCTUndoableEdit;
 
 /**
@@ -14,12 +14,12 @@ import net.gnehzr.cct.statistics.CCTUndoableEdit;
 class CustomizationEdit implements CCTUndoableEdit {
 
     private final CalCubeTimerModel calCubeTimerModel;
-    private ScrambleCustomization oldCustom;
-	private ScrambleCustomization newCustom;
-	private ScrambleChooserComboBox<ScrambleCustomization> scrambleChooser;
+    private PuzzleType oldCustom;
+	private PuzzleType newCustom;
+	private ScrambleChooserComboBox<PuzzleType> scrambleChooser;
 
-	public CustomizationEdit(CalCubeTimerModel calCubeTimerModel, ScrambleCustomization oldCustom, ScrambleCustomization newCustom,
-                             ScrambleChooserComboBox<ScrambleCustomization> scrambleChooser) {
+	public CustomizationEdit(CalCubeTimerModel calCubeTimerModel, PuzzleType oldCustom, PuzzleType newCustom,
+                             ScrambleChooserComboBox<PuzzleType> scrambleChooser) {
         this.calCubeTimerModel = calCubeTimerModel;
         this.oldCustom = oldCustom;
         this.newCustom = newCustom;

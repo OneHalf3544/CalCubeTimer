@@ -3,6 +3,7 @@ package net.gnehzr.cct.dao;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import net.gnehzr.cct.dao.converters.DurationConverter;
+import net.gnehzr.cct.dao.converters.LocalDateTimeConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.*;
@@ -41,6 +42,7 @@ public class HibernateDaoSupport {
     public static SessionFactory configureSessionFactory() throws HibernateException {
         Configuration configuration = new Configuration();
         configuration.addAttributeConverter(DurationConverter.class);
+        configuration.addAttributeConverter(LocalDateTimeConverter.class);
         configuration.configure();
 
         Properties properties = configuration.getProperties();
@@ -76,7 +78,7 @@ public class HibernateDaoSupport {
     }
 
     protected void update(Consumer<Session> updateFunction) {
-        doWithSession(session -> {
+        queryWithSession(session -> {
             Transaction tx = null;
             try {
                 tx = session.beginTransaction();
@@ -103,7 +105,14 @@ public class HibernateDaoSupport {
         });
     }
 
-    private <T> T doWithSession(Function<Session, T> sessionConsumer) {
+    protected void doWithSession(Consumer<Session> sessionConsumer) {
+        queryWithSession((session) -> {
+            sessionConsumer.accept(session);
+            return null;
+        });
+    }
+
+    protected <T> T queryWithSession(Function<Session, T> sessionConsumer) {
         Session session = null;
         try {
             session = sessionFactory.openSession();
@@ -127,7 +136,7 @@ public class HibernateDaoSupport {
     }
 
     protected  <T> T queryFirst(String query, Map<String, Object> args) {
-        return doWithSession(session -> Iterables.getFirst(queryList(query, args), null));
+        return queryWithSession(session -> Iterables.getFirst(queryListWithLimit(query, args, 1), null));
     }
 
     protected <T> List<T> queryList(String query) {
@@ -135,10 +144,17 @@ public class HibernateDaoSupport {
     }
 
     protected <T> List<T> queryList(String query, Map<String, Object> args) {
-        return doWithSession(new Function<Session, List<T>>() {
+        return queryListWithLimit(query, args, null);
+    }
+
+    private <T> List<T> queryListWithLimit(final String query, final Map<String, Object> args, Integer limit) {
+        return queryWithSession(new Function<Session, List<T>>() {
             @Override
             public List<T> apply(Session session) {
                 Query queryObj = createQuery(session, query, args);
+                if (limit != null) {
+                    queryObj.setMaxResults(limit);
+                }
                 //noinspection unchecked
                 return (List<T>) queryObj.list();
             }

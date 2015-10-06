@@ -142,7 +142,7 @@ public class DynamicString{
 		switch (s) {
 			case "global":
 				//Database queries for current scramble customization
-				PuzzleStatistics ps = statsModel.getCurrentSession().getPuzzleStatistics();
+				SessionsListAndPuzzleStatistics ps = statsModel.getCurrentSession().getSessionsListAndPuzzleStatistics();
 				Pattern globalPattern = Pattern.compile("^\\s*\\.\\s*(time|ra|average|solvecount)\\s*(.*)$");
 				Matcher globalMatcher = globalPattern.matcher(m.group(2));
 				if (globalMatcher.matches()) {

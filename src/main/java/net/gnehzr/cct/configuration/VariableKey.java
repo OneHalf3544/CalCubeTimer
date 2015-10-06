@@ -3,7 +3,7 @@ package net.gnehzr.cct.configuration;
 import com.google.common.base.Throwables;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 
@@ -42,7 +42,7 @@ public class VariableKey<H> {
 		return new VariableKey<>("Puzzle_ScrambleLength_" + var.toString());
 	}
 
-	public static VariableKey<Integer> RA_SIZE(int index, ScrambleCustomization custom) {
+	public static VariableKey<Integer> RA_SIZE(int index, PuzzleType custom) {
 		String key = "Puzzle_RA" + index + "Size";
 		if(custom != null)
 			key += "_" + custom.toString();
@@ -84,7 +84,7 @@ public class VariableKey<H> {
 	public static final VariableKey<String> XML_LAYOUT = new VariableKey<String>("GUI_xmlLayout_file");
 	public static final VariableKey<String> DEFAULT_SCRAMBLE_CUSTOMIZATION = new VariableKey<String>("Scramble_Default_scrambleCustomization"); 
 
-	public static VariableKey<String> scrambleGeneratorKey(ScrambleCustomization sc) {
+	public static VariableKey<String> scrambleGeneratorKey(PuzzleType sc) {
 		return new VariableKey<>("Puzzle_ScrambleGenerator_" + sc.toString());
 	}
 
@@ -132,7 +132,7 @@ public class VariableKey<H> {
 	public static final VariableKey<Boolean> LESS_ANNOYING_DISPLAY = new VariableKey<Boolean>("GUI_Timer_isLessAnnoyingDisplay"); 
 	public static final VariableKey<Boolean> FULLSCREEN_TIMING = new VariableKey<Boolean>("GUI_Timer_isFullScreenWhileTiming"); 
 	public static final VariableKey<Boolean> METRONOME_ENABLED = new VariableKey<Boolean>("Misc_Metronome_isEnabled"); 
-	public static final VariableKey<Boolean> RA_TRIMMED(int index, ScrambleCustomization var) {
+	public static final VariableKey<Boolean> RA_TRIMMED(int index, PuzzleType var) {
 		String key = "Puzzle_RA" + index + "Trimmed";
 		if(var != null)
 			key += "_" + var.toString();

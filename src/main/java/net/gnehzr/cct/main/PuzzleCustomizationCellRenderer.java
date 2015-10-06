@@ -1,6 +1,6 @@
 package net.gnehzr.cct.main;
 
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
 import org.jvnet.substance.api.renderers.SubstanceDefaultListCellRenderer;
 
@@ -20,10 +20,10 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 		String val;
 		Icon i = null;
 		if(value != null) {
-			ScrambleCustomization customization = null;
+			PuzzleType customization = null;
 			ScrambleVariation sv = null;
-			if(value instanceof ScrambleCustomization) {
-				customization = (ScrambleCustomization) value;
+			if(value instanceof PuzzleType) {
+				customization = (PuzzleType) value;
 				sv = customization.getScrambleVariation();
 			} else if(value instanceof ScrambleVariation) {
 				sv = (ScrambleVariation) value;

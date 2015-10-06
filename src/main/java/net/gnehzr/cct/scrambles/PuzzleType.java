@@ -5,9 +5,9 @@ import net.gnehzr.cct.configuration.VariableKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ScrambleCustomization {
+public class PuzzleType {
 
-	private static final Logger LOG = LogManager.getLogger(ScrambleCustomization.class);
+	private static final Logger LOG = LogManager.getLogger(PuzzleType.class);
 
 	private final Configuration configuration;
 	private ScrambleVariation variation;
@@ -15,7 +15,7 @@ public class ScrambleCustomization {
 	private String customization;
 	private String generator;
 
-	public ScrambleCustomization(Configuration configuration, ScrambleVariation variation, String customization, ScramblePluginManager scramblePluginManager) {
+	public PuzzleType(Configuration configuration, ScrambleVariation variation, String customization, ScramblePluginManager scramblePluginManager) {
 		this.configuration = configuration;
 		this.variation = variation;
 		this.scramblePluginManager = scramblePluginManager;
@@ -41,8 +41,9 @@ public class ScrambleCustomization {
 
 	public int getRASize(int index) {
 		Integer size = configuration.getInt(VariableKey.RA_SIZE(index, this));
-		if(size == null || size <= 0)
+		if(size == null || size <= 0) {
 			size = configuration.getInt(VariableKey.RA_SIZE(index, null));
+		}
 		return size;
 	}
 	public boolean isTrimmed(int index) {
@@ -106,5 +107,9 @@ public class ScrambleCustomization {
 			return false;
 		}
  		return this.toString().equals(o.toString());
+	}
+
+	public boolean isNullScramble() {
+		return this == scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
 	}
 }

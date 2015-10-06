@@ -64,8 +64,9 @@ public class UndoRedoList<E> {
 //		notifyListener();
 	}
 	public void notifyListener() {
-		if(l != null)
+		if(l != null) {
 			l.undoRedoChange(before, remaining);
+		}
 	}
 	public String toString() {
 		return lastDone.toString();

@@ -69,9 +69,9 @@ public class JFontChooser extends JComponent implements MouseListener {
 	private JTextField fontStyleTextField = null;
 	private JTextField fontSizeTextField = null;
 
-	private JList fontNameList = null;
-	private JList fontStyleList = null;
-	private JList fontSizeList = null;
+	private JList<String> fontNameList = null;
+	private JList<String> fontStyleList = null;
+	private JList<String> fontSizeList = null;
 
 	private JPanel fontNamePanel = null;
 	private JPanel fontStylePanel = null;
@@ -87,6 +87,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 	Font defaultFont;
 	private Integer maxSize;
 	private String toDisplay;
+
 	public JFontChooser(String[] fontSizeStrings, Font defaultFont, boolean sizingEnabled, Integer max, String toDisplay, Color bg, Color fg, boolean transparency) {
 		this.defaultFont = defaultFont;
 		this.fontSizeStrings = fontSizeStrings;
@@ -105,13 +106,11 @@ public class JFontChooser extends JComponent implements MouseListener {
 		if(transparency) {
 			setTrans = new JButton("X");
 			setTrans.putClientProperty(SubstanceLookAndFeel.BUTTON_NO_MIN_SIZE_PROPERTY, true);
-			setTrans.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					background.setBackground(null);
-					background.repaint();
-					updateSampleFont();
-				}
-			});
+			setTrans.addActionListener(e -> {
+                background.setBackground(null);
+                background.repaint();
+                updateSampleFont();
+            });
 		}
 		
 		JPanel selectPanel = new JPanel();
@@ -179,9 +178,9 @@ public class JFontChooser extends JComponent implements MouseListener {
 		return fontSizeTextField;
 	}
 
-	public JList getFontFamilyList() {
+	public JList<String> getFontFamilyList() {
 		if (fontNameList == null) {
-			fontNameList = new JList(getFontFamilies());
+			fontNameList = new JList<>(getFontFamilies());
 			fontNameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			fontNameList.addListSelectionListener(new ListSelectionHandler(
 					getFontFamilyTextField()));
@@ -191,9 +190,9 @@ public class JFontChooser extends JComponent implements MouseListener {
 		return fontNameList;
 	}
 
-	public JList getFontStyleList() {
+	public JList<String> getFontStyleList() {
 		if (fontStyleList == null) {
-			fontStyleList = new JList(getFontStyleNames());
+			fontStyleList = new JList<>(getFontStyleNames());
 			fontStyleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			fontStyleList.addListSelectionListener(new ListSelectionHandler(
 					getFontStyleTextField()));
@@ -203,9 +202,9 @@ public class JFontChooser extends JComponent implements MouseListener {
 		return fontStyleList;
 	}
 
-	public JList getFontSizeList() {
+	public JList<String> getFontSizeList() {
 		if (fontSizeList == null) {
-			fontSizeList = new JList(this.fontSizeStrings);
+			fontSizeList = new JList<>(this.fontSizeStrings);
 			fontSizeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			fontSizeList.addListSelectionListener(new ListSelectionHandler(
 					getFontSizeTextField()));
@@ -216,8 +215,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 	}
 
 	public String getSelectedFontFamily() {
-		String fontName = (String) getFontFamilyList().getSelectedValue();
-		return fontName;
+		return getFontFamilyList().getSelectedValue();
 	}
 
 	public int getSelectedFontStyle() {
@@ -226,7 +224,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 	}
 
 	public int getSelectedFontSize() {
-		int fontSize = 1;
+		int fontSize;
 		String fontSizeString = getFontSizeTextField().getText();
 		while (true) {
 			try {
@@ -240,7 +238,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 				}
 				break;
 			} catch (NumberFormatException e) {
-				fontSizeString = (String) getFontSizeList().getSelectedValue();
+				fontSizeString = getFontSizeList().getSelectedValue();
 				getFontSizeTextField().setText(fontSizeString);
 			}
 		}
@@ -249,9 +247,8 @@ public class JFontChooser extends JComponent implements MouseListener {
 	}
 
 	public Font getSelectedFont() {
-		Font font = new Font(getSelectedFontFamily(), getSelectedFontStyle(),
+		return new Font(getSelectedFontFamily(), getSelectedFontStyle(),
 				getSelectedFontSize());
-		return font;
 	}
 	
 	public Color getSelectedBG() {
@@ -311,6 +308,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 		dialogResultValue = ERROR_OPTION;
 		JDialog dialog = createDialog(parent);
 		dialog.addWindowListener(new WindowAdapter() {
+			@Override
 			public void windowClosing(WindowEvent e) {
 				dialogResultValue = CANCEL_OPTION;
 			}
@@ -318,7 +316,6 @@ public class JFontChooser extends JComponent implements MouseListener {
 
 		dialog.setVisible(true);
 		dialog.dispose();
-		dialog = null;
 		return dialogResultValue;
 	}
 
@@ -329,8 +326,9 @@ public class JFontChooser extends JComponent implements MouseListener {
 			this.textComponent = textComponent;
 		}
 
+		@Override
 		public void valueChanged(ListSelectionEvent e) {
-			if (e.getValueIsAdjusting() == false) {
+			if (!e.getValueIsAdjusting()) {
 				JList list = (JList) e.getSource();
 				String fontName = (String) list.getSelectedValue();
 				String oldFontName = textComponent.getText();
@@ -353,10 +351,12 @@ public class JFontChooser extends JComponent implements MouseListener {
 			this.textComponent = textComponent;
 		}
 
+		@Override
 		public void focusGained(FocusEvent e) {
 			textComponent.selectAll();
 		}
 
+		@Override
 		public void focusLost(FocusEvent e) {
 			textComponent.select(0, 0);
 			updateSampleFont();
@@ -370,6 +370,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 			this.targetList = list;
 		}
 
+		@Override
 		public void keyPressed(KeyEvent e) {
 			int i = targetList.getSelectedIndex();
 			switch (e.getKeyCode()) {
@@ -400,14 +401,17 @@ public class JFontChooser extends JComponent implements MouseListener {
 			this.targetList = targetList;
 		}
 
+		@Override
 		public void insertUpdate(DocumentEvent e) {
 			update(e);
 		}
 
+		@Override
 		public void removeUpdate(DocumentEvent e) {
 			update(e);
 		}
 
+		@Override
 		public void changedUpdate(DocumentEvent e) {
 			update(e);
 		}
@@ -445,6 +449,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 				this.index = index;
 			}
 
+			@Override
 			public void run() {
 				targetList.setSelectedIndex(this.index);
 			}
@@ -460,6 +465,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 			putValue(Action.NAME, StringAccessor.getString("JFontChooser.OK"));
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			dialogResultValue = OK_OPTION;
 			dialog.setVisible(false);
@@ -475,6 +481,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 			putValue(Action.NAME, StringAccessor.getString("JFontChooser.Cancel"));
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			dialogResultValue = CANCEL_OPTION;
 			dialog.setVisible(false);
@@ -487,6 +494,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 			putValue(Action.NAME, StringAccessor.getString("JFontChooser.Reset"));
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			background.setBackground(bg);
 			if(bg == null) {
@@ -690,6 +698,7 @@ public class JFontChooser extends JComponent implements MouseListener {
 		return fontStyleNames;
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e) {
 		Object source = e.getSource();
 		if(source instanceof JColorComponent) {
@@ -700,9 +709,13 @@ public class JFontChooser extends JComponent implements MouseListener {
 		}
 		updateSampleFont();
 	}
+	@Override
 	public void mouseEntered(MouseEvent e) {}
+	@Override
 	public void mouseExited(MouseEvent e) {}
+	@Override
 	public void mousePressed(MouseEvent e) {}
+	@Override
 	public void mouseReleased(MouseEvent e) {}
 
 	public void setFontForeground(Color foreground) {

@@ -1,7 +1,7 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.i18n.LocaleAndIcon;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 
 import javax.swing.*;
@@ -22,7 +22,7 @@ public interface CalCubeTimerGui {
 
     void updateInspection();
 
-    ScrambleChooserComboBox<ScrambleCustomization> getScrambleCustomizationComboBox();
+    ScrambleChooserComboBox<PuzzleType> getScrambleCustomizationComboBox();
 
     void loadXMLGUI();
 

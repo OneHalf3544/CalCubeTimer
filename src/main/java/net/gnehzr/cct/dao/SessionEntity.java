@@ -1,6 +1,12 @@
 package net.gnehzr.cct.dao;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.Session;
+
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -20,11 +26,18 @@ public class SessionEntity {
     @Column(name = "SESSION_ID")
     private Long sessionId;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<SolutionEntity> solutions;
+    @Column
+    private LocalDateTime sessionStart;
 
     @Column
-    private String profileId;
+    private String scrambleCustomization;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<SolutionEntity> solutions;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "PROFILEID")
+    private ProfileEntity profile;
 
     public Long getSessionId() {
         return sessionId;
@@ -42,11 +55,31 @@ public class SessionEntity {
         this.solutions = solutions;
     }
 
-    public String getProfileId() {
-        return profileId;
+    public LocalDateTime getSessionStart() {
+        return sessionStart;
     }
 
-    public void setProfileId(String profileId) {
-        this.profileId = profileId;
+    public void setSessionStart(LocalDateTime sessionStart) {
+        this.sessionStart = sessionStart;
+    }
+
+    public String getScrambleCustomization() {
+        return scrambleCustomization;
+    }
+
+    public void setScrambleCustomization(String scrambleCustomization) {
+        this.scrambleCustomization = scrambleCustomization;
+    }
+
+    public ProfileEntity getProfileId() {
+        return profile;
+    }
+
+    public void setProfileId(ProfileEntity profileId) {
+        this.profile = profileId;
+    }
+
+    public Session toSession(Configuration configuration, ScramblePluginManager pluginManager, Profile profile) {
+        return new Session(sessionStart, configuration, pluginManager.getCustomizationFromString(profile, scrambleCustomization));
     }
 }

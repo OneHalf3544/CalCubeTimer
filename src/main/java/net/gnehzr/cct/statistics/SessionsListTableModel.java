@@ -4,17 +4,16 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.statistics.Statistics.AverageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.lambda.tuple.Tuple2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,19 +22,20 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
+import static java.util.stream.Collectors.toMap;
+
 public class SessionsListTableModel extends DraggableJTableModel {
 
 	private static final Logger LOG = LogManager.getLogger(SessionsListTableModel.class);
 
 	private static final String SEND_TO_PROFILE = "sendToProfile";
 
-	private Map<ScrambleCustomization, PuzzleStatistics> mapScrambleTypeStatistics = new HashMap<>();
+	private Map<PuzzleType, SessionsListAndPuzzleStatistics> mapScrambleTypeStatistics = new HashMap<>();
 
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
 	private final CalCubeTimerModel cubeTimerModel;
 	private final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
-	private final ScramblePluginManager scramblePluginManager;
 
 	private List<Session> sessionCache = new ArrayList<>();
 	private SessionListener l;
@@ -53,7 +53,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 
 	private Class<?>[] columnClasses = new Class<?>[] {
 			Session.class,
-			ScrambleCustomization.class,
+			PuzzleType.class,
 			SolveTime.class,
 			SolveTime.class,
 			SolveTime.class,
@@ -64,36 +64,36 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	};
 
 	public SessionsListTableModel(Configuration configuration, ProfileDao profileDao,
-								  CalCubeTimerModel cubeTimerModel, CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel, ScramblePluginManager scramblePluginManager) {
+								  CalCubeTimerModel cubeTimerModel,
+								  CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel) {
 		this.configuration = configuration;
 		this.profileDao = profileDao;
 		this.cubeTimerModel = cubeTimerModel;
 		this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
-		this.scramblePluginManager = scramblePluginManager;
 	}
 
-	private List<PuzzleStatistics> getPuzzlesStatistics() {
+	private List<SessionsListAndPuzzleStatistics> getPuzzlesStatistics() {
 		return new ArrayList<>(mapScrambleTypeStatistics.values());
 	}
 
-	public List<ScrambleCustomization> getCustomizations() {
+	public List<PuzzleType> getCustomizations() {
 		return new ArrayList<>(mapScrambleTypeStatistics.keySet());
 	}
 
-	public PuzzleStatistics getPuzzleStatisticsForType(ScrambleCustomization customization) {
-		PuzzleStatistics puzzleStatistics = mapScrambleTypeStatistics.get(customization);
-		if(puzzleStatistics == null) {
-			puzzleStatistics = new PuzzleStatistics(customization, this, configuration, currentSessionSolutionsTableModel);
-			mapScrambleTypeStatistics.put(customization, puzzleStatistics);
+	public SessionsListAndPuzzleStatistics getPuzzleStatisticsForType(PuzzleType customization) {
+		SessionsListAndPuzzleStatistics sessionsListAndPuzzleStatistics = mapScrambleTypeStatistics.get(customization);
+		if(sessionsListAndPuzzleStatistics == null) {
+			sessionsListAndPuzzleStatistics = new SessionsListAndPuzzleStatistics(customization, this, configuration, currentSessionSolutionsTableModel);
+			mapScrambleTypeStatistics.put(customization, sessionsListAndPuzzleStatistics);
 		}
-		return puzzleStatistics;
+		return sessionsListAndPuzzleStatistics;
 	}
 	
 	public void removeEmptySessions() {
-		for(PuzzleStatistics puzzleStatistics : getPuzzlesStatistics()) {
-			for(Session session : puzzleStatistics.toSessionIterable()) {
+		for(SessionsListAndPuzzleStatistics sessionsListAndPuzzleStatistics : getPuzzlesStatistics()) {
+			for(Session session : sessionsListAndPuzzleStatistics.toSessionIterable()) {
 				if(session.getStatistics().getAttemptCount() == 0) {
-					puzzleStatistics.removeSession(session);
+					sessionsListAndPuzzleStatistics.removeSession(session);
 				}
 			}
 		}
@@ -101,7 +101,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 
 	public int getDatabaseTypeCount(SolveType t) {
 		int c = 0;
-		for(PuzzleStatistics ps : mapScrambleTypeStatistics.values())
+		for(SessionsListAndPuzzleStatistics ps : mapScrambleTypeStatistics.values())
 			c += ps.getSolveTypeCount(t);
 		return c;
 	}
@@ -114,17 +114,11 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		return ImmutableList.copyOf(sessionCache);
 	}
 
-	public int indexOf(Session findMe) {
-		int n = 0;
-		for(PuzzleStatistics ps : getPuzzlesStatistics()) {
-			for(Session s : ps.toSessionIterable()) {
-				if(s == findMe) {
-					return n;
-				}
-				n++;
-			}
-		}
-		return -1;
+	public void setSessions(List<Session> sessions) {
+		mapScrambleTypeStatistics = sessions.stream()
+				.map(s -> new Tuple2<>(s.getCustomization(), s.getSessionsListAndPuzzleStatistics()))
+				.collect(toMap(t -> t.v1, t -> t.v2));
+		fireTableDataChanged();
 	}
 
 	public void setSessionListener(SessionListener sl) {
@@ -147,8 +141,8 @@ public class SessionsListTableModel extends DraggableJTableModel {
 
 	private void updateSessionCache() {
 		sessionCache.clear();
-		for(PuzzleStatistics ps : getPuzzlesStatistics()) {
-			for (Session s : ps.toSessionIterable()) {
+		for(SessionsListAndPuzzleStatistics sessionsListAndPuzzleStatistics : getPuzzlesStatistics()) {
+			for (Session s : sessionsListAndPuzzleStatistics.toSessionIterable()) {
 				sessionCache.add(s);
 			}
 		}
@@ -202,24 +196,15 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	}
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
-		if(columnIndex == 1 && value instanceof ScrambleCustomization) { //setting the customization
-			ScrambleCustomization sc = (ScrambleCustomization) value;
-			Session s = getNthSession(rowIndex);
-			if(!s.getCustomization().equals(sc)) { //we're not interested in doing anything if they select the same customization
-				s.setCustomization(sc, cubeTimerModel.getSelectedProfile());
-				updateSessionCache();
-				rowIndex = indexOf(s); //changing the customization will change the index in the model
-				fireTableRowsUpdated(rowIndex, rowIndex);
-			}
-		} else if(columnIndex == 8 && value instanceof String) {
+		if(columnIndex == 8 && value instanceof String) {
 			getNthSession(rowIndex).setComment((String) value);
 		}
 	}
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		// allow modification of the session customization or comment
-		return columnIndex == 1 || columnIndex == 8;
+		// allow comment modification
+		return columnIndex == 8;
 	}
 
 	@Override
@@ -278,13 +263,12 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		String rows = Joiner.on(",").join(Arrays.asList(source.getSelectedRows()));
 
 		profileMenuItem.setActionCommand(SEND_TO_PROFILE + rows);
-		profileMenuItem.addActionListener(this::switchProfile);
+		profileMenuItem.addActionListener(this::sendSessionToAnotherProfile);
 		return profileMenuItem;
 	}
 
-	public void switchProfile(ActionEvent e) {
-		Profile to = profileDao.loadProfile(((JMenuItem) e.getSource()).getText());
-		profileDao.loadDatabase(to, scramblePluginManager);
+	public void sendSessionToAnotherProfile(ActionEvent e) {
+		Profile anotherProfile = profileDao.loadProfile(((JMenuItem) e.getSource()).getText());
 
 		String[] rows = e.getActionCommand().substring(SEND_TO_PROFILE.length()).split(",");
 
@@ -293,16 +277,12 @@ public class SessionsListTableModel extends DraggableJTableModel {
             int row = Integer.parseInt(rows[ch]);
             sessions[ch] = getNthSession(row);
         }
+
 		for(Session session : sessions) {
-            ScrambleCustomization custom = session.getCustomization();
-            session.delete();
-            to.getSessionsDatabase().getPuzzleStatisticsForType(custom).addSession(session);
+            getPuzzleStatisticsForType(session.getCustomization()).removeSession(session);
         }
 		fireSessionsDeleted();
-		profileDao.saveDatabase(to);
-	}
 
-	public List<SessionEntity> toEntityList() {
-		return Collections.singletonList(currentSessionSolutionsTableModel.getCurrentSession().toSessionEntity());
+		profileDao.moveSessionsTo(sessions, anotherProfile);
 	}
 }

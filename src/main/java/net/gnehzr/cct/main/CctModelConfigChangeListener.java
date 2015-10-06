@@ -5,7 +5,7 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.statistics.Profile;
@@ -59,7 +59,7 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
         calCubeTimerGui.getMainFrame().updateWatermark();
 
         scramblePluginManager.reloadLengthsFromConfiguration(false);
-        ScrambleCustomization newCustom = scramblePluginManager.getCurrentScrambleCustomization(currentProfile);
+        PuzzleType newCustom = scramblePluginManager.getCurrentScrambleCustomization(currentProfile);
         calCubeTimerGui.getMainFrame().getScrambleCustomizationComboBox().setSelectedItem(newCustom);
 
         //we need to notify the stackmatinterpreter package because it has been rewritten to

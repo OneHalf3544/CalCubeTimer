@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.dao.ProfileEntity;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class Profile {
@@ -38,6 +39,7 @@ public class Profile {
         ProfileEntity profileEntity = new ProfileEntity(name);
         profileEntity.setProfileId(id);
         profileEntity.setLastSessionId(lastSessionId);
+        profileEntity.setLastLoad(LocalDateTime.now());
         return profileEntity;
     }
 
@@ -75,8 +77,8 @@ public class Profile {
         return sessionsListTableModel;
     }
 
-    public void setSessionsListTableModel(SessionsListTableModel puzzleDatabase) {
-        this.sessionsListTableModel = puzzleDatabase;
+    public void setSessionsListTableModel(SessionsListTableModel sessionsListTableModel) {
+        this.sessionsListTableModel = sessionsListTableModel;
     }
 
     public String getNewName() {

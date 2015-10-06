@@ -9,27 +9,22 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Singleton
 public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
-	private static final Logger LOG = LogManager.getLogger(CurrentSessionSolutionsTableModel.class);
-
-	private final Configuration configuration;
-
-	private UndoRedoListener undoRedoListener;
+	private final CurrentSessionSolutionsList currentSessionSolutionsList;
 
 	private String[] columnNames = new String[] {
 			"StatisticsTableModel.times",
@@ -51,60 +46,39 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	private DraggableJTable timesTable;
 	private Component prevFocusOwner;
 	private Map<SolveType, JMenuItem> typeButtons;
-	private List<StatisticsUpdateListener> statsListeners = new ArrayList<>();
-
-	private Session currentSession;
+	private final Configuration configuration;
 
 	@Inject
-	public CurrentSessionSolutionsTableModel(Configuration configuration) {
+	public CurrentSessionSolutionsTableModel(Configuration configuration,
+											 CurrentSessionSolutionsList currentSessionSolutionsList) {
+		this.currentSessionSolutionsList = currentSessionSolutionsList;
 		this.configuration = configuration;
-		currentSession = new Session(LocalDateTime.now(), this.configuration, this);
 	}
 
-	public void setCurrentSession(@NotNull Session currentSession) {
-		this.currentSession = Objects.requireNonNull(currentSession);
-		Statistics stats = Objects.requireNonNull(currentSession.getStatistics());
-		if(stats != null) {
-			stats.setUndoRedoListener(null);
-			stats.setTableListener(null);
-			stats.setStatisticsUpdateListeners(null);
-		}
-		stats = currentSession.getStatistics();
-
-		stats.setTableListener(this);
-		stats.setUndoRedoListener(undoRedoListener);
-		stats.setStatisticsUpdateListeners(statsListeners);
-
-		stats.notifyListeners(false);
+	public void setCurrentSession(Profile selectedProfile, @NotNull Session session) {
+		currentSessionSolutionsList.setCurrentSession(selectedProfile, session, this);
 	}
 
 	@NotNull
 	public Session getCurrentSession() {
-		return currentSession;
+		return currentSessionSolutionsList.getCurrentSession();
 	}
 
 	public void setUndoRedoListener(@NotNull UndoRedoListener l) {
-		this.undoRedoListener = Objects.requireNonNull(l);
+		currentSessionSolutionsList.setUndoRedoListener(l);
 	}
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener l) {
-		//This nastyness is to ensure that PuzzleStatistics have had a chance to see the change (see notifyListeners() in Statistics)
-		//before the dynamicstrings
-		if(l instanceof PuzzleStatistics)
-			statsListeners.add(0, l);
-		else
-			statsListeners.add(l);
+		currentSessionSolutionsList.addStatisticsUpdateListener(l);
 	}
 
 	public void removeStatisticsUpdateListener(StatisticsUpdateListener l) {
-		statsListeners.remove(l);
+		currentSessionSolutionsList.removeStatisticsUpdateListener(l);
 	}
 
 	//this is needed to update the i18n text
 	public void fireStringUpdates() {
-		LOG.debug("StatisticsTableModel.fireStringUpdates()");
-		statsListeners.forEach(StatisticsUpdateListener::update);
-		undoRedoListener.refresh();
+		currentSessionSolutionsList.fireStringUpdates();
 	}
 
 	@Override
@@ -128,11 +102,12 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public int getRowCount() {
-		return currentSession.getStatistics().getAttemptCount();
+		return currentSessionSolutionsList.getSize();
 	}
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
+		Session currentSession = currentSessionSolutionsList.getCurrentSession();
 		switch(columnIndex) {
 		case 0: //get the solvetime for this index
 			return currentSession.getStatistics().get(rowIndex).getTime();
@@ -162,23 +137,23 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public void insertValueAt(Object value, int rowIndex) {
-		currentSession.getStatistics().add(rowIndex, (Solution) value);
+		currentSessionSolutionsList.addSolution((Solution) value, rowIndex);
 		fireTableRowsInserted(rowIndex, rowIndex);
 	}
 
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(columnIndex == 0 && value instanceof Solution) {
-			currentSession.getStatistics().set(rowIndex, (Solution) value);
+			currentSessionSolutionsList.addSolution((Solution) value, rowIndex);
 		}
 		else if(columnIndex == 3 && value instanceof String) {
-			currentSession.getStatistics().get(rowIndex).setComment((String) value);
+			currentSessionSolutionsList.setComment((String) value, rowIndex);
 		}
 	}
 
 	@Override
 	public void deleteRows(int[] indices) {
-		currentSession.getStatistics().remove(indices);
+		currentSessionSolutionsList.deleteRows(indices);
 	}
 
 	@Override
@@ -188,7 +163,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
-		String t = currentSession.getStatistics().get(rowIndex).getComment();
+		String t = getCurrentSession().getStatistics().get(rowIndex).getComment();
 		return t.isEmpty() ? null : t;
 	}
 
@@ -211,7 +186,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		List<SolveType> types = typeButtons.keySet().stream()
                 .filter(key -> typeButtons.get(key).isSelected())
 				.collect(Collectors.toList());
-		currentSession.getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
+		getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
 		if (prevFocusOwner != null) {
 			prevFocusOwner.requestFocusInWindow();
 		}
@@ -227,7 +202,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			return;
 		}
 		else if(selectedSolves.length == 1) {
-			Solution selectedSolve = currentSession.getStatistics().get(timesTable.getSelectedRow());
+			Solution selectedSolve = getCurrentSession().getStatistics().get(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
 					+ Utils.formatTime(selectedSolve.getTime(), configuration.useClockFormat() ));
 			rawTime.setEnabled(false);
@@ -273,7 +248,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		jpopup.show(e.getComponent(), e.getX(), e.getY());
 	}
 
-	private void addSplitsPopup(JPopupMenu jpopup, Solution selectedSolve) {
+	void addSplitsPopup(JPopupMenu jpopup, Solution selectedSolve) {
 		List<SolveTime> splits = selectedSolve.getSplits();
 		for (int i = 0; i < splits.size(); i++) {
 			SolveTime next = splits.get(i);

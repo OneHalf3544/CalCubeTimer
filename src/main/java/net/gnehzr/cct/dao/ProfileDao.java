@@ -8,6 +8,7 @@ import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SessionsListTableModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,9 +17,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.stream.Collectors.toList;
 
 /**
  * <p>
@@ -68,7 +69,7 @@ public class ProfileDao extends HibernateDaoSupport {
     @NotNull
     private Profile mapEntityToProfile(@NotNull String name, ProfileEntity profileEntity) {
         SessionsListTableModel sessionsListTableModel = new SessionsListTableModel(configuration, this, cubeTimerModel,
-                currentSessionSolutionsTableModel, scramblePluginManager);
+                currentSessionSolutionsTableModel);
         Profile profile;
         if (profileEntity != null) {
             profile = new Profile(profileEntity.getProfileId(), name, sessionsListTableModel);
@@ -86,7 +87,7 @@ public class ProfileDao extends HibernateDaoSupport {
             saveProfileWithoutSession(profile);
         }
         LOG.info("save current session for {}", profile);
-        solutionsDao.saveSession(currentSessionSolutionsTableModel.getCurrentSession().toSessionEntity());
+        solutionsDao.saveSession(currentSessionSolutionsTableModel.getCurrentSession().toSessionEntity(profile.getId()));
     }
 
     private void saveProfileWithoutSession(Profile profile) {
@@ -100,13 +101,26 @@ public class ProfileDao extends HibernateDaoSupport {
     }
 
     public void loadDatabase(@NotNull Profile profile, ScramblePluginManager scramblePluginManager) {
-        profile.setSessionsListTableModel(new SessionsListTableModel(
-                configuration, this, cubeTimerModel, currentSessionSolutionsTableModel, scramblePluginManager));
+        doWithSession((session) -> {
+            List<SessionEntity> entity = queryList("from SessionEntity where profile.profileId = :profileId",
+                    Collections.singletonMap("profileId", profile.getId()));
+
+            SessionsListTableModel sessionsListTableModel = new SessionsListTableModel(
+                    configuration, this, cubeTimerModel, currentSessionSolutionsTableModel);
+
+            sessionsListTableModel.setSessions(entity.stream()
+                    .map(s -> s.toSession(configuration, scramblePluginManager, profile))
+                    .collect(toList()));
+            profile.setSessionsListTableModel(sessionsListTableModel);
+        });
     }
 
     public void saveDatabase(Profile profile) {
         LOG.debug("save database for profile {}", profile);
         profile.getSessionsDatabase().removeEmptySessions();
+        profile.getSessionsDatabase().getSessions().stream()
+                .map(s -> s.toSessionEntity(profile.getId()))
+                .forEach(this::insertOrUpdate);
     }
 
     public void commitRename(Profile profile) {
@@ -127,7 +141,7 @@ public class ProfileDao extends HibernateDaoSupport {
 
         List<Profile> profs = profilesExceptGuest.stream()
                 .map(profDir -> loadProfile(profDir.getName()))
-                .collect(Collectors.toList());
+                .collect(toList());
         profs.add(0, getOrCreateGuestProfile());
 
         return profs;
@@ -136,10 +150,15 @@ public class ProfileDao extends HibernateDaoSupport {
     @NotNull
     public Profile loadLastProfile() {
         LOG.info("load last used profile");
-        ProfileEntity lastUsedProfile = queryFirst("FROM PROFILE WHERE lastSessionId = MAX(lastSessionId)");
+        ProfileEntity lastUsedProfile = queryFirst("FROM PROFILE ORDER BY lastSessionId DESC");
         return lastUsedProfile == null
                 ? getOrCreateGuestProfile()
                 : mapEntityToProfile(lastUsedProfile.getName(), lastUsedProfile);
     }
 
+    public void moveSessionsTo(Session[] sessions, Profile anotherProfile) {
+        for (Session session : sessions) {
+            insertOrUpdate(session.toSessionEntity(anotherProfile.getId()));
+        }
+    }
 }

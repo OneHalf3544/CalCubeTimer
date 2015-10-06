@@ -3,7 +3,7 @@ package net.gnehzr.cct.statistics;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
-public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter {
+public class SessionsListAndPuzzleStatistics implements StatisticsUpdateListener, SolveCounter {
 
-	private ScrambleCustomization customization;
+	private PuzzleType customization;
 
 	private SessionsListTableModel sessionsListTableModel;
 
@@ -30,8 +30,8 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 
 	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<>();
 
-	public PuzzleStatistics(ScrambleCustomization customization, SessionsListTableModel sessionsListTableModel,
-							Configuration configuration, CurrentSessionSolutionsTableModel statsModel) {
+	public SessionsListAndPuzzleStatistics(PuzzleType customization, SessionsListTableModel sessionsListTableModel,
+										   Configuration configuration, CurrentSessionSolutionsTableModel statsModel) {
 		this.customization = customization;
 		this.sessionsListTableModel = sessionsListTableModel;
 		this.configuration = configuration;
@@ -40,7 +40,7 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 		statsModel.addStatisticsUpdateListener(this);
 	}
 
-	public ScrambleCustomization getCustomization() {
+	public PuzzleType getCustomization() {
 		return customization;
 	}
 
@@ -54,7 +54,7 @@ public class PuzzleStatistics implements StatisticsUpdateListener, SolveCounter 
 
 	public void addSession(Session session) {
 		sessions.add(session);
-		session.setPuzzleStatistics(this);
+		session.setSessionsListAndPuzzleStatistics(this);
 		refreshStats();
 		sessionsListTableModel.fireTableDataChanged();
 	}

@@ -7,7 +7,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JSpinnerWithText;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleVariation;
@@ -132,9 +132,9 @@ public class ScrambleExportDialog extends JDialog {
 	private boolean generateAndExportScrambles(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
 		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
-			ScrambleCustomization scrambleCustomization = new ScrambleCustomization(configuration, scrambleVariation, null, scramblePluginManager);
+			PuzzleType puzzleType = new PuzzleType(configuration, scrambleVariation, null, scramblePluginManager);
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
-				fileWriter.println(scrambleCustomization.generateScramble().getScramble());
+				fileWriter.println(puzzleType.generateScramble().getScramble());
 			}
 			Utils.showConfirmDialog(this, StringAccessor.getString("ScrambleExportDialog.successmessage") + "\n" + outputFile.getPath());
 			return true;
@@ -167,11 +167,11 @@ public class ScrambleExportDialog extends JDialog {
 
 		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
-			ScrambleCustomization scrambleCustomization = new ScrambleCustomization(configuration, scrambleVariation, null, scramblePluginManager);
+			PuzzleType puzzleType = new PuzzleType(configuration, scrambleVariation, null, scramblePluginManager);
 			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP);
 			fileWriter.println("<html><head><title>Exported Scrambles</title></head><body><table>");
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
-				ScrambleString scramble = scrambleCustomization.generateScramble();
+				ScrambleString scramble = puzzleType.generateScramble();
 				BufferedImage image = scramblePluginManager.getScrambleImage(scramble, popupGap,
 						scramble.getScramblePlugin().getDefaultUnitSize(), scramblePluginManager.getColorScheme(scramble.getScramblePlugin(), false));
 

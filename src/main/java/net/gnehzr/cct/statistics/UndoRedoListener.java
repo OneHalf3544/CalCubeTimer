@@ -1,6 +1,8 @@
 package net.gnehzr.cct.statistics;
 
 public interface UndoRedoListener {
-	public void undoRedoChange(int undoable, int redoable);
-	public void refresh();
+
+	void undoRedoChange(int undoable, int redoable);
+
+	void refresh();
 }

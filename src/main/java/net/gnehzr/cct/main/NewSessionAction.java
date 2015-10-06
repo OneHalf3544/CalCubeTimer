@@ -2,12 +2,14 @@ package net.gnehzr.cct.main;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
+import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.Session;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.time.LocalDateTime;
 
 /**
 * <p>
@@ -24,9 +26,11 @@ public class NewSessionAction extends AbstractAction {
     private final CalCubeTimerModel calCubeTimerModel;
 
     @Inject
-    private CurrentSessionSolutionsTableModel statsModel;
+    private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
     @Inject
     private ScrambleList scramblesList;
+    @Inject
+    private Configuration configuration;
 
     @Inject
     public NewSessionAction(CALCubeTimerFrame calCubeTimerFrame, CalCubeTimerModel calCubeTimerModel) {
@@ -41,9 +45,10 @@ public class NewSessionAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        if (statsModel.getRowCount() > 0) { //only create a new session if we've added any times to the current one
-            ScrambleCustomization scrambleCustomization = scramblesList.getCurrentScrambleCustomization();
-            statsModel.setCurrentSession(calCubeTimerFrame.createNewSession(calCubeTimerModel.getSelectedProfile(), scrambleCustomization));
+        //only create a new session if we've added any times to the current one
+        if (currentSessionSolutionsTableModel.getRowCount() > 0) {
+            currentSessionSolutionsTableModel.setCurrentSession(calCubeTimerModel.getSelectedProfile(),
+                    new Session(LocalDateTime.now(), configuration, scramblesList.getCurrentScrambleCustomization()));
             calCubeTimerFrame.getTimeLabel().reset();
             scramblesList.clear();
             calCubeTimerFrame.updateScramble();
