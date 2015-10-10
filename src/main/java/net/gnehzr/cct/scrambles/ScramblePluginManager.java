@@ -11,7 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import scramblePlugins.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -40,32 +39,26 @@ public class ScramblePluginManager {
 		this.setAttributes(attributes);
 	}
 
-	private List<Class<? extends ScramblePlugin>> pluginClasses = ImmutableList.of(
-			// todo load class names from /META-INF/somefile
-			Cube2x2ScramblePlugin.class,
-			CubeScramblePlugin.class,
-			ClockScramblePlugin.class,
-			MegaminxScramblePlugin.class,
-			PyraminxScramblePlugin.class,
-			SquareOneScramblePlugin.class
-	);
+	private final List<ScramblePlugin> plugins;
 
 	@Inject
 	public ScramblePluginManager(Configuration configuration) throws IllegalArgumentException,
 														       		 IllegalAccessException, InstantiationException {
 		this.configuration = configuration;
-		this.scramblePlugins = createScramblePlugins();
 
 		ScrambleVariation NULL_SCRAMBLE_VARIATION = new ScrambleVariation(NULL_SCRAMBLE_PLUGIN, "", this.configuration, this, "");
 		NULL_SCRAMBLE_CUSTOMIZATION = new PuzzleType(configuration, NULL_SCRAMBLE_VARIATION, null, this);
+
+		plugins = ImmutableList.copyOf(ServiceLoader.load(ScramblePlugin.class));
+		this.scramblePlugins = createScramblePlugins();
+		LOG.info("loaded plugins: {}", plugins);
 	}
 
 	public Map<Class<? extends ScramblePlugin>, ScramblePlugin> createScramblePlugins() throws IllegalAccessException, InstantiationException {
 		Map<Class<? extends ScramblePlugin>, ScramblePlugin> scramblePlugin = new HashMap<>();
-		for (Class<? extends ScramblePlugin> pluginClass : pluginClasses) {
-			ScramblePlugin plugin = pluginClass.newInstance();
+		for (ScramblePlugin plugin : plugins) {
 			plugin.checkPluginState();
-			scramblePlugin.put(pluginClass, plugin);
+			scramblePlugin.put(plugin.getClass(), plugin);
 		}
 		return scramblePlugin;
 	}
@@ -256,7 +249,7 @@ public class ScramblePluginManager {
 	@Override
 	public String toString() {
 		Integer variationsCount = getScrambleVariations().length;
-		return String.format("ScramblePluginManager{has %d plugins (%d variations)}", pluginClasses.size(), variationsCount);
+		return String.format("ScramblePluginManager{has %d plugins (%d variations)}", plugins.size(), variationsCount);
 	}
 
 	@Nullable
