@@ -34,8 +34,6 @@ public interface CalCubeTimerModel extends SessionListener {
 
     ScrambleList getScramblesList();
 
-    CurrentSessionSolutionsTableModel getSessionSolutionsTableModel();
-
     TimingListener getTimingListener();
 
     long getLastSplit();

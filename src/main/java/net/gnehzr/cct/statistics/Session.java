@@ -79,10 +79,6 @@ public class Session extends Commentable implements Comparable<Session> {
 		return configuration.getDateFormat().format(getStartTime());
 	}
 
-	public String toString() {
-		return toDateString();
-	}
-
 	public void delete() {
 		sessionsList.removeSession(this);
 	}
@@ -114,5 +110,15 @@ public class Session extends Commentable implements Comparable<Session> {
 
 	public Solution getSolutions(int solutionIndex) {
 		return statistics.get(solutionIndex);
+	}
+
+	@Override
+	public String toString() {
+		return "Session{" +
+				"lastSessionId=" + lastSessionId +
+				", solutions count=" + getSolutionsCount() +
+				", dateStarted=" + dateStarted +
+				", puzzleType=" + puzzleType +
+				'}';
 	}
 }

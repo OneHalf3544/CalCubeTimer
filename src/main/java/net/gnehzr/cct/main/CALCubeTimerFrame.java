@@ -571,6 +571,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 	@Override
 	public void updateScramble() {
+		LOG.debug("update scramble for {}", model.getScramblesList().getPuzzleType());
 		ScrambleString current = model.getScramblesList().getCurrentScramble();
 		if (current != null) {
 			//set the length of the current scramble
@@ -746,9 +747,11 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void createScrambleAttributesPanel() {
+		LOG.debug("create scramble attributes panel");
 		PuzzleType sc = model.getScramblesList().getPuzzleType();
 		scrambleAttributesPanel.removeAll();
 		if (sc == scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION) {
+			LOG.debug("skip creating scramble attributes panel");
 			return;
 		}
 		List<String> attrs = scramblePluginManager.getAvailablePuzzleAttributes(sc.getScramblePlugin().getClass());

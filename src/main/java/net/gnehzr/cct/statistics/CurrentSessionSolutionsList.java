@@ -32,7 +32,7 @@ public class CurrentSessionSolutionsList {
 
 	public void setCurrentSession(@NotNull Session session) {
 		this.currentSession = Objects.requireNonNull(session);
-
+		LOG.info("setCurrentSession {}", session);
 		Statistics statistics = session.getStatistics();
 
 		statistics.notifyListeners(false);

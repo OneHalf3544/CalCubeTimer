@@ -135,14 +135,18 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 
 		Font font = configuration.getFont(VariableKey.SCRAMBLE_FONT, false);
 		StringBuilder fontStyle = new StringBuilder(); 
-		if(font.isItalic())
-			fontStyle.append("font-style: italic; "); 
-		else if(font.isPlain())
-			fontStyle.append("font-style: normal; "); 
-		if(font.isBold())
-			fontStyle.append("font-weight: bold; "); 
-		else
-			fontStyle.append("font-weight: normal; "); 
+		if(font.isItalic()) {
+			fontStyle.append("font-style: italic; ");
+		}
+		else if(font.isPlain()) {
+			fontStyle.append("font-style: normal; ");
+		}
+		if(font.isBold()) {
+			fontStyle.append("font-weight: bold; ");
+		}
+		else {
+			fontStyle.append("font-weight: normal; ");
+		}
 		
 		String selected = Utils.colorToString(configuration.getColor(VariableKey.SCRAMBLE_SELECTED, false));
 		String unselected = Utils.colorToString(configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, false));

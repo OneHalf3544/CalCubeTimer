@@ -8,7 +8,6 @@ import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.GeneratedScrambleList;
-import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
@@ -164,27 +163,23 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         return scramblesList;
     }
 
-    @Override
-    public CurrentSessionSolutionsTableModel getSessionSolutionsTableModel() {
-        return sessionSolutionsTableModel;
-    }
-
     //if we deleted the current session, should we create a new one, or load the "nearest" session?
     @Override
     public Session getNextSession(CALCubeTimerFrame calCubeTimerFrame) {
-        Session nextSession = getSessionSolutionsTableModel().getCurrentSession();
-        PuzzleType customization = scramblesList.getPuzzleType();
-        SessionsListTableModel sessionsListTableModel = getSelectedProfile().getSessionsListTableModel();
-        SessionsList sessionsList = sessionsListTableModel.getSessionsList();
+        LOG.debug("getNextSession");
+
+        Session nextSession = sessionSolutionsTableModel.getCurrentSession();
+        SessionsList sessionsList = getSelectedProfile().getSessionsListTableModel().getSessionsList();
         if (!sessionsList.containsSession(nextSession)) {
-            //failed to find a session to continue, so load newest session
+            LOG.debug("failed to find a session to continue. try to load newest session");
             Optional<Session> nextSessionOptional = sessionsList.getSessions().stream()
                     .max(Comparator.comparing(Session::getStartTime));
 
             if (nextSessionOptional.isPresent()) {
+                LOG.debug("newest session found");
                 nextSession = nextSessionOptional.get();
             } else {
-                nextSession = new Session(LocalDateTime.now(), configuration, customization);
+                nextSession = new Session(LocalDateTime.now(), configuration, scramblesList.getPuzzleType());
                 currentSessionSolutionsTableModel.setCurrentSession(nextSession);
             }
         }
