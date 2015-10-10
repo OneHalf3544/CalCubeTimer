@@ -25,7 +25,7 @@ public abstract class TimerState implements Comparable<TimerState> {
 		this.time = time;
 	}
 
-	public Solution toSolution(ScrambleString scramble, List<SolveTime> splits) {
+	public Solution toSolution(@NotNull ScrambleString scramble, List<SolveTime> splits) {
 		return new Solution(this, scramble, splits);
 	}
 

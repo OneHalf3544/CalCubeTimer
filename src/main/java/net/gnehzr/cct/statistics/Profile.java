@@ -73,7 +73,7 @@ public class Profile {
         this.name = newName;
     }
 
-    public SessionsListTableModel getSessionsDatabase() {
+    public SessionsListTableModel getSessionsListTableModel() {
         return sessionsListTableModel;
     }
 

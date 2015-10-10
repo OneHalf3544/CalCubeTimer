@@ -134,7 +134,7 @@ public class ScrambleExportDialog extends JDialog {
 
 			PuzzleType puzzleType = new PuzzleType(configuration, scrambleVariation, null, scramblePluginManager);
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
-				fileWriter.println(puzzleType.generateScramble().getScramble());
+				fileWriter.println(puzzleType.generateScramble(puzzleType.getScrambleVariation()).getScramble());
 			}
 			Utils.showConfirmDialog(this, StringAccessor.getString("ScrambleExportDialog.successmessage") + "\n" + outputFile.getPath());
 			return true;
@@ -171,7 +171,7 @@ public class ScrambleExportDialog extends JDialog {
 			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP);
 			fileWriter.println("<html><head><title>Exported Scrambles</title></head><body><table>");
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
-				ScrambleString scramble = puzzleType.generateScramble();
+				ScrambleString scramble = puzzleType.generateScramble(puzzleType.getScrambleVariation());
 				BufferedImage image = scramblePluginManager.getScrambleImage(scramble, popupGap,
 						scramble.getScramblePlugin().getDefaultUnitSize(), scramblePluginManager.getColorScheme(scramble.getScramblePlugin(), false));
 

@@ -29,13 +29,13 @@ class NullScramblePlugin extends ScramblePlugin {
 
     @Override
     public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
-                                         String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+                                         List<String> attributes) throws InvalidScrambleException {
         LOG.debug("import scramble");
         return ScramblePluginManager.NULL_IMPORTED_SCRUMBLE;
     }
 
     @Override
-    public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+    public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
         LOG.debug("create scramble");
         throw new UnsupportedOperationException("NullScramblePlugin.createScramble");
     }

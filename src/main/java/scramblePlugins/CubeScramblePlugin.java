@@ -66,7 +66,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     @Override
-    public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+    public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
         int cubeSize = getSizeFromVariation(variation.getName());
 
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
@@ -81,12 +81,12 @@ public class CubeScramblePlugin extends ScramblePlugin {
             scramble = generateScramble(variation.getLength(), cubeSize, image, multislice);
 
         }
-        return new ScrambleString(scramble, false, variation, this, getTextComments(scramble, cubeSize, generatorGroup));
+        return new ScrambleString(scramble, false, variation, this, getTextComments(scramble, cubeSize, variation.getGeneratorGroup()));
     }
 
     @Override
     public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
-                                         String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+                                         List<String> attributes) throws InvalidScrambleException {
 
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
         wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
@@ -97,7 +97,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         if (!isValidScramble(scramble, cubeSize, image, multislice)) {
             throw new InvalidScrambleException(scramble);
         }
-        String text = getTextComments(scramble, getSizeFromVariation(variation.getName()), generatorGroup);
+        String text = getTextComments(scramble, getSizeFromVariation(variation.getName()), variation.getGeneratorGroup());
         return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, text);
     }
 

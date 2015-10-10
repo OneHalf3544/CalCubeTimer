@@ -9,6 +9,8 @@ package net.gnehzr.cct.statistics;
 * @author OneHalf
 */
 public interface CCTUndoableEdit {
-    public void doEdit();
-    public void undoEdit();
+
+    void doEdit();
+
+    void undoEdit();
 }

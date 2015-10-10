@@ -30,24 +30,15 @@ public class ScrambleImporter {
         this.model = model;
     }
 
-    public void importScrambles(PuzzleType sc, List<ScrambleString> scramblePlugins, CALCubeTimerFrame calCubeTimer) {
-        model.getScramblesList().setCurrentScrambleCustomization(sc);
-        model.getScramblesList().importScrambles(scramblePlugins);
-        calCubeTimer.getScrambleCustomizationComboBox().setSelectedItem(model.getScramblesList().getCurrentScrambleCustomization());
+    public void importScrambles(PuzzleType puzzleType, List<ScrambleString> scramblePlugins, CALCubeTimerFrame calCubeTimer) {
+        model.setScramblesList(new ImportedScrambleList(puzzleType, scramblePlugins));
+        calCubeTimer.getScrambleCustomizationComboBox().setSelectedItem(model.getScramblesList().getPuzzleType());
         calCubeTimer.updateScramble();
     }
 
     public void exportScramblesAction(Profile selectedProfile, ScrambleList scramblesList) {
-        new ScrambleExportDialog(calCubeTimerFrame.getMainFrame(), scramblesList.getCurrentScrambleCustomization().getScrambleVariation(),
+        new ScrambleExportDialog(calCubeTimerFrame.getMainFrame(), scramblesList.getPuzzleType().getScrambleVariation(),
                 scramblePluginManager, configuration, selectedProfile, profileDao);
     }
 
-    public void importScrambles(ScrambleVariation sv, List<ScrambleString> scramblePlugins, Profile profile, ScrambleList scramblesList) {
-        if(!((PuzzleType)calCubeTimerFrame.getScrambleCustomizationComboBox().getSelectedItem()).getScrambleVariation().equals(sv)) {
-            scramblesList.setCurrentScrambleCustomization(scramblePluginManager.getCustomizationFromString(profile, "" + sv.toString()));
-        }
-        calCubeTimerFrame.getScrambleCustomizationComboBox().setSelectedItem(scramblesList.getCurrentScrambleCustomization());
-        scramblesList.importScrambles(scramblePlugins);
-        calCubeTimerFrame.updateScramble();
-    }
 }

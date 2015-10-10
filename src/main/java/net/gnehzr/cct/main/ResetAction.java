@@ -1,5 +1,8 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.misc.Utils;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
@@ -12,13 +15,27 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class ResetAction extends AbstractAction {
-	private CALCubeTimerFrame cct;
-	public ResetAction(CALCubeTimerFrame cct){
-		this.cct = cct;
+
+	private CALCubeTimerFrame cubeTimerFrame;
+
+	public ResetAction(CALCubeTimerFrame cubeTimerFrame){
+		this.cubeTimerFrame = cubeTimerFrame;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.resetAction();
+		resetAction();
 	}
+
+	public void resetAction() {
+		int choice = Utils.showYesNoDialog(cubeTimerFrame, StringAccessor.getString("CALCubeTimer.confirmreset"));
+		if(choice == JOptionPane.YES_OPTION) {
+			cubeTimerFrame.getTimeLabel().reset();
+			cubeTimerFrame.bigTimersDisplay.reset();
+			cubeTimerFrame.model.getScramblesList().asGenerating().clear();
+			cubeTimerFrame.updateScramble();
+			cubeTimerFrame.currentSessionSolutionsTableModel.getCurrentSession().getStatistics().clear();
+		}
+	}
+
 }

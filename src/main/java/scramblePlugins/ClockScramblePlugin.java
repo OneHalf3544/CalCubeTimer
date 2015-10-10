@@ -26,13 +26,13 @@ public class ClockScramblePlugin extends ScramblePlugin {
 
 	@Override
 	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
-										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+										 List<String> attributes) throws InvalidScrambleException {
 		verbose = hasVerboseAttribute(attributes);
 		return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, null);
 	}
 
 	@Override
-	public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+	public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
 		verbose = hasVerboseAttribute(attributes);
 
 		return new ScrambleString(generateScramble(), false, variation, this, null);

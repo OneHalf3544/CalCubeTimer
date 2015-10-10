@@ -104,7 +104,7 @@ public class Configuration {
 	}
 
 	public void apply(Profile currentProfile) {
-		listeners.forEach((l) -> l.configurationChanged(currentProfile));
+		listeners.forEach(listener -> listener.configurationChanged(currentProfile));
 	}
 
 	public static File getRootDirectory() {

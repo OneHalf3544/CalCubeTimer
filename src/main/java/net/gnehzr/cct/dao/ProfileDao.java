@@ -57,13 +57,17 @@ public class ProfileDao extends HibernateDaoSupport {
     }
 
     public Profile loadProfile(@NotNull String name) {
-        checkArgument(!Strings.isNullOrEmpty(name));
-        LOG.info("load profile {}", name);
-
-        ProfileEntity profileEntity = queryFirst("from PROFILE where name = :name",
-                Collections.singletonMap("name", name));
+        ProfileEntity profileEntity = loadProfileEntity(name);
 
         return mapEntityToProfile(name, profileEntity);
+    }
+
+    public ProfileEntity loadProfileEntity(@NotNull String name) {
+        checkArgument(!Strings.isNullOrEmpty(name));
+        LOG.info("load profile entity {}", name);
+
+        return queryFirst("from PROFILE where name = :name",
+                Collections.singletonMap("name", name));
     }
 
     @NotNull
@@ -108,17 +112,18 @@ public class ProfileDao extends HibernateDaoSupport {
             SessionsListTableModel sessionsListTableModel = new SessionsListTableModel(
                     configuration, this, cubeTimerModel, currentSessionSolutionsTableModel);
 
-            sessionsListTableModel.setSessions(entity.stream()
+            sessionsListTableModel.getSessionsList().setSessions(entity.stream()
                     .map(s -> s.toSession(configuration, scramblePluginManager, profile))
                     .collect(toList()));
             profile.setSessionsListTableModel(sessionsListTableModel);
+            sessionsListTableModel.fireTableDataChanged();
         });
     }
 
     public void saveDatabase(Profile profile) {
         LOG.debug("save database for profile {}", profile);
-        profile.getSessionsDatabase().removeEmptySessions();
-        profile.getSessionsDatabase().getSessions().stream()
+        profile.getSessionsListTableModel().getSessionsList().removeEmptySessions();
+        profile.getSessionsListTableModel().getSessionsList().getSessions().stream()
                 .map(s -> s.toSessionEntity(profile.getId()))
                 .forEach(this::insertOrUpdate);
     }
@@ -136,8 +141,7 @@ public class ProfileDao extends HibernateDaoSupport {
     }
 
     public List<Profile> getProfiles() {
-        List<ProfileEntity> profilesExceptGuest = queryList(
-                "from PROFILE where name != '" + GUEST_NAME + "' order by lastSessionId desc ");
+        List<ProfileEntity> profilesExceptGuest = getProfileEntitiesExcept(GUEST_NAME);
 
         List<Profile> profs = profilesExceptGuest.stream()
                 .map(profDir -> loadProfile(profDir.getName()))
@@ -145,6 +149,11 @@ public class ProfileDao extends HibernateDaoSupport {
         profs.add(0, getOrCreateGuestProfile());
 
         return profs;
+    }
+
+    public List<ProfileEntity> getProfileEntitiesExcept(String exceptedProfileName) {
+        return queryList(
+                    "from PROFILE where name != '" + exceptedProfileName + "' order by lastSessionId desc ");
     }
 
     @NotNull
@@ -156,9 +165,9 @@ public class ProfileDao extends HibernateDaoSupport {
                 : mapEntityToProfile(lastUsedProfile.getName(), lastUsedProfile);
     }
 
-    public void moveSessionsTo(Session[] sessions, Profile anotherProfile) {
+    public void moveSessionsTo(Session[] sessions, ProfileEntity anotherProfile) {
         for (Session session : sessions) {
-            insertOrUpdate(session.toSessionEntity(anotherProfile.getId()));
+            insertOrUpdate(session.toSessionEntity(anotherProfile.getProfileId()));
         }
     }
 }

@@ -45,7 +45,7 @@ class GeneratorTextField extends JTextField {
         setVisible(t != null);
 
         if(t != null && !t.equals(oldText)) {
-            scramblesList.updateGeneratorGroup(t);
+            scramblesList.asGenerating().updateGeneratorGroup(t);
             calCubeTimerFrame.updateScramble();
         }
         oldText = t;

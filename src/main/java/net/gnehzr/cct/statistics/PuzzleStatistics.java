@@ -10,14 +10,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
-public class SessionsListAndPuzzleStatistics implements StatisticsUpdateListener, SolveCounter {
+public class PuzzleStatistics implements SolveCounter {
 
-	private PuzzleType customization;
-
-	private SessionsListTableModel sessionsListTableModel;
+	private PuzzleType puzzleType;
 
 	private final Configuration configuration;
 
@@ -28,67 +25,26 @@ public class SessionsListAndPuzzleStatistics implements StatisticsUpdateListener
 	private int attemptCount;
 	private Map<SolveType, Integer> typeCounter;
 
-	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<>();
-
-	public SessionsListAndPuzzleStatistics(PuzzleType customization, SessionsListTableModel sessionsListTableModel,
-										   Configuration configuration, CurrentSessionSolutionsTableModel statsModel) {
-		this.customization = customization;
-		this.sessionsListTableModel = sessionsListTableModel;
+	public PuzzleStatistics(PuzzleType puzzleType,
+							Configuration configuration,
+							CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel) {
+		this.puzzleType = puzzleType;
 		this.configuration = configuration;
-		//We need some way for each profile database to listen for updates,
-		//this seems fine to me, although nasty
-		statsModel.addStatisticsUpdateListener(this);
-	}
-
-	public PuzzleType getCustomization() {
-		return customization;
-	}
-
-	public Iterable<Session> toSessionIterable() {
-		return sessions;
-	}
-
-	public int getSessionsCount() {
-		return sessions.size();
-	}
-
-	public void addSession(Session session) {
-		sessions.add(session);
-		session.setSessionsListAndPuzzleStatistics(this);
-		refreshStats();
-		sessionsListTableModel.fireTableDataChanged();
-	}
-
-	public void removeSession(Session s) {
-		sessions.remove(s);
-		refreshStats();
-		sessionsListTableModel.fireTableDataChanged();
-	}
-
-	public boolean containsSession(Session s) {
-		return sessions.contains(s);
-	}
-
-	public SessionsListTableModel getPuzzleDatabase() {
-		return sessionsListTableModel;
+		// We need some way for each profile database to listen for updates,
+		// this seems fine to me, although nasty
+		currentSessionSolutionsTableModel.addStatisticsUpdateListener(this::refreshStats);
 	}
 
 	public String toString() {
-		return customization.toString();
+		return puzzleType.toString();
 	}
 
-	@Override
-	public void update() {
-		refreshStats();
-		sessionsListTableModel.fireTableDataChanged();
-	}
-
-	private void refreshStats() {
+	void refreshStats(SessionsList sessionsList) {
 		solvedCount = 0;
 		attemptCount = 0;
 		typeCounter = new HashMap<>();
 
-		bestTime = sessions.stream()
+		bestTime = sessionsList.getSessions().stream()
 				.map(s -> s.getStatistics().getBestTime())
 				.min(Comparator.comparing(Function.<SolveTime>identity()))
 				.orElse(SolveTime.WORST);
@@ -96,7 +52,7 @@ public class SessionsListAndPuzzleStatistics implements StatisticsUpdateListener
 		bestRAs = new SolveTime[Statistics.RA_SIZES_COUNT];
 		Arrays.fill(bestRAs, SolveTime.WORST);
 		globalAverage = new SolveTime(Duration.ZERO);
-		for(Session s : sessions) {
+		for(Session s : sessionsList) {
 			Statistics stats = s.getStatistics();
 			for(int ra = 0; ra < bestRAs.length; ra++) {
 				SolveTime ave = stats.getBestAverage(ra);
@@ -133,9 +89,7 @@ public class SessionsListAndPuzzleStatistics implements StatisticsUpdateListener
 
 	@Override
 	public int getSolveTypeCount(SolveType t) {
-		Integer c = typeCounter.get(t);
-		if(c == null) c = 0;
-		return c;
+		return typeCounter.getOrDefault(t, 0);
 	}
 
 	@Override

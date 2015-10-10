@@ -4,14 +4,15 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
-* <p>
-* <p>
-* Created: 01.02.2015 16:05
-* <p>
-*
-* @author OneHalf
-*/
+ * <p>
+ * <p>
+ * Created: 01.02.2015 16:05
+ * <p>
+ *
+ * @author OneHalf
+ */
 class StatisticsEdit implements CCTUndoableEdit {
+
     private Statistics statistics;
     private int[] positions;
     Solution[] oldTimes;
@@ -23,6 +24,7 @@ class StatisticsEdit implements CCTUndoableEdit {
         oldTimes = oldValues;
         newTime = newValue;
     }
+
     int row = -1;
 
     private List<SolveType> oldTypes;
@@ -34,16 +36,17 @@ class StatisticsEdit implements CCTUndoableEdit {
         this.oldTypes = oldTypes;
         this.newTypes = newTypes;
     }
+
     @Override
     public void doEdit() {
-        if(row != -1) { //changed type
+        if (row != -1) { //changed type
             statistics.times.get(row).getTime().setTypes(newTypes);
             statistics.refresh();
         } else { //time added/removed/changed
             statistics.editActions.setEnabled(false);
-            if(oldTimes == null) { //add newTime
+            if (oldTimes == null) { //add newTime
                 statistics.add(positions[0], newTime);
-            } else if(newTime == null) { //remove oldTimes
+            } else if (newTime == null) { //remove oldTimes
                 statistics.remove(positions);
             } else { //change oldTime to newTime
                 statistics.set(positions[0], newTime);
@@ -51,18 +54,19 @@ class StatisticsEdit implements CCTUndoableEdit {
             statistics.editActions.setEnabled(true);
         }
     }
+
     @Override
     public void undoEdit() {
-        if(row != -1) { //changed type
+        if (row != -1) { //changed type
             statistics.times.get(row).getTime().setTypes(oldTypes);
             statistics.refresh();
         } else { //time added/removed/changed
             statistics.editActions.setEnabled(false);
-            if(oldTimes == null) { //undo add
+            if (oldTimes == null) { //undo add
                 statistics.remove(positions);
-            } else if(newTime == null) { //undo removal
-                for(int ch = 0; ch < positions.length; ch++) {
-                    if(positions[ch] >= 0) {
+            } else if (newTime == null) { //undo removal
+                for (int ch = 0; ch < positions.length; ch++) {
+                    if (positions[ch] >= 0) {
                         //we don't want this to change the scramble #
                         statistics.addSilently(positions[ch], oldTimes[ch]);
                     }
@@ -73,13 +77,14 @@ class StatisticsEdit implements CCTUndoableEdit {
             statistics.editActions.setEnabled(true);
         }
     }
+
     public String toString() {
-        if(oldTimes == null) { //add newTime
-            return "added"+newTime;
-        } else if(newTime == null) { //remove oldTime
-            return "removed"+ Arrays.toString(oldTimes);
+        if (oldTimes == null) { //add newTime
+            return "added" + newTime;
+        } else if (newTime == null) { //remove oldTime
+            return "removed" + Arrays.toString(oldTimes);
         } else { //change oldTime to newTime
-            return "changed"+oldTimes[0]+"->"+newTime;
+            return "changed" + oldTimes[0] + "->" + newTime;
         }
     }
 }

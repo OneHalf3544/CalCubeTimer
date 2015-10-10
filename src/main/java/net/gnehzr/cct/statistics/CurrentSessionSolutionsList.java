@@ -1,5 +1,6 @@
 package net.gnehzr.cct.statistics;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
@@ -17,40 +18,22 @@ public class CurrentSessionSolutionsList {
 
 	private static final Logger LOG = LogManager.getLogger(CurrentSessionSolutionsList.class);
 
-	private final Configuration configuration;
-
 	private UndoRedoListener undoRedoListener;
 
-	private List<StatisticsUpdateListener> statsListeners = new ArrayList<>();
+	private List<StatisticsUpdateListener> statisticsUpdateListeners = new ArrayList<>();
 
+	@NotNull
 	private Session currentSession;
 
 	@Inject
-	public CurrentSessionSolutionsList(Configuration configuration,
-									   ScramblePluginManager scramblePluginManager) {
-		this.configuration = configuration;
-		currentSession = new Session(LocalDateTime.now(), this.configuration, scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION);
+	public CurrentSessionSolutionsList(Configuration configuration, ScramblePluginManager scramblePluginManager) {
+		currentSession = new Session(LocalDateTime.now(), configuration, scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION);
 	}
 
-	public void setCurrentSession(Profile selectedProfile, @NotNull Session session, CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel) {
+	public void setCurrentSession(@NotNull Session session) {
 		this.currentSession = Objects.requireNonNull(session);
-		Statistics statistics = Objects.requireNonNull(session.getStatistics());
 
-		SessionsListAndPuzzleStatistics sessionsListAndPuzzleStatistics = selectedProfile.getSessionsDatabase().getPuzzleStatisticsForType(session.getCustomization());
-		if (!sessionsListAndPuzzleStatistics.containsSession(session)) {
-			sessionsListAndPuzzleStatistics.addSession(session);
-		}
-
-		if(statistics != null) {
-			statistics.setUndoRedoListener(null);
-			statistics.setTableListener(null);
-			statistics.setStatisticsUpdateListeners(null);
-		}
-		statistics = session.getStatistics();
-
-		statistics.setTableListener(currentSessionSolutionsTableModel);
-		statistics.setUndoRedoListener(undoRedoListener);
-		statistics.setStatisticsUpdateListeners(statsListeners);
+		Statistics statistics = session.getStatistics();
 
 		statistics.notifyListeners(false);
 	}
@@ -64,23 +47,19 @@ public class CurrentSessionSolutionsList {
 		this.undoRedoListener = Objects.requireNonNull(l);
 	}
 
-	public void addStatisticsUpdateListener(StatisticsUpdateListener l) {
-		//This nastyness is to ensure that PuzzleStatistics have had a chance to see the change (see notifyListeners() in Statistics)
-		//before the dynamicstrings
-		if(l instanceof SessionsListAndPuzzleStatistics)
-			statsListeners.add(0, l);
-		else
-			statsListeners.add(l);
+	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {
+		LOG.trace("addStatisticsUpdateListener: {}", listener);
+		statisticsUpdateListeners.add(listener);
 	}
 
 	public void removeStatisticsUpdateListener(StatisticsUpdateListener l) {
-		statsListeners.remove(l);
+		statisticsUpdateListeners.remove(l);
 	}
 
 	//this is needed to update the i18n text
-	public void fireStringUpdates() {
+	public void fireStringUpdates(SessionsList sessionsList) {
 		LOG.debug("StatisticsTableModel.fireStringUpdates()");
-		statsListeners.forEach(StatisticsUpdateListener::update);
+		ImmutableList.copyOf(statisticsUpdateListeners).forEach(e -> e.update(sessionsList));
 		undoRedoListener.refresh();
 	}
 
@@ -89,7 +68,7 @@ public class CurrentSessionSolutionsList {
 	}
 
 	public void addSolution(Solution solution, int rowIndex) {
-		currentSession.getStatistics().add(rowIndex, (Solution) solution);
+		currentSession.getStatistics().add(rowIndex, solution);
 	}
 
 	public void setSolution(Solution solution, int index) {

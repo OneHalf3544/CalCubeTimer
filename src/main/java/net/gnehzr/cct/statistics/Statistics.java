@@ -8,23 +8,22 @@ import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import org.jooq.lambda.tuple.Tuple2;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class Statistics implements SolveCounter {
 
 	public enum AverageType {
-		CURRENT {
+		CURRENT_AVERAGE {
 			public String toString() {
 				return StringAccessor.getString("Statistics.currentaverage");
 			}
 		},
-		RA {
+		BEST_ROLLING_AVERAGE {
 			public String toString() {
 				return StringAccessor.getString("Statistics.bestRA");
 			}
 		},
-		SESSION {
+		SESSION_AVERAGE {
 			public String toString() {
 				return StringAccessor.getString("Statistics.sessionAverage");
 			}
@@ -78,14 +77,7 @@ public class Statistics implements SolveCounter {
 
 	public static final int RA_SIZES_COUNT = 2;
 
-	private LocalDateTime dateStarted;
-
-	public LocalDateTime getStartTime() {
-		return dateStarted;
-	}
-
-	public Statistics(Configuration configuration, LocalDateTime dateStarted, PuzzleType puzzleType) {
-		this.dateStarted = dateStarted;
+	public Statistics(Configuration configuration, PuzzleType puzzleType) {
 		configuration.addConfigurationChangeListener(this::onConfigurationChange);
 
 		//we'll initialized these arrays when our scramble customization is set
@@ -101,7 +93,7 @@ public class Statistics implements SolveCounter {
 		sessionavgs = new ArrayList<>();
 		sessionsds = new ArrayList<>();
 
-		for(int i = 0; i < RA_SIZES_COUNT; i++){
+		for (int i = 0; i < RA_SIZES_COUNT; i++){
 			averages.add(i, new ArrayList<>());
 			sds.add(i, new ArrayList<>());
 			sortaverages.add(i, new ArrayList<>());
@@ -112,15 +104,15 @@ public class Statistics implements SolveCounter {
 
 		times = new ArrayList<>();
 		sortedTimes = new TreeSet<>();
+		customization = puzzleType;
 
 		initialize();
 
-		customization = puzzleType;
 		onConfigurationChange(null);
 	}
 
 	private void onConfigurationChange(Profile profile) {
-		if(loadRollingAverages()) {
+		if (loadRollingAverages()) {
 			refresh();
 		}
 	}
@@ -176,16 +168,17 @@ public class Statistics implements SolveCounter {
 	//TODO - this could probably be cleaned up, as it is currently
 	//hacked together from the ashes of the old system (see StatisticsTableModel for how it's done)
 	public void notifyListeners(boolean newTime) {
-		if(tableListener != null) {
-			if(newTime) {
+		if (tableListener != null) {
+			if (newTime) {
 				int row = times.size() - 1;
 				tableListener.fireTableRowsInserted(row, row);
-			} else
+			} else {
 				tableListener.fireTableDataChanged();
+			}
 		}
 		editActions.notifyListener();
 		if(statisticsUpdateListeners != null) {
-			statisticsUpdateListeners.forEach(StatisticsUpdateListener::update);
+			statisticsUpdateListeners.forEach(e -> e.update(null));
 		}
 	}
 	
@@ -299,13 +292,13 @@ public class Statistics implements SolveCounter {
 				SolveTime s = calculateRSD(times.size() - curRASize[k], k);
 				sds.get(k).add(s);
 
-				for(i = 0; i < sortsds.get(k).size() && sortsds.get(k).get(i).compareTo(s) <= 0; i++) {
+				for (i = 0; i < sortsds.get(k).size() && sortsds.get(k).get(i).compareTo(s) <= 0; i++) {
 					;
 				}
 				sortsds.get(k).add(i, s);
 			}
 
-			for(i = 0; i < sortaverages.get(k).size() && averages.get(k).get(sortaverages.get(k).get(i)).compareTo(avg) < 0; i++) ;
+			for (i = 0; i < sortaverages.get(k).size() && averages.get(k).get(sortaverages.get(k).get(i)).compareTo(avg) < 0; i++) ;
 			sortaverages.get(k).add(i, averages.get(k).size() - 1);
 			if(i == 0){
 				int newbest = averages.get(k).size() - 1;
@@ -420,7 +413,7 @@ public class Statistics implements SolveCounter {
 
 	private boolean loadRollingAverages() {
 		boolean refresh = false;
-		for (int c = 0; c < curRASize.length && !customization.isNullScramble(); c++) {
+		for (int c = 0; c < curRASize.length && !customization.isNullType(); c++) {
 			int raSize = customization.getRASize(c);
 			boolean rollingAverageTrimmed = customization.isTrimmed(c);
 			if (raSize != curRASize[c] || rollingAverageTrimmed != curRATrimmed[c]) {
@@ -435,11 +428,11 @@ public class Statistics implements SolveCounter {
 	public SolveTime average(AverageType type, int num) {
 		SolveTime average;
 		try {
-			if(type == AverageType.SESSION)
+			if(type == AverageType.SESSION_AVERAGE)
 				average = curSessionAvg;
-			else if(type == AverageType.RA)
+			else if(type == AverageType.BEST_ROLLING_AVERAGE)
 				average = averages.get(num).get(indexOfBestRA[num]);
-			else if(type == AverageType.CURRENT)
+			else if(type == AverageType.CURRENT_AVERAGE)
 				average = averages.get(num).get(averages.get(num).size() - 1);
 			else
 				return SolveTime.NULL_TIME;
@@ -459,11 +452,11 @@ public class Statistics implements SolveCounter {
 	public boolean isValid(AverageType type, int num) {
 		SolveTime average;
 		try {
-			if(type == AverageType.SESSION)
+			if(type == AverageType.SESSION_AVERAGE)
 				average = curSessionAvg;
-			else if(type == AverageType.RA)
+			else if(type == AverageType.BEST_ROLLING_AVERAGE)
 				average = averages.get(num).get(sortaverages.get(num).get(0));
-			else if(type == AverageType.CURRENT)
+			else if(type == AverageType.CURRENT_AVERAGE)
 				average = averages.get(num).get(averages.get(num).size() - 1);
 			else
 				return false;
@@ -492,11 +485,11 @@ public class Statistics implements SolveCounter {
 
 	private int[] getBounds(AverageType type, int num) {
 		int lower, upper;
-		if(type == AverageType.SESSION) {
+		if(type == AverageType.SESSION_AVERAGE) {
 			lower = 0;
 			upper = times.size();
 		} else {
-			if(type == AverageType.CURRENT)
+			if(type == AverageType.CURRENT_AVERAGE)
 				lower = averages.get(num).size() - 1;
 			else
 				lower = indexOfBestRA[num];
@@ -531,19 +524,21 @@ public class Statistics implements SolveCounter {
 	public SolveTime[] getBestAndWorstTimes(AverageType type, int num) {
 		SolveTime best = SolveTime.WORST;
 		SolveTime worst = SolveTime.BEST;
-		boolean ignoreInfinite = type == AverageType.SESSION;
+		boolean ignoreInfinite = type == AverageType.SESSION_AVERAGE;
 		for(Solution time : getSublist(type, num)) {
-			if(best.compareTo(time.getTime()) >= 0)
+			if(best.compareTo(time.getTime()) >= 0) {
 				best = time.getTime();
+			}
 			// the following should not be an else
-			if(worst.compareTo(time.getTime()) < 0 && !(ignoreInfinite && time.getTime().isInfiniteTime()))
+			if(worst.compareTo(time.getTime()) < 0 && !(ignoreInfinite && time.getTime().isInfiniteTime())) {
 				worst = time.getTime();
+			}
 		}
 		return new SolveTime[] { best, worst };
 	}
 
 	public String toStatsString(AverageType type, boolean showSplits, int num) {
-		SolveTime[] bestAndWorst = ((type == AverageType.SESSION) ? new SolveTime[] {
+		SolveTime[] bestAndWorst = ((type == AverageType.SESSION_AVERAGE) ? new SolveTime[] {
 				null, null }
 				: getBestAndWorstTimes(type, num));
 		return toStatsStringHelper(getSublist(type, num), bestAndWorst[0],
@@ -617,11 +612,11 @@ public class Statistics implements SolveCounter {
 
 	public SolveTime standardDeviation(AverageType type, int num) {
 		switch (type) {
-			case SESSION:
+			case SESSION_AVERAGE:
 				return getSessionSD();
-			case RA:
+			case BEST_ROLLING_AVERAGE:
 				return sds.get(num).get(indexOfBestRA[num]);
-			case CURRENT:
+			case CURRENT_AVERAGE:
 				return sds.get(num).get(sds.get(num).size() - 1);
 			default:
 				return SolveTime.NA;
@@ -651,12 +646,13 @@ public class Statistics implements SolveCounter {
 
 	@Override
 	public int getSolveCount() {
-		int unsolved = 0;
-		for(SolveType t : solveCounter.keySet())
-			if(!t.isSolved())
-				unsolved += solveCounter.get(t);
-		return times.size() - unsolved;
+		return times.size() - solveCounter.keySet().stream()
+				.filter(SolveType::isSolved)
+				.map(solveCounter::get)
+				.reduce((a, b) -> a + b)
+				.orElse(0);
 	}
+
 	@Override
 	public int getAttemptCount() {
 		return times.size();
@@ -796,14 +792,19 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getWorstTimeOfSortAverage(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
 		if(n < 0)
 			n = sortaverages.get(num).size() + n;
 
-		if(sortaverages.get(num).size() == 0 || n < 0 || n >= sortaverages.get(num).size())
+		if(sortaverages.get(num).size() == 0 || n < 0 || n >= sortaverages.get(num).size()) {
 			return SolveTime.NULL_TIME;
+		}
 		return worstTimeOfAverage(sortaverages.get(num).get(n), num);
 	}
 
@@ -981,15 +982,15 @@ public class Statistics implements SolveCounter {
 	}
 
 	public String getBestAverageList(int num) {
-		return toTerseString(AverageType.RA, num, false);
+		return toTerseString(AverageType.BEST_ROLLING_AVERAGE, num, false);
 	}
 
 	public String getCurrentAverageList(int num) {
-		return toTerseString(AverageType.CURRENT, num, false);
+		return toTerseString(AverageType.CURRENT_AVERAGE, num, false);
 	}
 
 	public String getSessionAverageList() {
-		return toTerseString(AverageType.SESSION, 0, true);
+		return toTerseString(AverageType.SESSION_AVERAGE, 0, true);
 	}
 
 	public String getWorstAverageList(int num) {
@@ -999,7 +1000,7 @@ public class Statistics implements SolveCounter {
 		if(sortaverages.get(num).size() >= 1)
 			return toTerseString(sortaverages.get(num).get(sortaverages.get(num).size() - 1), num);
 		
-		return toTerseString(AverageType.RA, num, false);
+		return toTerseString(AverageType.BEST_ROLLING_AVERAGE, num, false);
 	}
 
 	public String getLastAverageList(int num) {

@@ -91,15 +91,15 @@ public class ActionMap {
                 return a;
             }
             case "currentaverage0":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT, 0, configuration);
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT_AVERAGE, 0, configuration);
             case "bestaverage0":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.RA, 0, configuration);
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.BEST_ROLLING_AVERAGE, 0, configuration);
             case "currentaverage1":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT, 1, configuration);
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT_AVERAGE, 1, configuration);
             case "bestaverage1":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.RA, 1, configuration);
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.BEST_ROLLING_AVERAGE, 1, configuration);
             case "sessionaverage":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION, 0, configuration);
+                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION_AVERAGE, 0, configuration);
             case ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN:
                 // action to stop timing during fullscreen
                 return toggleFullscreenTimingAction;
@@ -158,7 +158,7 @@ public class ActionMap {
                 return new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        submitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), Statistics.AverageType.CURRENT, 0);
+                        submitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), Statistics.AverageType.CURRENT_AVERAGE, 0);
                         submitter.setVisible(true);
                     }
                 };

@@ -55,10 +55,10 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 	@Inject
 	public void refreshModel() {
 		if(sessionsListTableModel != null) {
-			sessionsListTableModel.setSessionListener(null);
+			sessionsListTableModel.getSessionsList().setSessionListener(null);
 		}
-		sessionsListTableModel = timerModel.getSelectedProfile().getSessionsDatabase();
-		sessionsListTableModel.setSessionListener(l);
+		sessionsListTableModel = timerModel.getSelectedProfile().getSessionsListTableModel();
+		sessionsListTableModel.getSessionsList().setSessionListener(l);
 		super.setModel(sessionsListTableModel);
 	}
 	
@@ -67,7 +67,7 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		int modelRow = event.getFirstRow();
 		boolean oneRowSelected = (modelRow == event.getLastRow());
 		if(modelRow != -1 && event.getType() == TableModelEvent.UPDATE && oneRowSelected) {
-			Session s = sessionsListTableModel.getNthSession(modelRow);
+			Session s = sessionsListTableModel.getSessionsList().getNthSession(modelRow);
 			if(s != null && s == statsModel.getCurrentSession()) {
 				//this indicates that the ScrambleCustomization of the currently selected profile has been changed
 				//we deal with this by simply reselecting the current session

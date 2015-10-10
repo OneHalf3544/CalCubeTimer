@@ -21,12 +21,12 @@ public class PyraminxScramblePluginTest {
 
     @Test
     public void testGeneratePyraminx() {
-        ScrambleString cubeScramble = pyraminxScramblePlugin.createScramble(createVariation("Pyraminx", 10), null, Collections.<String>emptyList());
+        ScrambleString cubeScramble = pyraminxScramblePlugin.createScramble(createVariation("Pyraminx", 10), Collections.<String>emptyList());
         LOG.info("Scramble (pyraminx): " + cubeScramble);
     }
 
     private ScrambleVariation createVariation(String variationName, int length) {
-        ScrambleVariation scrambleVariation = new ScrambleVariation(pyraminxScramblePlugin, variationName, mock(Configuration.class), mock(ScramblePluginManager.class));
+        ScrambleVariation scrambleVariation = new ScrambleVariation(pyraminxScramblePlugin, variationName, mock(Configuration.class), mock(ScramblePluginManager.class), "");
         scrambleVariation.setLength(length);
         return scrambleVariation;
     }

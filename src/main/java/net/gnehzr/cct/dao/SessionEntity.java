@@ -71,12 +71,12 @@ public class SessionEntity {
         this.scrambleCustomization = scrambleCustomization;
     }
 
-    public ProfileEntity getProfileId() {
+    public ProfileEntity getProfile() {
         return profile;
     }
 
-    public void setProfileId(ProfileEntity profileId) {
-        this.profile = profileId;
+    public void setProfile(ProfileEntity profile) {
+        this.profile = profile;
     }
 
     public Session toSession(Configuration configuration, ScramblePluginManager pluginManager, Profile profile) {

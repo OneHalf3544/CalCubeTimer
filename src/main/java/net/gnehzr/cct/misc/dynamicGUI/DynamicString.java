@@ -61,20 +61,25 @@ public class DynamicString{
 		return statsModel;
 	}
 
+	@Override
 	public String toString(){
-		return toString(-1);
+		return toString(null);
 	}
 
-	public String toString(int num) {
+
+	public String toString(SessionsList sessions) {
+		return toString(-1, sessions);
+	}
+
+	public String toString(int num, SessionsList sessions) {
 		StringBuilder stringBuilder = new StringBuilder();
 
 		for (String aSplitText : splitText) {
 			if (aSplitText == null) {
 				break;
 			}
-			char firstChar = aSplitText.charAt(0);
 			String t = aSplitText.substring(1);
-			switch (firstChar) {
+			switch (aSplitText.charAt(0)) {
 				case I18N_TEXT:
 					if (accessor != null) {
 						stringBuilder.append(accessor.getString(t));
@@ -82,7 +87,7 @@ public class DynamicString{
 					}
 				case STAT:
 					if (statsModel != null) {
-						stringBuilder.append(getReplacement(t, num));
+						stringBuilder.append(getReplacement(t, num, sessions));
 						break;
 					}
 				case RAW_TEXT:
@@ -110,8 +115,8 @@ public class DynamicString{
 		return addParens ? "(" + result + ")" : result;
 	}
 
-	private String getReplacement(String s, int num){
-		String sorig = s;
+	private String getReplacement(String s, int num, SessionsList sessions){
+		String originalString = s;
 
 		String r = "";
 
@@ -135,14 +140,14 @@ public class DynamicString{
 		if(m.matches()){
 			s = m.group(1);
 		}
-		else return "Unimplemented: " + sorig;
+		else return "Unimplemented: " + originalString;
 
 		Pattern progressPattern = Pattern.compile("^\\s*\\.\\s*(progress)\\s*(.*)$");
 
 		switch (s) {
 			case "global":
 				//Database queries for current scramble customization
-				SessionsListAndPuzzleStatistics ps = statsModel.getCurrentSession().getSessionsListAndPuzzleStatistics();
+				PuzzleStatistics puzzleStatistics = sessions.getPuzzleStatisticsForType(sessions.getCurrentSession().getPuzzleType());
 				Pattern globalPattern = Pattern.compile("^\\s*\\.\\s*(time|ra|average|solvecount)\\s*(.*)$");
 				Matcher globalMatcher = globalPattern.matcher(m.group(2));
 				if (globalMatcher.matches()) {
@@ -153,20 +158,20 @@ public class DynamicString{
 							if (timeMatcher.matches()) {
 								String u = timeMatcher.group(1);
 								if (u.equals("best")) {
-									r = ps.getBestTime().toString(configuration);
+									r = puzzleStatistics.getBestTime().toString(configuration);
 								}
 								else {
-									r = "Unimplemented: " + u + " : " + sorig;
+									r = "Unimplemented: " + u + " : " + originalString;
 								}
 							} else {
-								r = "Unimplemented: " + sorig;
+								r = "Unimplemented: " + originalString;
 							}
 							break;
 						case "ra":
 							Matcher raMatcher = argPattern.matcher(globalMatcher.group(2));
 							String[] args;
 							if (!raMatcher.matches()) {
-								return "Unimplemented: " + sorig;
+								return "Unimplemented: " + originalString;
 							}
 
 							args = raMatcher.group(1).split(",");
@@ -175,33 +180,33 @@ public class DynamicString{
 								try {
 									num = Integer.parseInt(args[0]);
 								} catch (NumberFormatException e) {
-									return "Invalid argument: " + args[0] + " : " + sorig;
+									return "Invalid argument: " + args[0] + " : " + originalString;
 								}
 							}
 
-							if (args.length < 2) r = "Invalid number of arguments: " + sorig;
+							if (args.length < 2) r = "Invalid number of arguments: " + originalString;
 							else {
 								String avg = args[1].trim();
 								if (avg.equals("best"))
-									r = Utils.formatTime(ps.getBestRA(num), configuration.useClockFormat());
+									r = Utils.formatTime(puzzleStatistics.getBestRA(num), configuration.useClockFormat());
 								else {
-									r = "Unimplemented: " + avg + " : " + sorig;
+									r = "Unimplemented: " + avg + " : " + originalString;
 								}
 							}
 							break;
 						case "average":
-							r = Utils.formatTime(ps.getGlobalAverage(), configuration.useClockFormat());
+							r = Utils.formatTime(puzzleStatistics.getGlobalAverage(), configuration.useClockFormat());
 							break;
 						case "solvecount":
-							r = handleSolveCount(globalMatcher.group(2), ps);
-							if (r == null) r = "Unimplemented: " + sorig;
+							r = handleSolveCount(globalMatcher.group(2), puzzleStatistics);
+							if (r == null) r = "Unimplemented: " + originalString;
 							break;
 						default:
-							r = "Unimplemented: " + sorig;
+							r = "Unimplemented: " + originalString;
 							break;
 					}
 				} else {
-					r = "Unimplemented: " + sorig;
+					r = "Unimplemented: " + originalString;
 				}
 				break;
 			case "session":
@@ -210,12 +215,12 @@ public class DynamicString{
 				String t;
 				if (sessionMatcher.matches()) {
 					t = sessionMatcher.group(1);
-				} else return "Unimplemented: " + sorig;
+				} else return "Unimplemented: " + originalString;
 
 				switch (t) {
 					case "solvecount":
 						r = handleSolveCount(sessionMatcher.group(2), stats);
-						if (r == null) r = "Unimplemented: " + sorig;
+						if (r == null) r = "Unimplemented: " + originalString;
 						break;
 					case "average":
 						if (sessionMatcher.group(2).isEmpty()) {
@@ -252,7 +257,7 @@ public class DynamicString{
 						break;
 					case "stats":
 						boolean splits = hasFilter(sessionMatcher.group(2), "splits");
-						r = stats.toStatsString(AverageType.SESSION, splits, 0);
+						r = stats.toStatsString(AverageType.SESSION_AVERAGE, splits, 0);
 						break;
 					case "time":
 						Matcher timeMatcher = argPattern.matcher(sessionMatcher.group(2));
@@ -276,13 +281,13 @@ public class DynamicString{
 									r = Utils.formatTime(stats.getLastTime(), configuration.useClockFormat());
 									break;
 								default:
-									r = "Unimplemented: " + u + " : " + sorig;
+									r = "Unimplemented: " + u + " : " + originalString;
 									break;
 							}
-						} else r = "Unimplemented: " + sorig;
+						} else r = "Unimplemented: " + originalString;
 						break;
 					default:
-						r = "Unimplemented: " + t + " : " + sorig;
+						r = "Unimplemented: " + t + " : " + originalString;
 						break;
 				}
 				break;
@@ -291,17 +296,17 @@ public class DynamicString{
 				String[] args;
 				if (raMatcher.matches()) {
 					args = raMatcher.group(1).split(",");
-				} else return "Unimplemented: " + sorig;
+				} else return "Unimplemented: " + originalString;
 
 				if (num == -1) {
 					try {
 						num = Integer.parseInt(args[0]);
 					} catch (NumberFormatException e) {
-						return "Invalid argument: " + args[0] + " : " + sorig;
+						return "Invalid argument: " + args[0] + " : " + originalString;
 					}
 				}
 
-				if (args.length == 0) r = "Invalid number of arguments: " + sorig;
+				if (args.length == 0) r = "Invalid number of arguments: " + originalString;
 				else if (args.length == 1) {
 					Pattern arg1Pattern = Pattern.compile("^\\s*\\.\\s*(sd|progress|size)\\s*(.*)$");
 					Matcher arg1Matcher = arg1Pattern.matcher(raMatcher.group(2));
@@ -320,8 +325,8 @@ public class DynamicString{
 							boolean parens = hasFilter(arg1Matcher.group(2), "parens");
 							r = formatProgressTime(stats.getProgressAverage(num), parens);
 						} else if (arg1Matcher.group(1).equals("size")) r = "" + stats.getRASize(num);
-						else r = "Unimplemented: " + sorig;
-					} else r = "Unimplemented: " + sorig;
+						else r = "Unimplemented: " + originalString;
+					} else r = "Unimplemented: " + originalString;
 				} else {
 					String avg = args[1].trim();
 					Pattern raPattern = Pattern.compile("^\\s*\\.\\s*(list|sd|time|stats)\\s*(.*)$");
@@ -346,7 +351,7 @@ public class DynamicString{
 										r = stats.getLastAverageList(num);
 										break;
 									default:
-										r = "Unimplemented: " + avg + " : " + sorig;
+										r = "Unimplemented: " + avg + " : " + originalString;
 										break;
 								}
 								break;
@@ -365,7 +370,7 @@ public class DynamicString{
 										r = Utils.formatTime(stats.getLastSD(num), configuration.useClockFormat());
 										break;
 									default:
-										r = "Unimplemented: " + avg + " : " + sorig;
+										r = "Unimplemented: " + avg + " : " + originalString;
 										break;
 								}
 								break;
@@ -383,7 +388,7 @@ public class DynamicString{
 													r = stats.getWorstTimeOfBestAverage(num).toString(configuration);
 													break;
 												default:
-													r = "Unimplemented: " + time + " : " + sorig;
+													r = "Unimplemented: " + time + " : " + originalString;
 													break;
 											}
 											break;
@@ -396,7 +401,7 @@ public class DynamicString{
 													r = stats.getWorstTimeOfWorstAverage(num).toString(configuration);
 													break;
 												default:
-													r = "Unimplemented: " + time + " : " + sorig;
+													r = "Unimplemented: " + time + " : " + originalString;
 													break;
 											}
 											break;
@@ -409,7 +414,7 @@ public class DynamicString{
 													r = stats.getWorstTimeOfCurrentAverage(num).toString(configuration);
 													break;
 												default:
-													r = "Unimplemented: " + time + " : " + sorig;
+													r = "Unimplemented: " + time + " : " + originalString;
 													break;
 											}
 											break;
@@ -422,32 +427,32 @@ public class DynamicString{
 													r = stats.getWorstTimeOfLastAverage(num).toString(configuration);
 													break;
 												default:
-													r = "Unimplemented: " + time + " : " + sorig;
+													r = "Unimplemented: " + time + " : " + originalString;
 													break;
 											}
 											break;
 										default:
-											r = "Unimplemented: " + avg + " : " + sorig;
+											r = "Unimplemented: " + avg + " : " + originalString;
 											break;
 									}
-								} else r = "Unimplemented: " + sorig;
+								} else r = "Unimplemented: " + originalString;
 								break;
 							case "stats":
 								boolean splits = hasFilter(raMatcher2.group(2), "splits");
 								switch (avg) {
 									case "best":
-										r = stats.toStatsString(AverageType.RA, splits, num);
+										r = stats.toStatsString(AverageType.BEST_ROLLING_AVERAGE, splits, num);
 										break;
 									case "recent":
-										r = stats.toStatsString(AverageType.CURRENT, splits, num);
+										r = stats.toStatsString(AverageType.CURRENT_AVERAGE, splits, num);
 										break;
 									default:
-										r = "Unimplemented: " + avg + " : " + sorig;
+										r = "Unimplemented: " + avg + " : " + originalString;
 										break;
 								}
 								break;
 							default:
-								r = "Unimplemented: " + t2 + " : " + sorig;
+								r = "Unimplemented: " + t2 + " : " + originalString;
 								break;
 						}
 					} else {
@@ -465,7 +470,7 @@ public class DynamicString{
 								r = Utils.formatTime(stats.getLastAverage(num), configuration.useClockFormat());
 								break;
 							default:
-								r = "Unimplemented: " + avg + " : " + sorig;
+								r = "Unimplemented: " + avg + " : " + originalString;
 								break;
 						}
 					}
@@ -475,7 +480,7 @@ public class DynamicString{
 				r = configuration.getDateFormat().format(LocalDateTime.now());
 				break;
 			default:
-				r = "Unimplemented: " + sorig;
+				r = "Unimplemented: " + originalString;
 				break;
 		}
 
@@ -513,4 +518,5 @@ public class DynamicString{
 		}
 		else return null;
 	}
+
 }

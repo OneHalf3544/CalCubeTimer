@@ -3,6 +3,7 @@ package net.gnehzr.cct.misc.dynamicGUI;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
@@ -15,7 +16,7 @@ public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListen
 	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
 		@Override
 		public void configurationChanged(Profile currentProfile) {
-			update();
+			update(currentProfile.getSessionsListTableModel().getSessionsList());
 		}
 
 		@Override
@@ -46,14 +47,14 @@ public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListen
 		this.s = s;
 		if(this.s != null) {
 			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
-			update();
+			update(((SessionsList) null));
 		}
 	}
 
 	@Override
-	public void update(){
+	public void update(SessionsList sessions){
 		if(s != null) {
-			setText(s.toString());
+			setText(s.toString(sessions));
 		}
 	}
 

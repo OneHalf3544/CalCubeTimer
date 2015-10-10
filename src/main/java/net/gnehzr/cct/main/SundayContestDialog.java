@@ -165,6 +165,7 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 			level++;
 		}
 
+		@Override
 		public void endElement(String uri, String localName, String name)
 				throws SAXException {
 			level--;
@@ -173,6 +174,7 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 			if(resultsLevel != -1)
 				results += "</" + name + ">";
 		}
+		@Override
 		public void characters(char[] ch, int start, int length)
 				throws SAXException {
 			if(resultsLevel != -1)

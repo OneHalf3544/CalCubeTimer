@@ -50,14 +50,14 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 				memberOfBestRA = indexOfBestRA != -1 && (indexOfBestRA + raSize == row + 1);
 			} else {
 				solveTime = (SolveTime)value;
-				SolveTime[] bestAndWorst = times.getBestAndWorstTimes(AverageType.SESSION, 0);
+				SolveTime[] bestAndWorst = times.getBestAndWorstTimes(AverageType.SESSION_AVERAGE, 0);
 				if(bestAndWorst[0] == solveTime) {
 					foreground = configuration.getColor(VariableKey.BEST_TIME, false);
 				} else if(bestAndWorst[1] == solveTime) {
 					foreground = configuration.getColor(VariableKey.WORST_TIME, false);
 				}
-				memberOfBestRA = times.containsTime(row, AverageType.RA, 0);
-				memberOfCurrentAverage = times.containsTime(row, AverageType.CURRENT, 0);
+				memberOfBestRA = times.containsTime(row, AverageType.BEST_ROLLING_AVERAGE, 0);
+				memberOfCurrentAverage = times.containsTime(row, AverageType.CURRENT_AVERAGE, 0);
 			}
 			
 			if(memberOfCurrentAverage) {

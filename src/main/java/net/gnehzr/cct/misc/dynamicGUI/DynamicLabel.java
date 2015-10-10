@@ -3,6 +3,7 @@ package net.gnehzr.cct.misc.dynamicGUI;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
@@ -12,7 +13,7 @@ public class DynamicLabel extends JLabel implements StatisticsUpdateListener, Dy
 	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
 		@Override
 		public void configurationChanged(Profile currentProfile) {
-			DynamicLabel.this.update();
+			DynamicLabel.this.update(currentProfile.getSessionsListTableModel().getSessionsList());
 		}
 
 		@Override
@@ -22,7 +23,7 @@ public class DynamicLabel extends JLabel implements StatisticsUpdateListener, Dy
 	};
 
 	private final Configuration configuration;
-	private DynamicString s = null;
+	private DynamicString dynamicString = null;
 
 	public DynamicLabel(Configuration configuration){
 		this.configuration = configuration;
@@ -31,20 +32,20 @@ public class DynamicLabel extends JLabel implements StatisticsUpdateListener, Dy
 
 	@Override
 	public void setDynamicString(DynamicString s){
-		if(this.s != null) {
-			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
+		if(this.dynamicString != null) {
+			this.dynamicString.getStatisticsModel().removeStatisticsUpdateListener(this);
 		}
-		this.s = s;
-		if(this.s != null) {
-			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
-			update();
+		this.dynamicString = s;
+		if(this.dynamicString != null) {
+			this.dynamicString.getStatisticsModel().addStatisticsUpdateListener(this);
+			//update((SessionsList)null);
 		}
 	}
 
 	@Override
-	public void update(){
-		if(s != null) {
-			setText(s.toString());
+	public void update(SessionsList sessions){
+		if(dynamicString != null) {
+			setText(dynamicString.toString(sessions));
 		}
 	}
 

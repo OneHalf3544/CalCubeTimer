@@ -3,9 +3,8 @@ package net.gnehzr.cct.main;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.scrambles.ScrambleList;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SessionsListTableModel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -26,9 +25,8 @@ public class NewSessionAction extends AbstractAction {
     private final CalCubeTimerModel calCubeTimerModel;
 
     @Inject
-    private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
-    @Inject
-    private ScrambleList scramblesList;
+    private SessionsListTableModel sessionsListTableModel;
+
     @Inject
     private Configuration configuration;
 
@@ -44,14 +42,14 @@ public class NewSessionAction extends AbstractAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent arg0) {
-        //only create a new session if we've added any times to the current one
-        if (currentSessionSolutionsTableModel.getRowCount() > 0) {
-            currentSessionSolutionsTableModel.setCurrentSession(calCubeTimerModel.getSelectedProfile(),
-                    new Session(LocalDateTime.now(), configuration, scramblesList.getCurrentScrambleCustomization()));
-            calCubeTimerFrame.getTimeLabel().reset();
-            scramblesList.clear();
-            calCubeTimerFrame.updateScramble();
-        }
+    public void actionPerformed(ActionEvent event) {
+        Session session = new Session(LocalDateTime.now(), configuration, calCubeTimerModel.getScramblesList().getPuzzleType());
+        sessionsListTableModel.getSessionsList().addSession(
+                session,
+                calCubeTimerModel.getSelectedProfile());
+
+        calCubeTimerModel.getScramblesList().asGenerating().clear();
+        calCubeTimerFrame.getTimeLabel().reset();
+        calCubeTimerFrame.updateScramble();
     }
 }

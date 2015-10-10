@@ -33,26 +33,26 @@ public class CubeScramblePluginTest {
 
     @Test
     public void testGenerate2x2() {
-        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("2x2x2", 10), "U D", Collections.<String>emptyList());
+        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("2x2x2", 10, "U D"), Collections.<String>emptyList());
         LOG.info("cubeScramble (2x2): " + cubeScramble);
     }
 
     @Test
     public void testGenerate3x3() {
-        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("3x3x3", 10), "U D", Collections.<String>emptyList());
+        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("3x3x3", 10, "U D"), Collections.<String>emptyList());
         LOG.info("cubeScramble (3x3): " + cubeScramble);
     }
 
     @Test
     public void testGenerate6x6() {
-        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("6x6x6", 10), "U D", Collections.<String>emptyList());
+        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("6x6x6", 10, "U D"), Collections.<String>emptyList());
         LOG.info("cubeScramble (6x6): " + cubeScramble);
     }
 
-    private ScrambleVariation createVariation(String variationName, int length) {
-        ScrambleVariation scrambleVariation = new ScrambleVariation(cubeScramblePlugin, variationName, mock(Configuration.class), mock(ScramblePluginManager.class));
-        scrambleVariation.setLength(length);
-        return scrambleVariation;
+    private ScrambleVariation createVariation(String variationName, int length, String generator) {
+        return new ScrambleVariation(
+                cubeScramblePlugin, variationName, mock(Configuration.class), mock(ScramblePluginManager.class), generator)
+                .withLength(length);
     }
 
 }

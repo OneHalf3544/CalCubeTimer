@@ -9,6 +9,8 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scramblePlugins.*;
 
 import java.awt.*;
@@ -54,7 +56,7 @@ public class ScramblePluginManager {
 		this.configuration = configuration;
 		this.scramblePlugins = createScramblePlugins();
 
-		ScrambleVariation NULL_SCRAMBLE_VARIATION = new ScrambleVariation(NULL_SCRAMBLE_PLUGIN, "", this.configuration, this);
+		ScrambleVariation NULL_SCRAMBLE_VARIATION = new ScrambleVariation(NULL_SCRAMBLE_PLUGIN, "", this.configuration, this, "");
 		NULL_SCRAMBLE_CUSTOMIZATION = new PuzzleType(configuration, NULL_SCRAMBLE_VARIATION, null, this);
 	}
 
@@ -91,7 +93,8 @@ public class ScramblePluginManager {
 			List<ScrambleVariation> variations = new ArrayList<>();
 			for(ScramblePlugin plugin : scramblePlugins.values()) {
 				for(String variationName : plugin.getVariations()) {
-					variations.add(new ScrambleVariation(plugin, variationName, configuration, this));
+					variations.add(new ScrambleVariation(
+							plugin, variationName, configuration, this, getDefaultGeneratorGroup(variationName, plugin)));
 				}
 			}
 			if(variations.isEmpty()) {
@@ -155,7 +158,7 @@ public class ScramblePluginManager {
 		if(customNames == null) {
 			customNames = Lists.newArrayList();
 		}
-		Iterator<PuzzleType> databaseCustoms = selectedProfile.getSessionsDatabase().getCustomizations().iterator();
+		Iterator<PuzzleType> databaseCustoms = selectedProfile.getSessionsListTableModel().getSessionsList().getUsedPuzzleTypes().iterator();
 		int ch = customNames.size() - 1;
 		while(true) {
 			String name;
@@ -178,7 +181,7 @@ public class ScramblePluginManager {
 			String variationName = name.substring(0, delimeter);
 
 			PuzzleType scramCustomization = searchCustomizationByName(puzzleTypes, variationName);
-			PuzzleType sc = new PuzzleType(configuration, scramCustomization.getVariation(), customizationName, this);
+			PuzzleType sc = new PuzzleType(configuration, scramCustomization.getScrambleVariation(), customizationName, this);
 			if (!variationName.isEmpty()) {
 				if(puzzleTypes.contains(sc)) {
 					if(ch == customNames.size() - 1) {
@@ -214,10 +217,14 @@ public class ScramblePluginManager {
 	}
 
 	public String getDefaultGeneratorGroup(ScrambleVariation var) {
-		return var.getPlugin().getDefaultGenerators().get(var.getName());
+		return getDefaultGeneratorGroup(var.getName(), var.getPlugin());
 	}
 	
-	public boolean isGeneratorEnabled(ScrambleVariation scrambleVariation) {
+	public String getDefaultGeneratorGroup(String variationName, ScramblePlugin plugin) {
+		return plugin.getDefaultGenerators().get(variationName);
+	}
+
+	public boolean isGeneratorEnabled(@NotNull ScrambleVariation scrambleVariation) {
 		return scrambleVariation.getPlugin().getDefaultGenerators().containsKey(scrambleVariation.getName());
 	}
 
@@ -252,12 +259,13 @@ public class ScramblePluginManager {
 		return String.format("ScramblePluginManager{has %d plugins (%d variations)}", pluginClasses.size(), variationsCount);
 	}
 
-	public String loadGeneratorFromConfig(PuzzleType puzzleType, boolean defaults) {
-		if (!isGeneratorEnabled(puzzleType.getScrambleVariation())) {
+	@Nullable
+	public String loadGeneratorFromConfig(@NotNull PuzzleType puzzleType, boolean defaults, ScrambleVariation scrambleVariation) {
+		if (!isGeneratorEnabled(scrambleVariation)) {
 			return null;
 		}
 		String generatorConfig = configuration.getNullableString(VariableKey.scrambleGeneratorKey(puzzleType), defaults);
-		return generatorConfig == null ? getDefaultGeneratorGroup(puzzleType.getVariation()) : generatorConfig;
+		return generatorConfig == null ? getDefaultGeneratorGroup(scrambleVariation) : generatorConfig;
 	}
 
 	// todo scramble generator not save without configuration dialog
@@ -265,7 +273,7 @@ public class ScramblePluginManager {
 		if(isGeneratorEnabled(puzzleType.getScrambleVariation())) {
 			configuration.setString(
 					VariableKey.scrambleGeneratorKey(puzzleType),
-					puzzleType.getGenerator() == null ? "" : puzzleType.getGenerator());
+					puzzleType.getScrambleVariation().getGeneratorGroup() == null ? "" : puzzleType.getScrambleVariation().getGeneratorGroup());
 		}
 	}
 }

@@ -38,7 +38,7 @@ public class Solution extends Commentable {
         this.scrambleString = Objects.requireNonNull(scrambleString);
     }
 
-    public Solution(TimerState time, ScrambleString scrambleString, List<SolveTime> splits) {
+    public Solution(@NotNull TimerState time, @NotNull ScrambleString scrambleString, List<SolveTime> splits) {
         this(time, scrambleString);
         this.splits = splits;
     }

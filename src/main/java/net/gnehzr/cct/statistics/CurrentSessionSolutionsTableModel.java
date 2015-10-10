@@ -55,8 +55,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		this.configuration = configuration;
 	}
 
-	public void setCurrentSession(Profile selectedProfile, @NotNull Session session) {
-		currentSessionSolutionsList.setCurrentSession(selectedProfile, session, this);
+	public void setCurrentSession(@NotNull Session newSession) {
+		currentSessionSolutionsList.setCurrentSession(newSession);
 	}
 
 	@NotNull
@@ -68,8 +68,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		currentSessionSolutionsList.setUndoRedoListener(l);
 	}
 
-	public void addStatisticsUpdateListener(StatisticsUpdateListener l) {
-		currentSessionSolutionsList.addStatisticsUpdateListener(l);
+	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {
+		currentSessionSolutionsList.addStatisticsUpdateListener(listener);
 	}
 
 	public void removeStatisticsUpdateListener(StatisticsUpdateListener l) {
@@ -77,8 +77,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	}
 
 	//this is needed to update the i18n text
-	public void fireStringUpdates() {
-		currentSessionSolutionsList.fireStringUpdates();
+	public void fireStringUpdates(SessionsList sessionsList) {
+		currentSessionSolutionsList.fireStringUpdates(sessionsList);
 	}
 
 	@Override

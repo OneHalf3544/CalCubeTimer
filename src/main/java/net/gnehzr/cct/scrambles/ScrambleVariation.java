@@ -13,40 +13,42 @@ public class ScrambleVariation {
 	private static final Logger LOG = LogManager.getLogger(ScrambleVariation.class);
 
 	public interface WithoutLength {
+
 		ScrambleVariation withLength(int length);
 		String getName();
+		String getGeneratorGroup();
+		WithoutLength withGeneratorGroup(String defaultGeneratorGroup);
 	}
-
 	private ScramblePlugin scramblePlugin;
+
 	private String variationName;
 	private int length = 0;
+	private String generatorGroup;
 	private final Icon image;
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
 
-	public ScrambleVariation(ScramblePlugin plugin, String variationName, Configuration configuration, ScramblePluginManager scramblePluginManager) {
+	public ScrambleVariation(ScramblePlugin plugin, String variationName, Configuration configuration,
+							 ScramblePluginManager scramblePluginManager, String generatorGroup) {
 		this.scramblePlugin = plugin;
 		this.variationName = variationName;
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
+		this.generatorGroup = generatorGroup;
 		length = getScrambleLength(variationName, false);
 		image = getImageIcon(variationName);
 	}
 
-	public WithoutLength withoutLength() {
-		return new WithoutLength() {
-			@Override
-			public ScrambleVariation withLength(int length) {
-				ScrambleVariation scrambleVariation = new ScrambleVariation(getPlugin(), variationName, configuration, scramblePluginManager);
-				scrambleVariation.setLength(length);
-				return scrambleVariation;
-			}
+	public ScrambleVariation withGeneratorGroup(String generatorGroup) {
+		return new ScrambleVariation(getPlugin(), variationName, configuration, scramblePluginManager, generatorGroup);
+	}
 
-			@Override
-			public String getName() {
-				return ScrambleVariation.this.getName();
-			}
-		};
+	public WithoutLength withoutLength() {
+		return new ScrambleVariationWithoutLength(this, configuration, scramblePluginManager);
+	}
+
+	public String getGeneratorGroup() {
+		return generatorGroup;
 	}
 
 	private ImageIcon getImageIcon(String variation) {
@@ -79,17 +81,25 @@ public class ScrambleVariation {
 		this.length = length;
 	}
 
+	public ScrambleVariation withLength(int length) {
+		ScrambleVariation variation = new ScrambleVariation(getPlugin(), variationName, configuration, scramblePluginManager, generatorGroup);
+		variation.setLength(length);
+		return variation;
+	}
+
 	public int getLength() {
 		return length;
 	}
 
 	public ScrambleString generateScramble() {
-		return scramblePlugin.createScramble(this, scramblePluginManager.getDefaultGeneratorGroup(this), getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		String defaultGeneratorGroup = scramblePluginManager.getDefaultGeneratorGroup(this);
+		return scramblePlugin.createScramble(this.withGeneratorGroup(defaultGeneratorGroup), getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 
 	public ScrambleString generateScramble(String scramble) throws InvalidScrambleException {
+		String defaultGeneratorGroup = scramblePluginManager.getDefaultGeneratorGroup(this);
 		return scramblePlugin.importScramble(
-				this.withoutLength(), scramble, scramblePluginManager.getDefaultGeneratorGroup(this),
+				this.withoutLength().withGeneratorGroup(defaultGeneratorGroup), scramble,
 				getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 	}
 
@@ -125,4 +135,5 @@ public class ScrambleVariation {
 	public String toString() {
 		return variationName.isEmpty() ? scramblePlugin.getPuzzleName() : variationName;
 	}
+
 }

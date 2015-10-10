@@ -17,7 +17,6 @@ import org.jvnet.lafwidget.LafWidget;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
@@ -30,7 +29,7 @@ import java.util.regex.Pattern;
  * Scramble text field component
  */
 @Singleton
-public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListener, HyperlinkListener, MouseListener, MouseMotionListener {
+public class ScrambleHyperlinkArea extends JScrollPane {
 
 	private static final Logger LOG = LogManager.getLogger(ScrambleHyperlinkArea.class);
 	private static final Pattern NULL_SCRAMBLE_REGEX = Pattern.compile("^(.+)()$");
@@ -68,16 +67,42 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 		scramblePane.setEditable(false);
 		scramblePane.setBorder(null);
 		scramblePane.setOpaque(false);
-		scramblePane.addHyperlinkListener(this);
+		scramblePane.addHyperlinkListener(this::hyperlinkUpdate);
 		setViewportView(scramblePane);
 		setOpaque(false);
 		setBorder(null);
 		getViewport().setOpaque(false);
 		resetPreferredSize();
-		addComponentListener(this);
+		addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent arg0) {
+				setProperSize();
+			}
+		});
 		scramblePane.setFocusable(false); //this way, we never steal focus from the keyboard timer
-		scramblePane.addMouseListener(this);
-		scramblePane.addMouseMotionListener(this);
+		scramblePane.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					StringSelection ss = new StringSelection(currentScramble.getScramble());
+					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
+
+					success.show(e.getComponent(), e.getX() + 10, e.getY() + 10);
+				}
+			}
+		});
+		scramblePane.addMouseMotionListener(new MouseMotionListener() {
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				success.setVisible(false);
+			}
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				success.setVisible(false);
+			}
+
+		});
 		scramblePane.putClientProperty(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.FALSE);
 		
 		success = new JPopupMenu();
@@ -85,38 +110,11 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 		success.add(successMsg = new JLabel());
 		updateStrings();
 	}
-	
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		if(e.getClickCount() == 2) {
-	        StringSelection ss = new StringSelection(currentScramble.getScramble());
-	        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
 
-			success.show(e.getComponent(), e.getX() + 10, e.getY() + 10);
-		}
-	}
 	public void updateStrings() {
 		scramblePane.setToolTipText(StringAccessor.getString("ScrambleArea.tooltip"));
 		successMsg.setText(StringAccessor.getString("ScrambleArea.copymessage"));
 		success.pack();
-	}
-	@Override
-	public void mousePressed(MouseEvent e) {}
-	@Override
-	public void mouseReleased(MouseEvent e) {}
-	@Override
-	public void mouseEntered(MouseEvent e) {}
-	@Override
-	public void mouseExited(MouseEvent e) {
-		success.setVisible(false);
-	}
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		success.setVisible(false);
-	}
-	@Override
-	public void mouseMoved(MouseEvent e) {
-		success.setVisible(false);
 	}
 
 	@Override
@@ -182,8 +180,7 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 			par.validate();
 	}
 
-	@Override
-	public void hyperlinkUpdate(HyperlinkEvent e) {
+	private void hyperlinkUpdate(HyperlinkEvent e) {
 		if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
 			incrementScramble = e.getDescription();
 			String[] moveAndScramble = incrementScramble.split(" ", 2);
@@ -262,15 +259,5 @@ public class ScrambleHyperlinkArea extends JScrollPane implements ComponentListe
 			LOG.info("unexpected exception", e);
 		}
 	}
-	
-	@Override
-	public void componentHidden(ComponentEvent arg0) {}
-	@Override
-	public void componentMoved(ComponentEvent arg0) {}
-	@Override
-	public void componentResized(ComponentEvent arg0) {
-		setProperSize();
-	}
-	@Override
-	public void componentShown(ComponentEvent arg0) {}
+
 }

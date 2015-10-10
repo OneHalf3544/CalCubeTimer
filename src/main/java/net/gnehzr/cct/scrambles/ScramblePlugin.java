@@ -31,11 +31,9 @@ public abstract class ScramblePlugin {
 	private final boolean supportsScrambleImage;
 
 	public abstract ScrambleString importScramble(final ScrambleVariation.WithoutLength variation, final String scramble,
-												  final String generatorGroup,
 												  final List<String> attributes) throws InvalidScrambleException;
 
-	public abstract ScrambleString createScramble(final ScrambleVariation variation,
-													 final String generatorGroup, final List<String> attributes);
+	public abstract ScrambleString createScramble(final ScrambleVariation variation, final List<String> attributes);
 
 	protected int parseSize(String scramble) {
 		return scramble.trim().split("\\s+").length;

@@ -94,7 +94,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 	public void deleteRows(int[] indices) {
 		for(int c = indices.length - 1; c >= 0; c--) {
 			TypeAndName tan = tags.get(indices[c]);
-			int count = statsModel.getCurrentSession().getSessionsListAndPuzzleStatistics().getPuzzleDatabase().getDatabaseTypeCount(tan.type);
+			int count = statsModel.getCurrentSession().getSessionsList().getDatabaseTypeCount(tan.type);
 			if(count == 0)
 				deletedTags.add(tags.remove(indices[c])); //mark this type for deletion
 			else

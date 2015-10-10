@@ -34,7 +34,7 @@ public interface CalCubeTimerModel extends SessionListener {
 
     ScrambleList getScramblesList();
 
-    CurrentSessionSolutionsTableModel getStatsModel();
+    CurrentSessionSolutionsTableModel getSessionSolutionsTableModel();
 
     TimingListener getTimingListener();
 
@@ -84,4 +84,8 @@ public interface CalCubeTimerModel extends SessionListener {
     void setSelectedProfile(Profile currentProfile);
 
     Profile getSelectedProfile();
+
+    SessionsList getSessionsList();
+
+    void setScramblesList(ScrambleList scrambleList);
 }

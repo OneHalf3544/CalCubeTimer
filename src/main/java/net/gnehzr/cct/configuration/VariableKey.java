@@ -84,8 +84,8 @@ public class VariableKey<H> {
 	public static final VariableKey<String> XML_LAYOUT = new VariableKey<String>("GUI_xmlLayout_file");
 	public static final VariableKey<String> DEFAULT_SCRAMBLE_CUSTOMIZATION = new VariableKey<String>("Scramble_Default_scrambleCustomization"); 
 
-	public static VariableKey<String> scrambleGeneratorKey(PuzzleType sc) {
-		return new VariableKey<>("Puzzle_ScrambleGenerator_" + sc.toString());
+	public static VariableKey<String> scrambleGeneratorKey(PuzzleType puzzleType) {
+		return new VariableKey<>("Puzzle_ScrambleGenerator_" + puzzleType.toString());
 	}
 
 	public static final VariableKey<List<String>> SOLVE_TAGS = new VariableKey<>("Misc_solveTags");

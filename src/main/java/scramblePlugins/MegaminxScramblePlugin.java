@@ -59,7 +59,7 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 
 	@Override
 	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
-										 String generatorGroup, List<String> attributes) throws InvalidScrambleException {
+										 List<String> attributes) throws InvalidScrambleException {
 		boolean pochmann = variation.getName().equals(POCHMANN_VARIATION_NAME);
 		if(!isValidScramble(initializeImage(), scramble)) {
 			throw new InvalidScrambleException(scramble);
@@ -68,7 +68,7 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	public ScrambleString createScramble(ScrambleVariation variation, String generatorGroup, List<String> attributes) {
+	public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
 		boolean pochmann = variation.getName().equals(POCHMANN_VARIATION_NAME);
 		return new ScrambleString(generateScramble(variation.getLength(), pochmann), false, variation, this, null);
 	}

@@ -6,10 +6,12 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.ConfigurationDao;
 import net.gnehzr.cct.dao.HibernateDaoSupport;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,9 +45,11 @@ public class Main implements Module {
     @Override
     public void configure(Binder binder) {
         binder.bind(CalCubeTimerModel.class).to(CalCubeTimerModelImpl.class).asEagerSingleton();
-        binder.bind(StackmatHandler.class).asEagerSingleton();
-
         binder.bind(CalCubeTimerGui.class).to(CALCubeTimerFrame.class).asEagerSingleton();
+
+        binder.bind(Configuration.class).asEagerSingleton();
+        binder.bind(ConfigurationDao.class).asEagerSingleton();
+        binder.bind(StackmatHandler.class).asEagerSingleton();
 
         binder.bind(NewSessionAction.class).asEagerSingleton();
         binder.bind(ToggleScramblePopupAction.class).asEagerSingleton();
@@ -56,6 +60,8 @@ public class Main implements Module {
         binder.bind(TimingListener.class).to(TimingListenerImpl.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("bigTimersDisplay")).to(TimerLabel.class).asEagerSingleton();
+
+        binder.bind(ScramblePluginManager.class).asEagerSingleton();
 
         binder.bind(SessionFactory.class).toInstance(sessionFactory);
     }

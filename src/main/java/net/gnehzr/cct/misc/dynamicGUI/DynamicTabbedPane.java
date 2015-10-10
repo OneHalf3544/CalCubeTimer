@@ -5,6 +5,7 @@ import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
 
 import javax.swing.*;
@@ -19,7 +20,7 @@ public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateLi
 	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
         @Override
         public void configurationChanged(Profile currentProfile) {
-            update();
+            update(currentProfile.getSessionsListTableModel().getSessionsList());
         }
 
         @Override
@@ -52,9 +53,9 @@ public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateLi
 	}
 	
 	@Override
-	public void update() {
+	public void update(SessionsList sessions) {
 		for(int c = 0; c < tabNames.size(); c++) {
-			setTitleAt(c, tabNames.get(c).toString());
+			setTitleAt(c, tabNames.get(c).toString(sessions));
 		}
 	}
 

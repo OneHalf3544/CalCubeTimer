@@ -2,9 +2,9 @@ package net.gnehzr.cct.statistics;
 
 public interface SolveCounter{
 
-	public int getSolveTypeCount(SolveType t);
+	int getSolveTypeCount(SolveType t);
 
-	public int getSolveCount();
+	int getSolveCount();
 
-	public int getAttemptCount();
+	int getAttemptCount();
 }

@@ -23,10 +23,7 @@ import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicDestroyable;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -160,10 +157,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			final Solution latestSolution = currentSessionSolutionsTableModel.getCurrentSession().getStatistics().get(-1);
 
 			if(event != null && event.getType() == TableModelEvent.INSERT) {
-				ScrambleString currentScramble = model.getScramblesList().getCurrent();
-				boolean outOfScrambles = currentScramble.isImported(); //This is tricky, think before you change it
-				outOfScrambles = !model.getScramblesList().getNext().isImported() && outOfScrambles;
-				if (outOfScrambles) {
+				if (model.getScramblesList().getNext() != null) {
 					Utils.showWarningDialog(CALCubeTimerFrame.this,
 							StringAccessor.getString("CALCubeTimer.outofimported") +
 									StringAccessor.getString("CALCubeTimer.generatedscrambles"));
@@ -188,24 +182,25 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				return;
 			}
 
-			Statistics s = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
+			Statistics statistics = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
 			PuzzleType newPuzzleType = (PuzzleType) getScrambleCustomizationComboBox().getSelectedItem();
-			if (!model.getCustomizationEditsDisabled() && s != null) {
+			if (!model.getCustomizationEditsDisabled() && statistics != null) {
 				//TODO - changing session? //TODO - deleted customization?
-				s.editActions.add(new CustomizationEdit(model, model.getScramblesList().getCurrentScrambleCustomization(),
+				statistics.editActions.add(new CustomizationEdit(model, model.getScramblesList().getPuzzleType(),
 						newPuzzleType, getScrambleCustomizationComboBox()));
 			}
 
-			model.getScramblesList().setCurrentScrambleCustomization(newPuzzleType);
 
 			//change current session's scramble customization
-			if (!currentSessionSolutionsTableModel.getCurrentSession().getCustomization().equals(newPuzzleType)) {
-				currentSessionSolutionsTableModel.setCurrentSession(model.getSelectedProfile(), new Session(
-						LocalDateTime.now(), configuration, newPuzzleType));
+			if (!currentSessionSolutionsTableModel.getCurrentSession().getPuzzleType().equals(newPuzzleType)) {
+				currentSessionSolutionsTableModel.setCurrentSession(
+						new Session(LocalDateTime.now(), configuration, newPuzzleType)
+				);
 			}
+			model.getScramblesList().asGenerating().setSession(currentSessionSolutionsTableModel.getCurrentSession());
 
-			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getCurrentScrambleCustomization().getScrambleVariation());
-			String generator = model.getScramblesList().getCurrentScrambleCustomization().getGenerator();
+			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getPuzzleType().getScrambleVariation());
+			String generator = model.getScramblesList().getPuzzleType().getScrambleVariation().getGeneratorGroup();
 			updateGeneratorField(generatorEnabled, generator);
 
 			createScrambleAttributesPanel();
@@ -240,7 +235,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	};
 
 	private ChangeListener scrambleLengthListener = e -> {
-		model.getScramblesList().setScrambleLength((Integer) getScrambleLengthSpinner().getValue());
+		model.getScramblesList().asGenerating().setScrambleLength((Integer) getScrambleLengthSpinner().getValue());
 		updateScramble();
 	};
 
@@ -398,15 +393,16 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		UIManager.getDefaults().setDefaultLocale(Locale.getDefault());
 		try {
 			ResourceBundle messages = ResourceBundle.getBundle("languages/javax_swing");
-			for(String key : messages.keySet())
+			for(String key : messages.keySet()) {
 				UIManager.put(key, messages.getString(key));
+			}
 		} catch(MissingResourceException e) {
 			throw Throwables.propagate(e);
 		}
 
 		StringAccessor.clearResources();
 		xmlGuiMessages.reloadResources();
-		currentSessionSolutionsTableModel.fireStringUpdates(); //this is necessary to update the undo-redo actions
+		currentSessionSolutionsTableModel.fireStringUpdates(model.getSessionsList()); //this is necessary to update the undo-redo actions
 
 		customGUIMenu.setText(StringAccessor.getString("CALCubeTimer.loadcustomgui"));
 		timesTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
@@ -514,11 +510,11 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	public void repaintTimes() {
 		Statistics stats = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
 
-		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT);
-		updateActionStatus(stats, "bestaverage0", AverageType.RA);
-		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT);
-		updateActionStatus(stats, "bestaverage1", AverageType.RA);
-		updateActionStatus(stats, "sessionaverage", AverageType.SESSION);
+		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT_AVERAGE);
+		updateActionStatus(stats, "bestaverage0", AverageType.BEST_ROLLING_AVERAGE);
+		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT_AVERAGE);
+		updateActionStatus(stats, "bestaverage1", AverageType.BEST_ROLLING_AVERAGE);
+		updateActionStatus(stats, "sessionaverage", AverageType.SESSION_AVERAGE);
 	}
 
 	private void updateActionStatus(Statistics stats, String actionName, AverageType statType) {
@@ -545,8 +541,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			siw.setKind(SubstanceConstants.ImageWatermarkKind.APP_CENTER);
 			siw.setOpacity(configuration.getFloat(VariableKey.OPACITY, false));
 			sw = siw;
-		} else
+		} else {
 			sw = new SubstanceNullWatermark();
+		}
 		SubstanceLookAndFeel.setSkin(SubstanceLookAndFeel.getCurrentSkin().withWatermark(sw));
 
 		Window[] frames = Window.getWindows();
@@ -574,17 +571,17 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 	@Override
 	public void updateScramble() {
-		ScrambleString current = model.getScramblesList().getCurrent();
-		if(current != null) {
+		ScrambleString current = model.getScramblesList().getCurrentScramble();
+		if (current != null) {
 			//set the length of the current scramble
 			safeSetValue(scrambleLengthSpinner, current.getVariation().getLength(), scrambleLengthListener);
 			//update new number of scrambles
-			safeSetScrambleNumberMax(model.getScramblesList().size());
+			safeSetScrambleNumberMax(model.getScramblesList().scramblesCount());
 			//update new scramble number
 			safeSetValue(scrambleNumber, model.getScramblesList().getScrambleNumber(), scrambleNumberListener);
-			scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getCurrentScrambleCustomization()); //this will update scramblePopup
+			scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getPuzzleType()); //this will update scramblePopup
 
-			boolean canChangeStuff = model.getScramblesList().size() == model.getScramblesList().getScrambleNumber();
+			boolean canChangeStuff = model.getScramblesList().scramblesCount() == model.getScramblesList().getScrambleNumber();
 			scrambleCustomizationComboBox.setEnabled(canChangeStuff);
 			scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && canChangeStuff && !current.isImported());
 		}
@@ -654,17 +651,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
         });
 	}
 
-	public void resetAction() {
-		int choice = Utils.showYesNoDialog(this, StringAccessor.getString("CALCubeTimer.confirmreset"));
-		if(choice == JOptionPane.YES_OPTION) {
-			getTimeLabel().reset();
-			bigTimersDisplay.reset();
-			model.getScramblesList().clear();
-			updateScramble();
-			currentSessionSolutionsTableModel.getCurrentSession().getStatistics().clear();
-		}
-	}
-
 	public void showDocumentation() {
 		try {
 			URI uri = configuration.getDocumentationFile();
@@ -718,7 +704,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				hands += ((StackmatState) state).leftHand() ? StringAccessor.getString("CALCubeTimer.lefthand")
 														    : StringAccessor.getString("CALCubeTimer.righthand");
 			}
-			model.getSplits().add(state.toSolution(model.getScramblesList().getCurrent(), ImmutableList.of()).getTime());
+			model.getSplits().add(state.toSolution(model.getScramblesList().getCurrentScramble(), ImmutableList.of()).getTime());
 			model.setLastSplit(currentTime);
 		}
 	}
@@ -760,7 +746,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void createScrambleAttributesPanel() {
-		PuzzleType sc = model.getScramblesList().getCurrentScrambleCustomization();
+		PuzzleType sc = model.getScramblesList().getPuzzleType();
 		scrambleAttributesPanel.removeAll();
 		if (sc == scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION) {
 			return;
@@ -825,7 +811,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void saveToConfiguration() {
-		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, model.getScramblesList().getCurrentScrambleCustomization().toString());
+		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, model.getScramblesList().getPuzzleType().toString());
 		scramblePluginManager.saveLengthsToConfiguration();
 		for (ScramblePlugin plugin : scramblePluginManager.getScramblePlugins()) {
 			configuration.setStringArray(VariableKey.PUZZLE_ATTRIBUTES(plugin), plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
