@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class CubeScramblePlugin extends ScramblePlugin {
 
     private static final Logger LOG = LogManager.getLogger(CubeScramblePlugin.class);
@@ -58,7 +60,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     private boolean optimalCross;
 
     //solve the U face on D
-    public final String dg = DEFAULT_SOLVE_FACE + " " + DEFAULT_SOLVE_SIDE;
+    public final String defaultGenerators = DEFAULT_SOLVE_FACE + " " + DEFAULT_SOLVE_SIDE;
 
     @SuppressWarnings("UnusedDeclaration")
     public CubeScramblePlugin() {
@@ -66,8 +68,8 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     @Override
-    public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
-        int cubeSize = getSizeFromVariation(variation.getName());
+    public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
+        int cubeSize = getSizeFromVariation(puzzleType.getVariationName());
 
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
         wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
@@ -81,24 +83,24 @@ public class CubeScramblePlugin extends ScramblePlugin {
             scramble = generateScramble(variation.getLength(), cubeSize, image, multislice);
 
         }
-        return new ScrambleString(scramble, false, variation, this, getTextComments(scramble, cubeSize, variation.getGeneratorGroup()));
+        return new ScrambleString(puzzleType, scramble, false, variation, this, getTextComments(scramble, cubeSize, variation.getGeneratorGroup()));
     }
 
     @Override
-    public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+    public ScrambleString importScramble(PuzzleType puzzleType, ScrambleSettings.WithoutLength variation, String scramble,
                                          List<String> attributes) throws InvalidScrambleException {
 
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
         wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
         optimalCross = attributes.contains(OPTIMAL_CROSS_ATTRIBUTE);
 
-        int cubeSize = getSizeFromVariation(variation.getName());
+        int cubeSize = getSizeFromVariation(puzzleType.getVariationName());
         String[][][] image = initializeImage(cubeSize);
         if (!isValidScramble(scramble, cubeSize, image, multislice)) {
             throw new InvalidScrambleException(scramble);
         }
-        String text = getTextComments(scramble, getSizeFromVariation(variation.getName()), variation.getGeneratorGroup());
-        return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, text);
+        String text = getTextComments(scramble, getSizeFromVariation(puzzleType.getVariationName()), variation.getGeneratorGroup());
+        return new ScrambleString(puzzleType, scramble, true, variation.withLength(parseSize(scramble)), this, text);
     }
 
 
@@ -118,15 +120,15 @@ public class CubeScramblePlugin extends ScramblePlugin {
     @Override
     public Map<String, String> getDefaultGenerators() {
         return ImmutableMap.<String, String>builder()
-                .put("3x3x3", dg)
-                .put("4x4x4", dg)
-                .put("5x5x5", dg)
-                .put("6x6x6", dg)
-                .put("7x7x7", dg)
-                .put("8x8x8", dg)
-                .put("9x9x9", dg)
-                .put("10x10x10", dg)
-                .put("11x11x11", dg)
+                .put("3x3x3", defaultGenerators)
+                .put("4x4x4", defaultGenerators)
+                .put("5x5x5", defaultGenerators)
+                .put("6x6x6", defaultGenerators)
+                .put("7x7x7", defaultGenerators)
+                .put("8x8x8", defaultGenerators)
+                .put("9x9x9", defaultGenerators)
+                .put("10x10x10", defaultGenerators)
+                .put("11x11x11", defaultGenerators)
                 .build();
     }
 
@@ -181,7 +183,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
     @Override
     public BufferedImage getScrambleImage(ScrambleString scramble, int gap, int cubieSize, Map<String, Color> colorScheme) {
-        int cubeSize = getSizeFromVariation(scramble.getVariation().getName());
+        int cubeSize = getSizeFromVariation(scramble.getPuzzleType().getVariationName());
         String[][][] image = initializeImage(cubeSize);
         isValidScramble(scramble.getScramble(), cubeSize, image, multislice);
         Dimension dim = getImageSize(gap, cubieSize, cubeSize);
@@ -213,7 +215,8 @@ public class CubeScramblePlugin extends ScramblePlugin {
                 .build();
     }
 
-    protected static int getSizeFromVariation(String variation) {
+    protected int getSizeFromVariation(String variation) {
+        checkArgument(getVariations().contains(variation));
         return variation.isEmpty() ? 3 : Integer.parseInt(variation.split("x")[0]);
     }
 
@@ -232,7 +235,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return CrossSolver.solveCross(solveCrossFace, solveCrossSide, scramble);
     }
 
-    private String generateScramble(int length, int cubeSize, String[][][] image, boolean multislice) {
+    private String generateScramble(int length, int cubeSize, String[][][] image, boolean multiSlice) {
         if (length == 0) {
             return "";
         }
@@ -240,7 +243,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         StringBuilder scram = new StringBuilder();
         int lastAxis = -1;
         int axis;
-        int slices = cubeSize - ((multislice || cubeSize % 2 != 0) ? 1 : 0);
+        int slices = cubeSize - ((multiSlice || cubeSize % 2 != 0) ? 1 : 0);
         int[] slicesMoved = new int[slices];
         int[] directionsMoved = new int[3];
         int moved;
@@ -261,7 +264,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
                 } while (slicesMoved[slice] != 0);
                 int direction = random(3);
 
-                if (multislice || slices != cubeSize || (directionsMoved[direction] + 1) * 2 < slices ||
+                if (multiSlice || slices != cubeSize || (directionsMoved[direction] + 1) * 2 < slices ||
                         (directionsMoved[direction] + 1) * 2 == slices && directionsMoved[0] + directionsMoved[1] + directionsMoved[2] == directionsMoved[direction]) {
                     directionsMoved[direction]++;
                     moved++;
@@ -287,7 +290,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
                     do {
                         slice(face, slice, direction, image, cubeSize);
                         slice--;
-                    } while (multislice && slice >= 0);
+                    } while (multiSlice && slice >= 0);
                 }
             }
             lastAxis = axis;

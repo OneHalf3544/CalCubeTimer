@@ -35,6 +35,12 @@ public class SessionEntity {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<SolutionEntity> solutions;
 
+    @Column
+    private String pluginName;
+
+    @Column
+    private String variationName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PROFILEID")
     private ProfileEntity profile;
@@ -79,7 +85,34 @@ public class SessionEntity {
         this.profile = profile;
     }
 
+
+    public String getPluginName() {
+        return pluginName;
+    }
+
+    public void setPluginName(String pluginName) {
+        this.pluginName = pluginName;
+    }
+
+    public String getVariationName() {
+        return variationName;
+    }
+
+    public void setVariationName(String variationName) {
+        this.variationName = variationName;
+    }
+
+    public SessionEntity withPluginName(String pluginName) {
+        this.pluginName = pluginName;
+        return this;
+    }
+
+    public SessionEntity withVariationName(String variationName) {
+        this.variationName = variationName;
+        return this;
+    }
+
     public Session toSession(Configuration configuration, ScramblePluginManager pluginManager, Profile profile) {
-        return new Session(sessionStart, configuration, pluginManager.getCustomizationFromString(profile, scrambleCustomization));
+        return new Session(sessionStart, configuration, pluginManager.getPuzzleTypeByString(profile, scrambleCustomization));
     }
 }

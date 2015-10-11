@@ -4,8 +4,6 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,8 +13,6 @@ import java.util.Map;
 
 public class ScrambleViewComponent extends JComponent {
 
-	private static final Logger LOGGER = LogManager.getLogger(ScrambleViewComponent.class);
-
 	private static final int DEFAULT_GAP = 5;
 	private static final Dimension PREFERRED_SIZE = new Dimension(0, 0);
 
@@ -25,11 +21,12 @@ public class ScrambleViewComponent extends JComponent {
 	private final ScramblePluginManager scramblePluginManager;
 	private boolean fixedSize;
 
-	private BufferedImage buffer;
-	private ScrambleString currentScramblePlugin = null;
-	private ScramblePlugin currentPlugin = null;
-	private ScrambleVariation currentVariation = null;
 	private String focusedFaceId = null;
+	private BufferedImage buffer;
+	private ScramblePlugin currentPlugin = null;
+	private PuzzleType puzzleType = null;
+
+	private ScrambleString scrambleString = null;
 
 	// todo move to scramblePluginManager:
 	private Map<String, Color> colorScheme = null;
@@ -58,18 +55,20 @@ public class ScrambleViewComponent extends JComponent {
 	}
 	
 	public void redo() {
-		setScramble(currentScramblePlugin, currentVariation);
+		setScramble(scrambleString, puzzleType);
 	}
 
-	public void setScramble(ScrambleString scramblePlugin, ScrambleVariation variation) {
-		currentScramblePlugin = scramblePlugin;
-		currentVariation = variation;
-		if(colorScheme == null || currentVariation.getPlugin() != currentPlugin) {
-			currentPlugin = currentVariation.getPlugin();
+	public void setScramble(ScrambleString scrambleString, PuzzleType puzzleType) {
+		this.scrambleString = scrambleString;
+		this.puzzleType = puzzleType;
+
+		if(colorScheme == null) {
+			currentPlugin = scrambleString.getScramblePlugin();
 			colorScheme = scramblePluginManager.getColorScheme(currentPlugin, false);
 		}
-		faces = currentPlugin.getFaces(GAP, getUnitSize(false), currentVariation.getName());
-		buffer = scramblePluginManager.getScrambleImage(currentScramblePlugin, GAP, getUnitSize(false), colorScheme);
+
+		faces = currentPlugin.getFaces(GAP, getUnitSize(false), this.puzzleType.getVariationName());
+		buffer = scramblePluginManager.getScrambleImage(this.scrambleString, GAP, getUnitSize(false), colorScheme);
 		repaint();	//this will cause the scramble to be drawn
 		invalidate(); //this forces the component to fit itself to its layout properly
 	}
@@ -91,7 +90,7 @@ public class ScrambleViewComponent extends JComponent {
 		if(buffer == null) {
 			return PREFERRED_SIZE;
 		}
-		Dimension d = currentPlugin.getImageSize(GAP, getUnitSize(true), currentVariation.getName());
+		Dimension d = currentPlugin.getImageSize(GAP, getUnitSize(true), puzzleType.getVariationName());
 		if(d != null) {
 			return d;
 		}
@@ -157,7 +156,7 @@ public class ScrambleViewComponent extends JComponent {
 		if(fixedSize) {
 			return currentPlugin.getDefaultUnitSize();
 		}
-		return currentVariation.getPuzzleUnitSize(defaults);
+		return getPuzzleType().getPuzzleUnitSize(currentPlugin, defaults);
 	}
 
 
@@ -174,8 +173,8 @@ public class ScrambleViewComponent extends JComponent {
 		return new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-				if (currentVariation != null) {
-					currentVariation.setPuzzleUnitSize(currentPlugin.getNewUnitSize(getWidth(), getHeight(), GAP, currentVariation.getName()));
+				if (puzzleType != null) {
+					puzzleType.setPuzzleUnitSize(currentPlugin.getNewUnitSize(getWidth(), getHeight(), GAP, puzzleType.getVariationName()));
 					redo();
 				}
 			}
@@ -216,4 +215,7 @@ public class ScrambleViewComponent extends JComponent {
 	}
 
 
+	public PuzzleType getPuzzleType() {
+		return puzzleType;
+	}
 }

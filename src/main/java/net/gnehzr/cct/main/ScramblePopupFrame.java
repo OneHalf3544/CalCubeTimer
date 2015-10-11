@@ -81,9 +81,9 @@ public class ScramblePopupFrame extends JDialog {
 			setLocation(location);
 	}
 
-	public void setScramble(ScrambleString incrementalScramble, ScrambleString fullScramble, ScrambleVariation newVariation) {
-		incrementalScrambleView.setScramble(incrementalScramble, newVariation);
-		finalView.setScramble(fullScramble, newVariation);
+	public void setScramble(ScrambleString incrementalScramble, ScrambleString fullScramble) {
+		incrementalScrambleView.setScramble(incrementalScramble, incrementalScramble.getPuzzleType());
+		finalView.setScramble(fullScramble, incrementalScramble.getPuzzleType());
 		String info = incrementalScramble.getTextComments();
 		if(info == null) {
 			pane.remove(scrambleInfoScroller);

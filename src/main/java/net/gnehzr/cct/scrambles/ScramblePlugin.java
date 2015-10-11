@@ -30,10 +30,10 @@ public abstract class ScramblePlugin {
 
 	private final boolean supportsScrambleImage;
 
-	public abstract ScrambleString importScramble(final ScrambleVariation.WithoutLength variation, final String scramble,
+	public abstract ScrambleString importScramble(PuzzleType puzzleType, final ScrambleSettings.WithoutLength variation, final String scramble,
 												  final List<String> attributes) throws InvalidScrambleException;
 
-	public abstract ScrambleString createScramble(final ScrambleVariation variation, final List<String> attributes);
+	public abstract ScrambleString createScramble(PuzzleType puzzleType, final ScrambleSettings variation, final List<String> attributes);
 
 	protected int parseSize(String scramble) {
 		return scramble.trim().split("\\s+").length;

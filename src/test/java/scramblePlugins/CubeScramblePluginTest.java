@@ -1,9 +1,10 @@
 package scramblePlugins;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.ScrambleSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.kociemba.twophase.Search;
@@ -17,6 +18,8 @@ import static org.mockito.Mockito.mock;
 public class CubeScramblePluginTest {
 
     private static final Logger LOG = LogManager.getLogger(CubeScramblePluginTest.class);
+    private final Configuration configuration = mock(Configuration.class);
+    private final ScramblePluginManager scramblePluginManager = mock(ScramblePluginManager.class);
 
     private CubeScramblePlugin cubeScramblePlugin = new CubeScramblePlugin();
 
@@ -33,26 +36,30 @@ public class CubeScramblePluginTest {
 
     @Test
     public void testGenerate2x2() {
-        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("2x2x2", 10, "U D"), Collections.<String>emptyList());
+        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createPuzzleType("2x2x2"), createVariation(10, "U D"), Collections.<String>emptyList());
         LOG.info("cubeScramble (2x2): " + cubeScramble);
     }
 
     @Test
     public void testGenerate3x3() {
-        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("3x3x3", 10, "U D"), Collections.<String>emptyList());
+        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createPuzzleType("3x3x3"), createVariation(10, "U D"), Collections.<String>emptyList());
         LOG.info("cubeScramble (3x3): " + cubeScramble);
     }
 
     @Test
     public void testGenerate6x6() {
-        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createVariation("6x6x6", 10, "U D"), Collections.<String>emptyList());
+        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createPuzzleType("6x6x6"), createVariation(10, "U D"), Collections.<String>emptyList());
         LOG.info("cubeScramble (6x6): " + cubeScramble);
     }
 
-    private ScrambleVariation createVariation(String variationName, int length, String generator) {
-        return new ScrambleVariation(
-                cubeScramblePlugin, variationName, mock(Configuration.class), mock(ScramblePluginManager.class), generator)
-                .withLength(length);
+    private ScrambleSettings createVariation(int length, String generator) {
+        return new ScrambleSettings(configuration, scramblePluginManager, generator, length, null);
+    }
+
+    private PuzzleType createPuzzleType(String variationName) {
+        PuzzleType puzzleType = new PuzzleType(configuration, "", scramblePluginManager, cubeScramblePlugin);
+        puzzleType.setVariationName(variationName);
+        return puzzleType;
     }
 
 }

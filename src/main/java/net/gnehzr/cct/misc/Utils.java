@@ -49,14 +49,6 @@ public class Utils {
 		return Math.round(c * pow) / (double) pow;
 	}
 
-	@Deprecated
-	public static String formatTime(double solveTime, boolean useClockFormat) {
-		if(Double.isInfinite(solveTime)) {
-			return "N/A";
-		}
-		return formatTime(new SolveTime(solveTime), useClockFormat);
-	}
-
 	public static String formatTime(SolveTime solveTime, boolean useClockFormat) {
 		if(solveTime.isInfiniteTime()) {
 			return "N/A";

@@ -3,8 +3,11 @@ package net.gnehzr.cct.dao;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
 import org.hibernate.SessionFactory;
+
+import java.util.List;
 
 /**
  * <p>
@@ -29,5 +32,11 @@ public class SolutionDao extends HibernateDaoSupport {
     public SessionEntity loadSession(Session session) {
         return queryFirst("FROM SessionEntity WHERE sessionId = :id", ImmutableMap.of(
                 "id", session.getSessionId()));
+    }
+
+    public List<String> getUsedPuzzleTypes(Profile profile) {
+        return queryList("select distinct variationName from SessionEntity where profile.profileId = :id", ImmutableMap.of(
+                "id", profile.getId()
+        ));
     }
 }

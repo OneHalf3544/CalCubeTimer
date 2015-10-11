@@ -2,7 +2,6 @@ package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.statistics.Session;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -13,11 +12,13 @@ public class GeneratedScrambleList implements ScrambleList {
 	private int scrambleNumber = 0;
 
 	private ScrambleString currentScrambleString;
-	private ScrambleVariation currentScrambleVariation;
 
 	public GeneratedScrambleList(Session session) {
 		this.session = session;
 		this.scramblePluginManager = session.getPuzzleType().scramblePluginManager;
+		this.currentScrambleString = session.getPuzzleType().isNullType()
+				? scramblePluginManager.NULL_IMPORTED_SCRUMBLE
+				: generateScramble();
 	}
 
 	@Override
@@ -28,15 +29,15 @@ public class GeneratedScrambleList implements ScrambleList {
 
 	public void setSession(@NotNull Session session) {
 		this.session = Objects.requireNonNull(session);
+		this.currentScrambleString = generateScramble();
 	}
 	
 	public void setScrambleLength(int scrambleLength) {
-		this.currentScrambleVariation.setLength(scrambleLength);
 		session.getPuzzleType().getScrambleVariation().setLength(scrambleLength);
 	}
 
 	public void updateGeneratorGroup(String generatorGroup) {
-		this.currentScrambleVariation = currentScrambleVariation.withGeneratorGroup(generatorGroup);
+		scramblePluginManager.setScrambleSettings(getPuzzleType(), session.getPuzzleType().getScrambleVariation().withGeneratorGroup(generatorGroup));
 		scramblePluginManager.saveGeneratorToConfiguration(session.getPuzzleType());
 	}
 
@@ -51,7 +52,7 @@ public class GeneratedScrambleList implements ScrambleList {
 	}
 
 	@Override
-	@Nullable
+	@NotNull
 	public ScrambleString getCurrentScramble() {
 		return currentScrambleString;
 	}
@@ -65,11 +66,15 @@ public class GeneratedScrambleList implements ScrambleList {
 	public ScrambleString getNext() {
 		scrambleNumber++;
 		if (isLastScrambleInList()) {
-			return currentScrambleString = getPuzzleType().generateScramble(currentScrambleVariation);
+			return currentScrambleString = generateScramble();
 		}
 		else {
 			return session.getSolutions(scrambleNumber).getScrambleString();
 		}
+	}
+
+	private ScrambleString generateScramble() {
+		return getPuzzleType().isNullType() ? currentScrambleString : getPuzzleType().generateScramble();
 	}
 
 	@Override

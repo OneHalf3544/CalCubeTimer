@@ -3,10 +3,7 @@ package scramblePlugins;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import net.gnehzr.cct.scrambles.InvalidScrambleException;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -41,21 +38,21 @@ public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
     }
 
     @Override
-    public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
+    public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
         String scramble = generateScrambleFor2x2();
-        return new ScrambleString(scramble, false, variation, this, getTextComments(scramble, 2, variation.getGeneratorGroup()));
+        return new ScrambleString(puzzleType, scramble, false, variation, this, getTextComments(scramble, 2, variation.getGeneratorGroup()));
     }
 
     @Override
-    public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+    public ScrambleString importScramble(PuzzleType puzzleType, ScrambleSettings.WithoutLength variation, String scramble,
                                          List<String> attributes) throws InvalidScrambleException {
-        int cubeSize = getSizeFromVariation(variation.getName());
+        int cubeSize = getSizeFromVariation(puzzleType.getVariationName());
         String[][][] image = initializeImage(cubeSize);
         if (!isValidScramble(scramble, cubeSize, image, false)) {
             throw new InvalidScrambleException(scramble);
         }
-        String text = getTextComments(scramble, getSizeFromVariation(variation.getName()), variation.getGeneratorGroup());
-        return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, text);
+        String text = getTextComments(scramble, getSizeFromVariation(puzzleType.getVariationName()), variation.getGeneratorGroup());
+        return new ScrambleString(puzzleType, scramble, true, variation.withLength(parseSize(scramble)), this, text);
     }
 
 

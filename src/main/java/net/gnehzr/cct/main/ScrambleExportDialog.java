@@ -2,7 +2,6 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JSpinnerWithText;
@@ -10,7 +9,7 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.ScrambleSettings;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,16 +32,18 @@ public class ScrambleExportDialog extends JDialog {
 	private final Configuration configuration;
 
 	private JTextField urlField;
-	private ScrambleChooserComboBox<?> scrambleChooser;
-	private JSpinnerWithText scrambleLength, numberOfScrambles;
+	private ScrambleChooserComboBox<PuzzleType> scrambleChooser;
+	private JSpinnerWithText scrambleLengthJSpinner;
+	private JSpinnerWithText numberOfScramblesJSpinner;
 
-	public ScrambleExportDialog(JFrame owner, ScrambleVariation selected, ScramblePluginManager scramblePluginManager,
-								Configuration configuration, Profile profile, ProfileDao profileDao) {
+	public ScrambleExportDialog(JFrame owner, PuzzleType selectedPuzzleType, ScramblePluginManager scramblePluginManager,
+								Configuration configuration, Profile profile) {
 		super(owner, StringAccessor.getString("ScrambleExportDialog.exportscrambles"), true);
 		this.scramblePluginManager = scramblePluginManager;
 		this.configuration = configuration;
 		urlField = new JTextField(40);
 		urlField.setToolTipText(StringAccessor.getString("ScrambleExportDialog.choosefile"));
+
 		JButton browseButton = new JButton(StringAccessor.getString("ScrambleExportDialog.browse"));
 		browseButton.addActionListener(e -> {
 			CCTFileChooser fc = new CCTFileChooser(configuration);
@@ -53,13 +54,13 @@ public class ScrambleExportDialog extends JDialog {
 		});
 
 		scrambleChooser = new ScrambleVariationChooserComboBox(false, this.scramblePluginManager, this.configuration);
-		scrambleChooser.setSelectedItem(selected);
+		scrambleChooser.setSelectedItem(selectedPuzzleType);
 		scrambleChooser.addActionListener(e -> {
-            if(scrambleLength != null) {
-                ScrambleVariation curr = (ScrambleVariation) scrambleChooser.getSelectedItem();
-                scrambleLength.setValue(curr.getLength());
-                numberOfScrambles.setValue(scramblePluginManager.getCustomizationFromVariation(curr, profile).getRASize(0));
-            }
+            //if(scrambleLengthJSpinner != null) {
+                PuzzleType puzzleType = (PuzzleType) scrambleChooser.getSelectedItem();
+                scrambleLengthJSpinner.setValue(scramblePluginManager.getScrambleVariation(puzzleType).getLength());
+                numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType, profile).getRASize(0));
+            //}
         });
 
 		JPanel subPanel = new JPanel();
@@ -73,10 +74,18 @@ public class ScrambleExportDialog extends JDialog {
 		subPanel.add(sideBySide);
 		subPanel.add(scrambleChooser);
 
-		scrambleLength = new JSpinnerWithText(selected.getLength(), 1, StringAccessor.getString("ScrambleExportDialog.lengthscrambles")); 
-		numberOfScrambles = new JSpinnerWithText(scramblePluginManager.getCustomizationFromVariation(selected, profile).getRASize(0), 1, StringAccessor.getString("ScrambleExportDialog.numberscrambles"));
-		subPanel.add(scrambleLength);
-		subPanel.add(numberOfScrambles);
+		scrambleLengthJSpinner = new JSpinnerWithText(
+				selectedPuzzleType.getScrambleVariation().getLength(),
+				1,
+				StringAccessor.getString("ScrambleExportDialog.lengthscrambles"));
+
+		numberOfScramblesJSpinner = new JSpinnerWithText(
+				selectedPuzzleType.getRASize(0),
+				1,
+				StringAccessor.getString("ScrambleExportDialog.numberscrambles"));
+
+		subPanel.add(scrambleLengthJSpinner);
+		subPanel.add(numberOfScramblesJSpinner);
 
 		JButton exportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.export"));
 		exportButton.addActionListener(e -> {
@@ -87,7 +96,7 @@ public class ScrambleExportDialog extends JDialog {
 				Utils.showErrorDialog(ScrambleExportDialog.this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
 				return;
 			}
-			if (generateAndExportScrambles(file, getNumberOfScrambles(), getVariation()))
+			if (generateAndExportScrambles(file, getNumberOfScramblesJSpinner(), selectedPuzzleType))
 				setVisible(false);
 		});
 		JButton htmlExportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.htmlexport"));
@@ -99,7 +108,7 @@ public class ScrambleExportDialog extends JDialog {
 				Utils.showErrorDialog(ScrambleExportDialog.this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
 				return;
 			}
-			if (exportScramblesToHTML(file, getNumberOfScrambles(), getVariation()))
+			if (exportScramblesToHTML(file, getNumberOfScramblesJSpinner(), selectedPuzzleType))
 				setVisible(false);
 		});
 		JButton cancelButton = new JButton(StringAccessor.getString("ScrambleExportDialog.cancel"));
@@ -117,22 +126,21 @@ public class ScrambleExportDialog extends JDialog {
 		setVisible(true);
 	}
 
-	private int getNumberOfScrambles() {
-		return numberOfScrambles.getSpinnerValue();
+	private int getNumberOfScramblesJSpinner() {
+		return numberOfScramblesJSpinner.getSpinnerValue();
 	}
 
-	private ScrambleVariation getVariation() {
-		ScrambleVariation var = (ScrambleVariation) scrambleChooser.getSelectedItem();
-		if(scrambleLength != null) {
-			var.setLength(scrambleLength.getSpinnerValue());
+	private ScrambleSettings getVariation() {
+		ScrambleSettings var = (ScrambleSettings) scrambleChooser.getSelectedItem();
+		if(scrambleLengthJSpinner != null) {
+			var.setLength(scrambleLengthJSpinner.getSpinnerValue());
 		}
 		return var;
 	}
 
-	private boolean generateAndExportScrambles(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
+	private boolean generateAndExportScrambles(URL outputFile, int numberOfScrambles, PuzzleType puzzleType) {
 		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
-			PuzzleType puzzleType = new PuzzleType(configuration, scrambleVariation, null, scramblePluginManager);
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
 				fileWriter.println(puzzleType.generateScramble(puzzleType.getScrambleVariation()).getScramble());
 			}
@@ -145,7 +153,7 @@ public class ScrambleExportDialog extends JDialog {
 		}
 	}
 	
-	private boolean exportScramblesToHTML(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
+	private boolean exportScramblesToHTML(URL outputFile, int numberOfScrambles, PuzzleType puzzleType) {
 		File htmlFile;
 		try {
 			htmlFile = new File(outputFile.toURI());
@@ -167,7 +175,6 @@ public class ScrambleExportDialog extends JDialog {
 
 		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
-			PuzzleType puzzleType = new PuzzleType(configuration, scrambleVariation, null, scramblePluginManager);
 			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP);
 			fileWriter.println("<html><head><title>Exported Scrambles</title></head><body><table>");
 			for(int ch = 0; ch < numberOfScrambles; ch++) {

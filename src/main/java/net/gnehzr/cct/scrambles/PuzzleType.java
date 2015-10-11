@@ -6,38 +6,61 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class PuzzleType {
 
 	private static final Logger LOG = LogManager.getLogger(PuzzleType.class);
 
 	private final Configuration configuration;
-	@NotNull
-	private ScrambleVariation variation;
 	public final ScramblePluginManager scramblePluginManager;
+	private final ScramblePlugin plugin;
 	private String customization;
+	private String variationName;
 
-	public PuzzleType(Configuration configuration, @NotNull ScrambleVariation variation,
-					  String customization, ScramblePluginManager scramblePluginManager) {
+	public PuzzleType(Configuration configuration,
+					  String customization, ScramblePluginManager scramblePluginManager, ScramblePlugin plugin) {
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
 		this.customization = customization;
+		this.plugin = plugin;
 
-		// todo hack to avoid NPE in PuzzleType.toString() in loadFromConfig:
-		this.variation = variation;
-		this.variation = variation.withGeneratorGroup(scramblePluginManager.loadGeneratorFromConfig(this, false, variation));
 	}
 
-	public ScrambleString generateScramble(ScrambleVariation variation) {
-		ScrambleString newScramblePlugin = variation.getPlugin().createScramble(
-				variation,
-				variation.getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
-		LOG.info("generated scramble: " + newScramblePlugin + ", for plugin '" + this.variation.getPlugin().getPuzzleName() + "', variation: " + this.variation);
-		return newScramblePlugin;
+	public ScrambleString generateScramble() {
+		return generateScramble(getScrambleVariation());
+	}
+
+	public ScrambleString generateScramble(ScrambleSettings scrambleSettings) {
+		checkState(!isNullType());
+
+		ScramblePlugin scramblePlugin = this.getScramblePlugin();
+		ScrambleString newScramble = scramblePlugin.createScramble(
+				this,
+				scrambleSettings.withGeneratorGroup(scramblePluginManager.getDefaultGeneratorGroup(scramblePlugin, getVariationName())),
+				scramblePlugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		LOG.info("generated scramble: " + newScramble + ", for puzzle '" + this);
+		return newScramble;
 	}
 
 	public ScrambleString importScramble(String scramble) throws InvalidScrambleException {
-		return variation.getPlugin().importScramble(variation.withoutLength(), scramble,
-				variation.getPlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+		ScrambleSettings scrambleSettings = scramblePluginManager.getScrambleVariation(this);
+		return getScramblePlugin().importScramble(
+				this,
+				scrambleSettings.withoutLength(),
+				scramble,
+				getScramblePlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+	}
+
+	public int getPuzzleUnitSize(ScramblePlugin scramblePlugin, boolean defaults) {
+		Integer unitSize = configuration.getInt(VariableKey.UNIT_SIZE(this), defaults);
+		return unitSize  != null ? unitSize : scramblePlugin.getDefaultUnitSize();
+	}
+
+	public void setPuzzleUnitSize(int size) {
+		if(!this.isNullType()) {
+			configuration.setLong(VariableKey.UNIT_SIZE(this), size);
+		}
 	}
 
 	public void setRA(int index, int newra, boolean trimmed) {
@@ -59,21 +82,17 @@ public class PuzzleType {
 		return configuration.getBoolean(key, false);
 	}
 
-	public void setScrambleVariation(@NotNull ScrambleVariation newVariation) {
-		variation = newVariation;
-	}
-
 	public void setCustomization(String custom) {
 		customization = custom;
 	}
 
 	public ScramblePlugin getScramblePlugin() {
-		return variation.getPlugin();
+		return plugin;
 	}
 
 	@NotNull
-	public ScrambleVariation getScrambleVariation() {
-		return variation;
+	public ScrambleSettings getScrambleVariation() {
+		return scramblePluginManager.getScrambleVariation(this);
 	}
 
 	public String getCustomization() {
@@ -81,10 +100,7 @@ public class PuzzleType {
 	}
 
 	public String toString() {
-		String temp = variation.getName();
-		if(temp.isEmpty()) {
-			temp += variation.getPlugin().getPuzzleName();
-		}
+		String temp = plugin.getPuzzleName();
 		if(customization != null) {
 			temp += ":" + customization;
 		}
@@ -105,6 +121,15 @@ public class PuzzleType {
 	}
 
 	public boolean isNullType() {
-		return this == scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
+		return this == scramblePluginManager.NULL_PUZZLE_TYPE;
 	}
+
+	public String getVariationName() {
+		return variationName;
+	}
+
+	public void setVariationName(String variationName) {
+		this.variationName = variationName;
+	}
+
 }

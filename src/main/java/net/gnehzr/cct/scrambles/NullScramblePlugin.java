@@ -28,14 +28,14 @@ class NullScramblePlugin extends ScramblePlugin {
     }
 
     @Override
-    public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+    public ScrambleString importScramble(PuzzleType puzzleType, ScrambleSettings.WithoutLength variation, String scramble,
                                          List<String> attributes) throws InvalidScrambleException {
         LOG.debug("import scramble");
-        return ScramblePluginManager.NULL_IMPORTED_SCRUMBLE;
+        throw new UnsupportedOperationException("NullScramblePlugin.createScramble");
     }
 
     @Override
-    public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
+    public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
         LOG.debug("create scramble");
         throw new UnsupportedOperationException("NullScramblePlugin.createScramble");
     }

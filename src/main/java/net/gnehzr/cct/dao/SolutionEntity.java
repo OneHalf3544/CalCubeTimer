@@ -31,12 +31,6 @@ public class SolutionEntity {
     private String scramble;
 
     @Column
-    private String pluginName;
-
-    @Column
-    private String variationName;
-
-    @Column
     private String comment;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -74,22 +68,6 @@ public class SolutionEntity {
         this.scramble = scramble;
     }
 
-    public String getPluginName() {
-        return pluginName;
-    }
-
-    public void setPluginName(String pluginName) {
-        this.pluginName = pluginName;
-    }
-
-    public String getVariationName() {
-        return variationName;
-    }
-
-    public void setVariationName(String variationName) {
-        this.variationName = variationName;
-    }
-
     public List<SplitTimesEntity> getSplits() {
         return splits;
     }
@@ -123,16 +101,6 @@ public class SolutionEntity {
 
     public SolutionEntity withScramble(String scramble) {
         this.scramble = scramble;
-        return this;
-    }
-
-    public SolutionEntity withPluginName(String pluginName) {
-        this.pluginName = pluginName;
-        return this;
-    }
-
-    public SolutionEntity withVariationName(String variationName) {
-        this.variationName = variationName;
         return this;
     }
 

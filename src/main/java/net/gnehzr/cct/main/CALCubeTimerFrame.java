@@ -199,7 +199,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			}
 			model.getScramblesList().asGenerating().setSession(currentSessionSolutionsTableModel.getCurrentSession());
 
-			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getPuzzleType().getScrambleVariation());
+			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getPuzzleType());
 			String generator = model.getScramblesList().getPuzzleType().getScrambleVariation().getGeneratorGroup();
 			updateGeneratorField(generatorEnabled, generator);
 
@@ -571,8 +571,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 	@Override
 	public void updateScramble() {
-		LOG.debug("update scramble for {}", model.getScramblesList().getPuzzleType());
 		ScrambleString current = model.getScramblesList().getCurrentScramble();
+		LOG.debug("update scramble view for {}, {}", current, model.getScramblesList().getPuzzleType());
 		if (current != null) {
 			//set the length of the current scramble
 			safeSetValue(scrambleLengthSpinner, current.getVariation().getLength(), scrambleLengthListener);
@@ -750,7 +750,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		LOG.debug("create scramble attributes panel");
 		PuzzleType sc = model.getScramblesList().getPuzzleType();
 		scrambleAttributesPanel.removeAll();
-		if (sc == scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION) {
+		if (sc == scramblePluginManager.NULL_PUZZLE_TYPE) {
 			LOG.debug("skip creating scramble attributes panel");
 			return;
 		}

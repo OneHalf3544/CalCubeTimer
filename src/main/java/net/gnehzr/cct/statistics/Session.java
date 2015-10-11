@@ -84,10 +84,13 @@ public class Session extends Commentable implements Comparable<Session> {
 	}
 
 	public SessionEntity toSessionEntity(Long profileId) {
-		SessionEntity sessionEntity = new SessionEntity();
+		SessionEntity sessionEntity = new SessionEntity()
+				.withPluginName(getPuzzleType().getScramblePlugin().getPuzzleName())
+				.withVariationName(getPuzzleType().getVariationName());
 		sessionEntity.setSessionId(lastSessionId);
 		sessionEntity.setScrambleCustomization(puzzleType.getCustomization());
 		sessionEntity.setSessionStart(getStartTime());
+
 		ProfileEntity profile = new ProfileEntity();
 		profile.setProfileId(profileId);
 		sessionEntity.setProfile(profile);

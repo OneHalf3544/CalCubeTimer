@@ -8,7 +8,7 @@ import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.ScrambleSettings;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.api.SubstanceConstants;
@@ -133,9 +133,9 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		String val = value == null ? "" : value.toString();
 		if(value instanceof PuzzleType) {
 			PuzzleType customization = (PuzzleType) value;
-			ScrambleVariation v = customization.getScrambleVariation();
+			ScrambleSettings v = customization.getScrambleVariation();
 			if(column == 0) { //scramble customization
-				String bolded = v.getName();
+				String bolded = customization.getVariationName();
 				if(bolded.isEmpty())
 					bolded = customization.getScramblePlugin().getPuzzleName();
 				val = "<html><b>" + bolded + "</b>";
@@ -159,12 +159,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-		if(value instanceof PuzzleType)
-			puzzleType = (PuzzleType) value;
-		else
-			puzzleType = new PuzzleType(configuration,
-					scramblePluginManager.getCurrentScrambleCustomization(
-							profileDao.getSelectedProfile()).getScrambleVariation(), "", scramblePluginManager);
+		puzzleType = (PuzzleType) value;
 		editingColumn = column;
 		if(column == 0) //customization
 			return getCustomizationPanel(puzzleType);
@@ -190,12 +185,10 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		listenToContainer(temp);
 		return temp;
 	}
-	
-	private int raIndex;
+
 	JSpinner raSize;
 	JCheckBox trimmed;
 	private JPanel getRAPanel(final int index, final PuzzleType sc) {
-		raIndex = index;
 		raSize = new JSpinner(new SpinnerNumberModel(sc.getRASize(index), 0, null, 1));
 		raSize.setToolTipText(StringAccessor.getString("ScrambleCustomizationListModel.specifylength"));
 		((JSpinner.DefaultEditor) raSize.getEditor()).getTextField().setColumns(3);
@@ -205,45 +198,42 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		temp.add(trimmed = new JCheckBox(StringAccessor.getString("ScrambleCustomizationListModel.trimmed"), sc.isTrimmed(index)));
 		JButton resetRA = new JButton("X");
 		resetRA.putClientProperty(SubstanceLookAndFeel.BUTTON_NO_MIN_SIZE_PROPERTY, Boolean.TRUE);
-		resetRA.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				raSize.setValue(configuration.getInt(VariableKey.RA_SIZE(index, null)));
-				trimmed.setSelected(configuration.getBoolean(VariableKey.RA_TRIMMED(index, null)));
-			}
-		});
+		resetRA.addActionListener(e -> {
+            raSize.setValue(configuration.getInt(VariableKey.RA_SIZE(index, null)));
+            trimmed.setSelected(configuration.getBoolean(VariableKey.RA_TRIMMED(index, null)));
+        });
 		temp.add(resetRA);
-		disabledComponents = new ArrayList<Component>();
+		disabledComponents = new ArrayList<>();
 		listenToContainer(temp);
 		return temp;
 	}
 
 	PuzzleType puzzleType;
-	ScrambleChooserComboBox<ScrambleVariation> scrambleVariations;
+	ScrambleChooserComboBox<PuzzleType> scrambleVariations;
 	JSpinner scramLength;
 	private JTextField customField;
-	private String originalFieldText;
+
 	private JPanel getCustomizationPanel(PuzzleType custom) {
 		JPanel customPanel = new JPanel();
 		customPanel.setLayout(new BoxLayout(customPanel, BoxLayout.LINE_AXIS));
 		if(custom.getCustomization() != null) {
 			scrambleVariations = new ScrambleVariationChooserComboBox(false, scramblePluginManager, configuration);
-			scrambleVariations.addItem(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION.getScrambleVariation());
+			scrambleVariations.addItem(scramblePluginManager.NULL_PUZZLE_TYPE);
 			scrambleVariations.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 			scrambleVariations.setSelectedItem(custom.getScrambleVariation());
 			scrambleVariations.addItemListener(e -> {
                 if(e.getStateChange() == ItemEvent.SELECTED)
-                    puzzleType.setScrambleVariation((ScrambleVariation) scrambleVariations.getSelectedItem());
+                    scramblePluginManager.setScrambleSettings(puzzleType, (ScrambleSettings) scrambleVariations.getSelectedItem());
             });
 			scrambleVariations.setToolTipText(StringAccessor.getString("ScrambleCustomizationListModel.selectvariation"));
 			customPanel.add(scrambleVariations);
 
-			originalFieldText = custom.getCustomization();
+			String originalFieldText = custom.getCustomization();
 			customField = new JTextField(originalFieldText, 15);
 			customField.setToolTipText(StringAccessor.getString("ScrambleCustomizationListModel.specifycustomization"));
 			customPanel.add(customField);
 		} else {
-			customPanel.add(new JLabel("<html><b>" + custom.getScrambleVariation().toString() + "</b></html>"));
+			customPanel.add(new JLabel("<html><b>" + custom.getVariationName() + "</b></html>"));
 		}
 
 		disabledComponents = new ArrayList<>();
@@ -268,8 +258,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		resetButton.setFocusPainted(false);
 		resetButton.setMargin(new Insets(0, 0, 0, 0));
 		resetButton.addActionListener(e -> {
-			ScrambleVariation variation = puzzleType.getScrambleVariation();
-			scramLength.setValue(variation.getScrambleLength(variation.getName(), true));
+			scramLength.setValue(ScrambleSettings.getScrambleLength(puzzleType.getScramblePlugin(), puzzleType.getVariationName(), configuration, true));
         });
 		resetButton.putClientProperty(SubstanceLookAndFeel.BUTTON_NO_MIN_SIZE_PROPERTY, Boolean.TRUE);
 		resetButton.putClientProperty(SubstanceLookAndFeel.BUTTON_SIDE_PROPERTY, new SubstanceConstants.Side[] { SubstanceConstants.Side.LEFT });
@@ -352,7 +341,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 			if(customName.isEmpty()) {
 				error = StringAccessor.getString("ScrambleCustomizationListModel.noemptycustomization");
 			} else {
-				String fullCustomName = puzzleType.getScrambleVariation().getName() + ":" + customName;
+				String fullCustomName = puzzleType.getVariationName() + ":" + customName;
 				for(PuzzleType c : customizations) {
 					if(c.toString().equals(fullCustomName) && c != puzzleType) {
 						error = StringAccessor.getString("ScrambleCustomizationListModel.noduplicatecustomizations");
@@ -375,7 +364,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 //		if(scramLength != null) {
 			puzzleType.getScrambleVariation().setLength((Integer) scramLength.getValue());
 		} else if(editingColumn == 2) { //generator
-			puzzleType.setScrambleVariation(puzzleType.getScrambleVariation().withGeneratorGroup(generator.getText()));
+			scramblePluginManager.setScrambleSettings(puzzleType, puzzleType.getScrambleVariation().withGeneratorGroup(generator.getText()));
 		} else if(editingColumn == 3) { //ra 0
 			puzzleType.setRA(0, (Integer) raSize.getValue(), trimmed.isSelected());
 		} else if(editingColumn == 4) { //ra 1

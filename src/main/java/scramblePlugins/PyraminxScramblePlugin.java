@@ -33,16 +33,16 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+	public ScrambleString importScramble(PuzzleType puzzleType, ScrambleSettings.WithoutLength variation, String scramble,
 										 List<String> attributes) throws InvalidScrambleException {
 		int[][] image = initializeImage();
 		validateScramble(image, scramble);
-		return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, null);
+		return new ScrambleString(puzzleType, scramble, true, variation.withLength(parseSize(scramble)), this, null);
 	}
 
 	@Override
-	public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
-		return new ScrambleString(generateScramble(), false, variation, this, null);
+	public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
+		return new ScrambleString(puzzleType, generateScramble(), false, variation, this, null);
 	}
 
 	private int[][] initializeImage() {

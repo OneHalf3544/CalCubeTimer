@@ -1,7 +1,7 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
+import net.gnehzr.cct.scrambles.ScrambleSettings;
 import org.jvnet.substance.api.renderers.SubstanceDefaultListCellRenderer;
 
 import javax.swing.*;
@@ -20,24 +20,21 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 		String val;
 		Icon i = null;
 		if(value != null) {
-			PuzzleType customization = null;
-			ScrambleVariation sv = null;
-			if(value instanceof PuzzleType) {
-				customization = (PuzzleType) value;
-				sv = customization.getScrambleVariation();
-			} else if(value instanceof ScrambleVariation) {
-				sv = (ScrambleVariation) value;
-			} else {
-				throw new NullPointerException("Value must be an instance of ScrambleCustomization or ScrambleVariation!"); 
+			PuzzleType puzzleType = null;
+			ScrambleSettings scrambleSettings;
+			puzzleType = (PuzzleType) value;
+			scrambleSettings = puzzleType.getScrambleVariation();
+			if (icons) {
+				i = scrambleSettings.getImage();
 			}
-			if(icons)
-				i = sv.getImage();
-			String bolded = sv.getName();
-			if(bolded.isEmpty())
-				bolded = sv.getPlugin().getPuzzleName();
+			String bolded = puzzleType.getVariationName();
+			if(bolded.isEmpty()) {
+				bolded = puzzleType.getScramblePlugin().getPuzzleName();
+			}
 			val = "<html><b>" + bolded + "</b>";  
-			if(customization != null && customization.getCustomization() != null)
-				val += ":" + customization.getCustomization(); 
+			if(puzzleType != null && puzzleType.getCustomization() != null) {
+				val += ":" + puzzleType.getCustomization();
+			}
 			val += "</html>"; 
 		} else
 			val = ""; 

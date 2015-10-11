@@ -27,31 +27,11 @@ public class Statistics implements SolveCounter {
 			public String toString() {
 				return StringAccessor.getString("Statistics.sessionAverage");
 			}
-		}
+		};
+
+
 	}
 
-	public void redo() {
-		editActions.getNext().doEdit();
-	}
-
-	/**
-	 * @return  true if the caller should decrement the scramble #
-	 */
-	public boolean undo() {
-		CCTUndoableEdit t = editActions.getPrevious();
-		t.undoEdit();
-		if(t instanceof StatisticsEdit) {
-			StatisticsEdit se = (StatisticsEdit) t;
-			return se.row == -1 && se.oldTimes == null;
-		}
-		return false;
-	}
-
-	public void setUndoRedoListener(UndoRedoListener url) {
-		editActions.setUndoRedoListener(url);
-	}
-
-	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<>();
 
 	List<Solution> times;
 	private List<List<SolveTime>> averages;
@@ -69,13 +49,18 @@ public class Statistics implements SolveCounter {
 	private SolveTime curSessionAvg;
 	private double runningTotalSquareSeconds;
 	private	SolveTime curSessionSD;
-	
+
 	private Map<SolveType, Integer> solveCounter;
 
 	private int[] curRASize;
 	private boolean[] curRATrimmed;
 
 	public static final int RA_SIZES_COUNT = 2;
+
+	private PuzzleType puzzleType;
+	private List<StatisticsUpdateListener> statisticsUpdateListeners;
+	public DraggableJTableModel tableListener;
+
 
 	public Statistics(Configuration configuration, PuzzleType puzzleType) {
 		configuration.addConfigurationChangeListener(this::onConfigurationChange);
@@ -104,20 +89,41 @@ public class Statistics implements SolveCounter {
 
 		times = new ArrayList<>();
 		sortedTimes = new TreeSet<>();
-		customization = puzzleType;
+		this.puzzleType = puzzleType;
 
 		initialize();
 
 		onConfigurationChange(null);
 	}
 
+	public void redo() {
+		editActions.getNext().doEdit();
+	}
+
+	/**
+	 * @return  true if the caller should decrement the scramble #
+	 */
+	public boolean undo() {
+		CCTUndoableEdit t = editActions.getPrevious();
+		t.undoEdit();
+		if(t instanceof StatisticsEdit) {
+			StatisticsEdit se = (StatisticsEdit) t;
+			return se.row == -1 && se.oldTimes == null;
+		}
+		return false;
+	}
+
+	public void setUndoRedoListener(UndoRedoListener url) {
+		editActions.setUndoRedoListener(url);
+	}
+
+	public UndoRedoList<CCTUndoableEdit> editActions = new UndoRedoList<>();
+
 	private void onConfigurationChange(Profile profile) {
 		if (loadRollingAverages()) {
 			refresh();
 		}
 	}
-
-	private PuzzleType customization;
 
 	private void initialize() {
 		times.clear();
@@ -142,7 +148,6 @@ public class Statistics implements SolveCounter {
 		solveCounter.clear();
 	}
 
-	
 	public void clear() {
 		int[] indices = new int[times.size()];
 		for(int ch = 0; ch < indices.length; ch++) {
@@ -153,13 +158,10 @@ public class Statistics implements SolveCounter {
 		notifyListeners(false);
 	}
 
-	private List<StatisticsUpdateListener> statisticsUpdateListeners;
-
 	public void setStatisticsUpdateListeners(List<StatisticsUpdateListener> listener) {
 		statisticsUpdateListeners = listener;
 	}
-	
-	public DraggableJTableModel tableListener;
+
 
 	public void setTableListener(DraggableJTableModel tableListener) {
 		this.tableListener = tableListener;
@@ -413,9 +415,9 @@ public class Statistics implements SolveCounter {
 
 	private boolean loadRollingAverages() {
 		boolean refresh = false;
-		for (int c = 0; c < curRASize.length && !customization.isNullType(); c++) {
-			int raSize = customization.getRASize(c);
-			boolean rollingAverageTrimmed = customization.isTrimmed(c);
+		for (int c = 0; c < curRASize.length && !puzzleType.isNullType(); c++) {
+			int raSize = puzzleType.getRASize(c);
+			boolean rollingAverageTrimmed = puzzleType.isTrimmed(c);
 			if (raSize != curRASize[c] || rollingAverageTrimmed != curRATrimmed[c]) {
 				curRASize[c] = raSize;
 				curRATrimmed[c] = rollingAverageTrimmed;
@@ -569,12 +571,16 @@ public class Statistics implements SolveCounter {
 	}
 
 	public String toTerseString(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
 		Tuple2<SolveTime, SolveTime> bestAndWorst = getBestAndWorstTimes(n, n + curRASize[num]);
 		List<Solution> list = getSublist(n, n + curRASize[num]);
-		if(list.size() == 0)
+		if (list.size() == 0)
 			return "N/A";
 		
 		return toTerseStringHelper(list, bestAndWorst.v1, bestAndWorst.v2);
@@ -676,27 +682,39 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getAverage(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
-		if(n < 0)
+		if(n < 0) {
 			n = averages.get(num).size() + n;
+		}
 
-		if(averages.get(num).size() == 0 || n < 0 || n >= averages.get(num).size())
+		if(averages.get(num).size() == 0 || n < 0 || n >= averages.get(num).size()) {
 			return SolveTime.NA;
+		}
 
 		return averages.get(num).get(n);
 	}
 
 	public SolveTime getSD(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
-		if(n < 0)
+		if(n < 0) {
 			n = sds.get(num).size() + n;
+		}
 
-		if(sds.get(num).size() == 0 || n < 0 || n >= sds.get(num).size())
+		if(sds.get(num).size() == 0 || n < 0 || n >= sds.get(num).size()) {
 			return SolveTime.NA;
+		}
 		
 		return sds.get(num).get(n);
 	}
@@ -717,11 +735,16 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getSortAverage(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
-		if(n < 0)
+		if(n < 0) {
 			n = sortaverages.get(num).size() + n;
+		}
 
 		if(sortaverages.get(num).size() == 0 || n < 0 || n >= sortaverages.get(num).size())
 			return SolveTime.NA;
@@ -730,14 +753,20 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getSortSD(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
-		if(n < 0)
+		if(n < 0) {
 			n = sortsds.get(num).size() + n;
+		}
 
-		if(sortsds.get(num).size() == 0 || n < 0 || n >= sortsds.get(num).size())
+		if(sortsds.get(num).size() == 0 || n < 0 || n >= sortsds.get(num).size()) {
 			return SolveTime.NA;
+		}
 		
 		return sortsds.get(num).get(n);
 	}
@@ -768,8 +797,12 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getWorstTimeOfAverage(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
 		if(n < 0)
 			n = averages.get(num).size() + n;
@@ -780,11 +813,16 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getBestTimeOfSortAverage(int n, int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
-		if(n < 0)
+		if(n < 0) {
 			n = sortaverages.get(num).size() + n;
+		}
 
 		if(sortaverages.get(num).size() == 0 || n < 0 || n >= sortaverages.get(num).size())
 			return SolveTime.NULL_TIME;
@@ -799,8 +837,9 @@ public class Statistics implements SolveCounter {
 			num = RA_SIZES_COUNT - 1;
 		}
 
-		if(n < 0)
+		if(n < 0) {
 			n = sortaverages.get(num).size() + n;
+		}
 
 		if(sortaverages.get(num).size() == 0 || n < 0 || n >= sortaverages.get(num).size()) {
 			return SolveTime.NULL_TIME;
@@ -809,11 +848,13 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getSessionAverage(int n) {
-		if(n < 0)
+		if(n < 0) {
 			n = sessionavgs.size() + n;
+		}
 
-		if(sessionavgs.size() == 0 || n < 0 || n >= sessionavgs.size())
+		if(sessionavgs.size() == 0 || n < 0 || n >= sessionavgs.size()) {
 			return SolveTime.NA;
+		}
 		return sessionavgs.get(n);
 	}
 
@@ -829,21 +870,28 @@ public class Statistics implements SolveCounter {
 	}
 
 	public SolveTime getProgressTime() {
-		if(times.size() < 2)
+		if(times.size() < 2) {
 			return SolveTime.NA;
+		}
 		
 		SolveTime t1 = getTime(-1);
-		if(t1 == SolveTime.NA)
+		if(t1 == SolveTime.NA) {
 			return SolveTime.NA;
+		}
 		SolveTime t2 = getTime(-2);
-		if(t2 == SolveTime.NA)
+		if(t2 == SolveTime.NA) {
 			return SolveTime.NA;
+		}
 		return SolveTime.substruct(t1, t2);
 	}
 
 	public SolveTime getProgressAverage(int num) {
-		if(num < 0) num = 0;
-		else if(num >= RA_SIZES_COUNT) num = RA_SIZES_COUNT - 1;
+		if(num < 0) {
+			num = 0;
+		}
+		else if(num >= RA_SIZES_COUNT) {
+			num = RA_SIZES_COUNT - 1;
+		}
 
 		if(averages.get(num).size() == 0) {
 			return SolveTime.NA;

@@ -227,7 +227,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		if (a.isInfiniteTime()) {
 			return SolveTime.WORST;
 		}
-		return new SolveTime(a.getTime().dividedBy(divisor));
+ 		return new SolveTime(a.getTime().dividedBy(divisor));
 	}
 
 	public static SolveTime multiply(SolveTime a, long multiplier) {

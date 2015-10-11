@@ -67,7 +67,7 @@ public class ScrambleImportDialog extends JDialog {
 		topBot.add(sideBySide);
 
 		scrambleChooser = new ScrambleCustomizationChooserComboBox(false, scramblePluginManager, configuration);
-		scrambleChooser.addItem(scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION);
+		scrambleChooser.addItem(scramblePluginManager.NULL_PUZZLE_TYPE);
 		scrambleChooser.setSelectedItem(sc);
 		scrambleChooser.addActionListener(e -> this.validateScrambles());
 		topBot.add(scrambleChooser);

@@ -44,13 +44,11 @@ public class SolveTimeEditor extends DefaultCellEditor {
 	}
 
 	@Override
-	public Component getTableCellEditorComponent(JTable table, Object value,
-			boolean isSelected, int row, int column) {
+	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		this.value = null;
 		((JComponent) getComponent()).setBorder(new LineBorder(Color.BLACK));
 		((JComponent) getComponent()).setToolTipText(StringAccessor.getString("CALCubeTimer.typenewtime"));
-		return super.getTableCellEditorComponent(table, value, isSelected, row,
-				column);
+		return super.getTableCellEditorComponent(table, value, isSelected, row, column);
 	}
 
 	@Override

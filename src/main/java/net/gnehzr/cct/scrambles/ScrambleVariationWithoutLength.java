@@ -10,49 +10,44 @@ import net.gnehzr.cct.configuration.Configuration;
  *
  * @author OneHalf
  */
-class ScrambleVariationWithoutLength implements ScrambleVariation.WithoutLength {
+class ScrambleVariationWithoutLength implements ScrambleSettings.WithoutLength {
 
-	private ScrambleVariation scrambleVariation;
+	private ScrambleSettings scrambleSettings;
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
 
-	public ScrambleVariationWithoutLength(ScrambleVariation scrambleVariation, Configuration configuration,
+	public ScrambleVariationWithoutLength(ScrambleSettings scrambleSettings, Configuration configuration,
 										  ScramblePluginManager scramblePluginManager) {
-        this.scrambleVariation = scrambleVariation;
+        this.scrambleSettings = scrambleSettings;
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
 	}
 
     @Override
-	public ScrambleVariation withLength(int length) {
-		ScrambleVariation scrambleVariation = new ScrambleVariation(
-				this.scrambleVariation.getPlugin(),
-				this.scrambleVariation.getName(),
+	public ScrambleSettings withLength(int length) {
+		ScrambleSettings scrambleSettings = new ScrambleSettings(
 				configuration,
 				this.scramblePluginManager,
-				this.scrambleVariation.getGeneratorGroup());
-		scrambleVariation.setLength(length);
-		return scrambleVariation;
-	}
-
-    @Override
-	public String getName() {
-		return scrambleVariation.getName();
+				this.scrambleSettings.getGeneratorGroup(),
+				0,
+				this.scrambleSettings.getImage());
+		scrambleSettings.setLength(length);
+		return scrambleSettings;
 	}
 
     @Override
 	public String getGeneratorGroup() {
-		return scrambleVariation.getGeneratorGroup();
+		return scrambleSettings.getGeneratorGroup();
 	}
 
     @Override
-	public ScrambleVariation.WithoutLength withGeneratorGroup(String generatorGroup) {
-		return new ScrambleVariation(
-				this.scrambleVariation.getPlugin(),
-				this.scrambleVariation.getName(),
+	public ScrambleSettings.WithoutLength withGeneratorGroup(String generatorGroup) {
+		return new ScrambleSettings(
 				configuration,
 				this.scramblePluginManager,
-				generatorGroup)
+				generatorGroup,
+				0,
+				this.scrambleSettings.getImage())
 				.withoutLength();
 	}
 }

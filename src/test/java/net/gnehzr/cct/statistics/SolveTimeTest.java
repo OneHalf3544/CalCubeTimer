@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.SortedProperties;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.KeyboardTimerState;
 import org.testng.annotations.Test;
@@ -23,7 +23,7 @@ public class SolveTimeTest {
 
     @Test
     public void testParseDouble() {
-        SolveTime solveTime = new SolveTime(123.45);
+        SolveTime solveTime = new SolveTime("123.45");
         assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
     }
 
@@ -42,7 +42,7 @@ public class SolveTimeTest {
     @Test(enabled = false)
     public void testSplitsToString() {
         Solution solveTime = new Solution(new KeyboardTimerState(Duration.ofMinutes(2), Optional.<InspectionState>empty()),
-                ScramblePluginManager.NULL_IMPORTED_SCRUMBLE, ImmutableList.of(
+                null, ImmutableList.of(
                         new SolveTime("30.02"),
                         new SolveTime("89.98")
         ));
@@ -51,6 +51,6 @@ public class SolveTimeTest {
 
     @Test
     public void testEmptySplitsTimeToString() {
-        assertThat(new Solution(new SolveTime(123.22), ScramblePluginManager.NULL_IMPORTED_SCRUMBLE).toSplitsString(), isEmptyString());
+        assertThat(new Solution(new SolveTime("123.22"), new ScrambleString(null, "", true, null, null, "")).toSplitsString(), isEmptyString());
     }
 }

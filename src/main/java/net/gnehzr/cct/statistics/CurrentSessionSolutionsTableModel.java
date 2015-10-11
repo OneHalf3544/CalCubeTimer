@@ -118,8 +118,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			return currentSession.getStatistics().get(rowIndex).getComment();
 		case 4: //tags
 			return Joiner.on(", ").join(currentSession.getStatistics().get(rowIndex).getTime().getTypes());
-		case 5: // scramble variation
-			return currentSession.getStatistics().get(rowIndex).getScrambleString().getVariation().getName();
+		case 5: // puzzle type
+			return currentSession.getStatistics().get(rowIndex).getScrambleString().getPuzzleType().getVariationName();
 		default:
 			return null;
 		}

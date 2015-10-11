@@ -10,13 +10,15 @@ package net.gnehzr.cct.scrambles;
 */
 public class ScrambleString {
 
+    private final ScramblePlugin scramblePluginPlugin;
+    private final PuzzleType puzzleType;
     private String scramble;
     private boolean imported;
-    private ScrambleVariation variation;
-    private final ScramblePlugin scramblePluginPlugin;
+    private ScrambleSettings variation;
     private String textComments;
 
-    public ScrambleString(String scramble, boolean imported, ScrambleVariation variation, ScramblePlugin scramblePluginPlugin, String textComments) {
+    public ScrambleString(PuzzleType puzzleType, String scramble, boolean imported, ScrambleSettings variation, ScramblePlugin scramblePluginPlugin, String textComments) {
+        this.puzzleType = puzzleType;
         this.scramble = scramble;
         this.imported = imported;
         this.variation = variation;
@@ -36,7 +38,11 @@ public class ScrambleString {
         return imported;
     }
 
-	public ScrambleVariation getVariation() {
+	public PuzzleType getPuzzleType() {
+        return puzzleType;
+    }
+
+	public ScrambleSettings getVariation() {
         return variation;
     }
 

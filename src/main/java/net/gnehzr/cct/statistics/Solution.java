@@ -71,12 +71,10 @@ public class Solution extends Commentable {
 
     public SolutionEntity toEntity() {
         return new SolutionEntity()
-                .withPluginName(getScrambleString().getScramblePlugin().getPuzzleName())
                 .withComment(getComment())
                 .withScramble(getScrambleString().getScramble())
                 .withSolveStart(LocalDateTime.now())
                 .withSolveTime(getTime().getTime())
-                .withVariationName(getScrambleString().getVariation().getName())
                 // todo .withSplits(getSplits())
                 ;
     }

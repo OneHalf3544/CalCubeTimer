@@ -196,7 +196,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 				incrementScramble = moveAndScramble[1];
 			}
 			updateScramblePane();
-			scramblePopup.setScramble(incrementalScramble(), fullScramble, currentCustomization.getScrambleVariation());
+			scramblePopup.setScramble(incrementalScramble(), fullScramble);
 		}
 	}
 
@@ -206,7 +206,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 		}
 		catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
 			LOG.info("unexpected exception", e0);
-            currentCustomization = scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION;
+            currentCustomization = scramblePluginManager.NULL_PUZZLE_TYPE;
             try {
                 return currentCustomization.importScramble(incrementScramble);
             } catch (InvalidScrambleException e1) {

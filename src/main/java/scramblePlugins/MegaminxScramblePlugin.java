@@ -58,19 +58,19 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+	public ScrambleString importScramble(PuzzleType puzzleType, ScrambleSettings.WithoutLength variation, String scramble,
 										 List<String> attributes) throws InvalidScrambleException {
-		boolean pochmann = variation.getName().equals(POCHMANN_VARIATION_NAME);
+		boolean pochmann = puzzleType.getVariationName().equals(POCHMANN_VARIATION_NAME);
 		if(!isValidScramble(initializeImage(), scramble)) {
 			throw new InvalidScrambleException(scramble);
 		}
-		return new ScrambleString(scramble, true, variation.withLength(parseSize(scramble)), this, null);
+		return new ScrambleString(puzzleType, scramble, true, variation.withLength(parseSize(scramble)), this, null);
 	}
 
 	@Override
-	public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
-		boolean pochmann = variation.getName().equals(POCHMANN_VARIATION_NAME);
-		return new ScrambleString(generateScramble(variation.getLength(), pochmann), false, variation, this, null);
+	public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
+		boolean pochmann = puzzleType.getVariationName().equals(POCHMANN_VARIATION_NAME);
+		return new ScrambleString(puzzleType, generateScramble(variation.getLength(), pochmann), false, variation, this, null);
 	}
 
 	@Override

@@ -27,7 +27,7 @@ public class CurrentSessionSolutionsList {
 
 	@Inject
 	public CurrentSessionSolutionsList(Configuration configuration, ScramblePluginManager scramblePluginManager) {
-		currentSession = new Session(LocalDateTime.now(), configuration, scramblePluginManager.NULL_SCRAMBLE_CUSTOMIZATION);
+		currentSession = new Session(LocalDateTime.now(), configuration, scramblePluginManager.NULL_PUZZLE_TYPE);
 	}
 
 	public void setCurrentSession(@NotNull Session session) {

@@ -23,6 +23,6 @@ public class ScrambleCustomizationChooserComboBox extends ScrambleChooserComboBo
 
     @Override
     protected PuzzleType[] getScramblesTypeArray(Profile profile) {
-        return toArray(scramblePluginManager.getScrambleCustomizations(profile, false), PuzzleType.class);
+        return toArray(scramblePluginManager.getPuzzleTypes(profile), PuzzleType.class);
     }
 }

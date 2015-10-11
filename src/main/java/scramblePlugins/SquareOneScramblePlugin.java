@@ -64,7 +64,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
-	public ScrambleString importScramble(ScrambleVariation.WithoutLength variation, String scramble,
+	public ScrambleString importScramble(PuzzleType puzzleType, ScrambleSettings.WithoutLength variation, String scramble,
 										 List<String> attributes) throws InvalidScrambleException {
 		boolean slashes = attributes.contains(SLASHES_ATTRIBUTE);
 		Tuple2<Boolean, Boolean> generator = parseGenerator(variation.getGeneratorGroup());
@@ -73,14 +73,14 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 		if(!length.isPresent()) {
 			throw new InvalidScrambleException(scramble);
 		}
-		return new ScrambleString(scramble, true, variation.withLength(length.getAsInt()), this, null);
+		return new ScrambleString(puzzleType, scramble, true, variation.withLength(length.getAsInt()), this, null);
 	}
 
 	@Override
-	public ScrambleString createScramble(ScrambleVariation variation, List<String> attributes) {
+	public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
 		boolean slashes = attributes.contains(SLASHES_ATTRIBUTE);
 		Tuple2<Boolean, Boolean> generator = parseGenerator(variation.getGeneratorGroup());
-		return new ScrambleString(generateScramble(variation.getLength(), slashes, new State(generator)), false, variation, this, null);
+		return new ScrambleString(puzzleType, generateScramble(variation.getLength(), slashes, new State(generator)), false, variation, this, null);
 	}
 
 	@Override

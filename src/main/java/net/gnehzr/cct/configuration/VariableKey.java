@@ -2,10 +2,9 @@ package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Throwables;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -34,12 +34,12 @@ public class VariableKey<H> {
 	public static final VariableKey<Integer> MAX_FONTSIZE = new VariableKey<Integer>("Scramble_fontMaxSize"); 
 	public static final VariableKey<Integer> SCRAMBLE_COMBOBOX_ROWS = new VariableKey<Integer>("Scramble_comboboxRows"); 
 	public static final VariableKey<Integer> FULLSCREEN_DESKTOP = new VariableKey<Integer>("Misc_fullscreenDesktop"); 
-	public static VariableKey<Integer> UNIT_SIZE(ScrambleVariation variation) {
-		return new VariableKey<>("Scramble_Popup_unitSize_" + variation.toString());
+	public static VariableKey<Integer> UNIT_SIZE(PuzzleType variation) {
+		return new VariableKey<>("Scramble_Popup_unitSize_" + variation.getVariationName());
 	}
-	public static VariableKey<Integer> SCRAMBLE_LENGTH(ScrambleVariation var) {
-		checkArgument(var.getPlugin() != ScramblePluginManager.NULL_SCRAMBLE_PLUGIN);
-		return new VariableKey<>("Puzzle_ScrambleLength_" + var.toString());
+	public static VariableKey<Integer> scrambleLength(String variationName) {
+		checkArgument(!Objects.equals(variationName, ScramblePluginManager.NULL_SCRAMBLE_VARIATION_NAME));
+		return new VariableKey<>("Puzzle_ScrambleLength_" + variationName);
 	}
 
 	public static VariableKey<Integer> RA_SIZE(int index, PuzzleType custom) {
@@ -90,7 +90,6 @@ public class VariableKey<H> {
 
 	public static final VariableKey<List<String>> SOLVE_TAGS = new VariableKey<>("Misc_solveTags");
 	public static final VariableKey<List<String>> IMPORT_URLS = new VariableKey<>("Misc_scrambleURLs");
-	public static final VariableKey<List<String>> SCRAMBLE_CUSTOMIZATIONS = new VariableKey<>("Scramble_customizations");
 	public static VariableKey<List<String>> PUZZLE_ATTRIBUTES(ScramblePlugin plugin) {
 		return new VariableKey<>("Puzzle_Attributes_" + plugin.getPuzzleName());
 	}

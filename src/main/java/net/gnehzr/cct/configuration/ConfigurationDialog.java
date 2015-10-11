@@ -31,9 +31,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class ConfigurationDialog extends JDialog implements KeyListener, MouseListener, ActionListener, ItemListener, HyperlinkListener {
+public class ConfigurationDialog extends JDialog implements KeyListener, ActionListener, ItemListener, HyperlinkListener {
 
 	private static final Logger LOG = LogManager.getLogger(ConfigurationDialog.class);
 
@@ -45,6 +44,53 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 	private final CurrentSessionSolutionsTableModel statsModel;
 	private final NumberSpeaker numberSpeaker;
 	private final CalCubeTimerModel cubeTimerModel;
+
+	private final MouseListener mouseListener = new MouseAdapter() {
+
+		@Override
+		public void mouseClicked (MouseEvent e){
+			Object source = e.getSource();
+
+			if (source instanceof JColorComponent) {
+				JColorComponent label = (JColorComponent) source;
+
+				if (source == timerFontChooser || source == scrambleFontChooser) {
+					String toDisplay = null;
+					Font f;
+					Color bg, fg;
+					if (source == timerFontChooser) {
+						f = configuration.getFont(VariableKey.TIMER_FONT, true).deriveFont(DISPLAY_FONT_SIZE);
+						toDisplay = "0123456789:.,";
+						bg = configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, true);
+						fg = configuration.getColor(VariableKey.TIMER_FG, true);
+					} else { //scrambleFontChooser
+						f = configuration.getFont(VariableKey.SCRAMBLE_FONT, true);
+						bg = configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, true);
+						fg = configuration.getColor(VariableKey.SCRAMBLE_SELECTED, true);
+					}
+
+					int maxFontSize = configuration.getInt(VariableKey.MAX_FONTSIZE);
+					JFontChooser font = new JFontChooser(FONT_SIZES, f, source == scrambleFontChooser, maxFontSize, toDisplay, bg, fg, source == timerFontChooser);
+					font.setSelectedFont(label.getFont());
+					font.setFontForeground(label.getForeground());
+					font.setFontBackground(label.getBackground());
+					if (font.showDialog(ConfigurationDialog.this) == JFontChooser.OK_OPTION) {
+						Font selected = font.getSelectedFont();
+						selected = selected.deriveFont(Math.min(maxFontSize, selected.getSize2D()));
+						label.setFont(selected);
+						label.setOpaque(false);
+						label.setBackground(font.getSelectedBG()); //this must occur before call to setForeground
+						label.setForeground(font.getSelectedFG());
+						pack();
+					}
+				} else {
+					Color selected = JColorChooser.showDialog(ConfigurationDialog.this, StringAccessor.getString("ConfigurationDialog.choosecolor"), label.getBackground());
+					if (selected != null)
+						label.setBackground(selected);
+				}
+			}
+		}
+	};
 
 	private static abstract class SyncGUIListener implements ActionListener {
 		@Override
@@ -226,19 +272,19 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		rightPanel.add(sideBySide);
 
 		bestRA = new JColorComponent(StringAccessor.getString("ConfigurationDialog.bestra"));
-		bestRA.addMouseListener(this);
+		bestRA.addMouseListener(mouseListener);
 		colorPanel.add(bestRA);
 		
 		currentAverage = new JColorComponent(StringAccessor.getString("ConfigurationDialog.currentaverage"));
-		currentAverage.addMouseListener(this);
+		currentAverage.addMouseListener(mouseListener);
 		colorPanel.add(currentAverage);
 
 		bestTime = new JColorComponent(StringAccessor.getString("ConfigurationDialog.besttime"));
-		bestTime.addMouseListener(this);
+		bestTime.addMouseListener(mouseListener);
 		colorPanel.add(bestTime);
 
 		worstTime = new JColorComponent(StringAccessor.getString("ConfigurationDialog.worsttime"));
-		worstTime.addMouseListener(this);
+		worstTime.addMouseListener(mouseListener);
 		colorPanel.add(worstTime);
 
 		desktopPanel = new JPanel(); //this gets populated in refreshDesktops()
@@ -374,10 +420,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		panel.add(sideBySide(null, new JLabel(StringAccessor.getString("ConfigurationDialog.opacity")), opacity));
 
 		scrambleFontChooser = new JColorComponent(StringAccessor.getString("ConfigurationDialog.scramblefont"));
-		scrambleFontChooser.addMouseListener(this);
+		scrambleFontChooser.addMouseListener(mouseListener);
 
 		timerFontChooser = new JColorComponent(StringAccessor.getString("ConfigurationDialog.timerfont"));
-		timerFontChooser.addMouseListener(this);
+		timerFontChooser.addMouseListener(mouseListener);
 		
 		SyncGUIListener al = new SyncGUIListener() {
 			@Override
@@ -450,7 +496,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			public void syncGUIWithConfig(boolean defaults) {
 				// profile settings
 				scramblePluginManager.reloadLengthsFromConfiguration(defaults);
-				puzzlesModel.setContents(scramblePluginManager.getScrambleCustomizations(cubeTimerModel.getSelectedProfile(), defaults));
+				puzzlesModel.setContents(scramblePluginManager.getPuzzleTypes(cubeTimerModel.getSelectedProfile()));
 				profilesModel.setContents(profileDao.getProfiles());
 			}
 		};
@@ -935,19 +981,18 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			if (!plugin.supportsScrambleImage()) {
 				continue;
 			}
-			final ScrambleViewComponent puzzle = new ScrambleViewComponent(true, true, configuration, scramblePluginManager);
-			solvedPuzzles.add(puzzle);
+			final ScrambleViewComponent scrambleViewComponent = new ScrambleViewComponent(true, true, configuration, scramblePluginManager);
+			solvedPuzzles.add(scrambleViewComponent);
 
-			ScrambleVariation sv = new ScrambleVariation(plugin, "", configuration, scramblePluginManager, "");
-			sv.setLength(0); //this will not change the length of the real ScrambleVariation instances
-			puzzle.setScramble(sv.generateScramble(), sv);
-			puzzle.setAlignmentY(Component.CENTER_ALIGNMENT);
-			puzzle.setAlignmentX(Component.RIGHT_ALIGNMENT);
+			ScrambleSettings scrambleSettings = new ScrambleSettings(configuration, scramblePluginManager, "", 0, null);
+			scrambleViewComponent.setScramble(scrambleViewComponent.getPuzzleType().generateScramble(scrambleSettings), scrambleViewComponent.getPuzzleType());
+			scrambleViewComponent.setAlignmentY(Component.CENTER_ALIGNMENT);
+			scrambleViewComponent.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
 			SyncGUIListener sl = new SyncGUIListener() {
 				@Override
 				public void syncGUIWithConfig(boolean defaults) {
-					puzzle.syncColorScheme(defaults);
+					scrambleViewComponent.syncColorScheme(defaults);
 				}
 			};
 			resetListeners.add(sl);
@@ -955,64 +1000,12 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 			resetColors.addActionListener(sl);
 			resetColors.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
-			options.add(sideBySide(BoxLayout.PAGE_AXIS, puzzle, resetColors));
+			options.add(sideBySide(BoxLayout.PAGE_AXIS, scrambleViewComponent, resetColors));
 		}
 		options.add(Box.createHorizontalGlue());
 		scroller.setPreferredSize(new Dimension(0, options.getPreferredSize().height));
 		return scroller;
 	}
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		Object source = e.getSource();
-		
-		if(source instanceof JColorComponent) {
-			JColorComponent label = (JColorComponent) source;
-			
-			if(source == timerFontChooser || source == scrambleFontChooser) {
-				String toDisplay = null;
-				Font f;
-				Color bg, fg;
-				if(source == timerFontChooser) {
-					f = configuration.getFont(VariableKey.TIMER_FONT, true).deriveFont(DISPLAY_FONT_SIZE);
-					toDisplay = "0123456789:.,";
-					bg = configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, true);
-					fg = configuration.getColor(VariableKey.TIMER_FG, true);
-				} else { //scrambleFontChooser
-					f = configuration.getFont(VariableKey.SCRAMBLE_FONT, true);
-					bg = configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, true);
-					fg = configuration.getColor(VariableKey.SCRAMBLE_SELECTED, true);
-				}
-
-				int maxFontSize = configuration.getInt(VariableKey.MAX_FONTSIZE);
-				JFontChooser font = new JFontChooser(FONT_SIZES, f, source == scrambleFontChooser, maxFontSize, toDisplay, bg, fg, source == timerFontChooser);
-				font.setSelectedFont(label.getFont());
-				font.setFontForeground(label.getForeground());
-				font.setFontBackground(label.getBackground());
-				if(font.showDialog(this) == JFontChooser.OK_OPTION) {
-					Font selected = font.getSelectedFont();
-					selected = selected.deriveFont(Math.min(maxFontSize, selected.getSize2D()));
-					label.setFont(selected);
-					label.setOpaque(false);
-					label.setBackground(font.getSelectedBG()); //this must occur before call to setForeground
-					label.setForeground(font.getSelectedFG());
-					pack();
-				}
-			} else  {
-				Color selected = JColorChooser.showDialog(this, StringAccessor.getString("ConfigurationDialog.choosecolor"), label.getBackground());
-				if(selected != null)
-					label.setBackground(selected);
-			}
-		}
-	}
-	@Override
-	public void mouseEntered(MouseEvent e) {}
-	@Override
-	public void mouseExited(MouseEvent e) {}
-	@Override
-	public void mousePressed(MouseEvent e) {}
-	@Override
-	public void mouseReleased(MouseEvent e) {}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -1177,11 +1170,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, MouseLi
 		configuration.setColor(VariableKey.TIMER_FG, timerFontChooser.getForeground());
 		configuration.setFont(VariableKey.TIMER_FONT, timerFontChooser.getFont());
 
-		configuration.setStringArray(
-				VariableKey.SCRAMBLE_CUSTOMIZATIONS,
-				puzzlesModel.getContents().stream()
-						.map(PuzzleType::toString)
-						.collect(Collectors.<String>toList()));
 		scramblePluginManager.saveLengthsToConfiguration();
 		for(PuzzleType sc : puzzlesModel.getContents())
 			sc.scramblePluginManager.saveGeneratorToConfiguration(sc);
