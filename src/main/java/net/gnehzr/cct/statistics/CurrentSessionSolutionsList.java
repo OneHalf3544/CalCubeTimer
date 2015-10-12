@@ -33,9 +33,9 @@ public class CurrentSessionSolutionsList {
 	public void setCurrentSession(@NotNull Session session) {
 		this.currentSession = Objects.requireNonNull(session);
 		LOG.info("setCurrentSession {}", session);
-		Statistics statistics = session.getStatistics();
+		SessionPuzzleStatistics sessionPuzzleStatistics = session.getSessionPuzzleStatistics();
 
-		statistics.notifyListeners(false);
+		sessionPuzzleStatistics.notifyListeners();
 	}
 
 	@NotNull
@@ -64,22 +64,19 @@ public class CurrentSessionSolutionsList {
 	}
 
 	public int getSize() {
-		return currentSession.getStatistics().getAttemptCount();
+		return currentSession.getAttemptsCount();
 	}
 
 	public void addSolution(Solution solution, int rowIndex) {
-		currentSession.getStatistics().add(rowIndex, solution);
-	}
-
-	public void setSolution(Solution solution, int index) {
-		currentSession.getStatistics().set(index, solution);
+		currentSession.getSessionPuzzleStatistics().refresh();
 	}
 
 	public void setComment(String comment, int index) {
-		currentSession.getStatistics().get(index).setComment(comment);
+		currentSession.getSolution(index).setComment(comment);
+		currentSession.getSessionPuzzleStatistics().refresh();
 	}
 
 	public void deleteRows(int[] indices) {
-		currentSession.getStatistics().remove(indices);
+		currentSession.getSessionPuzzleStatistics().refresh();
 	}
 }

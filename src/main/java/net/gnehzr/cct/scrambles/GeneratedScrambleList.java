@@ -48,7 +48,7 @@ public class GeneratedScrambleList implements ScrambleList {
 	
 	@Override
 	public int scramblesCount() {
-		return session.getSolutionsCount();
+		return session.getAttemptsCount();
 	}
 
 	@Override
@@ -59,7 +59,7 @@ public class GeneratedScrambleList implements ScrambleList {
 
 	@Override
 	public boolean isLastScrambleInList() {
-		return scrambleNumber == session.getStatistics().getAttemptCount();
+		return scrambleNumber == session.getAttemptsCount();
 	}
 
 	@Override
@@ -69,7 +69,7 @@ public class GeneratedScrambleList implements ScrambleList {
 			return currentScrambleString = generateScramble();
 		}
 		else {
-			return session.getSolutions(scrambleNumber).getScrambleString();
+			return session.getSolution(scrambleNumber).getScrambleString();
 		}
 	}
 

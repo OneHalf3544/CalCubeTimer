@@ -9,6 +9,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -110,16 +111,17 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		Session currentSession = currentSessionSolutionsList.getCurrentSession();
 		switch(columnIndex) {
 		case 0: //get the solvetime for this index
-			return currentSession.getStatistics().get(rowIndex).getTime();
-		case 1: //falls through
-		case 2: //get the RA for this index in this column
-			return currentSession.getStatistics().getRA(rowIndex, columnIndex - 1);
+			return currentSession.getSolution(rowIndex).getTime();
+		case 1:
+			return currentSession.getSessionPuzzleStatistics().getRA(rowIndex, RollingAverageOf.OF_5);
+		case 2:
+			return currentSession.getSessionPuzzleStatistics().getRA(rowIndex, RollingAverageOf.OF_12);
 		case 3:
-			return currentSession.getStatistics().get(rowIndex).getComment();
+			return currentSession.getSolution(rowIndex).getComment();
 		case 4: //tags
-			return Joiner.on(", ").join(currentSession.getStatistics().get(rowIndex).getTime().getTypes());
+			return Joiner.on(", ").join(currentSession.getSolution(rowIndex).getTime().getTypes());
 		case 5: // puzzle type
-			return currentSession.getStatistics().get(rowIndex).getScrambleString().getPuzzleType().getVariationName();
+			return currentSession.getSolution(rowIndex).getScrambleString().getPuzzleType().getVariationName();
 		default:
 			return null;
 		}
@@ -137,8 +139,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public void insertValueAt(Object value, int rowIndex) {
-		currentSessionSolutionsList.addSolution((Solution) value, rowIndex);
-		fireTableRowsInserted(rowIndex, rowIndex);
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -163,7 +164,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
-		String t = getCurrentSession().getStatistics().get(rowIndex).getComment();
+		String t = getCurrentSession().getSolution(rowIndex).getComment();
 		return t.isEmpty() ? null : t;
 	}
 
@@ -186,7 +187,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		List<SolveType> types = typeButtons.keySet().stream()
                 .filter(key -> typeButtons.get(key).isSelected())
 				.collect(Collectors.toList());
-		getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
+		getCurrentSession().getSessionPuzzleStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
 		if (prevFocusOwner != null) {
 			prevFocusOwner.requestFocusInWindow();
 		}
@@ -198,11 +199,11 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		this.prevFocusOwner = prevFocusOwner;
 		JPopupMenu jpopup = new JPopupMenu();
 		int[] selectedSolves = timesTable.getSelectedRows();
-		if(selectedSolves.length == 0) {
+		if (selectedSolves.length == 0) {
 			return;
 		}
 		else if(selectedSolves.length == 1) {
-			Solution selectedSolve = getCurrentSession().getStatistics().get(timesTable.getSelectedRow());
+			Solution selectedSolve = getCurrentSession().getSolution(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
 					+ Utils.formatTime(selectedSolve.getTime(), configuration.useClockFormat() ));
 			rawTime.setEnabled(false);

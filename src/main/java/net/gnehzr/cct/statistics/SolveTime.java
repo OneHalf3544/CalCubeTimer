@@ -248,4 +248,8 @@ public class SolveTime implements Comparable<SolveTime> {
 	public boolean isNegative() {
 		return time != null && time.isNegative();
 	}
+
+	public boolean isDefined() {
+		return !(isInfiniteTime() || isZero() || isNegative());
+	}
 }

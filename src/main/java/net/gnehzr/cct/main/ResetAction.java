@@ -34,7 +34,7 @@ class ResetAction extends AbstractAction {
 			cubeTimerFrame.bigTimersDisplay.reset();
 			cubeTimerFrame.model.getScramblesList().asGenerating().clear();
 			cubeTimerFrame.updateScramble();
-			cubeTimerFrame.currentSessionSolutionsTableModel.getCurrentSession().getStatistics().clear();
+			cubeTimerFrame.currentSessionSolutionsTableModel.getCurrentSession().getSessionPuzzleStatistics().clear();
 		}
 	}
 

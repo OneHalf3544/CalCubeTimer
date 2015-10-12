@@ -266,7 +266,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         }
 
         if (promptNewTime(protect, sameAsLast)) {
-            sessionSolutionsTableModel.getCurrentSession().getStatistics().add(protect);
+            sessionSolutionsTableModel.getCurrentSession().addSolution(protect);
         }
     }
 

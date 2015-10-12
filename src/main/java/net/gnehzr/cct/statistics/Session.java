@@ -4,35 +4,40 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileEntity;
 import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.Seq;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class Session extends Commentable implements Comparable<Session> {
 
 	private Long lastSessionId;
-	private Statistics statistics;
+	private SessionPuzzleStatistics sessionPuzzleStatistics;
 	private SessionsList sessionsList;
 	private final Configuration configuration;
 	private final LocalDateTime dateStarted;
 	private final PuzzleType puzzleType;
+	private final List<Solution> solutions = new ArrayList<>();
 
 	//adds itself to the puzzlestatistics to which it belongs
 	public Session(LocalDateTime startSessionTime, Configuration configuration, PuzzleType puzzleType) {
 		this.dateStarted = startSessionTime;
 		this.configuration = configuration;
 		this.puzzleType = puzzleType;
-		statistics = new Statistics(configuration, puzzleType);
+		sessionPuzzleStatistics = new SessionPuzzleStatistics(this, configuration);
 	}
 
 	public LocalDateTime getStartTime() {
 		return dateStarted;
 	}
 
-	public Statistics getStatistics() {
-		return statistics;
+	public SessionPuzzleStatistics getSessionPuzzleStatistics() {
+		return sessionPuzzleStatistics;
 	}
 
 	//this should only be called by PuzzleStatistics
@@ -96,8 +101,8 @@ public class Session extends Commentable implements Comparable<Session> {
 		sessionEntity.setProfile(profile);
 		sessionEntity.setSolutions(Seq
 				.iterate(0, i -> i++)
-				.limit(statistics.getSolveCount())
-				.map(statistics::get)
+				.limit(sessionPuzzleStatistics.getSolveCounter().getSolveCount())
+				.map(this::getSolution)
 				.map(Solution::toEntity)
 				.toList());
 		return sessionEntity;
@@ -107,21 +112,41 @@ public class Session extends Commentable implements Comparable<Session> {
 		return new Session(LocalDateTime.now(), configuration, getPuzzleType());
 	}
 
-	public int getSolutionsCount() {
-		return statistics.getAttemptCount();
+	public int getAttemptsCount() {
+		return solutions.size();
 	}
 
-	public Solution getSolutions(int solutionIndex) {
-		return statistics.get(solutionIndex);
+	public Solution getSolution(int solutionIndex) {
+		return solutions.get(solutionIndex);
+	}
+
+	public void addSolution(Solution solution) {
+		this.solutions.add(solution);
 	}
 
 	@Override
 	public String toString() {
 		return "Session{" +
 				"lastSessionId=" + lastSessionId +
-				", solutions count=" + getSolutionsCount() +
+				", solutions count=" + getAttemptsCount() +
 				", dateStarted=" + dateStarted +
 				", puzzleType=" + puzzleType +
 				'}';
+	}
+
+	public RollingAverage getRollingAverage(RollingAverageOf ra, int fromIndex, int count) {
+		return RollingAverage.create(ra, this, fromIndex, count);
+	}
+
+	public RollingAverage getRollingAverageForWholeSession() {
+		return new RollingAverage(Seq.seq(solutions)
+				.filter(solution -> !solution.getTime().isInfiniteTime())
+				.toList(),
+				0,
+				solutions.size(), false);
+	}
+
+	public List<Solution> getSolutionList() {
+		return Collections.unmodifiableList(solutions);
 	}
 }

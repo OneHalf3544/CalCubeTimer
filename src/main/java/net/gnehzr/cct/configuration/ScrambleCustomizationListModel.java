@@ -9,6 +9,8 @@ import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleSettings;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import org.jetbrains.annotations.NotNull;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.api.SubstanceConstants;
@@ -19,7 +21,10 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
@@ -147,12 +152,17 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 			} else if(column == 2) { //generator group
 				val = customization.getScrambleVariation().getGeneratorGroup();
 			} else if(column == 3) { //ra 0
-				val = customization.getRASize(0) + " " + (customization.isTrimmed(0) ? "Trimmed" : "Untrimmed");
+				val = getTrimmedState(customization, RollingAverageOf.OF_5);
 			} else if(column == 4) { //ra 1
-				val = customization.getRASize(1) + " " + (customization.isTrimmed(1) ? "Trimmed" : "Untrimmed");
+				val = getTrimmedState(customization, RollingAverageOf.OF_12);
 			}
 		}
 		return new JLabel(val, SwingConstants.CENTER);
+	}
+
+	@NotNull
+	private String getTrimmedState(PuzzleType customization, RollingAverageOf of5) {
+		return customization.getRASize(of5) + " " + (customization.isTrimmed(of5) ? "Trimmed" : "Untrimmed");
 	}
 
 	private int editingColumn;
@@ -168,9 +178,9 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		else if(column == 2) //generator
 			return getGeneratorPanel(puzzleType);
 		else if(column == 3) //ra0
-			return getRAPanel(0, puzzleType);
+			return getRAPanel(RollingAverageOf.OF_5, puzzleType);
 		else if(column == 4) //ra1
-			return getRAPanel(1, puzzleType);
+			return getRAPanel(RollingAverageOf.OF_12, puzzleType);
 		
 		return null;
 	}
@@ -188,7 +198,8 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 
 	JSpinner raSize;
 	JCheckBox trimmed;
-	private JPanel getRAPanel(final int index, final PuzzleType sc) {
+
+	private JPanel getRAPanel(final RollingAverageOf index, final PuzzleType sc) {
 		raSize = new JSpinner(new SpinnerNumberModel(sc.getRASize(index), 0, null, 1));
 		raSize.setToolTipText(StringAccessor.getString("ScrambleCustomizationListModel.specifylength"));
 		((JSpinner.DefaultEditor) raSize.getEditor()).getTextField().setColumns(3);
@@ -290,8 +301,9 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 	public void mousePressed(MouseEvent e) {}
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		for(Component c : disabledComponents)
+		for(Component c : disabledComponents) {
 			c.setEnabled(true);
+		}
 	}
 
 	private CellEditorListener listener;
@@ -366,9 +378,9 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		} else if(editingColumn == 2) { //generator
 			scramblePluginManager.setScrambleSettings(puzzleType, puzzleType.getScrambleVariation().withGeneratorGroup(generator.getText()));
 		} else if(editingColumn == 3) { //ra 0
-			puzzleType.setRA(0, (Integer) raSize.getValue(), trimmed.isSelected());
+			puzzleType.setRA(RollingAverageOf.OF_5, (Integer) raSize.getValue(), trimmed.isSelected());
 		} else if(editingColumn == 4) { //ra 1
-			puzzleType.setRA(1, (Integer) raSize.getValue(), trimmed.isSelected());
+			puzzleType.setRA(RollingAverageOf.OF_12, (Integer) raSize.getValue(), trimmed.isSelected());
 		}
 		listener.editingStopped(null);
 		return true;

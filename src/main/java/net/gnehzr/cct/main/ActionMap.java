@@ -4,8 +4,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.statistics.Statistics;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,8 +42,6 @@ public class ActionMap {
     public static final String SHOW_DOCUMENTATION_ACTION = "showdocumentation";
     public static final String SUBMIT_SUNDAY_CONTEST_ACTION = "submitsundaycontest";
     public static final String SHOW_ABOUT_ACTION = "showabout";
-    public static final String UNDO_ACTION = "undo";
-    public static final String REDO_ACTION = "redo";
     public static final String SHOW_CONFIGURATION_ACTION = "showconfiguration";
 
     private Map<String, AbstractAction> actionMap;
@@ -75,8 +74,7 @@ public class ActionMap {
     private AbstractAction initializeAction(String s, final CALCubeTimerFrame calCubeTimerFrame){
         switch (s) {
             case KEYBOARDTIMING_ACTION: {
-                AbstractAction a = new KeyboardTimingAction(calCubeTimerFrame);
-                return a;
+                return new KeyboardTimingAction(calCubeTimerFrame);
             }
             case ADD_TIME_ACTION: {
                 AbstractAction a = new AddTimeAction(calCubeTimerFrame);
@@ -91,15 +89,20 @@ public class ActionMap {
                 return a;
             }
             case "currentaverage0":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT_AVERAGE, 0, configuration);
+                return new StatisticsAction(
+                        calCubeTimerFrame, statsModel, AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5, configuration);
             case "bestaverage0":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.BEST_ROLLING_AVERAGE, 0, configuration);
+                return new StatisticsAction(
+                        calCubeTimerFrame, statsModel, AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5, configuration);
             case "currentaverage1":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.CURRENT_AVERAGE, 1, configuration);
+                return new StatisticsAction(
+                        calCubeTimerFrame, statsModel, AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_12, configuration);
             case "bestaverage1":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.BEST_ROLLING_AVERAGE, 1, configuration);
+                return new StatisticsAction(
+                        calCubeTimerFrame, statsModel, AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_12, configuration);
             case "sessionaverage":
-                return new StatisticsAction(calCubeTimerFrame, statsModel, Statistics.AverageType.SESSION_AVERAGE, 0, configuration);
+                return new StatisticsAction(
+                        calCubeTimerFrame, statsModel, AverageType.SESSION_AVERAGE, null, configuration);
             case ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN:
                 // action to stop timing during fullscreen
                 return toggleFullscreenTimingAction;
@@ -123,42 +126,12 @@ public class ActionMap {
             case TOGGLE_SPACEBAR_STARTS_TIMER_ACTION: {
                 return new SpacebarOptionAction(configuration);
             }
-            case UNDO_ACTION:
-                return new AbstractAction() {
-                    {
-                        putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
-                    }
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (calCubeTimerFrame.timesTable.isEditing()) {
-                            return;
-                        }
-                        if (statsModel.getCurrentSession().getStatistics().undo()) { //should decrement 1 from scramblenumber if possible
-                            Object prev = calCubeTimerFrame.scrambleNumber.getPreviousValue();
-                            if (prev != null) {
-                                calCubeTimerFrame.scrambleNumber.setValue(prev);
-                            }
-                        }
-                    }
-                };
-            case REDO_ACTION:
-                return new AbstractAction() {
-                    {
-                        putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
-                    }
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (calCubeTimerFrame.timesTable.isEditing())
-                            return;
-                        statsModel.getCurrentSession().getStatistics().redo();
-                    }
-                };
             case SUBMIT_SUNDAY_CONTEST_ACTION:
                 final SundayContestDialog submitter = new SundayContestDialog(calCubeTimerFrame, configuration);
                 return new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        submitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), Statistics.AverageType.CURRENT_AVERAGE, 0);
+                        submitter.syncWithStats(statsModel.getCurrentSession().getSessionPuzzleStatistics(), AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
                         submitter.setVisible(true);
                     }
                 };

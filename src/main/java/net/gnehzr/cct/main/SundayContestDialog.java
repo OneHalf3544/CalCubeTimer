@@ -6,8 +6,9 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.DialogWithDetails;
 import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.statistics.Statistics;
-import net.gnehzr.cct.statistics.Statistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.xml.sax.Attributes;
@@ -138,7 +139,7 @@ public class SundayContestDialog extends JDialog implements ActionListener {
 		super.setVisible(b);
 	}
 	
-	public void syncWithStats(Statistics stats, AverageType type, int aveNum) {
+	public void syncWithStats(SessionPuzzleStatistics stats, AverageType type, RollingAverageOf aveNum) {
 		nameField.setText(configuration.getString(VariableKey.SUNDAY_NAME, false));
 		countryField.setText(configuration.getString(VariableKey.SUNDAY_COUNTRY, false));
 		emailField.setText(configuration.getString(VariableKey.SUNDAY_EMAIL_ADDRESS, false));

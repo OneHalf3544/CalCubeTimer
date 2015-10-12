@@ -60,7 +60,6 @@ public class Utils {
 		return getDecimalFormat().format(seconds.getTime().toMillis());
 	}
 
-	@Deprecated
 	public static String format(double seconds) {
 		return getDecimalFormat().format(seconds);
 	}
@@ -178,5 +177,9 @@ public class Utils {
 		String[] yesNo = new String[] { StringAccessor.getString("Utils.ok") };
 		return JOptionPane.showOptionDialog(c, message, StringAccessor.getString("Utils.confirm"), JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE,
 				null, yesNo, yesNo[0]);
+	}
+
+	public static boolean notEmpty(String string) {
+		return string != null && !string.trim().isEmpty();
 	}
 }

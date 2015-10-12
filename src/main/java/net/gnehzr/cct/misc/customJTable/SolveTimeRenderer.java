@@ -3,7 +3,8 @@ package net.gnehzr.cct.misc.customJTable;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.Statistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,31 +39,30 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color background = null;
 
 		if(value instanceof SolveTime || value instanceof RollingAverageTime) {
-			Statistics times = statsModel.getCurrentSession().getStatistics();
+			SessionPuzzleStatistics times = statsModel.getCurrentSession().getSessionPuzzleStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
 			SolveTime solveTime;
 			if (value instanceof RollingAverageTime) { //this indicates we're dealing with an average, not a solve time
-				solveTime = ((RollingAverageTime)value).getTime();
-				int whichRA = ((RollingAverageTime)value).getWhichRA();
+				RollingAverageOf whichRA = ((RollingAverageTime)value).getWhichRA();
 				int raSize = times.getRASize(whichRA);
 				int indexOfBestRA = times.getIndexOfBestRA(whichRA);
 				memberOfBestRA = indexOfBestRA != -1 && (indexOfBestRA + raSize == row + 1);
 			} else {
 				solveTime = (SolveTime)value;
-				SolveTime[] bestAndWorst = times.getBestAndWorstTimes(AverageType.SESSION_AVERAGE, 0);
-				if(bestAndWorst[0] == solveTime) {
+				RollingAverage result = times.getSession().getRollingAverageForWholeSession();
+				if(result.getBestTime() == solveTime) {
 					foreground = configuration.getColor(VariableKey.BEST_TIME, false);
-				} else if(bestAndWorst[1] == solveTime) {
+				} else if(result.getWorstTime() == solveTime) {
 					foreground = configuration.getColor(VariableKey.WORST_TIME, false);
 				}
-				memberOfBestRA = times.containsTime(row, AverageType.BEST_ROLLING_AVERAGE, 0);
-				memberOfCurrentAverage = times.containsTime(row, AverageType.CURRENT_AVERAGE, 0);
+				memberOfBestRA = times.containsTime(row, AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+				memberOfCurrentAverage = times.containsTime(row, AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
 			}
 			
 			if(memberOfCurrentAverage) {
-				boolean firstOfCurrentAverage = row == times.getAttemptCount() - times.getRASize(0);
-				boolean lastOfCurrentAverage = row == times.getAttemptCount() - 1;
+				boolean firstOfCurrentAverage = row == times.getSolveCounter().getAttemptCount() - times.getRASize(RollingAverageOf.OF_5);
+				boolean lastOfCurrentAverage = row == times.getSolveCounter().getAttemptCount() - 1;
 				
 				Border b;
 				Color c = configuration.getColor(VariableKey.CURRENT_AVERAGE, false);

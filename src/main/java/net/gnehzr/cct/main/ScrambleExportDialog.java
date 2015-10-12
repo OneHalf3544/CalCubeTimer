@@ -8,9 +8,10 @@ import net.gnehzr.cct.misc.JSpinnerWithText;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.scrambles.ScrambleSettings;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,7 +60,7 @@ public class ScrambleExportDialog extends JDialog {
             //if(scrambleLengthJSpinner != null) {
                 PuzzleType puzzleType = (PuzzleType) scrambleChooser.getSelectedItem();
                 scrambleLengthJSpinner.setValue(scramblePluginManager.getScrambleVariation(puzzleType).getLength());
-                numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType, profile).getRASize(0));
+                numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType, profile).getRASize(RollingAverageOf.OF_5));
             //}
         });
 
@@ -80,7 +81,7 @@ public class ScrambleExportDialog extends JDialog {
 				StringAccessor.getString("ScrambleExportDialog.lengthscrambles"));
 
 		numberOfScramblesJSpinner = new JSpinnerWithText(
-				selectedPuzzleType.getRASize(0),
+				selectedPuzzleType.getRASize(RollingAverageOf.OF_5),
 				1,
 				StringAccessor.getString("ScrambleExportDialog.numberscrambles"));
 

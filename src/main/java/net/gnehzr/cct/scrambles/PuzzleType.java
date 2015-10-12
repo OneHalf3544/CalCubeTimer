@@ -2,9 +2,13 @@ package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -28,7 +32,7 @@ public class PuzzleType {
 	}
 
 	public ScrambleString generateScramble() {
-		return generateScramble(getScrambleVariation());
+		return generateScramble(scramblePluginManager.getScrambleVariation(this));
 	}
 
 	public ScrambleString generateScramble(ScrambleSettings scrambleSettings) {
@@ -39,7 +43,7 @@ public class PuzzleType {
 				this,
 				scrambleSettings.withGeneratorGroup(scramblePluginManager.getDefaultGeneratorGroup(scramblePlugin, getVariationName())),
 				scramblePlugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
-		LOG.info("generated scramble: " + newScramble + ", for puzzle '" + this);
+		LOG.info("generated scramble: {}, for puzzle '{}'", newScramble, this);
 		return newScramble;
 	}
 
@@ -63,19 +67,19 @@ public class PuzzleType {
 		}
 	}
 
-	public void setRA(int index, int newra, boolean trimmed) {
+	public void setRA(RollingAverageOf index, int newra, boolean trimmed) {
 		configuration.setLong(VariableKey.RA_SIZE(index, this), newra);
 		configuration.setBoolean(VariableKey.RA_TRIMMED(index, this), trimmed);
 	}
 
-	public int getRASize(int index) {
+	public int getRASize(RollingAverageOf index) {
 		Integer size = configuration.getInt(VariableKey.RA_SIZE(index, this));
-		if(size == null || size <= 0) {
-			size = configuration.getInt(VariableKey.RA_SIZE(index, null));
+		if(size == null) {
+			size = Objects.requireNonNull(configuration.getInt(VariableKey.RA_SIZE(index, null)));
 		}
 		return size;
 	}
-	public boolean isTrimmed(int index) {
+	public boolean isTrimmed(RollingAverageOf index) {
 		VariableKey<Boolean> key = VariableKey.RA_TRIMMED(index, this);
 		if(!configuration.keyExists(key))
 			key = VariableKey.RA_TRIMMED(index, null);
@@ -91,6 +95,7 @@ public class PuzzleType {
 	}
 
 	@NotNull
+	@Deprecated // use scramblePluginManager directly
 	public ScrambleSettings getScrambleVariation() {
 		return scramblePluginManager.getScrambleVariation(this);
 	}
@@ -100,16 +105,16 @@ public class PuzzleType {
 	}
 
 	public String toString() {
-		String temp = plugin.getPuzzleName();
-		if(customization != null) {
-			temp += ":" + customization;
+		if(Utils.notEmpty(customization)) {
+			return plugin.getPuzzleName() + ":" + customization;
+		} else {
+			return plugin.getPuzzleName();
 		}
-		return temp;
 	}
 
 	@Override
 	public int hashCode() {
-		return toString().hashCode();
+		return Objects.hash(plugin, customization, variationName);
 	}
 
 	@Override
@@ -117,7 +122,10 @@ public class PuzzleType {
 		if (o == null || o.getClass() != getClass()) {
 			return false;
 		}
- 		return this.toString().equals(o.toString());
+		PuzzleType other = (PuzzleType) o;
+		return Objects.equals(plugin, other.plugin)
+				&& Objects.equals(customization, other.customization)
+				&& Objects.equals(variationName, other.variationName);
 	}
 
 	public boolean isNullType() {

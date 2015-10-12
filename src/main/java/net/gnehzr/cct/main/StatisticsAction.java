@@ -1,8 +1,9 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.statistics.Statistics;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,10 +20,11 @@ class StatisticsAction extends AbstractAction {
 
 	private StatsDialogHandler statsHandler;
 	private CurrentSessionSolutionsTableModel model;
-	private Statistics.AverageType type;
-	private int num;
+	private SessionPuzzleStatistics.AverageType type;
+	private RollingAverageOf num;
 
-	public StatisticsAction(CALCubeTimerFrame cct, CurrentSessionSolutionsTableModel model, Statistics.AverageType type, int num,
+	public StatisticsAction(CALCubeTimerFrame cct, CurrentSessionSolutionsTableModel model,
+							SessionPuzzleStatistics.AverageType type, RollingAverageOf num,
 							Configuration configuration){
 		statsHandler = new StatsDialogHandler(cct, configuration);
 		this.model = model;

@@ -36,7 +36,7 @@ public class SessionsList implements Iterable<Session> {
 	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<>();
 
 	protected SessionListener listener;
-	private Map<PuzzleType, PuzzleStatistics> statisticsByType = new HashMap<>();
+	private Map<PuzzleType, GlobalPuzzleStatistics> statisticsByType = new HashMap<>();
 
 	public SessionsList(CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel, Configuration configuration, CalCubeTimerModel cubeTimerModel, ProfileDao profileDao) {
 		this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
@@ -49,16 +49,16 @@ public class SessionsList implements Iterable<Session> {
 		return new ArrayList<>(statisticsByType.keySet());
 	}
 
-	public PuzzleStatistics getPuzzleStatisticsForType(PuzzleType puzzleType) {
-		PuzzleStatistics puzzleStatistics = statisticsByType.computeIfAbsent(puzzleType,
-				pt -> new PuzzleStatistics(pt, configuration, currentSessionSolutionsTableModel));
-		puzzleStatistics.refreshStats(this);
-		return puzzleStatistics;
+	public GlobalPuzzleStatistics getPuzzleStatisticsForType(PuzzleType puzzleType) {
+		GlobalPuzzleStatistics globalPuzzleStatistics = statisticsByType.computeIfAbsent(puzzleType,
+				pt -> new GlobalPuzzleStatistics(pt, currentSessionSolutionsTableModel));
+		globalPuzzleStatistics.refreshStats(this);
+		return globalPuzzleStatistics;
 	}
 
 	public void removeEmptySessions() {
 		for(Session session : this) {
-            if(session.getStatistics().getAttemptCount() == 0) {
+            if(session.getSessionPuzzleStatistics().getSolveCounter().getAttemptCount() == 0) {
                 removeSession(session);
             }
         }
@@ -71,8 +71,8 @@ public class SessionsList implements Iterable<Session> {
 
 	public int getDatabaseTypeCount(SolveType t) {
 		int c = 0;
-		for(PuzzleStatistics ps : statisticsByType.values())
-			c += ps.getSolveTypeCount(t);
+		for(GlobalPuzzleStatistics ps : statisticsByType.values())
+			c += ps.getSolveCounter().getSolveTypeCount(t);
 		return c;
 	}
 

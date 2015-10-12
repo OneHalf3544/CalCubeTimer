@@ -7,8 +7,9 @@ import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.statistics.Statistics.AverageType;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -86,11 +87,11 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
         super.setVisible(b);
     }
 
-    public void syncWithStats(CurrentSessionSolutionsTableModel statsModel, AverageType type, int avgNum) {
-        sundaySubmitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), type, avgNum);
+    public void syncWithStats(CurrentSessionSolutionsTableModel statsModel, AverageType type, RollingAverageOf avgNum) {
+        sundaySubmitter.syncWithStats(statsModel.getCurrentSession().getSessionPuzzleStatistics(), type, avgNum);
         setTitle(StringAccessor.getString("StatsDialogHandler.detailedstats") + " " + type.toString());
         switch (type) {
-            case CURRENT_AVERAGE:
+            case CURRENT_ROLLING_AVERAGE:
                 String currentAverageStatictic = configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, false);
                 textArea.setText(new DynamicString(currentAverageStatictic, statsModel, null, configuration).toString(avgNum, null));
                 break;

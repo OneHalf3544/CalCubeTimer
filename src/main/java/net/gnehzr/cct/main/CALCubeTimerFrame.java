@@ -30,7 +30,8 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.Statistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -154,7 +155,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 
 		private void newSolutionAdded(TableModelEvent event) {
-			final Solution latestSolution = currentSessionSolutionsTableModel.getCurrentSession().getStatistics().get(-1);
+			int n = -1;
+			final Solution latestSolution = currentSessionSolutionsTableModel.getCurrentSession().getSolution(n);
 
 			if(event != null && event.getType() == TableModelEvent.INSERT) {
 				if (model.getScramblesList().getNext() != null) {
@@ -182,14 +184,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				return;
 			}
 
-			Statistics statistics = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
 			PuzzleType newPuzzleType = (PuzzleType) getScrambleCustomizationComboBox().getSelectedItem();
-			if (!model.getCustomizationEditsDisabled() && statistics != null) {
-				//TODO - changing session? //TODO - deleted customization?
-				statistics.editActions.add(new CustomizationEdit(model, model.getScramblesList().getPuzzleType(),
-						newPuzzleType, getScrambleCustomizationComboBox()));
-			}
-
 
 			//change current session's scramble customization
 			if (!currentSessionSolutionsTableModel.getCurrentSession().getPuzzleType().equals(newPuzzleType)) {
@@ -197,10 +192,11 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 						new Session(LocalDateTime.now(), configuration, newPuzzleType)
 				);
 			}
+
 			model.getScramblesList().asGenerating().setSession(currentSessionSolutionsTableModel.getCurrentSession());
 
-			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(model.getScramblesList().getPuzzleType());
-			String generator = model.getScramblesList().getPuzzleType().getScrambleVariation().getGeneratorGroup();
+			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(newPuzzleType);
+			String generator = scramblePluginManager.getScrambleVariation(newPuzzleType).getGeneratorGroup();
 			updateGeneratorField(generatorEnabled, generator);
 
 			createScrambleAttributesPanel();
@@ -508,17 +504,18 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	 */
 	@Override
 	public void repaintTimes() {
-		Statistics stats = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
+		SessionPuzzleStatistics stats = currentSessionSolutionsTableModel.getCurrentSession().getSessionPuzzleStatistics();
 
-		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT_AVERAGE);
-		updateActionStatus(stats, "bestaverage0", AverageType.BEST_ROLLING_AVERAGE);
-		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT_AVERAGE);
-		updateActionStatus(stats, "bestaverage1", AverageType.BEST_ROLLING_AVERAGE);
-		updateActionStatus(stats, "sessionaverage", AverageType.SESSION_AVERAGE);
+		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_12);
+		updateActionStatus(stats, "bestaverage0", AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+		updateActionStatus(stats, "bestaverage1", AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_12);
+		updateActionStatus(stats, "sessionaverage", AverageType.SESSION_AVERAGE, null);
 	}
 
-	private void updateActionStatus(Statistics stats, String actionName, AverageType statType) {
-		actionMap.getActionIfExist(actionName).ifPresent(action -> action.setEnabled(stats.isValid(statType, 0)));
+	private void updateActionStatus(SessionPuzzleStatistics sessionStatistics, String actionName,
+									AverageType statType, RollingAverageOf i) {
+		actionMap.getActionIfExist(actionName).ifPresent(action -> action.setEnabled(sessionStatistics.isValid(statType, i)));
 	}
 
 	//this happens in windows when alt+f4 is pressed
@@ -582,7 +579,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			safeSetValue(scrambleNumber, model.getScramblesList().getScrambleNumber(), scrambleNumberListener);
 			scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getPuzzleType()); //this will update scramblePopup
 
-			boolean canChangeStuff = model.getScramblesList().scramblesCount() == model.getScramblesList().getScrambleNumber();
+			boolean canChangeStuff = model.getScramblesList().isLastScrambleInList();
 			scrambleCustomizationComboBox.setEnabled(canChangeStuff);
 			scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && canChangeStuff && !current.isImported());
 		}

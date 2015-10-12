@@ -107,7 +107,7 @@ public class ScramblePluginManager {
             }
         }
 		if(variations.isEmpty()) {
-            variations.put(NULL_PUZZLE_TYPE, NULL_PUZZLE_TYPE.getScrambleVariation());
+            throw new IllegalStateException("no plugins available");
         }
 		return variations;
 	}
@@ -167,7 +167,9 @@ public class ScramblePluginManager {
 	}
 
 	public List<PuzzleType> getPuzzleTypes() {
-		return ImmutableList.copyOf(getScrambleVariations().keySet());
+		SortedSet<PuzzleType> elements = new TreeSet<>(Comparator.comparing(PuzzleType::getVariationName));
+		elements.addAll(getScrambleVariations().keySet());
+		return ImmutableList.copyOf(elements);
 	}
 
 	private PuzzleType searchPuzzleByName(List<PuzzleType> customizations, String variationName) {
@@ -251,6 +253,7 @@ public class ScramblePluginManager {
 		}
 	}
 
+	@NotNull
 	public ScrambleSettings getScrambleVariation(PuzzleType puzzleType) {
 		return getScrambleVariations().get(puzzleType);
 	}
