@@ -20,7 +20,7 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 		String val;
 		Icon i = null;
 		if(value != null) {
-			PuzzleType puzzleType = null;
+			PuzzleType puzzleType;
 			ScrambleSettings scrambleSettings;
 			puzzleType = (PuzzleType) value;
 			scrambleSettings = puzzleType.getScrambleVariation();
@@ -32,7 +32,7 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 				bolded = puzzleType.getScramblePlugin().getPuzzleName();
 			}
 			val = "<html><b>" + bolded + "</b>";  
-			if(puzzleType != null && puzzleType.getCustomization() != null) {
+			if (puzzleType.getCustomization() != null) {
 				val += ":" + puzzleType.getCustomization();
 			}
 			val += "</html>"; 

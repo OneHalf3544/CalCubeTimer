@@ -270,7 +270,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
         return switchThreshold;
     }
 
-    private class StackmatValue {
+    private static class StackmatValue {
 
         private int timeSinceLastFlip;
         private int lastSample;

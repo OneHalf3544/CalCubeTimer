@@ -5,7 +5,7 @@ import net.gnehzr.cct.i18n.MessageAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -242,7 +242,7 @@ public class DynamicString{
 						break;
 					case "sd":
 						if (sessionMatcher.group(2).isEmpty()) {
-							r = Utils.formatTime(stats.getSessionSD(), configuration.useClockFormat());
+							r = Utils.formatTime(stats.getWholeSessionAverage().getStandartDeviation(), configuration.useClockFormat());
 						} else {
 							Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));
 							if (progressMatcher.matches()) {
@@ -270,7 +270,7 @@ public class DynamicString{
 									r = formatProgressTime(stats.getProgressTime(), parens);
 									break;
 								case "best":
-									r = stats.getBestTime().toString(configuration);
+									r = stats.getSession().getRollingAverageForWholeSession().getBestTime().toString(configuration);
 									break;
 								case "worst":
 									r = stats.getWorstTime().toString(configuration);
@@ -279,7 +279,7 @@ public class DynamicString{
 									r = Utils.formatTime(stats.getCurrentTime(), configuration.useClockFormat());
 									break;
 								case "last":
-									r = Utils.formatTime(stats.getLastTime(), configuration.useClockFormat());
+									r = Utils.formatTime(stats.getPreviousTime(), configuration.useClockFormat());
 									break;
 								default:
 									r = "Unimplemented: " + u + " : " + originalString;
@@ -313,10 +313,10 @@ public class DynamicString{
 							Matcher sdArgMatcher = argPattern.matcher(arg1Matcher.group(2));
 							if (sdArgMatcher.matches()) {
 								if (sdArgMatcher.group(1).equals("best")) {
-									r = Utils.formatTime(stats.getBestSD(num), configuration.useClockFormat());
+									r = Utils.formatTime(stats.getByBestStandardDeviation(num).getStandartDeviation(), configuration.useClockFormat());
 								}
 								else if (sdArgMatcher.group(1).equals("worst")) {
-									r = Utils.formatTime(stats.getWorstSD(num), configuration.useClockFormat());
+									r = Utils.formatTime(stats.getByWorstStandartDeviation(num), configuration.useClockFormat());
 								}
 							}
 						}
@@ -341,13 +341,13 @@ public class DynamicString{
 										r = stats.getBestAverageList(num);
 										break;
 									case "worst":
-										r = stats.getWorstAverageList(num);
+										r = stats.getWorstAverage(num).toTerseString();
 										break;
 									case "recent":
 										r = stats.getCurrentAverageList(num);
 										break;
 									case "last":
-										r = stats.getLastAverageList(num);
+										r = stats.getPreviousRollingAverage(num).toTerseString();
 										break;
 									default:
 										r = "Unimplemented: " + avg + " : " + originalString;
@@ -381,10 +381,10 @@ public class DynamicString{
 										case "best":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfBestAverage(num).toString(configuration);
+													r = stats.getBestAverage(num).getBestTime().toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfBestAverage(num).toString(configuration);
+													r = stats.getBestAverage(num).getWorstTime().toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + originalString;
@@ -407,10 +407,10 @@ public class DynamicString{
 										case "recent":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfCurrentAverage(num).toString(configuration);
+													r = stats.getCurrentRollingAverage(num).getBestTime().toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfCurrentAverage(num).toString(configuration);
+													r = stats.getCurrentRollingAverage(num).getWorstTime().toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + originalString;
@@ -420,10 +420,10 @@ public class DynamicString{
 										case "last":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfLastAverage(num).toString(configuration);
+													r = stats.getBestTimeOfPreviousAverage(num).toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfLastAverage(num).toString(configuration);
+													r = stats.getWorstTimeOfPreviousAverage(num).toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + originalString;
@@ -457,16 +457,16 @@ public class DynamicString{
 					} else {
 						switch (avg) {
 							case "best":
-								r = Utils.formatTime(stats.getBestAverage(num), configuration.useClockFormat());
+								r = Utils.formatTime(stats.getBestAverage(num).getAverage(), configuration.useClockFormat());
 								break;
 							case "worst":
-								r = Utils.formatTime(stats.getWorstAverage(num), configuration.useClockFormat());
+								r = Utils.formatTime(stats.getWorstAverage(num).getAverage(), configuration.useClockFormat());
 								break;
 							case "recent":
-								r = Utils.formatTime(stats.getCurrentAverage(num), configuration.useClockFormat());
+								r = Utils.formatTime(stats.getCurrentRollingAverage(num).getAverage(), configuration.useClockFormat());
 								break;
 							case "last":
-								r = Utils.formatTime(stats.getLastAverage(num), configuration.useClockFormat());
+								r = Utils.formatTime(stats.getPreviousAverage(num).getAverage(), configuration.useClockFormat());
 								break;
 							default:
 								r = "Unimplemented: " + avg + " : " + originalString;

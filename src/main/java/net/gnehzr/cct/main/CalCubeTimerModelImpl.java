@@ -58,7 +58,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     private final ProfileDao profileDao;
 
     final NumberSpeaker numberSpeaker;
-    ActionMap actionMap;
+
     Metronome metronome;
 
     boolean customizationEditsDisabled = false;
@@ -88,7 +88,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         this.configuration = configuration;
         this.profileDao = profileDao;
         this.numberSpeaker = numberSpeaker;
-        this.actionMap = initializeActionMap(actionMap);
         configuration.addConfigurationChangeListener(cctModelConfigChangeListener);
         scramblesList = new GeneratedScrambleList(sessionSolutionsTableModel.getCurrentSession());
         LOG.debug("model created");
@@ -121,30 +120,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             Objects.requireNonNull(scramblesList.getCurrentScramble());
         }
         this.timing = timing;
-    }
-
-
-    private ActionMap initializeActionMap(ActionMap actionMap) {
-        sessionSolutionsTableModel.setUndoRedoListener(new UndoRedoListener() {
-            private int undoable;
-            private int redoable;
-
-            @Override
-            public void undoRedoChange(int undoable, int redoable) {
-                this.undoable = undoable;
-                this.redoable = redoable;
-                refresh();
-            }
-
-            @Override
-            public void refresh() {
-                actionMap.getAction("undo", calCubeTimerGui.getMainFrame()).setEnabled(undoable != 0);
-                actionMap.getAction("redo", calCubeTimerGui.getMainFrame()).setEnabled(redoable != 0);
-                actionMap.getAction("undo", calCubeTimerGui.getMainFrame()).putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.undo") + undoable);
-                actionMap.getAction("redo", calCubeTimerGui.getMainFrame()).putValue(Action.NAME, StringAccessor.getString("CALCubeTimer.redo") + redoable);
-            }
-        });
-        return actionMap;
     }
 
     @Override

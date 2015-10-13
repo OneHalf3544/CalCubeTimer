@@ -74,9 +74,6 @@
 			<menuitem action="exit">%%exit%%</menuitem>
 		</menu>
 		<menu mnemonic="o">%%options%%
-			<menuitem action="undo"/>
-			<menuitem action="redo"/>
-			<separator/>
 			<checkboxmenuitem action="toggleScramblePopup">%%togglescramblepopup%%</checkboxmenuitem>
 			<menu mnemonic="k">%%keyboardtimer%%
 				<checkboxmenuitem action="keyboardTiming">%%usekeyboard%%</checkboxmenuitem>

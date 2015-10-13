@@ -45,8 +45,8 @@ public class SolveType {
         return !desc.isEmpty() && !desc.contains(",");
     }
 
-    public static SolveType getSolveType(String name) {
-        return SOLVE_TYPES.get(name.toLowerCase());
+    public static SolveType getSolveType(@NotNull String name) {
+        return SOLVE_TYPES.computeIfAbsent(name.toLowerCase(), SolveType::createSolveType);
     }
 
     public static Collection<SolveType> getSolveTypes(@NotNull List<String> solveTags) {

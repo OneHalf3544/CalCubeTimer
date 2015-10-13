@@ -9,7 +9,6 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -63,10 +62,6 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	@NotNull
 	public Session getCurrentSession() {
 		return currentSessionSolutionsList.getCurrentSession();
-	}
-
-	public void setUndoRedoListener(@NotNull UndoRedoListener l) {
-		currentSessionSolutionsList.setUndoRedoListener(l);
 	}
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {

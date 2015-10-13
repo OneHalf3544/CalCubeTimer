@@ -3,7 +3,7 @@ package net.gnehzr.cct.scrambles;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;

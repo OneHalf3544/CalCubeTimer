@@ -45,10 +45,10 @@ public class Metronome {
     }
 
     @NotNull
-    private static Clip loadSoundFile(String methronomeResourceName) {
+    private static Clip loadSoundFile(String metronomeResourceName) {
         try {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
-                    new BufferedInputStream(Objects.requireNonNull(Metronome.class.getResourceAsStream(methronomeResourceName))));
+                    new BufferedInputStream(Objects.requireNonNull(Metronome.class.getResourceAsStream(metronomeResourceName))));
             DataLine.Info info = new DataLine.Info(Clip.class, audioInputStream.getFormat());
             Clip clip = (Clip) AudioSystem.getLine(info);
             clip.open(audioInputStream);

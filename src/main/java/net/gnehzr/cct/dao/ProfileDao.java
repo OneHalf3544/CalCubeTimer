@@ -39,7 +39,6 @@ public class ProfileDao extends HibernateDaoSupport {
     private final Configuration configuration;
 
     private final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
-    private final ScramblePluginManager scramblePluginManager;
 
     private SolutionDao solutionsDao;
     private final CalCubeTimerModel cubeTimerModel;
@@ -51,7 +50,6 @@ public class ProfileDao extends HibernateDaoSupport {
         super(sessionFactory);
         this.configuration = configuration;
         this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
-        this.scramblePluginManager = scramblePluginManager;
         this.solutionsDao = solutionsDao;
         cubeTimerModel = model;
     }

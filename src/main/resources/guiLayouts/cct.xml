@@ -77,9 +77,6 @@
 			<menuitem action="exit">%%exit%%</menuitem>
 		</menu>
 		<menu mnemonic="o">%%options%%
-			<menuitem action="undo"/>
-			<menuitem action="redo"/>
-			<separator/>
 			<checkboxmenuitem action="toggleScramblePopup">%%togglescramblepopup%%</checkboxmenuitem>
 			<menu mnemonic="k">%%keyboardtimer%%
 				<checkboxmenuitem action="keyboardTiming">%%usekeyboard%%</checkboxmenuitem>
@@ -91,8 +88,6 @@
 			<component type="customGUIMenu"/>
 		</menu>
 		<glue orientation="horizontal"/>
-		<button nominsize="true" action="undo"/>
-		<button nominsize="true" action="redo"/>
 		<component type="languagecombobox"/>
 		<component type="profilecombobox"/>
 		<glue orientation="horizontal"/>

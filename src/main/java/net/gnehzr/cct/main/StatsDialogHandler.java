@@ -9,7 +9,7 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -17,9 +17,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 
 public class StatsDialogHandler extends JDialog implements ActionListener, ChangeListener {
     private JButton emailButton = null;
@@ -77,10 +75,11 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
         getContentPane().add(bottomPanel, BorderLayout.PAGE_END);
     }
 
+    @Override
     public void setVisible(boolean b) {
         if (b) {
             setSize(configuration.getDimension(VariableKey.STATS_DIALOG_DIMENSION));
-            sizeSpinner.setValue(configuration.getInt(VariableKey.STATS_DIALOG_FONT_SIZE).intValue());
+            sizeSpinner.setValue(configuration.getInt(VariableKey.STATS_DIALOG_FONT_SIZE));
             setLocationRelativeTo(getParent());
         } else
             configuration.setDimension(VariableKey.STATS_DIALOG_DIMENSION, getSize());
@@ -130,9 +129,7 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
                 else if (choiceOverwrite != JOptionPane.YES_OPTION)
                     return;
             }
-            PrintWriter out = null;
-            try {
-                out = new PrintWriter(new FileWriter(outputFile, append));
+            try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile, append), "UTF-8"))) {
                 if (append) {
                     out.println();
                     out.println();
@@ -143,12 +140,11 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
                                 outputFile.getAbsolutePath());
             } catch (Exception e) {
                 Utils.showErrorDialog(this, e);
-            } finally {
-                out.close();
             }
         }
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
         if (source == saveButton) {
@@ -162,6 +158,7 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
         }
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
         int fontSize = (Integer) sizeSpinner.getValue();
         configuration.setLong(VariableKey.STATS_DIALOG_FONT_SIZE, fontSize);

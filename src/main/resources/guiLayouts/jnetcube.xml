@@ -36,7 +36,7 @@
 										<label>Recent Time: $$session.time(recent)$$</label>
 										<label>Previous Time: $$session.time(last)$$</label>
 										<label>Progress: $$session.time(progress)$$ seconds</label>
-										<panel preferredsize="10x15"></panel>
+										<panel preferredsize="10x15"/>
 										<label>Cubes Solved: $$session.solvecount(solved)$$</label>
 										<label>Session Average: $$session.average$$ seconds</label>
 									</panel>
@@ -53,7 +53,7 @@
 								<panel layout="box" orientation="page">
 									<label>Current Average: $$ra(0, recent)$$</label>
 									<label>Progress: $$ra(0).progress$$</label>
-									<panel preferredsize="10x15"></panel>
+									<panel preferredsize="10x15"/>
 									<label>Fastest Time: $$ra(0, recent).time(best)$$</label>
 									<label>Slowest Time: $$ra(0, recent).time(worst)$$</label>
 									<label>Standard Deviation: $$ra(0, recent).sd$$</label>

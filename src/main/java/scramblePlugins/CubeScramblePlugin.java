@@ -40,7 +40,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
     public static final String FACES = "LDBRUFldbruf";
 
-    public static final String[] FACES_ORDER = {"L", "D", "B", "R", "U", "F"};
+    private static final String[] FACES_ORDER = {"L", "D", "B", "R", "U", "F"};
 
     private static final char DEFAULT_SOLVE_FACE = 'U';
     private static final char DEFAULT_SOLVE_SIDE = 'D';

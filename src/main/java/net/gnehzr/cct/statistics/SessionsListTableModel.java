@@ -10,8 +10,6 @@ import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 
 import javax.swing.*;
 import java.awt.*;
@@ -97,15 +95,15 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		case 1: //customization
 			return s.getPuzzleType();
 		case 2: //session average
-			return s.getSessionPuzzleStatistics().average(AverageType.SESSION_AVERAGE, null);
-		case 3: //best ra0
-			return s.getSessionPuzzleStatistics().getBestAverage(RollingAverageOf.OF_5);
+			return s.getSessionPuzzleStatistics().getWholeSessionAverage().getAverage();
+			case 3: //best ra0
+			return s.getSessionPuzzleStatistics().getBestAverage(RollingAverageOf.OF_5).getAverage();
 		case 4: //best ra1
-			return s.getSessionPuzzleStatistics().getBestAverage(RollingAverageOf.OF_12);
+			return s.getSessionPuzzleStatistics().getBestAverage(RollingAverageOf.OF_12).getAverage();
 		case 5: //best time
-			return s.getSessionPuzzleStatistics().getBestTime();
+			return s.getSessionPuzzleStatistics().getSession().getRollingAverageForWholeSession().getBestTime();
 		case 6: //stdev
-			return s.getSessionPuzzleStatistics().standardDeviation(AverageType.SESSION_AVERAGE, null);
+			return s.getSessionPuzzleStatistics().getWholeSessionAverage().getStandartDeviation();
 		case 7: //solve count
 			return s.getSessionPuzzleStatistics().getSolveCounter().getSolveCount();
 		case 8: //comment

@@ -11,16 +11,14 @@ import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleSettings;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -140,7 +138,7 @@ public class ScrambleExportDialog extends JDialog {
 	}
 
 	private boolean generateAndExportScrambles(URL outputFile, int numberOfScrambles, PuzzleType puzzleType) {
-		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
+		try (PrintWriter fileWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(outputFile.toURI())), "UTF-8"))) {
 
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
 				fileWriter.println(puzzleType.generateScramble(puzzleType.getScrambleVariation()).getScramble());

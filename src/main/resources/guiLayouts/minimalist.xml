@@ -12,7 +12,7 @@
 				<south>
 					<panel layout="grid" cols="2">
 					<panel><label>Cubes solved: $$session.solvecount(solved)$$</label></panel>
-					<panel></panel>
+					<panel/>
 					<panel><button action="sessionAverage">Session</button></panel>
 					<panel><button action="currentAverage0">Current %%raof%% $$ra(0).size$$</button><button action="bestAverage0">Best %%raof%% $$ra(0).size$$</button></panel>
 					</panel>
@@ -31,9 +31,6 @@
 			<menuitem action="exit">%%exit%%</menuitem>
 		</menu>
 		<menu mnemonic="o">%%options%%
-			<menuitem action="undo"/>
-			<menuitem action="redo"/>
-			<separator/>
 			<checkboxmenuitem action="toggleScramblePopup">%%togglescramblepopup%%</checkboxmenuitem>
 			<menu mnemonic="k">%%keyboardtimer%%
 				<checkboxmenuitem action="keyboardTiming">%%usekeyboard%%</checkboxmenuitem>

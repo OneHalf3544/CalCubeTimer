@@ -4,7 +4,6 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileEntity;
 import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.Seq;
 

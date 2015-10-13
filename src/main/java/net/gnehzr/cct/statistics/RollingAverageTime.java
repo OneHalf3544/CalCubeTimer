@@ -1,6 +1,5 @@
 package net.gnehzr.cct.statistics;
 
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;

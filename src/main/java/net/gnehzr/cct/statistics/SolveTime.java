@@ -238,11 +238,14 @@ public class SolveTime implements Comparable<SolveTime> {
 	}
 
 	public static SolveTime substruct(SolveTime time1, SolveTime time2) {
+		if (time1.isInfiniteTime() || time2.isInfiniteTime()) {
+			return SolveTime.NA;
+		}
 		return new SolveTime(time1.getTime().minus(time2.getTime()));
 	}
 
 	public boolean isZero() {
-		return getTime().isZero();
+		return time != null && time.isZero();
 	}
 
 	public boolean isNegative() {
@@ -251,5 +254,9 @@ public class SolveTime implements Comparable<SolveTime> {
 
 	public boolean isDefined() {
 		return !(isInfiniteTime() || isZero() || isNegative());
+	}
+
+	public boolean better(SolveTime solveTime) {
+		return Utils.lessThan(this, solveTime);
 	}
 }

@@ -38,10 +38,10 @@ public class CrossSolver {
 	}
 	
 	public static class Rotate {
-		public static Rotate identity = new Rotate();
-		public static Rotate x = new Rotate("x", Face.FRONT, Face.UP, Face.BACK, Face.DOWN);
-		public static Rotate y = new Rotate("y", Face.FRONT, Face.LEFT, Face.BACK, Face.RIGHT);
-		public static Rotate z = new Rotate("z", Face.UP, Face.RIGHT, Face.DOWN, Face.LEFT);
+		public static final Rotate identity = new Rotate();
+		public static final Rotate x = new Rotate("x", Face.FRONT, Face.UP, Face.BACK, Face.DOWN);
+		public static final Rotate y = new Rotate("y", Face.FRONT, Face.LEFT, Face.BACK, Face.RIGHT);
+		public static final Rotate z = new Rotate("z", Face.UP, Face.RIGHT, Face.DOWN, Face.LEFT);
 		
 		private HashMap<Face, Face> new_og = new HashMap<>();
 		private Rotate() {
@@ -406,9 +406,11 @@ public class CrossSolver {
 		rotation = rotation.invert();
 		String sep = " ";
 		String solution = "";
-		if(sol != null)
-			for(Pair<Face, Integer> turn : sol)
+		if(sol != null) {
+			for (Pair<Face, Integer> turn : sol) {
 				solution += sep + unsetup.getOGFace(rotation.getOGFace(turn.car)).toString() + directions.getReverse(turn.cdr);
+			}
+		}
 		if(!solution.isEmpty())
 			solution = solution.substring(sep.length());
 		return setup_rotations + " " + solution;

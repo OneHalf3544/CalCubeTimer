@@ -5,7 +5,7 @@ import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,10 +43,11 @@ public class VariableKey<H> {
 		return new VariableKey<>("Puzzle_ScrambleLength_" + variationName);
 	}
 
-	public static VariableKey<Integer> RA_SIZE(SessionPuzzleStatistics.RollingAverageOf index, PuzzleType custom) {
+	public static VariableKey<Integer> RA_SIZE(RollingAverageOf index, PuzzleType custom) {
 		String key = "Puzzle_RA" + index.getCode() + "Size";
-		if(custom != null)
+		if(custom != null) {
 			key += "_" + custom.toString();
+		}
 		return new VariableKey<>(key);
 	}
 
@@ -132,7 +133,7 @@ public class VariableKey<H> {
 	public static final VariableKey<Boolean> LESS_ANNOYING_DISPLAY = new VariableKey<Boolean>("GUI_Timer_isLessAnnoyingDisplay"); 
 	public static final VariableKey<Boolean> FULLSCREEN_TIMING = new VariableKey<Boolean>("GUI_Timer_isFullScreenWhileTiming"); 
 	public static final VariableKey<Boolean> METRONOME_ENABLED = new VariableKey<Boolean>("Misc_Metronome_isEnabled"); 
-	public static VariableKey<Boolean> RA_TRIMMED(SessionPuzzleStatistics.RollingAverageOf index, PuzzleType var) {
+	public static VariableKey<Boolean> RA_TRIMMED(RollingAverageOf index, PuzzleType var) {
 		String key = "Puzzle_RA" + index.getCode() + "Trimmed";
 		if(var != null)
 			key += "_" + var.toString();

@@ -18,8 +18,6 @@ public class CurrentSessionSolutionsList {
 
 	private static final Logger LOG = LogManager.getLogger(CurrentSessionSolutionsList.class);
 
-	private UndoRedoListener undoRedoListener;
-
 	private List<StatisticsUpdateListener> statisticsUpdateListeners = new ArrayList<>();
 
 	@NotNull
@@ -43,10 +41,6 @@ public class CurrentSessionSolutionsList {
 		return currentSession;
 	}
 
-	public void setUndoRedoListener(@NotNull UndoRedoListener l) {
-		this.undoRedoListener = Objects.requireNonNull(l);
-	}
-
 	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {
 		LOG.trace("addStatisticsUpdateListener: {}", listener);
 		statisticsUpdateListeners.add(listener);
@@ -60,7 +54,6 @@ public class CurrentSessionSolutionsList {
 	public void fireStringUpdates(SessionsList sessionsList) {
 		LOG.debug("StatisticsTableModel.fireStringUpdates()");
 		ImmutableList.copyOf(statisticsUpdateListeners).forEach(e -> e.update(sessionsList));
-		undoRedoListener.refresh();
 	}
 
 	public int getSize() {

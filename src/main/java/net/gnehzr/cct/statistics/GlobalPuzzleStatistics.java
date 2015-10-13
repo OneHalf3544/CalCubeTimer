@@ -2,7 +2,6 @@ package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 
 import java.time.Duration;
 import java.util.Comparator;
@@ -35,7 +34,7 @@ public class GlobalPuzzleStatistics {
 		solvesCounter = new SolveCounter();
 
 		bestTime = sessionsList.getSessions().stream()
-				.map(s -> s.getSessionPuzzleStatistics().getBestTime())
+				.map(s -> s.getSessionPuzzleStatistics().getSession().getRollingAverageForWholeSession().getBestTime())
 				.min(Comparator.comparing(Function.<SolveTime>identity()))
 				.orElse(SolveTime.WORST);
 
@@ -48,7 +47,7 @@ public class GlobalPuzzleStatistics {
 		for(Session s : sessionsList) {
 			SessionPuzzleStatistics sessionStatistics = s.getSessionPuzzleStatistics();
 			for(RollingAverageOf ra : RollingAverageOf.values()) {
-				SolveTime ave = sessionStatistics.getBestAverage(ra);
+				SolveTime ave = sessionStatistics.getBestAverage(ra).getAverage();
 				if (Utils.lessThan(ave, bestRAs.get(ra))) {
 					bestRAs.put(ra, ave);
 				}

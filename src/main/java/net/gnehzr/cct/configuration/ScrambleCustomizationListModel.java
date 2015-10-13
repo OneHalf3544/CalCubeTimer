@@ -9,7 +9,7 @@ import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleSettings;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.lafwidget.LafWidget;
 import org.jvnet.substance.SubstanceLookAndFeel;

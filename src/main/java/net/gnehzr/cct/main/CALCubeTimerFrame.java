@@ -23,15 +23,16 @@ import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicDestroyable;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
-import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jvnet.substance.SubstanceLookAndFeel;
@@ -696,12 +697,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	public void addSplit(TimerState state) {
 		long currentTime = System.currentTimeMillis();
 		if((currentTime - model.getLastSplit()) / 1000. > configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, false)) {
-			// todo hands variable is unused
-			String hands = "";
-			if(state instanceof StackmatState) {
-				hands += ((StackmatState) state).leftHand() ? StringAccessor.getString("CALCubeTimer.lefthand")
-														    : StringAccessor.getString("CALCubeTimer.righthand");
-			}
 			model.getSplits().add(state.toSolution(model.getScramblesList().getCurrentScramble(), ImmutableList.of()).getTime());
 			model.setLastSplit(currentTime);
 		}

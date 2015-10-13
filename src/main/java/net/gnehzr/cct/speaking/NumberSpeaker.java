@@ -1,5 +1,6 @@
 package net.gnehzr.cct.speaking;
 
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import javazoom.jl.decoder.JavaLayerException;
@@ -76,7 +77,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 	}
 	public NumberSpeaker[] getSpeakers() {
 		if(alphabetized == null) {
-			alphabetized = new ArrayList<>(getNumberSpeakers().values()).toArray(new NumberSpeaker[0]);
+			alphabetized = Iterables.toArray(getNumberSpeakers().values(), NumberSpeaker.class);
 			Arrays.sort(alphabetized);
 		}
 		return alphabetized.clone();

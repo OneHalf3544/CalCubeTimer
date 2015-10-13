@@ -38,7 +38,7 @@ public class Configuration {
 
 	private static final Logger LOG = LogManager.getLogger(Configuration.class);
 
-	private static File root;
+	private static volatile File root;
 
 	private final File documentationFile;
 	private final File dynamicStringsFile;
@@ -133,8 +133,8 @@ public class Configuration {
 		if (!defaultsFile.exists()) {
 			seriousError += "Couldn't find file!\n" + defaultsFile.getAbsolutePath() + "\n";
 		}
-		File[] layouts = getXMLLayoutsAvailable();
-		if (layouts == null || layouts.length == 0) {
+		List<File> layouts = getXMLLayoutsAvailable();
+		if (layouts == null || layouts.isEmpty()) {
 			seriousError += "Couldn't find file!\n" + guiLayoutsFolder.getAbsolutePath() + "\n";
 		}
 		return seriousError;
@@ -157,14 +157,15 @@ public class Configuration {
 	//otherwise, returns any available layout
 	//otherwise, returns null
 	public File getXMLGUILayout() {
-		for(File file : getXMLLayoutsAvailable()) {
-			if(file.getName().equalsIgnoreCase(userProperties.getString(VariableKey.XML_LAYOUT, false))) {
+		for (File file : getXMLLayoutsAvailable()) {
+			if (file.getName().equalsIgnoreCase(userProperties.getString(VariableKey.XML_LAYOUT, false))) {
 				return file;
 			}
 		}
-		if(getXMLLayoutsAvailable() == null)
+		if (getXMLLayoutsAvailable() == null) {
 			return null;
-		return getXMLLayoutsAvailable()[0];
+		}
+		return getXMLLayoutsAvailable().get(0);
 	}
 	public File getXMLFile(String xmlGUIName) {
 		for(File f : getXMLLayoutsAvailable()) {
@@ -175,12 +176,12 @@ public class Configuration {
 	}
 	private File[] availableLayouts;
 
-	public File[] getXMLLayoutsAvailable() {
+	public List<File> getXMLLayoutsAvailable() {
 		if(availableLayouts == null) {
 			availableLayouts = guiLayoutsFolder.listFiles(
 					(dir, name) -> name.endsWith(".xml") && new File(dir, name).isFile());
 		}
-		return availableLayouts;
+		return Arrays.asList(availableLayouts);
 	}
 	
 	public Font getFontForLocale(LocaleAndIcon l) {

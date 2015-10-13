@@ -3,7 +3,7 @@ package net.gnehzr.cct.main;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

@@ -4,7 +4,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.RollingAverageOf;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -23,8 +23,8 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 	}
 
 	@Override
-	public Component getTableCellRendererComponent(JTable table, Object value,
-			boolean isSelected, boolean hasFocus, int row, int column) {
+	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+												   boolean hasFocus, int row, int column) {
 
 		setEnabled(table.isEnabled());
 		setFont(table.getFont());
@@ -39,30 +39,30 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color background = null;
 
 		if(value instanceof SolveTime || value instanceof RollingAverageTime) {
-			SessionPuzzleStatistics times = statsModel.getCurrentSession().getSessionPuzzleStatistics();
+			SessionPuzzleStatistics sessionStatistics = statsModel.getCurrentSession().getSessionPuzzleStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
 			SolveTime solveTime;
 			if (value instanceof RollingAverageTime) { //this indicates we're dealing with an average, not a solve time
 				RollingAverageOf whichRA = ((RollingAverageTime)value).getWhichRA();
-				int raSize = times.getRASize(whichRA);
-				int indexOfBestRA = times.getIndexOfBestRA(whichRA);
+				int raSize = sessionStatistics.getRASize(whichRA);
+				int indexOfBestRA = sessionStatistics.getIndexOfBestRA(whichRA);
 				memberOfBestRA = indexOfBestRA != -1 && (indexOfBestRA + raSize == row + 1);
 			} else {
 				solveTime = (SolveTime)value;
-				RollingAverage result = times.getSession().getRollingAverageForWholeSession();
+				RollingAverage result = sessionStatistics.getSession().getRollingAverageForWholeSession();
 				if(result.getBestTime() == solveTime) {
 					foreground = configuration.getColor(VariableKey.BEST_TIME, false);
 				} else if(result.getWorstTime() == solveTime) {
 					foreground = configuration.getColor(VariableKey.WORST_TIME, false);
 				}
-				memberOfBestRA = times.containsTime(row, AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5);
-				memberOfCurrentAverage = times.containsTime(row, AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+				memberOfBestRA = sessionStatistics.containsTime(row, AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+				memberOfCurrentAverage = sessionStatistics.containsTime(row, AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
 			}
 			
-			if(memberOfCurrentAverage) {
-				boolean firstOfCurrentAverage = row == times.getSolveCounter().getAttemptCount() - times.getRASize(RollingAverageOf.OF_5);
-				boolean lastOfCurrentAverage = row == times.getSolveCounter().getAttemptCount() - 1;
+			if (memberOfCurrentAverage) {
+				boolean firstOfCurrentAverage = row == sessionStatistics.getSolveCounter().getAttemptCount() - sessionStatistics.getRASize(RollingAverageOf.OF_5);
+				boolean lastOfCurrentAverage = row == sessionStatistics.getSolveCounter().getAttemptCount() - 1;
 				
 				Border b;
 				Color c = configuration.getColor(VariableKey.CURRENT_AVERAGE, false);
@@ -74,10 +74,10 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 					b = BorderFactory.createMatteBorder(0, 2, 0, 2, c);
 				setBorder(BorderFactory.createCompoundBorder(b, getBorder()));
 			}
-			if(memberOfBestRA)
+			if (memberOfBestRA)
 				background = configuration.getColor(VariableKey.BEST_RA, false);
 		}
-		if(isSelected) {
+		if (isSelected) {
 			if(background == null)
 				background = Color.GRAY;
 			else
