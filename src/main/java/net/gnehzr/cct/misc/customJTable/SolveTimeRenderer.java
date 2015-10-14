@@ -39,7 +39,7 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color background = null;
 
 		if(value instanceof SolveTime || value instanceof RollingAverageTime) {
-			SessionPuzzleStatistics sessionStatistics = statsModel.getCurrentSession().getSessionPuzzleStatistics();
+			SessionPuzzleStatistics sessionStatistics = statsModel.getCurrentSession().getStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
 			SolveTime solveTime;

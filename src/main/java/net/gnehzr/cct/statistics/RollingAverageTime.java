@@ -1,14 +1,10 @@
 package net.gnehzr.cct.statistics;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 public class RollingAverageTime implements Comparable<RollingAverageTime> {
-
-	private static final Logger LOG = LogManager.getLogger(RollingAverageTime.class);
 
 	private final SolveTime time;
 	private final RollingAverageOf whichRA;

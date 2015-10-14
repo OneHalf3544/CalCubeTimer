@@ -505,7 +505,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	 */
 	@Override
 	public void repaintTimes() {
-		SessionPuzzleStatistics stats = currentSessionSolutionsTableModel.getCurrentSession().getSessionPuzzleStatistics();
+		SessionPuzzleStatistics stats = currentSessionSolutionsTableModel.getCurrentSession().getStatistics();
 
 		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
 		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_12);

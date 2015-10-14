@@ -58,7 +58,7 @@ public class SessionsList implements Iterable<Session> {
 
 	public void removeEmptySessions() {
 		for(Session session : this) {
-            if(session.getSessionPuzzleStatistics().getSolveCounter().getAttemptCount() == 0) {
+            if(session.getStatistics().getSolveCounter().getAttemptCount() == 0) {
                 removeSession(session);
             }
         }

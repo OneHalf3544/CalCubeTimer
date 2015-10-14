@@ -108,9 +108,9 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		case 0: //get the solvetime for this index
 			return currentSession.getSolution(rowIndex).getTime();
 		case 1:
-			return currentSession.getSessionPuzzleStatistics().getRA(rowIndex, RollingAverageOf.OF_5);
+			return currentSession.getStatistics().getRA(rowIndex, RollingAverageOf.OF_5).getAverage();
 		case 2:
-			return currentSession.getSessionPuzzleStatistics().getRA(rowIndex, RollingAverageOf.OF_12);
+			return currentSession.getStatistics().getRA(rowIndex, RollingAverageOf.OF_12).getAverage();
 		case 3:
 			return currentSession.getSolution(rowIndex).getComment();
 		case 4: //tags
@@ -118,7 +118,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		case 5: // puzzle type
 			return currentSession.getSolution(rowIndex).getScrambleString().getPuzzleType().getVariationName();
 		default:
-			return null;
+			throw new IllegalArgumentException("unsupported column index");
 		}
 	}
 
@@ -182,7 +182,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		List<SolveType> types = typeButtons.keySet().stream()
                 .filter(key -> typeButtons.get(key).isSelected())
 				.collect(Collectors.toList());
-		getCurrentSession().getSessionPuzzleStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
+		getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
 		if (prevFocusOwner != null) {
 			prevFocusOwner.requestFocusInWindow();
 		}

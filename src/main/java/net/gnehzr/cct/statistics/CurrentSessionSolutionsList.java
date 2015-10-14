@@ -31,7 +31,7 @@ public class CurrentSessionSolutionsList {
 	public void setCurrentSession(@NotNull Session session) {
 		this.currentSession = Objects.requireNonNull(session);
 		LOG.info("setCurrentSession {}", session);
-		SessionPuzzleStatistics sessionPuzzleStatistics = session.getSessionPuzzleStatistics();
+		SessionPuzzleStatistics sessionPuzzleStatistics = session.getStatistics();
 
 		sessionPuzzleStatistics.notifyListeners();
 	}
@@ -61,15 +61,15 @@ public class CurrentSessionSolutionsList {
 	}
 
 	public void addSolution(Solution solution, int rowIndex) {
-		currentSession.getSessionPuzzleStatistics().refresh();
+		currentSession.getStatistics().refresh();
 	}
 
 	public void setComment(String comment, int index) {
 		currentSession.getSolution(index).setComment(comment);
-		currentSession.getSessionPuzzleStatistics().refresh();
+		currentSession.getStatistics().refresh();
 	}
 
 	public void deleteRows(int[] indices) {
-		currentSession.getSessionPuzzleStatistics().refresh();
+		currentSession.getStatistics().refresh();
 	}
 }

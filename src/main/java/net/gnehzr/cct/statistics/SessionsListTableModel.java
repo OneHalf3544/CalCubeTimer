@@ -95,17 +95,17 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		case 1: //customization
 			return s.getPuzzleType();
 		case 2: //session average
-			return s.getSessionPuzzleStatistics().getWholeSessionAverage().getAverage();
+			return s.getStatistics().getWholeSessionAverage().getAverage();
 			case 3: //best ra0
-			return s.getSessionPuzzleStatistics().getBestAverage(RollingAverageOf.OF_5).getAverage();
+			return s.getStatistics().getBestAverage(RollingAverageOf.OF_5).getAverage();
 		case 4: //best ra1
-			return s.getSessionPuzzleStatistics().getBestAverage(RollingAverageOf.OF_12).getAverage();
+			return s.getStatistics().getBestAverage(RollingAverageOf.OF_12).getAverage();
 		case 5: //best time
-			return s.getSessionPuzzleStatistics().getSession().getRollingAverageForWholeSession().getBestTime();
+			return s.getStatistics().getSession().getRollingAverageForWholeSession().getBestTime();
 		case 6: //stdev
-			return s.getSessionPuzzleStatistics().getWholeSessionAverage().getStandartDeviation();
+			return s.getStatistics().getWholeSessionAverage().getStandartDeviation();
 		case 7: //solve count
-			return s.getSessionPuzzleStatistics().getSolveCounter().getSolveCount();
+			return s.getStatistics().getSolveCounter().getSolveCount();
 		case 8: //comment
 			return s.getComment();
 		default:

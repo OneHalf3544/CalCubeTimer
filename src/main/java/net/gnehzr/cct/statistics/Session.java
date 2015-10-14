@@ -4,6 +4,8 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileEntity;
 import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.scrambles.PuzzleType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.Seq;
 
@@ -14,6 +16,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Session extends Commentable implements Comparable<Session> {
+
+	private static final Logger LOG = LogManager.getLogger(Session.class);
 
 	private Long lastSessionId;
 	private SessionPuzzleStatistics sessionPuzzleStatistics;
@@ -28,14 +32,15 @@ public class Session extends Commentable implements Comparable<Session> {
 		this.dateStarted = startSessionTime;
 		this.configuration = configuration;
 		this.puzzleType = puzzleType;
-		sessionPuzzleStatistics = new SessionPuzzleStatistics(this, configuration);
+		sessionPuzzleStatistics = new SessionPuzzleStatistics(this);
+		configuration.addConfigurationChangeListener(profile -> sessionPuzzleStatistics.refresh());
 	}
 
 	public LocalDateTime getStartTime() {
 		return dateStarted;
 	}
 
-	public SessionPuzzleStatistics getSessionPuzzleStatistics() {
+	public SessionPuzzleStatistics getStatistics() {
 		return sessionPuzzleStatistics;
 	}
 
@@ -120,7 +125,10 @@ public class Session extends Commentable implements Comparable<Session> {
 	}
 
 	public void addSolution(Solution solution) {
+		LOG.info("add solution {}", solution);
 		this.solutions.add(solution);
+		// todo it's will recalculate whole statistics. Can be optimized
+		this.getStatistics().refresh();
 	}
 
 	@Override
@@ -133,8 +141,8 @@ public class Session extends Commentable implements Comparable<Session> {
 				'}';
 	}
 
-	public RollingAverage getRollingAverage(RollingAverageOf ra, int fromIndex, int count) {
-		return RollingAverage.create(ra, this, fromIndex, count);
+	public RollingAverage getRollingAverage(RollingAverageOf ra, int count, int toIndex) {
+		return RollingAverage.create(ra, this, toIndex, count);
 	}
 
 	public RollingAverage getRollingAverageForWholeSession() {

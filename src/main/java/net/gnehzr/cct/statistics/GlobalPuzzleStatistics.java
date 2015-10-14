@@ -34,7 +34,7 @@ public class GlobalPuzzleStatistics {
 		solvesCounter = new SolveCounter();
 
 		bestTime = sessionsList.getSessions().stream()
-				.map(s -> s.getSessionPuzzleStatistics().getSession().getRollingAverageForWholeSession().getBestTime())
+				.map(s -> s.getStatistics().getSession().getRollingAverageForWholeSession().getBestTime())
 				.min(Comparator.comparing(Function.<SolveTime>identity()))
 				.orElse(SolveTime.WORST);
 
@@ -45,7 +45,7 @@ public class GlobalPuzzleStatistics {
 		globalAverage = new SolveTime(Duration.ZERO);
 
 		for(Session s : sessionsList) {
-			SessionPuzzleStatistics sessionStatistics = s.getSessionPuzzleStatistics();
+			SessionPuzzleStatistics sessionStatistics = s.getStatistics();
 			for(RollingAverageOf ra : RollingAverageOf.values()) {
 				SolveTime ave = sessionStatistics.getBestAverage(ra).getAverage();
 				if (Utils.lessThan(ave, bestRAs.get(ra))) {

@@ -58,7 +58,7 @@ public class ScrambleExportDialog extends JDialog {
             //if(scrambleLengthJSpinner != null) {
                 PuzzleType puzzleType = (PuzzleType) scrambleChooser.getSelectedItem();
                 scrambleLengthJSpinner.setValue(scramblePluginManager.getScrambleVariation(puzzleType).getLength());
-                numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType, profile).getRASize(RollingAverageOf.OF_5));
+                numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType).getRASize(RollingAverageOf.OF_5));
             //}
         });
 

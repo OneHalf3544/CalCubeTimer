@@ -2,7 +2,6 @@ package net.gnehzr.cct.dao;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
 
 import javax.persistence.*;
@@ -112,7 +111,7 @@ public class SessionEntity {
         return this;
     }
 
-    public Session toSession(Configuration configuration, ScramblePluginManager pluginManager, Profile profile) {
-        return new Session(sessionStart, configuration, pluginManager.getPuzzleTypeByString(profile, scrambleCustomization));
+    public Session toSession(Configuration configuration, ScramblePluginManager pluginManager) {
+        return new Session(sessionStart, configuration, pluginManager.getPuzzleTypeByString(scrambleCustomization));
     }
 }

@@ -31,10 +31,6 @@ public class SolveCounter {
 		return attemptsCount;
 	}
 
-	public void clear() {
-		tagCounter.clear();
-	}
-
 	public static SolveCounter fromSolutions(List<Solution> solutionList) {
 		Multiset<SolveType> counter = HashMultiset.create();
 		for (Solution solution : solutionList) {
@@ -54,7 +50,7 @@ public class SolveCounter {
 
 	public static SolveCounter fromSessions(SessionsList sessions) {
 		return sessions.getSessions().stream()
-				.map(session -> session.getSessionPuzzleStatistics().getSolveCounter())
+				.map(session -> session.getStatistics().getSolveCounter())
 				.reduce(new SolveCounter(), (solveCounter1, solveCounter2) -> SolveCounter.sum(solveCounter1, solveCounter2));
 	}
 }

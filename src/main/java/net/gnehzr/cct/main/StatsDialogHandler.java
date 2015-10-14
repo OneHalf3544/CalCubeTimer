@@ -87,7 +87,7 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
     }
 
     public void syncWithStats(CurrentSessionSolutionsTableModel statsModel, AverageType type, RollingAverageOf avgNum) {
-        sundaySubmitter.syncWithStats(statsModel.getCurrentSession().getSessionPuzzleStatistics(), type, avgNum);
+        sundaySubmitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), type, avgNum);
         setTitle(StringAccessor.getString("StatsDialogHandler.detailedstats") + " " + type.toString());
         switch (type) {
             case CURRENT_ROLLING_AVERAGE:

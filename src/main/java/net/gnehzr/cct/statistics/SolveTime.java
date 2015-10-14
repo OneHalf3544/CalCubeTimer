@@ -139,14 +139,6 @@ public class SolveTime implements Comparable<SolveTime> {
 				.orElseGet(() -> Utils.formatTime(this, useClockFormat) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
 	}
 
-	@Deprecated
-	public double secondsValue() {
-		if(isInfiniteTime()) {
-			return Double.POSITIVE_INFINITY;
-		}
-		return value() / 100.;
-	}
-
 	private int value() {
 		return (int) (time.toMillis() / 10  + (isType(SolveType.PLUS_TWO) ? 200 : 0));
 	}
@@ -166,7 +158,14 @@ public class SolveTime implements Comparable<SolveTime> {
 		if (obj.getClass() != SolveTime.class) {
 			return false;
 		}
-		return this.value() == ((SolveTime)obj).value();
+		SolveTime another = (SolveTime) obj;
+		if (another.isInfiniteTime() && isInfiniteTime() ) {
+			return true;
+		}
+		if (this.isInfiniteTime() || another.isInfiniteTime()) {
+			return false;
+		}
+		return this.value() == another.value();
 	}
 
 	@Override

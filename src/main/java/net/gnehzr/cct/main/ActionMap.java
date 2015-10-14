@@ -84,7 +84,7 @@ public class ActionMap {
                 return a;
             }
             case RESET_ACTION: {
-                AbstractAction a = new ResetAction(calCubeTimerFrame);
+                AbstractAction a = new ResetAction(calCubeTimerFrame, configuration);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
                 return a;
             }
@@ -131,7 +131,7 @@ public class ActionMap {
                 return new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        submitter.syncWithStats(statsModel.getCurrentSession().getSessionPuzzleStatistics(), AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+                        submitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
                         submitter.setVisible(true);
                     }
                 };

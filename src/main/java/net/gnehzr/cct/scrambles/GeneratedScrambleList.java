@@ -41,11 +41,6 @@ public class GeneratedScrambleList implements ScrambleList {
 		scramblePluginManager.saveGeneratorToConfiguration(session.getPuzzleType());
 	}
 
-	public void clear() {
-		setSession(session.cloneEmpty());
-		scrambleNumber = 0;
-	}
-	
 	@Override
 	public int scramblesCount() {
 		return session.getAttemptsCount();

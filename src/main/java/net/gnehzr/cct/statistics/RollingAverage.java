@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 
@@ -24,7 +25,7 @@ public class RollingAverage implements Comparable<RollingAverage> {
     public static final RollingAverage NOT_AVAILABLE = new RollingAverage(
             Collections.<Solution>emptyList(), 0, 0, false);
 
-    private final int fromIndex;
+    private final int toIndex;
     private final int count;
     private final SolveTime worstTime;
     private final SolveTime bestTime;
@@ -33,9 +34,12 @@ public class RollingAverage implements Comparable<RollingAverage> {
     private final boolean trimmed;
     private final SolveTime standartDeviation;
 
-    public RollingAverage(List<Solution> solutions, int fromIndex, int count, boolean trimmed) {
+    public RollingAverage(List<Solution> solutions, int toIndex, int count, boolean trimmed) {
+        checkArgument(toIndex >= 0);
+        checkArgument(count >= 0);
+
         this.solutions = solutions;
-        this.fromIndex = fromIndex;
+        this.toIndex = toIndex;
         this.count = count;
         this.trimmed = trimmed;
         worstTime = solutions.stream().max(comparing(Solution::getTime)).map(Solution::getTime).orElse(SolveTime.BEST);
@@ -58,17 +62,20 @@ public class RollingAverage implements Comparable<RollingAverage> {
     }
 
     public static RollingAverage create(RollingAverageOf rollingAverageOf,
-                                        Session session, int fromIndex, int count) {
-        return new RollingAverage(Seq.iterate(fromIndex, index -> index + 1)
+                                        Session session, int toIndex, int count) {
+        if (toIndex < count) {
+            return NOT_AVAILABLE;
+        }
+        return new RollingAverage(Seq.iterate(toIndex - count, index -> index + 1)
                 .limit(count)
                 .filter(i -> i < session.getAttemptsCount())
                 .map(session::getSolution)
                 .toList(),
-                fromIndex, count, session.getPuzzleType().isTrimmed(rollingAverageOf));
+                toIndex, count, session.getPuzzleType().isTrimmed(rollingAverageOf));
     }
 
-    public int getFromIndex() {
-        return fromIndex;
+    public int getToIndex() {
+        return toIndex;
     }
 
     public int getCount() {
@@ -159,5 +166,10 @@ public class RollingAverage implements Comparable<RollingAverage> {
 
     public boolean better(RollingAverage anotherAverage) {
         return Utils.lessThan(this, anotherAverage);
+    }
+
+    @Override
+    public String toString() {
+        return toTerseString();
     }
 }

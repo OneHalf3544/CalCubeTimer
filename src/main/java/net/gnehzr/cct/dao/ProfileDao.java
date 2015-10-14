@@ -111,7 +111,7 @@ public class ProfileDao extends HibernateDaoSupport {
                     configuration, this, cubeTimerModel, currentSessionSolutionsTableModel);
 
             sessionsListTableModel.getSessionsList().setSessions(entity.stream()
-                    .map(s -> s.toSession(configuration, scramblePluginManager, profile))
+                    .map(s -> s.toSession(configuration, scramblePluginManager))
                     .collect(toList()));
             profile.setSessionsListTableModel(sessionsListTableModel);
             sessionsListTableModel.fireTableDataChanged();

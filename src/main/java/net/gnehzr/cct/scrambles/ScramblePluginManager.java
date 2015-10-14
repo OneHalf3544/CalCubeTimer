@@ -126,12 +126,12 @@ public class ScramblePluginManager {
 
 	public PuzzleType getCurrentScrambleCustomization(Profile currentProfile) {
 		String scName = configuration.getString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, false);
-		PuzzleType sc = getPuzzleTypeByString(currentProfile, scName);
+		PuzzleType sc = getPuzzleTypeByString(scName);
 
 		//now we'll try to match the variation, if we couldn't match the customization
 		if(sc == null && scName.indexOf(':') != -1) {
 			scName = scName.substring(0, scName.indexOf(":"));
-			sc = getPuzzleTypeByString(currentProfile, scName);
+			sc = getPuzzleTypeByString(scName);
 		}
 		if(sc == null) {
 			List<PuzzleType> puzzleTypes = getPuzzleTypes(currentProfile);
@@ -142,26 +142,28 @@ public class ScramblePluginManager {
 		return sc;
 	}
 
-	public PuzzleType getPuzzleTypeByVariation(PuzzleType scrambleSettings, Profile profile) {
-		return getPuzzleTypeByString(profile, scrambleSettings.getVariationName());
+	public PuzzleType getPuzzleTypeByVariation(PuzzleType scrambleSettings) {
+		return getPuzzleTypeByString(scrambleSettings.getVariationName());
 	}
 
-	public PuzzleType getPuzzleTypeByString(Profile profile, String customName) {
-		return getPuzzleTypes(profile).stream()
+	public PuzzleType getPuzzleTypeByString(String customName) {
+		return getPuzzleTypes(null).stream()
 				.filter(c -> c.toString().equals(customName))
 				.findAny()
 				.orElse(null);
 	}
 
-	public List<PuzzleType> getPuzzleTypes(Profile selectedProfile) {
+	public List<PuzzleType> getPuzzleTypes(@Nullable Profile selectedProfile) {
 		List<PuzzleType> puzzleTypes = getPuzzleTypes();
 
-		List<String> usedPuzzleTypes = solutionDao.getUsedPuzzleTypes(selectedProfile);
-		usedPuzzleTypes.removeAll(puzzleTypes.stream()
-				.map(PuzzleType::getVariationName)
-				.collect(Collectors.toList()));
+		if (selectedProfile != null) {
+			List<String> usedPuzzleTypes = solutionDao.getUsedPuzzleTypes(selectedProfile);
+			usedPuzzleTypes.removeAll(puzzleTypes.stream()
+                    .map(PuzzleType::getVariationName)
+                    .collect(Collectors.toList()));
 
-		LOG.warn("unsupported puzzleTypes: {}", usedPuzzleTypes);
+			LOG.warn("unsupported puzzleTypes: {}", usedPuzzleTypes);
+		}
 
 		return puzzleTypes;
 	}

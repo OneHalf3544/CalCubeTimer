@@ -131,7 +131,7 @@ public class DynamicString{
 
 		s = s.toLowerCase();
 
-		SessionPuzzleStatistics stats = statsModel.getCurrentSession().getSessionPuzzleStatistics();
+		SessionPuzzleStatistics stats = statsModel.getCurrentSession().getStatistics();
 		if(stats == null)
 			return r;
 
@@ -270,10 +270,10 @@ public class DynamicString{
 									r = formatProgressTime(stats.getProgressTime(), parens);
 									break;
 								case "best":
-									r = stats.getSession().getRollingAverageForWholeSession().getBestTime().toString(configuration);
+									r = stats.getWholeSessionAverage().getBestTime().toString(configuration);
 									break;
 								case "worst":
-									r = stats.getWorstTime().toString(configuration);
+									r = stats.getWholeSessionAverage().getWorstTime().toString(configuration);
 									break;
 								case "recent":
 									r = Utils.formatTime(stats.getCurrentTime(), configuration.useClockFormat());
@@ -341,7 +341,7 @@ public class DynamicString{
 										r = stats.getBestAverageList(num);
 										break;
 									case "worst":
-										r = stats.getWorstAverage(num).toTerseString();
+										r = stats.getWorstRollingAverage(num).toTerseString();
 										break;
 									case "recent":
 										r = stats.getCurrentAverageList(num);
@@ -394,10 +394,10 @@ public class DynamicString{
 										case "worst":
 											switch (time) {
 												case "best":
-													r = stats.getBestTimeOfWorstAverage(num).toString(configuration);
+													r = stats.getWorstRollingAverage(num).getBestTime().toString(configuration);
 													break;
 												case "worst":
-													r = stats.getWorstTimeOfWorstAverage(num).toString(configuration);
+													r = stats.getWorstRollingAverage(num).getWorstTime().toString(configuration);
 													break;
 												default:
 													r = "Unimplemented: " + time + " : " + originalString;
@@ -460,7 +460,7 @@ public class DynamicString{
 								r = Utils.formatTime(stats.getBestAverage(num).getAverage(), configuration.useClockFormat());
 								break;
 							case "worst":
-								r = Utils.formatTime(stats.getWorstAverage(num).getAverage(), configuration.useClockFormat());
+								r = Utils.formatTime(stats.getWorstRollingAverage(num).getAverage(), configuration.useClockFormat());
 								break;
 							case "recent":
 								r = Utils.formatTime(stats.getCurrentRollingAverage(num).getAverage(), configuration.useClockFormat());

@@ -328,7 +328,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 		if(sortKey == null) {
 			return;
 		}
-		defaultSort = Arrays.asList(sortKey);
+		defaultSort = Collections.singletonList(sortKey);
 		try {
 			getRowSorter().setSortKeys(defaultSort);
 		} catch(Exception e3) {

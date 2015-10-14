@@ -48,7 +48,7 @@ public class NewSessionAction extends AbstractAction {
                 session,
                 calCubeTimerModel.getSelectedProfile());
 
-        calCubeTimerModel.getScramblesList().asGenerating().clear();
+        calCubeTimerModel.getScramblesList().asGenerating().setSession(session);
         calCubeTimerFrame.getTimeLabel().reset();
         calCubeTimerFrame.updateScramble();
     }

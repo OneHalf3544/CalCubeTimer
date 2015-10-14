@@ -61,19 +61,18 @@ public class ProfileEditor extends DefaultCellEditor {
 	}
 
 	private String originalValue;
+
+	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value,
 			boolean isSelected, int row, int column) {
 		this.value = null;
-		if(value instanceof Profile)
-			originalValue = ((Profile)value).getName();
-		else
-			originalValue = value.toString();
+		originalValue = value instanceof Profile ? ((Profile) value).getName() : value.toString();
 		((JComponent) getComponent()).setBorder(new LineBorder(Color.black));
 		((JComponent) getComponent()).setToolTipText(editText);
-		return super.getTableCellEditorComponent(table, originalValue, isSelected, row,
-				column);
+		return super.getTableCellEditorComponent(table, originalValue, isSelected, row, column);
 	}
 
+	@Override
 	public Object getCellEditorValue() {
 		return value;
 	}
