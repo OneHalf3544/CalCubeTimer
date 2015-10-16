@@ -256,7 +256,10 @@ public class ScramblePluginManager {
 	}
 
 	@NotNull
-	public ScrambleSettings getScrambleVariation(PuzzleType puzzleType) {
+	public ScrambleSettings getScrambleVariation(@NotNull PuzzleType puzzleType) {
+		if (puzzleType.isNullType()) {
+			return nullScrambleSettings;
+		}
 		return getScrambleVariations().get(puzzleType);
 	}
 

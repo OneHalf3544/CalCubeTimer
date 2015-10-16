@@ -49,7 +49,7 @@ public class SessionsList implements Iterable<Session> {
 		return new ArrayList<>(statisticsByType.keySet());
 	}
 
-	public GlobalPuzzleStatistics getPuzzleStatisticsForType(PuzzleType puzzleType) {
+	public GlobalPuzzleStatistics getGlobalPuzzleStatisticsForType(PuzzleType puzzleType) {
 		GlobalPuzzleStatistics globalPuzzleStatistics = statisticsByType.computeIfAbsent(puzzleType,
 				pt -> new GlobalPuzzleStatistics(pt, currentSessionSolutionsTableModel));
 		globalPuzzleStatistics.refreshStats(this);
@@ -86,7 +86,7 @@ public class SessionsList implements Iterable<Session> {
 
 	public void setSessions(List<Session> sessions) {
 		statisticsByType = sessions.stream()
-				.map(s -> new Tuple2<>(s.getPuzzleType(), s.getSessionsList().getPuzzleStatisticsForType(s.getPuzzleType())))
+				.map(s -> new Tuple2<>(s.getPuzzleType(), s.getSessionsList().getGlobalPuzzleStatisticsForType(s.getPuzzleType())))
 				.collect(toMap(t -> t.v1, t -> t.v2));
 	}
 
@@ -119,13 +119,13 @@ public class SessionsList implements Iterable<Session> {
 
 		sessions.add(session);
 		session.setSessionsList(this);
-		session.getSessionsList().getPuzzleStatisticsForType(session.getPuzzleType()).refreshStats(this);
+		session.getSessionsList().getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats(this);
 		//sessionsListTableModel.fireTableDataChanged();
 	}
 
 	public void removeSession(Session session) {
 		sessions.remove(session);
-		session.getSessionsList().getPuzzleStatisticsForType(session.getPuzzleType()).refreshStats(this);
+		session.getSessionsList().getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats(this);
 		//sessionsListTableModel.fireTableDataChanged();
 	}
 

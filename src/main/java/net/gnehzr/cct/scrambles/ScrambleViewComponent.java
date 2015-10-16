@@ -24,7 +24,7 @@ public class ScrambleViewComponent extends JComponent {
 	private String focusedFaceId = null;
 	private BufferedImage buffer;
 	private ScramblePlugin currentPlugin = null;
-	private PuzzleType puzzleType = null;
+	private PuzzleType puzzleType;
 
 	private ScrambleString scrambleString = null;
 
@@ -45,6 +45,7 @@ public class ScrambleViewComponent extends JComponent {
 		}
 		configuration.addConfigurationChangeListener(createConfigurationListener(configuration));
 		this.configuration = configuration;
+		puzzleType = scramblePluginManager.NULL_PUZZLE_TYPE;
 	}
 
 	public void syncColorScheme(boolean defaults) {
@@ -173,7 +174,7 @@ public class ScrambleViewComponent extends JComponent {
 		return new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-				if (puzzleType != null) {
+				if (!puzzleType.isNullType()) {
 					puzzleType.setPuzzleUnitSize(currentPlugin.getNewUnitSize(getWidth(), getHeight(), GAP, puzzleType.getVariationName()));
 					redo();
 				}

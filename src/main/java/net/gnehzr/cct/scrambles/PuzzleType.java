@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkState;
-
 public class PuzzleType {
 
 	private static final Logger LOG = LogManager.getLogger(PuzzleType.class);
@@ -36,7 +34,9 @@ public class PuzzleType {
 	}
 
 	public ScrambleString generateScramble(ScrambleSettings scrambleSettings) {
-		checkState(!isNullType());
+		if (isNullType()) {
+			return scramblePluginManager.NULL_IMPORTED_SCRUMBLE;
+		}
 
 		ScramblePlugin scramblePlugin = this.getScramblePlugin();
 		ScrambleString newScramble = scramblePlugin.createScramble(

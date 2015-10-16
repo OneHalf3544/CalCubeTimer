@@ -28,7 +28,6 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
-import java.util.Objects;
 
 public class ScrambleCustomizationListModel extends DraggableJTableModel implements TableCellRenderer, TableCellEditor, MouseListener {
 
@@ -170,7 +169,16 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-		puzzleType = Objects.requireNonNull(scramblePluginManager.getPuzzleTypeByString(value.toString()));
+		if (value instanceof PuzzleType) {
+			puzzleType = ((PuzzleType) value);
+		}else {
+			if (value != null) {
+				puzzleType = scramblePluginManager.getPuzzleTypeByString(value.toString());
+				puzzleType = puzzleType == null ? scramblePluginManager.NULL_PUZZLE_TYPE : puzzleType;
+			} else {
+				puzzleType = scramblePluginManager.NULL_PUZZLE_TYPE;
+			}
+		}
 		editingColumn = column;
 		if(column == 0) //customization
 			return getCustomizationPanel(puzzleType);
