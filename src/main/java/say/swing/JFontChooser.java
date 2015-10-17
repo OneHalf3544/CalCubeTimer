@@ -7,7 +7,7 @@ import net.gnehzr.cct.configuration.JColorComponent;
 import net.gnehzr.cct.i18n.StringAccessor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jvnet.substance.SubstanceLookAndFeel;
+import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 
 import javax.swing.*;
 import javax.swing.border.Border;

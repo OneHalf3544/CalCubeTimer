@@ -459,6 +459,15 @@ public class PyraminxScramblePlugin extends ScramblePlugin {
 	}
 
 	@Override
+	public BufferedImage getDefaultStateImage(PuzzleType puzzleType, int gap, int finalUnitSize, Map<String, Color> colorScheme) {
+		Dimension dim = getImageSize(gap, finalUnitSize, null);
+		BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
+		int[][] image = initializeImage();
+		drawMinx(buffer.createGraphics(), image, gap, finalUnitSize, colorScheme);
+		return buffer;
+	}
+
+	@Override
 	public Dimension getImageSize(int gap, int pieceSize, String variation) {
 		return new Dimension(getPyraminxViewWidth(gap, pieceSize), getPyraminxViewHeight(gap, pieceSize));
 	}

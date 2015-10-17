@@ -15,6 +15,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -298,8 +299,18 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 
 	@Override
 	public BufferedImage getScrambleImage(ScrambleString scrambleString, int gap, int radius, Map<String, Color> colorScheme) {
+		return createImage(scrambleString, gap, radius, colorScheme, (state, scramble) -> validateScrambleAndGetLength(state, scrambleString.getScramble(), /*todo*/ false));
+	}
+
+	@Override
+	public BufferedImage getDefaultStateImage(PuzzleType puzzleType, int gap, int finalUnitSize, Map<String, Color> colorScheme) {
+		return createImage(null, gap, finalUnitSize, colorScheme, (state, scramble) -> {});
+	}
+
+	@NotNull
+	private BufferedImage createImage(ScrambleString scrambleString, int gap, int radius, Map<String, Color> colorScheme, BiConsumer<State, ScrambleString> scrambleValidator) {
 		State state = new State(new Tuple2<>(true, true));
-		validateScrambleAndGetLength(state, scrambleString.getScramble(), /*todo*/ false);
+		scrambleValidator.accept(state, scrambleString);
 		Dimension dim = getImageSize(gap, radius, null);
 		int width = dim.width;
 		int height = dim.height;

@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @Singleton
 public class ScramblePluginManager {
 
@@ -189,9 +191,17 @@ public class ScramblePluginManager {
 		return scramblePlugins.get(aClass);
 	}
 
-	public BufferedImage getScrambleImage(final ScrambleString scramble, final int gap, final int unitSize, final Map<String, Color> colorScheme) {
+	public BufferedImage getScrambleImage(@NotNull final ScrambleString scramble, final int gap, final int unitSize,
+										  @NotNull final Map<String, Color> colorScheme) {
+		checkArgument(scramble != NULL_IMPORTED_SCRUMBLE);
 		int finalUnitSize = Math.max(unitSize, scramble.getScramblePlugin().getDefaultUnitSize());
 		return scramble.getScramblePlugin().getScrambleImage(scramble, gap, finalUnitSize, colorScheme);
+	}
+
+	public BufferedImage getDefaultStateImage(PuzzleType puzzleType, final int gap, final int unitSize,
+											  @NotNull final Map<String, Color> colorScheme) {
+		int finalUnitSize = Math.max(unitSize, puzzleType.getScramblePlugin().getDefaultUnitSize());
+		return puzzleType.getScramblePlugin().getDefaultStateImage(puzzleType, gap, finalUnitSize, colorScheme);
 	}
 
 	public String getDefaultGeneratorGroup(ScramblePlugin scramblePlugin, String variationName) {

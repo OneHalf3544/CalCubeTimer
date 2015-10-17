@@ -17,9 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.jetbrains.annotations.Nullable;
-import org.jvnet.lafwidget.LafWidget;
-import org.jvnet.lafwidget.utils.LafConstants;
-import org.jvnet.substance.SubstanceLookAndFeel;
+import org.pushingpixels.lafwidget.LafWidget;
 
 import javax.swing.*;
 
@@ -110,12 +108,10 @@ public class Main implements Module {
 
                 JDialog.setDefaultLookAndFeelDecorated(true);
                 JFrame.setDefaultLookAndFeelDecorated(true);
-                UIManager.setLookAndFeel(new org.jvnet.substance.skin.SubstanceModerateLookAndFeel());
+                UIManager.setLookAndFeel(new org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel());
 
                 UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
                 UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
-                UIManager.put(LafWidget.ANIMATION_KIND, LafConstants.AnimationKind.NONE);
-                UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
 
                 CALCubeTimerFrame calCubeTimerFrame = injector.getInstance(CALCubeTimerFrame.class);
                 calCubeTimerFrame.setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);

@@ -77,6 +77,10 @@ public abstract class ScramblePlugin {
 		return null;
 	}
 
+	public BufferedImage getDefaultStateImage(PuzzleType puzzleType, int gap, int finalUnitSize, Map<String, Color> colorScheme) {
+		return null;
+	}
+
 	public abstract int getNewUnitSize(int width, int height, int gap, String variation);
 
 	public abstract Dimension getImageSize(int gap, int minxRad, String variation);

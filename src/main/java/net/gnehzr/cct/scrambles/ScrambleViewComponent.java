@@ -10,6 +10,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.Map;
+import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class ScrambleViewComponent extends JComponent {
 
@@ -23,14 +26,12 @@ public class ScrambleViewComponent extends JComponent {
 
 	private String focusedFaceId = null;
 	private BufferedImage buffer;
-	private ScramblePlugin currentPlugin = null;
 	private PuzzleType puzzleType;
-
-	private ScrambleString scrambleString = null;
 
 	// todo move to scramblePluginManager:
 	private Map<String, Color> colorScheme = null;
-	private Map<String, Shape> faces = null;
+	private Map<String, Shape> faceShapes = null;
+	private ScrambleString scrambleString;
 
 	public ScrambleViewComponent(boolean fixedSize, boolean detectColorClicks, Configuration configuration,
 								 ScramblePluginManager scramblePluginManager) {
@@ -46,30 +47,46 @@ public class ScrambleViewComponent extends JComponent {
 		configuration.addConfigurationChangeListener(createConfigurationListener(configuration));
 		this.configuration = configuration;
 		puzzleType = scramblePluginManager.NULL_PUZZLE_TYPE;
+		scrambleString = scramblePluginManager.NULL_IMPORTED_SCRUMBLE;
 	}
 
 	public void syncColorScheme(boolean defaults) {
-		if(currentPlugin != null) {
-			colorScheme = scramblePluginManager.getColorScheme(currentPlugin, defaults);
-			redo();
+		if (!puzzleType.isNullType()) {
+			colorScheme = scramblePluginManager.getColorScheme(puzzleType.getScramblePlugin(), defaults);
+			if (scrambleString != scramblePluginManager.NULL_IMPORTED_SCRUMBLE) {
+				setScramble(scrambleString, puzzleType);
+			} else {
+				setDefaultPuzzleView(puzzleType);
+			}
 		}
 	}
-	
-	public void redo() {
-		setScramble(scrambleString, puzzleType);
+
+
+	public void setDefaultPuzzleView(PuzzleType puzzleType) {
+		checkArgument(!puzzleType.isNullType());
+
+		this.puzzleType = puzzleType;
+
+		faceShapes = puzzleType.getScramblePlugin().getFaces(GAP, getUnitSize(false), this.puzzleType.getVariationName());
+		colorScheme = Objects.requireNonNull(scramblePluginManager.getColorScheme(puzzleType.getScramblePlugin(), false));
+		buffer = scramblePluginManager.getDefaultStateImage(puzzleType, GAP, getUnitSize(false), colorScheme);
+
+		repaint();	//this will cause the scramble to be drawn
+		invalidate(); //this forces the component to fit itself to its layout properly
 	}
 
 	public void setScramble(ScrambleString scrambleString, PuzzleType puzzleType) {
-		this.scrambleString = scrambleString;
+		checkArgument(!puzzleType.isNullType());
+
 		this.puzzleType = puzzleType;
+		this.scrambleString = scrambleString;
 
 		if(colorScheme == null) {
-			currentPlugin = scrambleString.getScramblePlugin();
-			colorScheme = scramblePluginManager.getColorScheme(currentPlugin, false);
+			colorScheme = scramblePluginManager.getColorScheme(puzzleType.getScramblePlugin(), false);
 		}
 
-		faces = currentPlugin.getFaces(GAP, getUnitSize(false), this.puzzleType.getVariationName());
-		buffer = scramblePluginManager.getScrambleImage(this.scrambleString, GAP, getUnitSize(false), colorScheme);
+		faceShapes = puzzleType.getScramblePlugin().getFaces(GAP, getUnitSize(false), this.puzzleType.getVariationName());
+		buffer = scramblePluginManager.getScrambleImage(scrambleString, GAP, getUnitSize(false), colorScheme);
 		repaint();	//this will cause the scramble to be drawn
 		invalidate(); //this forces the component to fit itself to its layout properly
 	}
@@ -91,7 +108,7 @@ public class ScrambleViewComponent extends JComponent {
 		if(buffer == null) {
 			return PREFERRED_SIZE;
 		}
-		Dimension d = currentPlugin.getImageSize(GAP, getUnitSize(true), puzzleType.getVariationName());
+		Dimension d = getPuzzleType().getScramblePlugin().getImageSize(GAP, getUnitSize(true), puzzleType.getVariationName());
 		if(d != null) {
 			return d;
 		}
@@ -121,7 +138,7 @@ public class ScrambleViewComponent extends JComponent {
 				g.drawImage(buffer, 0, 0, null);
 				
 				//now prepare the surface for drawing the selected face in solid
-				g.setClip(faces.get(focusedFaceId));
+				g.setClip(faceShapes.get(focusedFaceId));
 				ac = ac.derive(1.0f);
 				((Graphics2D)g).setComposite(ac);
 			}
@@ -138,7 +155,7 @@ public class ScrambleViewComponent extends JComponent {
 			repaint();
 			return;
 		}
-		focusedFaceId = faces.entrySet().stream()
+		focusedFaceId = faceShapes.entrySet().stream()
 				.filter(shape -> shape.getValue() != null && shape.getValue().contains(p))
 				.map(Map.Entry::getKey)
 				.findFirst()
@@ -149,15 +166,15 @@ public class ScrambleViewComponent extends JComponent {
 
 	public void commitColorSchemeToConfiguration() {
 		for(Map.Entry<String, Color> face : colorScheme.entrySet()) {
-			configuration.setColor(VariableKey.PUZZLE_COLOR(currentPlugin, face.getKey()), face.getValue());
+			configuration.setColor(VariableKey.PUZZLE_COLOR(puzzleType.getScramblePlugin(), face.getKey()), face.getValue());
 		}
 	}
 
 	private int getUnitSize(boolean defaults) {
 		if(fixedSize) {
-			return currentPlugin.getDefaultUnitSize();
+			return puzzleType.getScramblePlugin().getDefaultUnitSize();
 		}
-		return getPuzzleType().getPuzzleUnitSize(currentPlugin, defaults);
+		return getPuzzleType().getPuzzleUnitSize(puzzleType.getScramblePlugin(), defaults);
 	}
 
 
@@ -175,8 +192,8 @@ public class ScrambleViewComponent extends JComponent {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				if (!puzzleType.isNullType()) {
-					puzzleType.setPuzzleUnitSize(currentPlugin.getNewUnitSize(getWidth(), getHeight(), GAP, puzzleType.getVariationName()));
-					redo();
+					puzzleType.setPuzzleUnitSize(puzzleType.getScramblePlugin().getNewUnitSize(getWidth(), getHeight(), GAP, puzzleType.getVariationName()));
+					setScramble(scrambleString, puzzleType);
 				}
 			}
 		};
@@ -196,12 +213,12 @@ public class ScrambleViewComponent extends JComponent {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if(focusedFaceId != null) {
-					Color c = JColorChooser.showDialog(ScrambleViewComponent.this,
+					Color color = JColorChooser.showDialog(ScrambleViewComponent.this,
 							StringAccessor.getString("ScrambleViewComponent.choosecolor") + ": " + focusedFaceId,
-							colorScheme.get(focusedFaceId));
-					if(c != null) {
-						colorScheme.put(focusedFaceId, c);
-						redo();
+							Objects.requireNonNull(colorScheme.get(focusedFaceId)));
+					if(color != null) {
+						colorScheme.put(focusedFaceId, color);
+						setDefaultPuzzleView(puzzleType);
 					}
 					findFocusedFace(getMousePosition());
 				}
@@ -219,4 +236,5 @@ public class ScrambleViewComponent extends JComponent {
 	public PuzzleType getPuzzleType() {
 		return puzzleType;
 	}
+
 }

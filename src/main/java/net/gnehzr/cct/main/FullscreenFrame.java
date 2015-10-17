@@ -5,7 +5,6 @@ import com.google.inject.name.Named;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
-import org.jvnet.substance.SubstanceLookAndFeel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,8 +49,6 @@ public class FullscreenFrame extends JFrame {
     private JLayeredPane createFullscreenPanel(ActionMap.ToggleFullscreenTimingAction toggleFullscreenTimingAction,
                                                TimerLabel bigTimersDisplay) {
         JLayeredPane fullscreenPanel = new JLayeredPane();
-        // todo add property modification on settings change
-        fullscreenPanel.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
 
         final JButton fullScreenButton = new JButton(toggleFullscreenTimingAction);
 

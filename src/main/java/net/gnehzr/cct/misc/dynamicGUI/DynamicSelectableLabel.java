@@ -5,7 +5,7 @@ import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.StatisticsUpdateListener;
-import org.jvnet.lafwidget.LafWidget;
+import org.pushingpixels.lafwidget.LafWidget;
 
 import javax.swing.*;
 import javax.swing.border.Border;

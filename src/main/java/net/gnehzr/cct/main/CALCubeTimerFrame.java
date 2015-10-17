@@ -35,11 +35,7 @@ import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jvnet.substance.SubstanceLookAndFeel;
-import org.jvnet.substance.api.SubstanceConstants;
-import org.jvnet.substance.watermark.SubstanceImageWatermark;
-import org.jvnet.substance.watermark.SubstanceNullWatermark;
-import org.jvnet.substance.watermark.SubstanceWatermark;
+import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -55,7 +51,8 @@ import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -524,30 +521,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	public void dispose() {
 		super.dispose();
 		Main.exit(0);
-	}
-
-	void updateWatermark() {
-		SubstanceWatermark sw;
-		if(configuration.getBoolean(VariableKey.WATERMARK_ENABLED)) {
-			InputStream in;
-			try {
-				in = new FileInputStream(configuration.getString(VariableKey.WATERMARK_FILE, false));
-			} catch (FileNotFoundException e) {
-				in = CALCubeTimerFrame.class.getResourceAsStream(configuration.getString(VariableKey.WATERMARK_FILE, true));
-			}
-			SubstanceImageWatermark siw = new SubstanceImageWatermark(in);
-			siw.setKind(SubstanceConstants.ImageWatermarkKind.APP_CENTER);
-			siw.setOpacity(configuration.getFloat(VariableKey.OPACITY, false));
-			sw = siw;
-		} else {
-			sw = new SubstanceNullWatermark();
-		}
-		SubstanceLookAndFeel.setSkin(SubstanceLookAndFeel.getCurrentSkin().withWatermark(sw));
-
-		Window[] frames = Window.getWindows();
-		for (Window frame : frames) {
-			frame.repaint();
-		}
 	}
 
 	private void safeSetValue(JSpinner test, Object val, ChangeListener listenerForDisable) {

@@ -346,6 +346,16 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 		drawMinx(buffer.createGraphics(), image, gap, minxRad, colorScheme);
 		return buffer;
 	}
+
+	@Override
+	public BufferedImage getDefaultStateImage(PuzzleType puzzleType, int gap, int minxRad, Map<String, Color> colorScheme) {
+		Dimension dim = getImageSize(gap, minxRad, null);
+		BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
+		int[][] image = initializeImage();
+		drawMinx(buffer.createGraphics(), image, gap, minxRad, colorScheme);
+		return buffer;
+	}
+
 	@Override
 	public Dimension getImageSize(int gap, int minxRad, String variation) {
 		return new Dimension(getMegaminxViewWidth(gap, minxRad), getMegaminxViewHeight(gap, minxRad));

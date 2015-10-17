@@ -19,22 +19,22 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public class VariableKey<H> {
 
-	public static final VariableKey<Integer> STATS_DIALOG_FONT_SIZE = new VariableKey<Integer>("GUI_StatsDialog_fontSize");
+	public static final VariableKey<Integer> STATS_DIALOG_FONT_SIZE = new VariableKey<>("GUI_StatsDialog_fontSize");
 	public static final VariableKey<Duration> DELAY_UNTIL_INSPECTION = new VariableKey<>("GUI_Timer_delayUntilInspection");
-	public static final VariableKey<Integer> DELAY_BETWEEN_SOLVES = new VariableKey<Integer>("GUI_Timer_delayBetweenSolves"); 
-	public static final VariableKey<Integer> SWITCH_THRESHOLD = new VariableKey<Integer>("Stackmat_switchThreshold"); 
-	public static final VariableKey<Integer> MIXER_NUMBER = new VariableKey<Integer>("Stackmat_mixerNumber"); 
-	public static final VariableKey<Integer> SPLIT_KEY = new VariableKey<Integer>("Splits_splitKey"); 
-	public static final VariableKey<Integer> STACKMAT_EMULATION_KEY1 = new VariableKey<Integer>("GUI_Timer_stackmatEmulationKey1"); 
-	public static final VariableKey<Integer> STACKMAT_EMULATION_KEY2 = new VariableKey<Integer>("GUI_Timer_stackmatEmulationKey2"); 
-	public static final VariableKey<Integer> STACKMAT_SAMPLING_RATE = new VariableKey<Integer>("Stackmat_samplingRate"); 
-	public static final VariableKey<Integer> POPUP_GAP = new VariableKey<Integer>("Scramble_Popup_gap"); 
-	public static final VariableKey<Integer> METRONOME_DELAY_MIN = new VariableKey<Integer>("Misc_Metronome_delayMin"); 
-	public static final VariableKey<Integer> METRONOME_DELAY_MAX = new VariableKey<Integer>("Misc_Metronome_delayMax"); 
-	public static final VariableKey<Integer> METRONOME_DELAY = new VariableKey<Integer>("Misc_Metronome_delay"); 
-	public static final VariableKey<Integer> MAX_FONTSIZE = new VariableKey<Integer>("Scramble_fontMaxSize"); 
-	public static final VariableKey<Integer> SCRAMBLE_COMBOBOX_ROWS = new VariableKey<Integer>("Scramble_comboboxRows"); 
-	public static final VariableKey<Integer> FULLSCREEN_DESKTOP = new VariableKey<Integer>("Misc_fullscreenDesktop"); 
+	public static final VariableKey<Integer> DELAY_BETWEEN_SOLVES = new VariableKey<>("GUI_Timer_delayBetweenSolves");
+	public static final VariableKey<Integer> SWITCH_THRESHOLD = new VariableKey<>("Stackmat_switchThreshold");
+	public static final VariableKey<Integer> MIXER_NUMBER = new VariableKey<>("Stackmat_mixerNumber");
+	public static final VariableKey<Integer> SPLIT_KEY = new VariableKey<>("Splits_splitKey");
+	public static final VariableKey<Integer> STACKMAT_EMULATION_KEY1 = new VariableKey<>("GUI_Timer_stackmatEmulationKey1");
+	public static final VariableKey<Integer> STACKMAT_EMULATION_KEY2 = new VariableKey<>("GUI_Timer_stackmatEmulationKey2");
+	public static final VariableKey<Integer> STACKMAT_SAMPLING_RATE = new VariableKey<>("Stackmat_samplingRate");
+	public static final VariableKey<Integer> POPUP_GAP = new VariableKey<>("Scramble_Popup_gap");
+	public static final VariableKey<Integer> METRONOME_DELAY_MIN = new VariableKey<>("Misc_Metronome_delayMin");
+	public static final VariableKey<Integer> METRONOME_DELAY_MAX = new VariableKey<>("Misc_Metronome_delayMax");
+	public static final VariableKey<Integer> METRONOME_DELAY = new VariableKey<>("Misc_Metronome_delay");
+	public static final VariableKey<Integer> MAX_FONTSIZE = new VariableKey<>("Scramble_fontMaxSize");
+	public static final VariableKey<Integer> SCRAMBLE_COMBOBOX_ROWS = new VariableKey<>("Scramble_comboboxRows");
+	public static final VariableKey<Integer> FULLSCREEN_DESKTOP = new VariableKey<>("Misc_fullscreenDesktop");
 	public static VariableKey<Integer> UNIT_SIZE(PuzzleType variation) {
 		return new VariableKey<>("Scramble_Popup_unitSize_" + variation.getVariationName());
 	}
@@ -56,35 +56,34 @@ public class VariableKey<H> {
 		if(xmlSpecific)
 			key += "_" + xmlguiLayout.getName();
 		key += "_component"+ componentID; 
-		return new VariableKey<Integer>(key);
+		return new VariableKey<>(key);
 	}
 
 	public static VariableKey<Integer[]> JTABLE_COLUMN_ORDERING(String componentID) {
-		return new VariableKey<Integer[]>("GUI_xmlLayout_" + componentID + "_columns");  
+		return new VariableKey<>("GUI_xmlLayout_" + componentID + "_columns");
 	}
 	
-	public static final VariableKey<String> LANGUAGE = new VariableKey<String>("GUI_I18N_language");
-	public static final VariableKey<String> REGION = new VariableKey<String>("GUI_I18N_region"); 
-	public static final VariableKey<String> VOICE = new VariableKey<String>("Misc_Voices_person"); 
-	public static final VariableKey<String> DATE_FORMAT = new VariableKey<String>("Misc_dateFormat"); 
-	public static final VariableKey<String> SUNDAY_SUBMIT_URL = new VariableKey<String>("Sunday_submitURL"); 
-	public static final VariableKey<String> SUNDAY_NAME = new VariableKey<String>("Sunday_name"); 
-	public static final VariableKey<String> SMTP_FROM_ADDRESS = new VariableKey<String>("SMTP_fromAddress"); 
-	public static final VariableKey<String> SMTP_PASSWORD = new VariableKey<String>("SMTP_password"); 
+	public static final VariableKey<String> LANGUAGE = new VariableKey<>("GUI_I18N_language");
+	public static final VariableKey<String> REGION = new VariableKey<>("GUI_I18N_region");
+	public static final VariableKey<String> VOICE = new VariableKey<>("Misc_Voices_person");
+	public static final VariableKey<String> DATE_FORMAT = new VariableKey<>("Misc_dateFormat");
+	public static final VariableKey<String> SUNDAY_SUBMIT_URL = new VariableKey<>("Sunday_submitURL");
+	public static final VariableKey<String> SUNDAY_NAME = new VariableKey<>("Sunday_name");
+	public static final VariableKey<String> SMTP_FROM_ADDRESS = new VariableKey<>("SMTP_fromAddress");
+	public static final VariableKey<String> SMTP_PASSWORD = new VariableKey<>("SMTP_password");
 	public static final VariableKey<String> SMTP_PORT = new VariableKey<String>("SMTP_port"); 
-	public static final VariableKey<String> SMTP_HOST = new VariableKey<String>("SMTP_smtpHost"); 
-	public static final VariableKey<String> SMTP_USERNAME = new VariableKey<String>("SMTP_username"); 
-	public static final VariableKey<String> SUNDAY_EMAIL_ADDRESS = new VariableKey<String>("Sunday_emailAddress"); 
-	public static final VariableKey<String> SUNDAY_QUOTE = new VariableKey<String>("Sunday_quote"); 
-	public static final VariableKey<String> SUNDAY_COUNTRY = new VariableKey<String>("Sunday_country"); 
-	public static final VariableKey<String> BEST_RA_STATISTICS = new VariableKey<String>("Statistics_String_bestRA"); 
-	public static final VariableKey<String> CURRENT_AVERAGE_STATISTICS = new VariableKey<String>("Statistics_String_currentAverage"); 
-	public static final VariableKey<String> SESSION_STATISTICS = new VariableKey<String>("Statistics_String_session"); 
-	public static final VariableKey<String> LAST_VIEWED_FOLDER = new VariableKey<String>("Misc_lastViewedFolder"); 
-	public static final VariableKey<String> WATERMARK_FILE = new VariableKey<String>("Watermark_file"); 
-	public static final VariableKey<String> DEFAULT_SCRAMBLE_URL = new VariableKey<String>("Misc_defaultScrambleURL"); 
-	public static final VariableKey<String> XML_LAYOUT = new VariableKey<String>("GUI_xmlLayout_file");
-	public static final VariableKey<String> DEFAULT_SCRAMBLE_CUSTOMIZATION = new VariableKey<String>("Scramble_Default_scrambleCustomization"); 
+	public static final VariableKey<String> SMTP_HOST = new VariableKey<>("SMTP_smtpHost");
+	public static final VariableKey<String> SMTP_USERNAME = new VariableKey<>("SMTP_username");
+	public static final VariableKey<String> SUNDAY_EMAIL_ADDRESS = new VariableKey<>("Sunday_emailAddress");
+	public static final VariableKey<String> SUNDAY_QUOTE = new VariableKey<>("Sunday_quote");
+	public static final VariableKey<String> SUNDAY_COUNTRY = new VariableKey<>("Sunday_country");
+	public static final VariableKey<String> BEST_RA_STATISTICS = new VariableKey<>("Statistics_String_bestRA");
+	public static final VariableKey<String> CURRENT_AVERAGE_STATISTICS = new VariableKey<>("Statistics_String_currentAverage");
+	public static final VariableKey<String> SESSION_STATISTICS = new VariableKey<>("Statistics_String_session");
+	public static final VariableKey<String> LAST_VIEWED_FOLDER = new VariableKey<>("Misc_lastViewedFolder");
+	public static final VariableKey<String> DEFAULT_SCRAMBLE_URL = new VariableKey<>("Misc_defaultScrambleURL");
+	public static final VariableKey<String> XML_LAYOUT = new VariableKey<>("GUI_xmlLayout_file");
+	public static final VariableKey<String> DEFAULT_SCRAMBLE_CUSTOMIZATION = new VariableKey<>("Scramble_Default_scrambleCustomization");
 
 	public static VariableKey<String> scrambleGeneratorKey(PuzzleType puzzleType) {
 		return new VariableKey<>("Puzzle_ScrambleGenerator_" + puzzleType.toString());
@@ -109,7 +108,6 @@ public class VariableKey<H> {
 	public static final VariableKey<Font> SCRAMBLE_FONT = new VariableKey<>("Scramble_font");
 
 	public static final VariableKey<Boolean> SIDE_BY_SIDE_SCRAMBLE = new VariableKey<>("GUI_ScrambleView_sideBySide");
-	public static final VariableKey<Boolean> SCRAMBLE_PLUGINS_SECURE = new VariableKey<>("Scramble_Plugins_secure");
 	public static final VariableKey<Boolean> SPEAK_INSPECTION = new VariableKey<>("Misc_Voices_readInspection");
 	public static final VariableKey<Boolean> SPEAK_TIMES = new VariableKey<>("Misc_Voices_readTimes");
 	public static final VariableKey<Boolean> COMPETITION_INSPECTION = new VariableKey<>("GUI_Timer_competitionInspection");
@@ -118,21 +116,20 @@ public class VariableKey<H> {
 	public static final VariableKey<Boolean> INVERTED_HUNDREDTHS = new VariableKey<>("Stackmat_isInvertedHundredths");
 	public static final VariableKey<Boolean> INVERTED_SECONDS = new VariableKey<>("Stackmat_isInvertedSeconds");
 	public static final VariableKey<Boolean> INVERTED_MINUTES = new VariableKey<>("Stackmat_isInvertedMinutes");
-	public static final VariableKey<Boolean> SHOW_EMAIL = new VariableKey<Boolean>("Sunday_isShowAddress"); 
-	public static final VariableKey<Boolean> PROMPT_FOR_NEW_TIME = new VariableKey<Boolean>("Misc_isPromptForNewTime"); 
-	public static final VariableKey<Boolean> SMTP_ENABLED = new VariableKey<Boolean>("SMTP_isEnabled"); 
-	public static final VariableKey<Boolean> SMTP_AUTHENTICATION = new VariableKey<Boolean>("SMTP_isSmtpAuth"); 
-	public static final VariableKey<Boolean> SCRAMBLE_POPUP = new VariableKey<Boolean>("Scramble_Popup_isEnabled"); 
-	public static final VariableKey<Boolean> CHAT_WINDOW_FLASH = new VariableKey<Boolean>("IRC_Client_isChatWindowFlash"); 
-	public static final VariableKey<Boolean> TIMING_SPLITS = new VariableKey<Boolean>("Splits_isEnabled"); 
-	public static final VariableKey<Boolean> WATERMARK_ENABLED = new VariableKey<Boolean>("Watermark_isEnabled"); 
-	public static final VariableKey<Boolean> STACKMAT_ENABLED = new VariableKey<Boolean>("Stackmat_isEnabled"); 
-	public static final VariableKey<Boolean> HIDE_SCRAMBLES = new VariableKey<Boolean>("GUI_Timer_isHideScrambles"); 
-	public static final VariableKey<Boolean> SPACEBAR_ONLY = new VariableKey<Boolean>("GUI_Timer_isSpacebarOnly"); 
-	public static final VariableKey<Boolean> STACKMAT_EMULATION = new VariableKey<Boolean>("GUI_Timer_stackmatEmulation"); 
-	public static final VariableKey<Boolean> LESS_ANNOYING_DISPLAY = new VariableKey<Boolean>("GUI_Timer_isLessAnnoyingDisplay"); 
-	public static final VariableKey<Boolean> FULLSCREEN_TIMING = new VariableKey<Boolean>("GUI_Timer_isFullScreenWhileTiming"); 
-	public static final VariableKey<Boolean> METRONOME_ENABLED = new VariableKey<Boolean>("Misc_Metronome_isEnabled"); 
+	public static final VariableKey<Boolean> SHOW_EMAIL = new VariableKey<>("Sunday_isShowAddress");
+	public static final VariableKey<Boolean> PROMPT_FOR_NEW_TIME = new VariableKey<>("Misc_isPromptForNewTime");
+	public static final VariableKey<Boolean> SMTP_ENABLED = new VariableKey<>("SMTP_isEnabled");
+	public static final VariableKey<Boolean> SMTP_AUTHENTICATION = new VariableKey<>("SMTP_isSmtpAuth");
+	public static final VariableKey<Boolean> SCRAMBLE_POPUP = new VariableKey<>("Scramble_Popup_isEnabled");
+	public static final VariableKey<Boolean> CHAT_WINDOW_FLASH = new VariableKey<>("IRC_Client_isChatWindowFlash");
+	public static final VariableKey<Boolean> TIMING_SPLITS = new VariableKey<>("Splits_isEnabled");
+	public static final VariableKey<Boolean> STACKMAT_ENABLED = new VariableKey<>("Stackmat_isEnabled");
+	public static final VariableKey<Boolean> HIDE_SCRAMBLES = new VariableKey<>("GUI_Timer_isHideScrambles");
+	public static final VariableKey<Boolean> SPACEBAR_ONLY = new VariableKey<>("GUI_Timer_isSpacebarOnly");
+	public static final VariableKey<Boolean> STACKMAT_EMULATION = new VariableKey<>("GUI_Timer_stackmatEmulation");
+	public static final VariableKey<Boolean> LESS_ANNOYING_DISPLAY = new VariableKey<>("GUI_Timer_isLessAnnoyingDisplay");
+	public static final VariableKey<Boolean> FULLSCREEN_TIMING = new VariableKey<>("GUI_Timer_isFullScreenWhileTiming");
+	public static final VariableKey<Boolean> METRONOME_ENABLED = new VariableKey<>("Misc_Metronome_isEnabled");
 	public static VariableKey<Boolean> RA_TRIMMED(RollingAverageOf index, PuzzleType var) {
 		String key = "Puzzle_RA" + index.getCode() + "Trimmed";
 		if(var != null)
@@ -143,28 +140,25 @@ public class VariableKey<H> {
 		return new VariableKey<>("GUI_xmlLayout_" + src.getName() + index);
 	}
 
-	public static final VariableKey<Dimension> STATS_DIALOG_DIMENSION = new VariableKey<Dimension>("GUI_StatsDialog_dimension"); 
-	public static final VariableKey<Dimension> MAIN_FRAME_DIMENSION = new VariableKey<Dimension>("GUI_MainFrame_dimension"); 
-	public static final VariableKey<Dimension> KEYBOARD_TIMER_DIMENSION = new VariableKey<Dimension>("GUI_KeyboardTimer_dimension"); 
+	public static final VariableKey<Dimension> STATS_DIALOG_DIMENSION = new VariableKey<>("GUI_StatsDialog_dimension");
+	public static final VariableKey<Dimension> MAIN_FRAME_DIMENSION = new VariableKey<>("GUI_MainFrame_dimension");
 
-	public static final VariableKey<Point> SCRAMBLE_VIEW_LOCATION = new VariableKey<Point>("GUI_ScrambleView_location"); 
-	public static final VariableKey<Point> MAIN_FRAME_LOCATION = new VariableKey<Point>("GUI_MainFrame_location"); 
+	public static final VariableKey<Point> SCRAMBLE_VIEW_LOCATION = new VariableKey<>("GUI_ScrambleView_location");
+	public static final VariableKey<Point> MAIN_FRAME_LOCATION = new VariableKey<>("GUI_MainFrame_location");
 
-	public static final VariableKey<Color> TIMER_BG = new VariableKey<Color>("GUI_Timer_Color_background"); 
-	public static final VariableKey<Color> TIMER_FG = new VariableKey<Color>("GUI_Timer_Color_foreground"); 
-	public static final VariableKey<Color> SCRAMBLE_UNSELECTED = new VariableKey<Color>("Scramble_Color_unselected"); 
-	public static final VariableKey<Color> SCRAMBLE_SELECTED = new VariableKey<Color>("Scramble_Color_selected"); 
-	public static final VariableKey<Color> BEST_RA = new VariableKey<Color>("Statistics_Color_bestRA");
-	public static final VariableKey<Color> BEST_TIME = new VariableKey<Color>("Statistics_Color_bestTime"); 
-	public static final VariableKey<Color> CURRENT_AVERAGE = new VariableKey<Color>("Statistics_Color_currentAverage"); 
-	public static final VariableKey<Color> WORST_TIME = new VariableKey<Color>("Statistics_Color_worstTime"); 
+	public static final VariableKey<Color> TIMER_BG = new VariableKey<>("GUI_Timer_Color_background");
+	public static final VariableKey<Color> TIMER_FG = new VariableKey<>("GUI_Timer_Color_foreground");
+	public static final VariableKey<Color> SCRAMBLE_UNSELECTED = new VariableKey<>("Scramble_Color_unselected");
+	public static final VariableKey<Color> SCRAMBLE_SELECTED = new VariableKey<>("Scramble_Color_selected");
+	public static final VariableKey<Color> BEST_RA = new VariableKey<>("Statistics_Color_bestRA");
+	public static final VariableKey<Color> BEST_TIME = new VariableKey<>("Statistics_Color_bestTime");
+	public static final VariableKey<Color> CURRENT_AVERAGE = new VariableKey<>("Statistics_Color_currentAverage");
+	public static final VariableKey<Color> WORST_TIME = new VariableKey<>("Statistics_Color_worstTime");
 	public static VariableKey<Color> PUZZLE_COLOR(ScramblePlugin plugin, String faceName) {
 		return new VariableKey<>("Puzzle_Color_" + plugin.getPuzzleName() + "_face" + faceName);
 	}
 
-	public static final VariableKey<Float> OPACITY = new VariableKey<Float>("Watermark_opacity"); 
-
-	public static final VariableKey<Double> MIN_SPLIT_DIFFERENCE = new VariableKey<Double>("Splits_minimumSplitDifference"); 
+	public static final VariableKey<Double> MIN_SPLIT_DIFFERENCE = new VariableKey<>("Splits_minimumSplitDifference");
 
 	private final String propsName;
 

@@ -3,7 +3,7 @@ package net.gnehzr.cct.main;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.scrambles.ScrambleList;
-import org.jvnet.lafwidget.LafWidget;
+import org.pushingpixels.lafwidget.LafWidget;
 
 import javax.inject.Inject;
 import javax.swing.*;

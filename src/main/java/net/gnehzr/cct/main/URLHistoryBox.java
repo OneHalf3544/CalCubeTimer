@@ -2,8 +2,8 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import org.jvnet.lafwidget.LafWidget;
-import org.jvnet.substance.utils.combo.SubstanceComboBoxEditor;
+import org.pushingpixels.lafwidget.LafWidget;
+import org.pushingpixels.substance.internal.utils.combo.SubstanceComboBoxEditor;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;

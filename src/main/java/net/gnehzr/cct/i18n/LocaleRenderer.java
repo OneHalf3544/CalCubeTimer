@@ -1,7 +1,7 @@
 package net.gnehzr.cct.i18n;
 
 import net.gnehzr.cct.configuration.Configuration;
-import org.jvnet.substance.api.renderers.SubstanceDefaultListCellRenderer;
+import org.pushingpixels.substance.api.renderers.SubstanceDefaultListCellRenderer;
 
 import javax.swing.*;
 import java.awt.*;

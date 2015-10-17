@@ -5,13 +5,15 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.ScrambleViewComponent;
 import net.gnehzr.cct.statistics.Profile;
-import org.jvnet.substance.SubstanceLookAndFeel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 @Singleton
 public class ScramblePopupFrame extends JDialog {
@@ -34,12 +36,9 @@ public class ScramblePopupFrame extends JDialog {
 		incrementalScrambleView = new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
 		finalView = 			  new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
 		pane = new JPanel(new GridLayout(1, 0));
-		pane.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		pane.add(incrementalScrambleView);
 		scrambleInfoTextArea = new JTextArea();
 		scrambleInfoScroller = new JScrollPane(scrambleInfoTextArea);
-		scrambleInfoTextArea.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
-		scrambleInfoScroller.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		this.setContentPane(pane);
 		this.configuration.addConfigurationChangeListener(this::configurationChanged);
 		addMouseListener(createMouseListener());
@@ -72,6 +71,7 @@ public class ScramblePopupFrame extends JDialog {
 		}
 		super.setVisible(c);
 	}
+
 	public void configurationChanged(Profile profile) {
 		setFinalViewVisible(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE));
 		incrementalScrambleView.syncColorScheme(false);

@@ -2,8 +2,7 @@ package net.gnehzr.cct.misc;
 
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
-import org.jvnet.lafwidget.LafWidget;
-import org.jvnet.substance.SubstanceLookAndFeel;
+import org.pushingpixels.lafwidget.LafWidget;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,8 +28,6 @@ public class DialogWithDetails extends JDialog implements ActionListener {
 		
 		JTextArea detailsArea = new JTextArea("CCT " + CALCubeTimerFrame.CCT_VERSION + " " + new Date() + "\n" + details, 15, 30);
 		detailsArea.putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.FALSE);
-		detailsArea.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
-//		detailsArea.setLineWrap(true);
 		detailsPane = new JScrollPane(detailsArea);
 		detailsArea.setEditable(false);
 		

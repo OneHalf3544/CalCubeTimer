@@ -10,9 +10,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jvnet.substance.SubstanceLookAndFeel;
-import org.jvnet.substance.fonts.FontPolicy;
-import org.jvnet.substance.fonts.FontSet;
+import org.pushingpixels.substance.api.SubstanceLookAndFeel;
+import org.pushingpixels.substance.api.fonts.FontPolicy;
+import org.pushingpixels.substance.api.fonts.FontSet;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;

@@ -11,15 +11,17 @@ import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.ProfileEditor;
 import net.gnehzr.cct.misc.dynamicGUI.AABorder;
-import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleViewComponent;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SolveType;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jvnet.substance.SubstanceLookAndFeel;
+import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 import say.swing.JFontChooser;
 
 import javax.swing.*;
@@ -29,7 +31,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class ConfigurationDialog extends JDialog implements KeyListener, ActionListener, ItemListener, HyperlinkListener {
@@ -442,9 +443,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 				stackmatKeySelector1.setEnabled(stackmatEmulation.isSelected());
 				stackmatKeySelector2.setEnabled(stackmatEmulation.isSelected());
 				flashyWindow.setSelected(configuration.getBoolean(VariableKey.CHAT_WINDOW_FLASH, defaults));
-				isBackground.setSelected(configuration.getBoolean(VariableKey.WATERMARK_ENABLED, defaults));
-				backgroundFile.setText(configuration.getString(VariableKey.WATERMARK_FILE, defaults));
-				opacity.setValue((int) (10 * configuration.getFloat(VariableKey.OPACITY, defaults)));
 				backgroundFile.setEnabled(isBackground.isSelected());
 				browse.setEnabled(isBackground.isSelected());
 				opacity.setEnabled(isBackground.isSelected());
@@ -479,7 +477,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		DraggableJTable scramTable = new DraggableJTable(configuration, true, false);
 		scramTable.refreshStrings(StringAccessor.getString("ConfigurationDialog.addpuzzle"));
 		scramTable.getTableHeader().setReorderingAllowed(false);
-		scramTable.putClientProperty(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.FALSE);
 		scramTable.setShowGrid(false);
 		scramTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		scramTable.setDefaultRenderer(PuzzleType.class, puzzlesModel);
@@ -974,18 +971,17 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		options.add(Box.createHorizontalGlue());
 		JScrollPane scroller = new JScrollPane(options, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroller.getHorizontalScrollBar().setUnitIncrement(10);
-		Collection<ScramblePlugin> scramblePluginPlugins = scramblePluginManager.getScramblePlugins();
+		List<PuzzleType> scramblePlugins = scramblePluginManager.getPuzzleTypes();
 		solvedPuzzles = new ArrayList<>();
 
-		for (ScramblePlugin plugin : scramblePluginPlugins) {
-			if (!plugin.supportsScrambleImage()) {
+		for (PuzzleType puzzleType : scramblePlugins) {
+			if (!puzzleType.getScramblePlugin().supportsScrambleImage()) {
 				continue;
 			}
 			final ScrambleViewComponent scrambleViewComponent = new ScrambleViewComponent(true, true, configuration, scramblePluginManager);
 			solvedPuzzles.add(scrambleViewComponent);
 
-			ScrambleSettings scrambleSettings = new ScrambleSettings(configuration, scramblePluginManager, "", 0, null);
-			scrambleViewComponent.setScramble(scrambleViewComponent.getPuzzleType().generateScramble(scrambleSettings), scrambleViewComponent.getPuzzleType());
+			scrambleViewComponent.setDefaultPuzzleView(puzzleType);
 			scrambleViewComponent.setAlignmentY(Component.CENTER_ALIGNMENT);
 			scrambleViewComponent.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
@@ -1157,10 +1153,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		configuration.setLong(VariableKey.STACKMAT_EMULATION_KEY2, sekey2);
 
 		configuration.setBoolean(VariableKey.CHAT_WINDOW_FLASH, flashyWindow.isSelected());
-
-		configuration.setBoolean(VariableKey.WATERMARK_ENABLED, isBackground.isSelected());
-		configuration.setString(VariableKey.WATERMARK_FILE, backgroundFile.getText());
-		configuration.setFloat(VariableKey.OPACITY, (float) (opacity.getValue() / 10.));
 
 		configuration.setFont(VariableKey.SCRAMBLE_FONT, scrambleFontChooser.getFont());
 		configuration.setColor(VariableKey.SCRAMBLE_SELECTED, scrambleFontChooser.getForeground());

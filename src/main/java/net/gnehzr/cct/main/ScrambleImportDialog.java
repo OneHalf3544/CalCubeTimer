@@ -13,7 +13,7 @@ import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jvnet.lafwidget.LafWidget;
+import org.pushingpixels.lafwidget.LafWidget;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

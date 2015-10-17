@@ -193,6 +193,17 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     @Override
+    public BufferedImage getDefaultStateImage(PuzzleType puzzleType, int gap, int cubieSize, Map<String, Color> colorScheme) {
+        int cubeSize = getSizeFromVariation(puzzleType.getVariationName());
+        String[][][] image = initializeImage(cubeSize);
+
+        Dimension dim = getImageSize(gap, cubieSize, cubeSize);
+        BufferedImage buffer = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
+        drawCube(buffer.createGraphics(), image, gap, cubieSize, colorScheme);
+        return buffer;
+    }
+
+    @Override
     public int getNewUnitSize(int width, int height, int gap, String variation) {
         return getNewUnitSize(width, height, gap, getSizeFromVariation(variation));
     }
@@ -472,7 +483,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
         return new Dimension(getCubeViewWidth(unitSize, gap, size), getCubeViewHeight(unitSize, gap, size));
     }
 
-    private void drawCube(Graphics2D g, String[][][] state, int gap, int cubieSize, Map<String, Color> colorScheme) {
+    private void drawCube(Graphics2D g, String[][][] state, int gap, int cubieSize, @NotNull Map<String, Color> colorScheme) {
         int size = state[0].length;
         paintCubeFace(g, gap, 2 * gap + size * cubieSize, size, cubieSize, state[0], colorScheme);
         paintCubeFace(g, 2 * gap + size * cubieSize, 3 * gap + 2 * size * cubieSize, size, cubieSize, state[1], colorScheme);

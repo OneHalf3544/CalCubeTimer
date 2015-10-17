@@ -11,9 +11,9 @@ import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleSettings;
 import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.jetbrains.annotations.NotNull;
-import org.jvnet.lafwidget.LafWidget;
-import org.jvnet.substance.SubstanceLookAndFeel;
-import org.jvnet.substance.api.SubstanceConstants;
+import org.pushingpixels.lafwidget.LafWidget;
+import org.pushingpixels.substance.api.SubstanceConstants;
+import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;

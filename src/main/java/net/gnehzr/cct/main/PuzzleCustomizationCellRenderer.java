@@ -2,7 +2,7 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScrambleSettings;
-import org.jvnet.substance.api.renderers.SubstanceDefaultListCellRenderer;
+import org.pushingpixels.substance.api.renderers.SubstanceDefaultListCellRenderer;
 
 import javax.swing.*;
 import java.awt.*;
