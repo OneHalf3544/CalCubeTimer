@@ -11,8 +11,10 @@ import net.gnehzr.cct.dao.HibernateDaoSupport;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.misc.dynamicGUI.DynamicStringSettableManger;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -59,6 +61,8 @@ public class Main implements Module {
         binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("bigTimersDisplay")).to(TimerLabel.class).asEagerSingleton();
 
+        binder.bind(SessionsList.class).asEagerSingleton();
+        binder.bind(DynamicStringSettableManger.class).asEagerSingleton();
         binder.bind(ScramblePluginManager.class).asEagerSingleton();
 
         binder.bind(SessionFactory.class).toInstance(sessionFactory);

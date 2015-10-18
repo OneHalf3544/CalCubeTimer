@@ -2,11 +2,10 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
-import net.gnehzr.cct.configuration.Configuration;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.dao.ProfileEntity;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.PuzzleType;
@@ -17,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
+@Singleton
 public class SessionsListTableModel extends DraggableJTableModel {
 
 	private static final String SEND_TO_PROFILE = "sendToProfile";
@@ -47,10 +47,11 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	private final SessionsList sessionsList;
 
 	@Inject
-	public SessionsListTableModel(Configuration configuration, ProfileDao profileDao,
-								  CalCubeTimerModel cubeTimerModel,
-								  CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel) {
-		this.sessionsList = new SessionsList(currentSessionSolutionsTableModel, configuration, cubeTimerModel, profileDao);
+	private ProfileDao profileDao;
+
+	@Inject
+	public SessionsListTableModel(SessionsList sessionsList) {
+		this.sessionsList = sessionsList;
 	}
 
 	private void fireSessionsDeleted() {
@@ -133,7 +134,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	@Override
 	public void deleteRows(int[] indices) {
 		for(int ch = indices.length - 1; ch >= 0; ch--) {
-			sessionsList.getNthSession(indices[ch]).delete();
+			sessionsList.removeSession(sessionsList.getNthSession(indices[ch]));
 		}
 		fireTableDataChanged();
 		fireSessionsDeleted();
@@ -164,7 +165,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		jpopup.add(discard);
 		
 		JMenu sendTo = new JMenu(StringAccessor.getString("ProfileDatabase.sendto"));
-		for(ProfileEntity profile : sessionsList.profileDao.getProfileEntitiesExcept(
+		for(ProfileEntity profile : profileDao.getProfileEntitiesExcept(
 				sessionsList.cubeTimerModel.getSelectedProfile().getName())) {
 			sendTo.add(createProfileMenuItem(source, profile));
 		}
@@ -193,7 +194,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 			sessions[ch] = sessionsList.getNthSession(row);
 		}
 
-		sessionsList.sendSessionToAnotherProfile(sessions, anotherProfileName);
+		sessionsList.sendSessionToAnotherProfile(sessions, anotherProfileName, profileDao);
 
 		fireSessionsDeleted();
 	}

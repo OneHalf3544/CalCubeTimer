@@ -3,6 +3,7 @@ package net.gnehzr.cct.configuration;
 import com.google.common.collect.Iterables;
 import net.gnehzr.cct.configuration.SolveTypeTagEditorTableModel.TypeAndName;
 import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.main.CalCubeTimerModel;
@@ -31,6 +32,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ConfigurationDialog extends JDialog implements KeyListener, ActionListener, ItemListener, HyperlinkListener {
@@ -45,6 +47,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 	private final CurrentSessionSolutionsTableModel statsModel;
 	private final NumberSpeaker numberSpeaker;
 	private final CalCubeTimerModel cubeTimerModel;
+	private final SolutionDao solutionDao;
 
 	private final MouseListener mouseListener = new MouseAdapter() {
 
@@ -101,7 +104,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		}
 		public abstract void syncGUIWithConfig(boolean defaults);
 	}
-	private ArrayList<SyncGUIListener> resetListeners = new ArrayList<>();
+	private List<SyncGUIListener> resetListeners = new ArrayList<>();
 	private ComboItem[] items;
 	private StackmatInterpreter stackmat;
 	private Metronome tickTock;
@@ -110,7 +113,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 	public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
 							   ScramblePluginManager scramblePluginManager, CurrentSessionSolutionsTableModel statsModel,
 							   NumberSpeaker numberSpeaker, CalCubeTimerModel cubeTimerModel,
-							   StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
+							   SolutionDao solutionDao, StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
 		super(parent, modal);
 		this.configuration = configuration;
 		this.profileDao = profileDao;
@@ -118,10 +121,11 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		this.statsModel = statsModel;
 		this.numberSpeaker = numberSpeaker;
 		this.cubeTimerModel = cubeTimerModel;
+		this.solutionDao = solutionDao;
 		this.stackmat = stackmat;
 		this.tickTock = tickTock;
 		this.timesTable = timesTable;
-		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePluginManager, cubeTimerModel);
+		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePluginManager);
 		profilesModel = new ProfileListModel(this.profileDao);
 		createGUI();
 		setLocationRelativeTo(parent);
@@ -141,8 +145,9 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		String text = StringAccessor.getString("ConfigurationDialog.reset");
 		if(vertical && !text.isEmpty()) {
 			String t = "";
-			for(int i = 0; i < text.length(); i++)
+			for(int i = 0; i < text.length(); i++) {
 				t += "<br>" + text.substring(i, i + 1); //this is written this way to deal with unicode characters that don't fit in java char values
+			}
 			text = "<html><center>" + t.substring(4) + "</center></html>";
 		}
 		JButton reset = new JButton(text);
@@ -326,8 +331,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 				currentAverage.setBackground(configuration.getColor(VariableKey.CURRENT_AVERAGE, defaults));
 				speakTimes.setSelected(configuration.getBoolean(VariableKey.SPEAK_TIMES, defaults));
 				voices.setSelectedItem(numberSpeaker.getCurrentSpeaker());
-				tagsModel.setTags(SolveType.getSolveTypes(configuration.getStringArray(VariableKey.SOLVE_TAGS, defaults)));
-				
+				tagsModel.setTags(
+						SolveType.getSolveTypes(configuration.getStringArray(VariableKey.SOLVE_TAGS, defaults)),
+						/*todo*/ Collections.<SolveType>emptyList());
+
 				refreshDesktops();
 			}
 		};
@@ -842,14 +849,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 					profiles.setSelectedItem(cubeTimerModel.getSelectedProfile());
 					return;
 			}
+
+			// TODO load profile correctly
 			Profile profile = (Profile) profiles.getSelectedItem();
-			try {
-				profileDao.saveDatabase(profile);
-			} catch(Exception e1) {
-				LOG.info("unexpected exception", e1);
-			}
 			cubeTimerModel.setSelectedProfile(profile);
-			profileDao.loadDatabase(profile, scramblePluginManager);
 
 			configuration.loadConfiguration(profile);
 			configuration.apply(profile);

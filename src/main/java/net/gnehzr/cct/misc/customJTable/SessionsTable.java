@@ -1,7 +1,9 @@
 package net.gnehzr.cct.misc.customJTable;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.main.ScrambleCustomizationChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable.SelectionListener;
@@ -9,22 +11,31 @@ import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.SessionsListTableModel;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
+import javax.swing.table.TableModel;
 import java.awt.*;
 
+@Singleton
 public class SessionsTable extends DraggableJTable implements SelectionListener {
 
-	private final CurrentSessionSolutionsTableModel statsModel;
-	private final CalCubeTimerModel timerModel;
+	private final SolutionDao solutionDao;
+	private final SessionsList sessionsList;
+	private SessionListener sessionListener;
+	private TableModel sessionsListTableModel;
 
+	@Inject
 	public SessionsTable(CurrentSessionSolutionsTableModel statsModel, Configuration configuration,
-						 ScramblePluginManager scramblePluginManager, CalCubeTimerModel timerModel) {
+						 ScramblePluginManager scramblePluginManager, CalCubeTimerModel timerModel,
+						 SolutionDao solutionDao, SessionsList sessionsList, SessionsListTableModel sessionsListTableModel) {
 		super(configuration, false, true);
-		this.statsModel = statsModel;
-		this.timerModel = timerModel;
+		//this.statsModel = statsModel;
+		this.solutionDao = solutionDao;
+		this.sessionsList = sessionsList;
+		this.sessionsListTableModel = sessionsListTableModel;
 		this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		//for some reason, the default preferred size is huge
 		this.setPreferredScrollableViewportSize(new Dimension(0, 0));
@@ -39,27 +50,21 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		this.setRowHeight(chooserComboBox.getPreferredSize().height);
 		super.setSelectionListener(this);
 		configuration.addConfigurationChangeListener((p) -> refreshModel());
-		super.sortByColumn(new RowSorter.SortKey(0, SortOrder.DESCENDING));
 	}
 
 	@Override
 	public void rowSelected(int row) {
 		Session selected = (Session) getValueAt(row, convertColumnIndexToView(0));
-		if(statsModel.getCurrentSession() != selected) {  //we don't want to reload the current session
+		if(sessionsList.getCurrentSession() != selected) {  //we don't want to reload the current session
 			fireSessionSelected(selected);
 		}
 	}
-	
-	private SessionsListTableModel sessionsListTableModel;
 
 	@Inject
 	public void refreshModel() {
-		if(sessionsListTableModel != null) {
-			sessionsListTableModel.getSessionsList().setSessionListener(null);
-		}
-		sessionsListTableModel = timerModel.getSelectedProfile().getSessionsListTableModel();
-		sessionsListTableModel.getSessionsList().setSessionListener(l);
+		sessionsList.setSessionListener(sessionListener);
 		super.setModel(sessionsListTableModel);
+		super.sortByColumn(new RowSorter.SortKey(0, SortOrder.DESCENDING));
 	}
 	
 	@Override
@@ -67,8 +72,8 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		int modelRow = event.getFirstRow();
 		boolean oneRowSelected = (modelRow == event.getLastRow());
 		if(modelRow != -1 && event.getType() == TableModelEvent.UPDATE && oneRowSelected) {
-			Session s = sessionsListTableModel.getSessionsList().getNthSession(modelRow);
-			if(s != null && s == statsModel.getCurrentSession()) {
+			Session s = sessionsList.getNthSession(modelRow);
+			if(s != null && s == sessionsList.getCurrentSession()) {
 				//this indicates that the ScrambleCustomization of the currently selected profile has been changed
 				//we deal with this by simply reselecting the current session
 				fireSessionSelected(s);
@@ -76,14 +81,10 @@ public class SessionsTable extends DraggableJTable implements SelectionListener 
 		}
 		super.tableChanged(event);
 	}
-	
-	private SessionListener l;
-	public void setSessionListener(SessionListener sl) {
-		l = sl;
-	}
+
 	private void fireSessionSelected(Session s) {
-		if(l != null) {
-			l.sessionSelected(s);
+		if(sessionListener != null) {
+			sessionListener.sessionSelected(s);
 		}
 	}
 }

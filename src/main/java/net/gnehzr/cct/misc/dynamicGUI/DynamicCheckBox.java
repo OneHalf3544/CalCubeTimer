@@ -1,38 +1,22 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
-import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SessionsList;
-import net.gnehzr.cct.statistics.StatisticsUpdateListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListener, DynamicStringSettable, DynamicDestroyable{
+public class DynamicCheckBox extends JCheckBox implements DynamicStringSettable {
 
 	private DynamicString s = null;
-	private final Configuration configuration;
 
-	private final ConfigurationChangeListener changeListener = new ConfigurationChangeListener() {
-		@Override
-		public void configurationChanged(Profile currentProfile) {
-			update(currentProfile.getSessionsListTableModel().getSessionsList());
-		}
-
-		@Override
-		public String toString() {
-			return getClass().getEnclosingClass().getSimpleName() + ": " + getText();
-		}
-	};
-
-	public DynamicCheckBox(Configuration configuration){
-		configuration.addConfigurationChangeListener(changeListener);
-		this.configuration = configuration;
+	public DynamicCheckBox(){
 	}
 
-	public DynamicCheckBox(DynamicString s, Configuration configuration){
-		this.configuration = configuration;
-		setDynamicString(s);
+	public DynamicCheckBox(@NotNull DynamicString s){
+		this();
+		this.s = s;
+		setText(s.toString(null));
 	}
 
 	public DynamicString getDynamicString() {
@@ -41,26 +25,14 @@ public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListen
 	
 	@Override
 	public void setDynamicString(DynamicString s){
-		if(this.s != null) {
-			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
-		}
 		this.s = s;
-		if(this.s != null) {
-			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
-			update(((SessionsList) null));
-		}
 	}
 
 	@Override
-	public void update(SessionsList sessions){
+	public void updateTextFromDynamicString(Configuration configuration, SessionsList sessionsList) {
 		if(s != null) {
-			setText(s.toString(sessions));
+			setText(s.toString(sessionsList));
 		}
 	}
 
-	@Override
-	public void destroy(){
-		setDynamicString(null);
-		configuration.removeConfigurationChangeListener(changeListener);
-	}
 }

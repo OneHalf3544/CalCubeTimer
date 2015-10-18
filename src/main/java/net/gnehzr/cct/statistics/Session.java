@@ -21,7 +21,6 @@ public class Session extends Commentable implements Comparable<Session> {
 
 	private Long lastSessionId;
 	private SessionPuzzleStatistics sessionPuzzleStatistics;
-	private SessionsList sessionsList;
 	private final Configuration configuration;
 	private final LocalDateTime dateStarted;
 	private final PuzzleType puzzleType;
@@ -33,20 +32,15 @@ public class Session extends Commentable implements Comparable<Session> {
 		this.configuration = configuration;
 		this.puzzleType = puzzleType;
 		sessionPuzzleStatistics = new SessionPuzzleStatistics(this);
-		configuration.addConfigurationChangeListener(profile -> sessionPuzzleStatistics.refresh());
 	}
 
 	public LocalDateTime getStartTime() {
 		return dateStarted;
 	}
 
+	@NotNull
 	public SessionPuzzleStatistics getStatistics() {
 		return sessionPuzzleStatistics;
-	}
-
-	//this should only be called by PuzzleStatistics
-	public void setSessionsList(SessionsList sessionsList) {
-		this.sessionsList = sessionsList;
 	}
 
 	public Long getSessionId() {
@@ -59,10 +53,6 @@ public class Session extends Commentable implements Comparable<Session> {
 
 	public PuzzleType getPuzzleType() {
 		return puzzleType;
-	}
-
-	public SessionsList getSessionsList() {
-		return sessionsList;
 	}
 
 	@Override
@@ -86,10 +76,6 @@ public class Session extends Commentable implements Comparable<Session> {
 
 	public String toDateString() {
 		return configuration.getDateFormat().format(getStartTime());
-	}
-
-	public void delete() {
-		sessionsList.removeSession(this);
 	}
 
 	public SessionEntity toSessionEntity(Long profileId) {
@@ -124,11 +110,11 @@ public class Session extends Commentable implements Comparable<Session> {
 		return solutions.get(solutionIndex);
 	}
 
-	public void addSolution(Solution solution) {
+	public void addSolution(Solution solution, Runnable notifier) {
 		LOG.info("add solution {}", solution);
 		this.solutions.add(solution);
 		// todo it's will recalculate whole statistics. Can be optimized
-		this.getStatistics().refresh();
+		this.getStatistics().refresh(notifier);
 	}
 
 	@Override

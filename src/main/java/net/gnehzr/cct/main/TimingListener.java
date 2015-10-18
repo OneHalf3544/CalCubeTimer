@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import net.gnehzr.cct.statistics.Solution;
 
 public interface TimingListener {
 	/**
@@ -14,11 +15,13 @@ public interface TimingListener {
 
 	void timerStarted();
 
-	void timerAccidentlyReset(TimerState lastTimeRead);
+	void timerSplit(TimerState newSplit);
 
 	void timerStopped(TimerState newTime);
 
-	void timerSplit(TimerState newSplit);
+	void timerAccepted(Solution newTime);
+
+	void timerAccidentlyReset(TimerState lastTimeRead);
 
 	void stackmatChanged();
 }

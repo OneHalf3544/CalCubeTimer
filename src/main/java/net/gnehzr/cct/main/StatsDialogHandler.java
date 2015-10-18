@@ -92,15 +92,15 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
         switch (type) {
             case CURRENT_ROLLING_AVERAGE:
                 String currentAverageStatictic = configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, false);
-                textArea.setText(new DynamicString(currentAverageStatictic, statsModel, null, configuration).toString(avgNum, null));
+                textArea.setText(new DynamicString(currentAverageStatictic, null, configuration).toString(avgNum, null));
                 break;
             case BEST_ROLLING_AVERAGE:
                 String bestRA = configuration.getString(VariableKey.BEST_RA_STATISTICS, false);
-                textArea.setText(new DynamicString(bestRA, statsModel, null, configuration).toString(avgNum, null));
+                textArea.setText(new DynamicString(bestRA, null, configuration).toString(avgNum, null));
                 break;
             case SESSION_AVERAGE:
                 String sessionAverage = configuration.getString(VariableKey.SESSION_STATISTICS, false);
-                textArea.setText(new DynamicString(sessionAverage, statsModel, null, configuration).toString());
+                textArea.setText(new DynamicString(sessionAverage, null, configuration).toString());
                 break;
         }
     }

@@ -5,7 +5,6 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.*;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -35,38 +34,35 @@ class GuiParseSaxHandler extends DefaultHandler {
 	private CALCubeTimerFrame calCubeTimerFrame;
     private int level = -2;
     private int componentID = -1;
-    private List<String> strs;
+    private List<String> strings;
     private List<JComponent> componentTree;
     private List<Boolean> needText;
     private List<String> elementNames;
     private JFrame frame;
     private final Configuration configuration;
-    private final CurrentSessionSolutionsTableModel statsModel;
     private final DynamicBorderSetter dynamicBorderSetter;
     private final XMLGuiMessages xmlGuiMessages;
     private final ActionMap actionMap;
 
     public GuiParseSaxHandler(CALCubeTimerFrame calCubeTimerFrame, JFrame frame, Configuration configuration,
-                              CurrentSessionSolutionsTableModel statsModel, DynamicBorderSetter dynamicBorderSetter,
+                              DynamicBorderSetter dynamicBorderSetter,
                               XMLGuiMessages xmlGuiMessages, ActionMap actionMap){
         this.calCubeTimerFrame = calCubeTimerFrame;
         this.frame = frame;
         this.configuration = configuration;
-        this.statsModel = statsModel;
         this.dynamicBorderSetter = dynamicBorderSetter;
         this.xmlGuiMessages = xmlGuiMessages;
         this.actionMap = actionMap;
 
         componentTree = new ArrayList<>();
-        strs = new ArrayList<>();
+        strings = new ArrayList<>();
         needText = new ArrayList<>();
         elementNames = new ArrayList<>();
 
         calCubeTimerFrame.tabbedPanes.clear();
         calCubeTimerFrame.splitPanes.clear();
 
-        calCubeTimerFrame.dynamicStringComponents.forEach(DynamicDestroyable::destroy);
-        calCubeTimerFrame.dynamicStringComponents.clear();
+        calCubeTimerFrame.dynamicStringComponents.destroy();
     }
 
     @Override
@@ -98,14 +94,14 @@ class GuiParseSaxHandler extends DefaultHandler {
                 || elementName.equals("menu")
                 || elementName.equals("menuitem")
                 || elementName.equals("checkboxmenuitem"));
-        strs.add("");
+        strings.add("");
 
         switch (elementName) {
             case "label":
-                com = new DynamicLabel(configuration);
+                com = new DynamicLabel();
                 break;
             case "selectablelabel":
-                com = new DynamicSelectableLabel(configuration);
+                com = new DynamicSelectableLabel();
                 try {
                     if ((temp = attrs.getValue("editable")) != null)
                         ((DynamicSelectableLabel) com).setEditable(Boolean.parseBoolean(temp));
@@ -114,11 +110,11 @@ class GuiParseSaxHandler extends DefaultHandler {
                 }
                 break;
             case "button":
-                com = new DynamicButton(configuration);
+                com = new DynamicButton();
                 com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
                 break;
             case "checkbox":
-                com = new DynamicCheckBox(configuration);
+                com = new DynamicCheckBox();
                 com.setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
                 break;
             case "panel":
@@ -213,7 +209,7 @@ class GuiParseSaxHandler extends DefaultHandler {
                 };
                 break;
             case "menu":
-                JMenu menu = new DynamicMenu(configuration);
+                JMenu menu = new DynamicMenu();
                 if ((temp = attrs.getValue("mnemonic")) != null)
                     menu.setMnemonic(temp.charAt(0));
 
@@ -258,7 +254,7 @@ class GuiParseSaxHandler extends DefaultHandler {
                 com = scroll;
                 break;
             case "tabbedpane":
-                com = new DynamicTabbedPane(statsModel, configuration, xmlGuiMessages);
+                com = new DynamicTabbedPane(configuration, xmlGuiMessages);
                 com.setName(componentID + "");
                 calCubeTimerFrame.tabbedPanes.add((JTabbedPane) com);
                 break;
@@ -442,26 +438,27 @@ class GuiParseSaxHandler extends DefaultHandler {
             }
         }
 
-        if(com instanceof DynamicDestroyable)
-            calCubeTimerFrame.dynamicStringComponents.add((DynamicDestroyable)com);
+        if(com instanceof DynamicStringSettable)
+            calCubeTimerFrame.dynamicStringComponents.registerDynamicComponent((DynamicStringSettable) com);
     }
 
     @Override
     public void endElement(String namespaceURI, String sName, String qName) throws SAXException {
         if(level >= 0){
-            if(needText.get(level) && strs.get(level).length() > 0) {
+            if(needText.get(level) && strings.get(level).length() > 0) {
                 if(componentTree.get(level) instanceof DynamicStringSettable)
-                    ((DynamicStringSettable)componentTree.get(level)).setDynamicString(new DynamicString(strs.get(level), statsModel, xmlGuiMessages.XMLGUI_ACCESSOR, configuration));
+                    ((DynamicStringSettable)componentTree.get(level)).setDynamicString(new DynamicString(strings.get(level), xmlGuiMessages.XMLGUI_ACCESSOR, configuration));
             }
             if(componentTree.get(level) instanceof JTabbedPane) {
                 JTabbedPane temp = (JTabbedPane) componentTree.get(level);
                 Integer t = configuration.getInt(VariableKey.JCOMPONENT_VALUE(temp.getName(), true, configuration.getXMLGUILayout()));
-                if(t != null)
+                if(t != null) {
                     temp.setSelectedIndex(t);
+                }
             }
             componentTree.remove(level);
             elementNames.remove(level);
-            strs.remove(level);
+            strings.remove(level);
             needText.remove(level);
         }
         level--;
@@ -471,7 +468,7 @@ class GuiParseSaxHandler extends DefaultHandler {
     public void characters(char buf[], int offset, int len) throws SAXException {
         if(level >= 0 && needText.get(level)){
             String s = new String(buf, offset, len);
-            if(!s.trim().isEmpty()) strs.set(level, strs.get(level) + s);
+            if(!s.trim().isEmpty()) strings.set(level, strings.get(level) + s);
         }
     }
 

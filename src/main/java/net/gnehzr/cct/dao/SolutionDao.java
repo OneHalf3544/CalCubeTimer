@@ -3,11 +3,20 @@ package net.gnehzr.cct.dao;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SessionsList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * <p>
@@ -20,13 +29,26 @@ import java.util.List;
 @Singleton
 public class SolutionDao extends HibernateDaoSupport {
 
+    private static final Logger LOG = LogManager.getLogger(SolutionDao.class);
+
+    @Inject
+    private Configuration configuration;
+
     @Inject
     public SolutionDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
 
-    public void saveSession(SessionEntity session) {
-        insertOrUpdate(session);
+    public void saveSession(Profile profile, Session session) {
+        LOG.info("save current session for {}", profile);
+        SessionEntity sessionEntity = session.toSessionEntity(profile.getId());
+        insertOrUpdate(sessionEntity);
+        session.setSessionId(sessionEntity.getSessionId());
+    }
+
+    public void deleteSession(Session session) {
+        LOG.info("remove session {}", session);
+        doWithSession(s -> s.delete(session));
     }
 
     public SessionEntity loadSession(Session session) {
@@ -39,4 +61,24 @@ public class SolutionDao extends HibernateDaoSupport {
                 "id", profile.getId()
         ));
     }
+
+    @Deprecated // todo load sessions on demand
+    public List<Session> loadDatabase(@NotNull Profile profile, ScramblePluginManager scramblePluginManager) {
+        List<SessionEntity> sessionEntities = queryList("from SessionEntity where profile.profileId = :profileId",
+                Collections.singletonMap("profileId", profile.getId()));
+
+        return sessionEntities.stream()
+                .map(s -> s.toSession(configuration, scramblePluginManager))
+                .collect(toList());
+    }
+
+    @Deprecated // todo save solutions after each attempt
+    public void saveDatabase(Profile profile, SessionsList sessionsList) {
+        LOG.debug("save database for profile {}", profile);
+        sessionsList.removeEmptySessions();
+        sessionsList.getSessions().stream()
+                .map(s -> s.toSessionEntity(profile.getId()))
+                .forEach(this::insertOrUpdate);
+    }
+
 }

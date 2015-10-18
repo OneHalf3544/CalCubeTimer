@@ -32,7 +32,6 @@ public class SolveTime implements Comparable<SolveTime> {
 
 	public SolveTime(Duration time) {
 		this.time = time;
-		LOG.trace("new SolveTime " + time);
 	}
 
 	public SolveTime(String time) {
@@ -131,7 +130,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		return toString(true);
 	}
 
-	private String toString(boolean useClockFormat) {
+	String toString(boolean useClockFormat) {
 		return types.stream()
 				.filter(t -> !t.isSolved())
 				.findFirst()

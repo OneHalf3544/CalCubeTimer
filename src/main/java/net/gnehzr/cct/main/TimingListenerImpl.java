@@ -9,6 +9,8 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsList;
+import net.gnehzr.cct.statistics.Solution;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +34,8 @@ class TimingListenerImpl implements TimingListener {
     private CalCubeTimerModel model;
     @Inject
     private CalCubeTimerGui calCubeTimerFrame;
+    @Inject
+    private CurrentSessionSolutionsList currentSessionSolutionsList;
 
     private final Configuration configuration;
 
@@ -120,6 +124,11 @@ class TimingListenerImpl implements TimingListener {
             calCubeTimerFrame.setFullScreen(false);
         }
 
+    }
+
+    @Override
+    public void timerAccepted(Solution solution) {
+        currentSessionSolutionsList.addSolution(solution);
     }
 
     @Override

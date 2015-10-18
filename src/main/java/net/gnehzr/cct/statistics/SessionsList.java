@@ -1,9 +1,12 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.dao.ProfileEntity;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.PuzzleType;
@@ -24,12 +27,13 @@ import static java.util.stream.Collectors.toMap;
  *
  * @author OneHalf
  */
+@Singleton
 public class SessionsList implements Iterable<Session> {
 
 	private static final Logger LOG = LogManager.getLogger(SessionsListTableModel.class);
 
 	protected final Configuration configuration;
-	protected final ProfileDao profileDao;
+	private final SolutionDao solutionDao;
 	protected final CalCubeTimerModel cubeTimerModel;
 	protected final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 
@@ -38,27 +42,32 @@ public class SessionsList implements Iterable<Session> {
 	protected SessionListener listener;
 	private Map<PuzzleType, GlobalPuzzleStatistics> statisticsByType = new HashMap<>();
 
-	public SessionsList(CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel, Configuration configuration, CalCubeTimerModel cubeTimerModel, ProfileDao profileDao) {
+	@Inject
+	public SessionsList(CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel,
+						Configuration configuration, CalCubeTimerModel cubeTimerModel,
+						SolutionDao solutionDao) {
 		this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
 		this.configuration = configuration;
 		this.cubeTimerModel = cubeTimerModel;
-		this.profileDao = profileDao;
-	}
-
-	public List<PuzzleType> getUsedPuzzleTypes() {
-		return new ArrayList<>(statisticsByType.keySet());
+		this.solutionDao = solutionDao;
 	}
 
 	public GlobalPuzzleStatistics getGlobalPuzzleStatisticsForType(PuzzleType puzzleType) {
 		GlobalPuzzleStatistics globalPuzzleStatistics = statisticsByType.computeIfAbsent(puzzleType,
-				pt -> new GlobalPuzzleStatistics(pt, currentSessionSolutionsTableModel));
-		globalPuzzleStatistics.refreshStats(this);
+				pt -> {
+					GlobalPuzzleStatistics gPuzzleStat = new GlobalPuzzleStatistics(pt, this);
+					// We need some way for each profile database to listen for updates,
+					// this seems fine to me, although nasty
+					currentSessionSolutionsTableModel.addStatisticsUpdateListener(gPuzzleStat::refreshStats);
+					return gPuzzleStat;
+				});
+		globalPuzzleStatistics.refreshStats();
 		return globalPuzzleStatistics;
 	}
 
 	public void removeEmptySessions() {
 		for(Session session : this) {
-            if(session.getStatistics().getSolveCounter().getAttemptCount() == 0) {
+			if(session.getPuzzleType().isNullType() || session.getAttemptsCount() == 0) {
                 removeSession(session);
             }
         }
@@ -69,13 +78,6 @@ public class SessionsList implements Iterable<Session> {
 		return sessions.iterator();
 	}
 
-	public int getDatabaseTypeCount(SolveType t) {
-		int c = 0;
-		for(GlobalPuzzleStatistics ps : statisticsByType.values())
-			c += ps.getSolveCounter().getSolveTypeCount(t);
-		return c;
-	}
-
 	public Session getNthSession(int n) {
 		return sessions.get(n);
 	}
@@ -84,9 +86,9 @@ public class SessionsList implements Iterable<Session> {
 		return ImmutableList.copyOf(sessions);
 	}
 
-	public void setSessions(List<Session> sessions) {
+	public void setSessions(List</*todo puzzletype?*/Session> sessions) {
 		statisticsByType = sessions.stream()
-				.map(s -> new Tuple2<>(s.getPuzzleType(), s.getSessionsList().getGlobalPuzzleStatisticsForType(s.getPuzzleType())))
+				.map(s -> new Tuple2<>(s.getPuzzleType(), getGlobalPuzzleStatisticsForType(s.getPuzzleType())))
 				.collect(toMap(t -> t.v1, t -> t.v2));
 	}
 
@@ -94,7 +96,7 @@ public class SessionsList implements Iterable<Session> {
 		listener = sl;
 	}
 
-	public void sendSessionToAnotherProfile(Session[] sessions, String anotherProfileName) {
+	public void sendSessionToAnotherProfile(Session[] sessions, String anotherProfileName, ProfileDao profileDao) {
 		ProfileEntity anotherProfile = profileDao.loadProfileEntity(anotherProfileName);
 
 		for(Session session : sessions) {
@@ -105,27 +107,20 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 
-	public void addSession(Session session, Profile selectedProfile) {
-/*
-		if (!sessions.containsSession(newSession)) {
-			sessions.addSession(newSession, selectedProfile);
-		}
-		if (oldSession.getPuzzleType().isNullType()) {
-			sessions.removeSession(oldSession);
-		}
-*/
+	public void addSession(Session session) {
+		sessions.add(session);
 
 		currentSessionSolutionsTableModel.setCurrentSession(session);
 
-		sessions.add(session);
-		session.setSessionsList(this);
-		session.getSessionsList().getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats(this);
+		solutionDao.saveSession(cubeTimerModel.getSelectedProfile(), session);
+		getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats();
 		//sessionsListTableModel.fireTableDataChanged();
 	}
 
 	public void removeSession(Session session) {
 		sessions.remove(session);
-		session.getSessionsList().getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats(this);
+		solutionDao.deleteSession(session);
+		getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats();
 		//sessionsListTableModel.fireTableDataChanged();
 	}
 

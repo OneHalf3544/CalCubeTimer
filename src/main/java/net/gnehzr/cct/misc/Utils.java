@@ -13,7 +13,8 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.Duration;
-import java.util.Locale;
+import java.util.*;
+import java.util.List;
 
 public class Utils {
 
@@ -26,10 +27,6 @@ public class Utils {
 		return df;
 	}
 
-	public static String getDecimalSeparator() {
-		return "" + getDecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
-	}
-
 	private Utils() {}
 
 	public static <T extends Comparable<T>> boolean lessThan(T v1, T v2) {
@@ -40,15 +37,6 @@ public class Utils {
 		return v1.compareTo(v2) > 0;
 	}
 
-	public static boolean equalDouble(double a, double b) {
-		return round(a, 2) == round(b, 2);
-	}
-
-	private static double round(double c, int decimalPlaces) {
-		int pow = (int) Math.pow(10, decimalPlaces);
-		return Math.round(c * pow) / (double) pow;
-	}
-
 	public static String formatTime(SolveTime solveTime, boolean useClockFormat) {
 		if(solveTime.isInfiniteTime()) {
 			return "N/A";
@@ -57,7 +45,7 @@ public class Utils {
 	}
 
 	public static String format(SolveTime seconds) {
-		return getDecimalFormat().format(seconds.getTime().toMillis());
+		return getDecimalFormat().format(seconds.getTime().toMillis() / 1000.0);
 	}
 
 	public static String format(double seconds) {
@@ -181,5 +169,17 @@ public class Utils {
 
 	public static boolean notEmpty(String string) {
 		return string != null && !string.trim().isEmpty();
+	}
+
+	public static <T> T getByCircularIndex(int n, List<T> list, T defaultValue) {
+		if (list == null || list.isEmpty()) {
+			return defaultValue;
+		}
+		return getByCircularIndex(n, list);
+	}
+
+	public static <T> T getByCircularIndex(int n, List<T> list) {
+		int size = list.size();
+		return list.get(((n % size) + size) % size);
 	}
 }

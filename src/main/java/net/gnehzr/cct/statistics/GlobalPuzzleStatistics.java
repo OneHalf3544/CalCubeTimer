@@ -12,25 +12,24 @@ import java.util.function.Function;
 public class GlobalPuzzleStatistics {
 
 	private PuzzleType puzzleType;
+	private final SessionsList sessionsList;
 
 	private SolveTime bestTime;
 	private SolveTime globalAverage;
 	private Map<RollingAverageOf, SolveTime> bestRAs;
 	private SolveCounter solvesCounter;
 
-	public GlobalPuzzleStatistics(PuzzleType puzzleType,
-								  CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel) {
+	public GlobalPuzzleStatistics(PuzzleType puzzleType, SessionsList sessions) {
 		this.puzzleType = puzzleType;
-		// We need some way for each profile database to listen for updates,
-		// this seems fine to me, although nasty
-		currentSessionSolutionsTableModel.addStatisticsUpdateListener(this::refreshStats);
+		this.sessionsList = sessions;
+
 	}
 
 	public String toString() {
 		return puzzleType.toString();
 	}
 
-	void refreshStats(SessionsList sessionsList) {
+	void refreshStats() {
 		solvesCounter = new SolveCounter();
 
 		bestTime = sessionsList.getSessions().stream()

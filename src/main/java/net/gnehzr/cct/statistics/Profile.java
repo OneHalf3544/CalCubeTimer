@@ -12,15 +12,11 @@ public class Profile {
 
     private String newName;
 
-    //this maps from ScrambleVariations to PuzzleStatistics
-    SessionsListTableModel sessionsListTableModel;
-
     //constructors are private because we want only 1 instance of a profile
     //pointing to a given database
-    public Profile(Long id, String name, SessionsListTableModel sessionsListTableModel) {
+    public Profile(Long id, String name) {
         this.id = id;
         this.name = name;
-        this.sessionsListTableModel = sessionsListTableModel;
     }
 
     public Long getId() {
@@ -71,14 +67,6 @@ public class Profile {
 
     public void setName(String newName) {
         this.name = newName;
-    }
-
-    public SessionsListTableModel getSessionsListTableModel() {
-        return sessionsListTableModel;
-    }
-
-    public void setSessionsListTableModel(SessionsListTableModel sessionsListTableModel) {
-        this.sessionsListTableModel = sessionsListTableModel;
     }
 
     public String getNewName() {

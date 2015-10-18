@@ -1,7 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
+import net.gnehzr.cct.misc.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -38,10 +38,6 @@ public class SessionPuzzleStatistics {
 
     private SolveCounter solveCounter;
 
-    private List<StatisticsUpdateListener> statisticsUpdateListeners;
-    public DraggableJTableModel tableListener;
-
-
     public SessionPuzzleStatistics(Session session) {
         this.session = session;
 
@@ -53,36 +49,16 @@ public class SessionPuzzleStatistics {
         }
 
         solveCounter = new SolveCounter();
-
-        refresh();
     }
 
     public Session getSession() {
         return session;
     }
 
-    public void setStatisticsUpdateListeners(List<StatisticsUpdateListener> listener) {
-        statisticsUpdateListeners = listener;
-    }
-
-
-    public void setTableListener(DraggableJTableModel tableListener) {
-        this.tableListener = tableListener;
-    }
-
-    public void notifyListeners() {
-        if (tableListener != null) {
-            tableListener.fireTableDataChanged();
-        }
-        if (statisticsUpdateListeners != null) {
-            statisticsUpdateListeners.forEach(e -> e.update(session.getSessionsList()));
-        }
-    }
-
-    public void setSolveTypes(int row, List<SolveType> newTypes) {
+    public void setSolveTypes(int row, List<SolveType> newTypes, Runnable notifier) {
         SolveTime selectedSolve = session.getSolution(row).getTime();
         selectedSolve.setTypes(newTypes);
-        refresh();
+        refresh(notifier);
     }
 
     private void calculateCurrentAverage(@NotNull RollingAverageOf k) {
@@ -105,7 +81,7 @@ public class SessionPuzzleStatistics {
         }
     }
 
-    void refresh() {
+    void refresh(Runnable notifier) {
         wholeSessionAverage = RollingAverage.NOT_AVAILABLE;
         previousWholeSessionAverage = RollingAverage.NOT_AVAILABLE;
 
@@ -128,7 +104,7 @@ public class SessionPuzzleStatistics {
 
         solveCounter = SolveCounter.fromSolutions(session.getSolutionList());
 
-        notifyListeners();
+        notifier.run();
     }
 
     public int getRASize(RollingAverageOf num) {
@@ -245,29 +221,30 @@ public class SessionPuzzleStatistics {
         if (session.getAttemptsCount() == 0)
             return SolveTime.NA;
 
-        return session.getSolution(n).getTime();
+        return Utils.getByCircularIndex(n, session.getSolutionList()).getTime();
     }
 
     public SolveTime getAverage(int n, RollingAverageOf num) {
         if (getRollingAverageList(num).isEmpty()) {
             return SolveTime.NA;
         }
-        return getRollingAverageList(num).get(n).getAverage();
+        return Utils.getByCircularIndex(n, getRollingAverageList(num)).getAverage();
     }
+
 
     public SolveTime getSD(int n, RollingAverageOf num) {
         if (getRollingAverageList(num).isEmpty()) {
             return SolveTime.NA;
         }
 
-        return getRollingAverageList(num).get(n).getStandartDeviation();
+        return Utils.getByCircularIndex(n, getRollingAverageList(num)).getStandartDeviation();
     }
 
     public SolveTime getWorstTimeOfAverage(int n, RollingAverageOf num) {
         if (getRollingAverageList(num).isEmpty()) {
             return SolveTime.NULL_TIME;
         }
-        return getCurrentRollingAverage(num).getWorstTime();
+        return Utils.getByCircularIndex(n, averages.get(num)).getWorstTime();
     }
 
     public SolveTime getSessionSD(int n) {

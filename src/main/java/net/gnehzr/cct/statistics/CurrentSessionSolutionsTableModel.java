@@ -26,6 +26,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	private final CurrentSessionSolutionsList currentSessionSolutionsList;
 
+	private final Runnable notifier;
+
 	private String[] columnNames = new String[] {
 			"StatisticsTableModel.times",
 			"StatisticsTableModel.ra0",
@@ -53,10 +55,13 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 											 CurrentSessionSolutionsList currentSessionSolutionsList) {
 		this.currentSessionSolutionsList = currentSessionSolutionsList;
 		this.configuration = configuration;
+		notifier = currentSessionSolutionsList::notifyListeners;
 	}
 
 	public void setCurrentSession(@NotNull Session newSession) {
 		currentSessionSolutionsList.setCurrentSession(newSession);
+		configuration.addConfigurationChangeListener(profile -> newSession.getStatistics().refresh(notifier));
+		currentSessionSolutionsList.notifyListeners();
 	}
 
 	@NotNull
@@ -68,13 +73,9 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		currentSessionSolutionsList.addStatisticsUpdateListener(listener);
 	}
 
-	public void removeStatisticsUpdateListener(StatisticsUpdateListener l) {
-		currentSessionSolutionsList.removeStatisticsUpdateListener(l);
-	}
-
 	//this is needed to update the i18n text
-	public void fireStringUpdates(SessionsList sessionsList) {
-		currentSessionSolutionsList.fireStringUpdates(sessionsList);
+	public void fireStringUpdates() {
+		currentSessionSolutionsList.fireStringUpdates();
 	}
 
 	@Override
@@ -140,7 +141,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(columnIndex == 0 && value instanceof Solution) {
-			currentSessionSolutionsList.addSolution((Solution) value, rowIndex);
+			currentSessionSolutionsList.addSolution((Solution) value);
 		}
 		else if(columnIndex == 3 && value instanceof String) {
 			currentSessionSolutionsList.setComment((String) value, rowIndex);
@@ -182,7 +183,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		List<SolveType> types = typeButtons.keySet().stream()
                 .filter(key -> typeButtons.get(key).isSelected())
 				.collect(Collectors.toList());
-		getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types);
+		getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types, currentSessionSolutionsList::notifyListeners);
 		if (prevFocusOwner != null) {
 			prevFocusOwner.requestFocusInWindow();
 		}

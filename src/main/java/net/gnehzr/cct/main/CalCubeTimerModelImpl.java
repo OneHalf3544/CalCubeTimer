@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
@@ -46,7 +47,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     private InspectionState previousInpectionState = new InspectionState(Instant.now(), Instant.now());
 
-    private GeneratedScrambleList scramblesList;
+    private ScrambleList scramblesList;
 
     @Inject
     private StackmatInterpreter stackmatInterpreter;
@@ -78,11 +79,15 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
+    @Inject
+    private SolutionDao solutionDao;
+    @Inject
+    private SessionsList sessionsList;
 
     @Inject
     public CalCubeTimerModelImpl(CalCubeTimerGui calCubeTimerGui, Configuration configuration, ProfileDao profileDao,
                                  CurrentSessionSolutionsTableModel statsModel1, NumberSpeaker numberSpeaker,
-                                 ActionMap actionMap, CctModelConfigChangeListener cctModelConfigChangeListener) {
+                                 CctModelConfigChangeListener cctModelConfigChangeListener) {
         this.calCubeTimerGui = calCubeTimerGui;
         sessionSolutionsTableModel = statsModel1;
         this.configuration = configuration;
@@ -103,7 +108,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public void prepareForProfileSwitch() {
         Profile profile = getSelectedProfile();
-        profileDao.saveDatabase(profile);
+        solutionDao.saveDatabase(profile, sessionsList);
         profileDao.saveProfile(profile);
         calCubeTimerGui.saveToConfiguration();
         configuration.saveConfiguration(profile);
@@ -144,7 +149,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         LOG.debug("getNextSession");
 
         Session nextSession = sessionSolutionsTableModel.getCurrentSession();
-        SessionsList sessionsList = getSelectedProfile().getSessionsListTableModel().getSessionsList();
         if (!sessionsList.containsSession(nextSession)) {
             LOG.debug("failed to find a session to continue. try to load newest session");
             Optional<Session> nextSessionOptional = sessionsList.getSessions().stream()
@@ -174,7 +178,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public void sessionSelected(Session session) {
         sessionSolutionsTableModel.setCurrentSession(session);
-        scramblesList.setSession(session);
+        scramblesList.asGenerating().setSession(session);
         scramblesList.setScrambleNumber(scramblesList.scramblesCount() + 1);
 
         customizationEditsDisabled = true;
@@ -223,25 +227,26 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public void addTime(TimerState timerState) {
-        Solution protect = timerState.toSolution(Objects.requireNonNull(scramblesList.getCurrentScramble()), splits);
+        Solution solution = timerState.toSolution(Objects.requireNonNull(scramblesList.getCurrentScramble()), splits);
         if(penalty == null) {
-            protect.getTime().clearType();
+            solution.getTime().clearType();
         }
         else {
-            protect.getTime().setTypes(Collections.singletonList(penalty));
+            solution.getTime().setTypes(Collections.singletonList(penalty));
         }
         penalty = null;
         splits = new ArrayList<>();
         boolean sameAsLast = timerState.compareTo(lastAccepted) == 0;
         if(sameAsLast) {
-            int choice = Utils.showYesNoDialog(calCubeTimerGui.getMainFrame(), timerState.toString() + "\n" + StringAccessor.getString("CALCubeTimer.confirmduplicate"));
+            int choice = Utils.showYesNoDialog(calCubeTimerGui.getMainFrame(),
+                    timerState.toString() + "\n" + StringAccessor.getString("CALCubeTimer.confirmduplicate"));
             if(choice != JOptionPane.YES_OPTION) {
                 return;
             }
         }
 
-        if (promptNewTime(protect, sameAsLast)) {
-            sessionSolutionsTableModel.getCurrentSession().addSolution(protect);
+        if (promptNewTime(solution, sameAsLast)) {
+            timingListener.timerAccepted(solution);
         }
     }
 
@@ -355,11 +360,11 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Override
     public SessionsList getSessionsList() {
-        return this.currentProfile.getSessionsListTableModel().getSessionsList();
+        return sessionsList;
     }
 
     @Override
     public void setScramblesList(@NotNull ScrambleList scrambleList) {
-        this.scramblesList = scramblesList;
+        this.scramblesList = scrambleList;
     }
 }

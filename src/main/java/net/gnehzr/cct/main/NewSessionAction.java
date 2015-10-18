@@ -44,9 +44,7 @@ public class NewSessionAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent event) {
         Session session = new Session(LocalDateTime.now(), configuration, calCubeTimerModel.getScramblesList().getPuzzleType());
-        sessionsListTableModel.getSessionsList().addSession(
-                session,
-                calCubeTimerModel.getSelectedProfile());
+        sessionsListTableModel.getSessionsList().addSession(session);
 
         calCubeTimerModel.getScramblesList().asGenerating().setSession(session);
         calCubeTimerFrame.getTimeLabel().reset();

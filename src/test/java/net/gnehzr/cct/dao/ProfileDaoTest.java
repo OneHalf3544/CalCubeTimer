@@ -1,8 +1,5 @@
 package net.gnehzr.cct.dao;
 
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.main.CalCubeTimerModel;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
@@ -19,9 +16,9 @@ public class ProfileDaoTest {
     @Test(enabled = false)
     public void main() {
         SessionFactory sessionFactory = ProfileDao.configureSessionFactory();
-        ProfileDao profileDao = new ProfileDao(mock(Configuration.class),
-                mock(CurrentSessionSolutionsTableModel.class), mock(ScramblePluginManager.class),
-                sessionFactory, mock(SolutionDao.class), mock(CalCubeTimerModel.class));
+        ProfileDao profileDao = new ProfileDao(
+                mock(CurrentSessionSolutionsTableModel.class),
+                sessionFactory, mock(SolutionDao.class));
 
         profileDao.update(session1 -> {
             // Creating Contact entity that will be save to the sqlite database

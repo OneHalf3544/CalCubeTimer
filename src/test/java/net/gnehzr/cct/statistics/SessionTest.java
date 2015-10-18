@@ -77,7 +77,7 @@ public class SessionTest {
     private Session createSessionWithSolutions(String... time) {
         Session session = new Session(LocalDateTime.now(), configuration, puzzleType);
         for (String s : time) {
-            session.addSolution(new Solution(new SolveTime(s), createScrambleString()));
+            session.addSolution(new Solution(new SolveTime(s), createScrambleString()), () -> {});
         }
         assertEquals(session.getAttemptsCount(), time.length);
         return session;

@@ -3,8 +3,8 @@ package net.gnehzr.cct.configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import net.gnehzr.cct.statistics.SolveType;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.SolveType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,8 +13,11 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
@@ -26,6 +29,7 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
 	private List<TypeAndName> tags;
 	private List<TypeAndName> deletedTags;
+	private List<SolveType> usedTags;
 
 	private String origValue;
 
@@ -35,8 +39,10 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 		this.statsModel = statsModel;
 	}
 	public class TypeAndName {
-		public String name;
-		public SolveType type;
+
+		private String name;
+		private SolveType type;
+
 		public TypeAndName(String name, SolveType type) {
 			this.name = name;
 			this.type = type;
@@ -60,11 +66,12 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
 	}
 
-	public void setTags(Collection<SolveType> tagTypes) {
-		tags = new ArrayList<>();
+	public void setTags(Collection<SolveType> tagsFromConfig, Collection<SolveType> usedTags) {
 		deletedTags = new ArrayList<>();
-		for(SolveType t : tagTypes)
-			tags.add(new TypeAndName(t.toString(), t));
+		tags = tagsFromConfig.stream()
+				.map(t -> new TypeAndName(t.toString(), t))
+				.collect(toList());
+
 		fireTableDataChanged();
 	}
 
@@ -92,18 +99,24 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
 	@Override
 	public void deleteRows(int[] indices) {
-		for(int c = indices.length - 1; c >= 0; c--) {
-			TypeAndName tan = tags.get(indices[c]);
-			int count = statsModel.getCurrentSession().getSessionsList().getDatabaseTypeCount(tan.type);
-			if(count == 0)
-				deletedTags.add(tags.remove(indices[c])); //mark this type for deletion
-			else
-				Utils.showConfirmDialog(parent, StringAccessor.getString("SolveTypeTagEditorTableModel.deletefail") + "\n"
-						+ tan.name + "/" + count +
-						" (" + StringAccessor.getString("SolveTypeTagEditorTableModel.tag") + "/" +
-						StringAccessor.getString("SolveTypeTagEditorTableModel.instances") + ")");
-		}
+		Arrays.stream(indices)
+				.forEach(index -> {
+					TypeAndName typeAndName = tags.get(index);
+					if (usedTags.contains(typeAndName.type)) {
+						showTagDeleteFailDialog(typeAndName, /*todo count*/0);
+					} else {
+						deletedTags.add(tags.remove(index)); //mark this type for deletion
+					}
+
+				});
 		fireTableDataChanged();
+	}
+
+	private void showTagDeleteFailDialog(TypeAndName typeAndName, int count) {
+		Utils.showConfirmDialog(parent, StringAccessor.getString("SolveTypeTagEditorTableModel.deletefail") + "\n"
+				+ typeAndName.name + "/" + count +
+				" (" + StringAccessor.getString("SolveTypeTagEditorTableModel.tag") + "/" +
+				StringAccessor.getString("SolveTypeTagEditorTableModel.instances") + ")");
 	}
 
 	@Override

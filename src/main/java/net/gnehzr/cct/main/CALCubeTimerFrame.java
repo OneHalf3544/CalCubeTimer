@@ -8,6 +8,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationDialog;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.LocaleRenderer;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -21,8 +22,8 @@ import net.gnehzr.cct.misc.customJTable.SolveTimeEditor;
 import net.gnehzr.cct.misc.customJTable.SolveTimeRenderer;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicDestroyable;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
+import net.gnehzr.cct.misc.dynamicGUI.DynamicStringSettableManger;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
@@ -76,7 +77,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private JLabel onLabel = null;
 	DraggableJTable timesTable = null;
 	private JScrollPane timesScroller = null;
-	private SessionsTable sessionsTable = null;
+	@Inject
+	private SessionsTable sessionsTable;
 	ScrambleHyperlinkArea scrambleHyperlinkArea = null;
 	private ScrambleCustomizationChooserComboBox scrambleCustomizationComboBox;
 	private JPanel scrambleAttributesPanel = null;
@@ -90,6 +92,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private TimerLabel timeLabel;
 	@Inject @Named("bigTimersDisplay")
 	TimerLabel bigTimersDisplay;
+
+	@Inject
+	private SolutionDao solutionDao;
 
 	@Inject
 	NumberSpeaker numberSpeaker;
@@ -115,8 +120,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	//splitPane location later on
 	List<JTabbedPane> tabbedPanes = new ArrayList<>();
 	List<JSplitPane> splitPanes = new ArrayList<>();
-	List<DynamicDestroyable> dynamicStringComponents = new ArrayList<>();
-
+	DynamicStringSettableManger dynamicStringComponents;
 
 	final ItemListener profileComboboxListener = new ItemListener() {
 
@@ -136,7 +140,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
                 currentSessionSolutionsTableModel.removeTableModelListener(newSolutionAddedListener);
 
                 model.setSelectedProfile(affectedProfile);
-                profileDao.loadDatabase(affectedProfile, scramblePluginManager);
+                model.getSessionsList().setSessions(solutionDao.loadDatabase(affectedProfile, scramblePluginManager));
 
                 configuration.loadConfiguration(affectedProfile);
                 configuration.apply(affectedProfile);
@@ -244,12 +248,14 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Inject
 	private KeyboardHandler keyHandler;
+	@Inject
+	private SessionsList sessionsList;
 
 	@Inject
 	public CALCubeTimerFrame(CalCubeTimerModel calCubeTimerModel, StackmatInterpreter stackmatInterpreter,
 							 Configuration configuration, ProfileDao profileDao, ScramblePluginManager scramblePluginManager,
 							 DynamicBorderSetter dynamicBorderSetter,
-							 XMLGuiMessages xmlGuiMessages, ActionMap actionMap) {
+							 XMLGuiMessages xmlGuiMessages, ActionMap actionMap, DynamicStringSettableManger dynamicStringComponents) {
 		this.model = calCubeTimerModel;
 		this.stackmatInterpreter = stackmatInterpreter;
 		this.configuration = configuration;
@@ -258,10 +264,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		this.profileDao = profileDao;
 		this.dynamicBorderSetter = dynamicBorderSetter;
 		this.xmlGuiMessages = xmlGuiMessages;
-	}
-
-	public void setSelectedProfile(Profile p) {
-		profilesComboBox.setSelectedItem(p);
+		this.dynamicStringComponents = dynamicStringComponents;
 	}
 
 	@Override
@@ -307,12 +310,11 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		timesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		timesScroller = new JScrollPane(timesTable);
 
-		sessionsTable = new SessionsTable(currentSessionSolutionsTableModel, configuration, scramblePluginManager, model);
 		sessionsTable.setName("sessionsTable");
 		//TODO - this wastes space, probably not easy to fix...
 		sessionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		JScrollPane sessionsScroller = new JScrollPane(sessionsTable);
-		sessionsTable.setSessionListener(model);
+		sessionsList.setSessionListener(model);
 
 		scrambleHyperlinkArea = new ScrambleHyperlinkArea(scramblePopup, configuration, scramblePluginManager);
 		scrambleHyperlinkArea.setAlignmentX(.5f);
@@ -396,7 +398,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 		StringAccessor.clearResources();
 		xmlGuiMessages.reloadResources();
-		currentSessionSolutionsTableModel.fireStringUpdates(model.getSessionsList()); //this is necessary to update the undo-redo actions
+		currentSessionSolutionsTableModel.fireStringUpdates(); //this is necessary to update the undo-redo actions
 
 		customGUIMenu.setText(StringAccessor.getString("CALCubeTimer.loadcustomgui"));
 		timesTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
@@ -454,7 +456,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 		xmlGuiMessages.reloadResources();
 
-		DefaultHandler handler = new GuiParseSaxHandler(this, this, configuration, currentSessionSolutionsTableModel, dynamicBorderSetter, xmlGuiMessages, actionMap);
+		DefaultHandler handler = new GuiParseSaxHandler(this, this, configuration, dynamicBorderSetter, xmlGuiMessages, actionMap);
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try {
 			SAXParser saxParser = factory.newSAXParser();
@@ -483,6 +485,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			if(divide != null)
 				pane.setDividerLocation(divide);
 		}
+		dynamicStringComponents.update();
 	}
 
 	@Override
@@ -729,7 +732,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 					break;
 				}
 			}
-			attributes[ch] = new DynamicCheckBox(new DynamicString(attrs.get(ch), currentSessionSolutionsTableModel, sc.getScramblePlugin().getMessageAccessor(), configuration), configuration);
+			attributes[ch] = new DynamicCheckBox(new DynamicString(attrs.get(ch), sc.getScramblePlugin().getMessageAccessor(), configuration));
 			attributes[ch].setSelected(selected);
 			attributes[ch].setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
 			attributes[ch].setActionCommand(CalCubeTimerModel.SCRAMBLE_ATTRIBUTE_CHANGED);
@@ -764,7 +767,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
         if(configurationDialog == null) {
             configurationDialog = new ConfigurationDialog(
 					this, true, configuration, profileDao, scramblePluginManager, currentSessionSolutionsTableModel,
-                    calCubeTimerModel.getNumberSpeaker(), calCubeTimerModel, stackmatInterpreter, model.getMetronome(), timesTable);
+                    calCubeTimerModel.getNumberSpeaker(), calCubeTimerModel, solutionDao, stackmatInterpreter, model.getMetronome(),
+					timesTable);
         }
         SwingUtilities.invokeLater(() -> {
             configurationDialog.syncGUIwithConfig(false);

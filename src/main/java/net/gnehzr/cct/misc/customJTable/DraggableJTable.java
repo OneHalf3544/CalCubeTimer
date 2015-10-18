@@ -329,11 +329,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 			return;
 		}
 		defaultSort = Collections.singletonList(sortKey);
-		try {
-			getRowSorter().setSortKeys(defaultSort);
-		} catch(Exception e3) {
-			LOG.trace("ignored exception", e3);
-		}
+		getRowSorter().setSortKeys(defaultSort);
 	}
 	//returns column + 1, negative if descending, positive if ascending
 	//returns 0 if no column is sorted
