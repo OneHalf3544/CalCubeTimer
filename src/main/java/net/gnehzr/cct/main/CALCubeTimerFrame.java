@@ -547,19 +547,17 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	public void updateScramble() {
 		ScrambleString current = model.getScramblesList().getCurrentScramble();
 		LOG.debug("update scramble view for {}, {}", current, model.getScramblesList().getPuzzleType());
-		if (current != null) {
-			//set the length of the current scramble
-			safeSetValue(scrambleLengthSpinner, current.getVariation().getLength(), scrambleLengthListener);
-			//update new number of scrambles
-			safeSetScrambleNumberMax(model.getScramblesList().scramblesCount());
-			//update new scramble number
-			safeSetValue(scrambleNumber, model.getScramblesList().getScrambleNumber(), scrambleNumberListener);
-			scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getPuzzleType()); //this will update scramblePopup
+		//set the length of the current scramble
+		safeSetValue(scrambleLengthSpinner, current.getVariation().getLength(), scrambleLengthListener);
+		//update new number of scrambles
+		safeSetScrambleNumberMax(model.getScramblesList().scramblesCount());
+		//update new scramble number
+		safeSetValue(scrambleNumber, model.getScramblesList().getScrambleNumber(), scrambleNumberListener);
+		scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getPuzzleType()); //this will update scramblePopup
 
-			boolean canChangeStuff = model.getScramblesList().isLastScrambleInList();
-			scrambleCustomizationComboBox.setEnabled(canChangeStuff);
-			scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && canChangeStuff && !current.isImported());
-		}
+		boolean canChangeStuff = model.getScramblesList().isLastScrambleInList();
+		scrambleCustomizationComboBox.setEnabled(canChangeStuff);
+		scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && canChangeStuff && !current.isImported());
 	}
 
 	@Override

@@ -34,7 +34,7 @@ public class ProfileListModel extends DraggableJTableModel {
 		public void executeAction() {
 			switch(act) {
 			case ADDED:
-				profileDao.saveProfile(profile);
+				profileDao.insertProfile(profile);
 				break;
 			case RENAMED:
 				profileDao.commitRename(profile);

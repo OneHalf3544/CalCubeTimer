@@ -34,14 +34,11 @@ public class ProfileDao extends HibernateDaoSupport {
 
     private final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 
-    private SolutionDao solutionsDao;
-
     @Inject
     public ProfileDao(CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel,
-                      SessionFactory sessionFactory, SolutionDao solutionsDao) {
+                      SessionFactory sessionFactory) {
         super(sessionFactory);
         this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
-        this.solutionsDao = solutionsDao;
     }
 
     public Profile loadProfile(@NotNull String name) {
@@ -65,16 +62,16 @@ public class ProfileDao extends HibernateDaoSupport {
             profile = new Profile(profileEntity.getProfileId(), name);
             return profile;
         } else {
+            LOG.info("save profile for {}", name);
             profile = new Profile(null, name);
-            saveProfile(profile);
+            saveProfileWithoutSession(profile);
             return profile;
         }
     }
 
-    @Deprecated
-    public void saveProfile(Profile profile) {
+    public void insertProfile(Profile profile) {
         if (profile.getId() == null) {
-            LOG.info("save profile for {}", profile);
+            LOG.info("insert profile for {}", profile);
             saveProfileWithoutSession(profile);
         }
     }

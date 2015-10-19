@@ -18,7 +18,7 @@ public class ProfileDaoTest {
         SessionFactory sessionFactory = ProfileDao.configureSessionFactory();
         ProfileDao profileDao = new ProfileDao(
                 mock(CurrentSessionSolutionsTableModel.class),
-                sessionFactory, mock(SolutionDao.class));
+                sessionFactory);
 
         profileDao.update(session1 -> {
             // Creating Contact entity that will be save to the sqlite database

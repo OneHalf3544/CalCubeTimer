@@ -1,11 +1,15 @@
 package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.statistics.Session;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public class GeneratedScrambleList implements ScrambleList {
+
+	private static final Logger LOG = LogManager.getLogger(GeneratedScrambleList.class);
 
 	private final ScramblePluginManager scramblePluginManager;
 	private Session session;
@@ -14,7 +18,7 @@ public class GeneratedScrambleList implements ScrambleList {
 	private ScrambleString currentScrambleString;
 
 	public GeneratedScrambleList(Session session) {
-		this.session = session;
+		this.setSession(session);
 		this.scramblePluginManager = session.getPuzzleType().scramblePluginManager;
 		this.currentScrambleString = session.getPuzzleType().isNullType()
 				? scramblePluginManager.NULL_IMPORTED_SCRUMBLE
@@ -29,11 +33,12 @@ public class GeneratedScrambleList implements ScrambleList {
 
 	public void setSession(@NotNull Session session) {
 		this.session = Objects.requireNonNull(session);
+		LOG.info("set session to GeneratedScrambleList: {}", session);
 		this.currentScrambleString = generateScramble();
 	}
 	
 	public void setScrambleLength(int scrambleLength) {
-		session.getPuzzleType().getScrambleVariation().setLength(scrambleLength);
+		scramblePluginManager.getScrambleVariation(session.getPuzzleType()).setLength(scrambleLength);
 	}
 
 	public void updateGeneratorGroup(String generatorGroup) {

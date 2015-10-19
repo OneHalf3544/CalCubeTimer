@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +26,9 @@ public class CurrentSessionSolutionsList {
 
 	@NotNull
 	private Session currentSession;
+
+	@Inject
+	private SolutionDao solutionDao;
 
 	@Inject
 	public CurrentSessionSolutionsList(Configuration configuration, ScramblePluginManager scramblePluginManager) {
@@ -78,6 +82,7 @@ public class CurrentSessionSolutionsList {
 	}
 
 	public void addSolution(Solution solution) {
+		solutionDao.insertSolution(solution);
 		currentSession.addSolution(solution, this::notifyListeners);
 	}
 

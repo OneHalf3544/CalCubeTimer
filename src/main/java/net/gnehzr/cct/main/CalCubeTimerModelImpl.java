@@ -109,7 +109,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     public void prepareForProfileSwitch() {
         Profile profile = getSelectedProfile();
         solutionDao.saveDatabase(profile, sessionsList);
-        profileDao.saveProfile(profile);
         calCubeTimerGui.saveToConfiguration();
         configuration.saveConfiguration(profile);
     }

@@ -35,6 +35,7 @@ public class PuzzleType {
 
 	public ScrambleString generateScramble(ScrambleSettings scrambleSettings) {
 		if (isNullType()) {
+			LOG.warn("null scramble generating");
 			return scramblePluginManager.NULL_IMPORTED_SCRUMBLE;
 		}
 
@@ -106,9 +107,9 @@ public class PuzzleType {
 
 	public String toString() {
 		if(Utils.notEmpty(customization)) {
-			return plugin.getPuzzleName() + ":" + customization;
+			return getVariationName() + ":" + customization;
 		} else {
-			return plugin.getPuzzleName();
+			return getVariationName();
 		}
 	}
 

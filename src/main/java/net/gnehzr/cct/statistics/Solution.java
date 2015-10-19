@@ -25,6 +25,8 @@ public class Solution extends Commentable {
 
     private static final Logger LOG = LogManager.getLogger(Solution.class);
 
+    private Long solutionId;
+
     @NotNull
     private final SolveTime solveTime;
 
@@ -46,6 +48,14 @@ public class Solution extends Commentable {
     private Solution(@NotNull TimerState time, @NotNull ScrambleString scrambleString) {
         this.solveTime = new SolveTime(time.getTime());
         this.scrambleString = scrambleString;
+    }
+
+    public Long getSolutionId() {
+        return solutionId;
+    }
+
+    public void setSolutionId(Long solutionId) {
+        this.solutionId = solutionId;
     }
 
     public ScrambleString getScrambleString() {
@@ -71,6 +81,7 @@ public class Solution extends Commentable {
 
     public SolutionEntity toEntity() {
         return new SolutionEntity()
+                .withId(solutionId)
                 .withComment(getComment())
                 .withScramble(getScrambleString().getScramble())
                 .withSolveStart(LocalDateTime.now())

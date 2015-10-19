@@ -8,6 +8,7 @@ import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SessionsList;
+import net.gnehzr.cct.statistics.Solution;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -81,4 +82,11 @@ public class SolutionDao extends HibernateDaoSupport {
                 .forEach(this::insertOrUpdate);
     }
 
+    public void insertSolution(Solution solution) {
+        SolutionEntity entity = solution.toEntity();
+        doWithSession(session -> {
+            insert(entity);
+        });
+        solution.setSolutionId(entity.getId());
+    }
 }

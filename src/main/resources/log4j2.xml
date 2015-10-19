@@ -21,7 +21,7 @@
     </Appenders>
 
     <Loggers>
-        <logger name="net.gnehzr" level="TRACE"/>
+        <logger name="net.gnehzr" level="DEBUG"/>
         <logger name="org.kociemba" level="ERROR"/>
         <logger name="scramblePlugins" level="DEBUG"/>
         <Root level="ERROR">
