@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.PuzzleType;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.util.Comparator;
@@ -19,7 +20,7 @@ public class GlobalPuzzleStatistics {
 	private Map<RollingAverageOf, SolveTime> bestRAs;
 	private SolveCounter solvesCounter;
 
-	public GlobalPuzzleStatistics(PuzzleType puzzleType, SessionsList sessions) {
+	public GlobalPuzzleStatistics(@NotNull PuzzleType puzzleType, @NotNull SessionsList sessions) {
 		this.puzzleType = puzzleType;
 		this.sessionsList = sessions;
 
@@ -53,7 +54,6 @@ public class GlobalPuzzleStatistics {
 			}
 			int solves = sessionStatistics.getSolveCounter().getSolveCount();
 			globalAverage = SolveTime.sum(globalAverage, SolveTime.multiply(sessionStatistics.getSessionAvg(), solves));
-			
 		}
 
 		solvesCounter = SolveCounter.fromSessions(sessionsList);

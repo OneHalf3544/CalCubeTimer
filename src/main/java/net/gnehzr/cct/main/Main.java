@@ -9,6 +9,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ConfigurationDao;
 import net.gnehzr.cct.dao.HibernateDaoSupport;
 import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicStringSettableManger;
@@ -128,9 +129,11 @@ public class Main implements Module {
 
                 calCubeTimerFrame.loadXMLGUI();
 
-                calCubeTimerModel.sessionSelected(calCubeTimerModel.getNextSession(calCubeTimerFrame));
-
                 configuration1.apply(calCubeTimerModel.getSelectedProfile());
+                ScramblePluginManager scramblePluginManager = injector.getInstance(ScramblePluginManager.class);
+                SolutionDao solutionDao = injector.getInstance(SolutionDao.class);
+                calCubeTimerModel.getSessionsList().setSessions(solutionDao.loadSessions(calCubeTimerModel.getSelectedProfile(), scramblePluginManager));
+
                 calCubeTimerFrame.repaintTimes();
             } catch (Exception e) {
                 LOG.error("unexpected exception", e);

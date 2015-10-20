@@ -56,7 +56,6 @@ public class KeyboardHandler {
 		reset = true;
 		inspecting = false;
 		current = Instant.now();
-		timingListener.initializeDisplay();
 	}
 
 	public void reset() {

@@ -7,7 +7,6 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
-import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.Solution;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,7 +48,7 @@ public class SolutionDao extends HibernateDaoSupport {
 
     public void deleteSession(Session session) {
         LOG.info("remove session {}", session);
-        doWithSession(s -> s.delete(session));
+        doWithSession(s -> s.delete(session.toSessionEntity(0L)));
     }
 
     public SessionEntity loadSession(Session session) {
@@ -63,23 +62,13 @@ public class SolutionDao extends HibernateDaoSupport {
         ));
     }
 
-    @Deprecated // todo load sessions on demand
-    public List<Session> loadDatabase(@NotNull Profile profile, ScramblePluginManager scramblePluginManager) {
+    public List<Session> loadSessions(@NotNull Profile profile, ScramblePluginManager scramblePluginManager) {
         List<SessionEntity> sessionEntities = queryList("from SessionEntity where profile.profileId = :profileId",
                 Collections.singletonMap("profileId", profile.getId()));
 
         return sessionEntities.stream()
-                .map(s -> s.toSession(configuration, scramblePluginManager))
+                .map(s -> s.toSession(configuration, scramblePluginManager, this))
                 .collect(toList());
-    }
-
-    @Deprecated // todo save solutions after each attempt
-    public void saveDatabase(Profile profile, SessionsList sessionsList) {
-        LOG.debug("save database for profile {}", profile);
-        sessionsList.removeEmptySessions();
-        sessionsList.getSessions().stream()
-                .map(s -> s.toSessionEntity(profile.getId()))
-                .forEach(this::insertOrUpdate);
     }
 
     public void insertSolution(Solution solution) {
@@ -88,5 +77,9 @@ public class SolutionDao extends HibernateDaoSupport {
             insert(entity);
         });
         solution.setSolutionId(entity.getId());
+    }
+
+    public void deleteSolution(Solution solution) {
+        doWithSession(s -> s.delete(solution.toEntity()));
     }
 }

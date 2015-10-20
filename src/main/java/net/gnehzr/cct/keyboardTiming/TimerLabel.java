@@ -10,6 +10,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.main.ScrambleHyperlinkArea;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
@@ -64,14 +65,14 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	Hashtable<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
 
 	private KeyboardHandler keyHandler;
+	@Inject
 	private ScrambleHyperlinkArea scrambleHyperlinkArea;
 	private final Configuration configuration;
 
 	@Inject
-	public TimerLabel(ScrambleHyperlinkArea scrambleHyperlinkArea, Configuration configuration) {
+	public TimerLabel(Configuration configuration) {
 		super("");
 		LOG.debug("TimerLabel created");
-		this.scrambleHyperlinkArea = scrambleHyperlinkArea;
 		this.configuration = configuration;
 		addComponentListener(this);
 		setFocusable(true);
@@ -94,6 +95,20 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 			}
 		});
 		setFocusTraversalKeysEnabled(false);
+	}
+
+	@Inject
+	public void initializeDisplay() {
+		updateHandsState(TimerState.ZERO);
+		setTime(TimerState.ZERO);
+	}
+
+	public void updateHandsState(TimerState newTime) {
+		if(newTime instanceof StackmatState) {
+			StackmatState newState = (StackmatState) newTime;
+			setHands(newState.leftHand(), newState.rightHand());
+			setStackmatGreenLight(newState.isGreenLight());
+		}
 	}
 
 	public void setTime(TimerState time) {

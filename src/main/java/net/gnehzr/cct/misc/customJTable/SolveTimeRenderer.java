@@ -13,11 +13,11 @@ import java.awt.*;
 
 public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 	// Will highlight times from current average and from best rolling average
-	private CurrentSessionSolutionsTableModel statsModel;
+	private SessionsList sessionsList;
 	private final Configuration configuration;
 
-	public SolveTimeRenderer(CurrentSessionSolutionsTableModel statsModel, Configuration configuration) {
-		this.statsModel = statsModel;
+	public SolveTimeRenderer(SessionsList sessionsList, Configuration configuration) {
+		this.sessionsList = sessionsList;
 		this.configuration = configuration;
 		setOpaque(true);
 	}
@@ -39,7 +39,7 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color background = null;
 
 		if(value instanceof SolveTime || value instanceof RollingAverageTime) {
-			SessionPuzzleStatistics sessionStatistics = statsModel.getCurrentSession().getStatistics();
+			SessionPuzzleStatistics sessionStatistics = sessionsList.getCurrentSession().getStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
 			SolveTime solveTime;

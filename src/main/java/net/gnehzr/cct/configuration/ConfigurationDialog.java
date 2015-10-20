@@ -3,7 +3,6 @@ package net.gnehzr.cct.configuration;
 import com.google.common.collect.Iterables;
 import net.gnehzr.cct.configuration.SolveTypeTagEditorTableModel.TypeAndName;
 import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.main.CalCubeTimerModel;
@@ -17,7 +16,6 @@ import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleViewComponent;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SolveType;
 import org.apache.logging.log4j.LogManager;
@@ -44,10 +42,8 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 	private final Configuration configuration;
 	private final ProfileDao profileDao;
 	private final ScramblePluginManager scramblePluginManager;
-	private final CurrentSessionSolutionsTableModel statsModel;
 	private final NumberSpeaker numberSpeaker;
 	private final CalCubeTimerModel cubeTimerModel;
-	private final SolutionDao solutionDao;
 
 	private final MouseListener mouseListener = new MouseAdapter() {
 
@@ -111,17 +107,15 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 	JTable timesTable;
 
 	public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
-							   ScramblePluginManager scramblePluginManager, CurrentSessionSolutionsTableModel statsModel,
+							   ScramblePluginManager scramblePluginManager,
 							   NumberSpeaker numberSpeaker, CalCubeTimerModel cubeTimerModel,
-							   SolutionDao solutionDao, StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
+							   StackmatInterpreter stackmat, Metronome tickTock, JTable timesTable) {
 		super(parent, modal);
 		this.configuration = configuration;
 		this.profileDao = profileDao;
 		this.scramblePluginManager = scramblePluginManager;
-		this.statsModel = statsModel;
 		this.numberSpeaker = numberSpeaker;
 		this.cubeTimerModel = cubeTimerModel;
-		this.solutionDao = solutionDao;
 		this.stackmat = stackmat;
 		this.tickTock = tickTock;
 		this.timesTable = timesTable;
@@ -307,7 +301,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		
 		DraggableJTable tagsTable = new DraggableJTable(configuration, true, false);
 		tagsTable.getTableHeader().setReorderingAllowed(false);
-		tagsModel = new SolveTypeTagEditorTableModel(tagsTable, configuration, statsModel);
+		tagsModel = new SolveTypeTagEditorTableModel(tagsTable, configuration);
 		tagsTable.refreshStrings(StringAccessor.getString("ConfigurationDialog.addtag"));
 		tagsTable.setDefaultEditor(TypeAndName.class, tagsModel.editor);
 		tagsTable.setModel(tagsModel);

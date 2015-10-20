@@ -4,10 +4,10 @@ import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.GeneratedScrambleList;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.speaking.NumberSpeaker;
@@ -22,11 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Singleton;
 import javax.swing.*;
-import javax.swing.Timer;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -42,7 +43,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     private static final Logger LOG = LogManager.getLogger(CalCubeTimerModelImpl.class);
 
     private /*final */ CalCubeTimerGui calCubeTimerGui;
-    private final CurrentSessionSolutionsTableModel sessionSolutionsTableModel;
     private final Configuration configuration;
 
     private InspectionState previousInpectionState = new InspectionState(Instant.now(), Instant.now());
@@ -76,30 +76,42 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     private boolean fullscreen = false;
     private Instant inspectionStart = null;
     private Profile currentProfile;
-
-    @Inject
-    private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
-    @Inject
-    private SolutionDao solutionDao;
     @Inject
     private SessionsList sessionsList;
 
+    SessionListener sessionListener = new SessionListener() {
+        @Override
+        public void sessionSelected(Session session) {
+            scramblesList.asGenerating().generateScrambleForCurrentSession();
+
+            customizationEditsDisabled = true;
+            calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(session.getPuzzleType()); //this will update the scramble
+            customizationEditsDisabled = false;
+        }
+
+        @Override
+        public void sessionsDeleted() {
+            Session session = sessionsList.getCurrentSession();
+            sessionsList.removeSession(session);
+            calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(session.getPuzzleType());
+        }
+    };
+
     @Inject
     public CalCubeTimerModelImpl(CalCubeTimerGui calCubeTimerGui, Configuration configuration, ProfileDao profileDao,
-                                 CurrentSessionSolutionsTableModel statsModel1, NumberSpeaker numberSpeaker,
-                                 CctModelConfigChangeListener cctModelConfigChangeListener) {
+                                 NumberSpeaker numberSpeaker, CctModelConfigChangeListener cctModelConfigChangeListener) {
         this.calCubeTimerGui = calCubeTimerGui;
-        sessionSolutionsTableModel = statsModel1;
         this.configuration = configuration;
         this.profileDao = profileDao;
         this.numberSpeaker = numberSpeaker;
         configuration.addConfigurationChangeListener(cctModelConfigChangeListener);
-        scramblesList = new GeneratedScrambleList(sessionSolutionsTableModel.getCurrentSession());
         LOG.debug("model created");
     }
 
     @Inject
     void initialize() {
+        scramblesList = new GeneratedScrambleList(sessionsList);
+        sessionsList.addSessionListener(sessionListener);
         updateInspectionTimer = new Timer(90, e -> calCubeTimerGui.updateInspection());
         metronome = Metronome.createTickTockTimer(Duration.ofSeconds(1));
         LOG.debug("model initialized");
@@ -108,7 +120,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public void prepareForProfileSwitch() {
         Profile profile = getSelectedProfile();
-        solutionDao.saveDatabase(profile, sessionsList);
+        profileDao.saveLastSession(profile, sessionsList);
         calCubeTimerGui.saveToConfiguration();
         configuration.saveConfiguration(profile);
     }
@@ -144,52 +156,21 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     //if we deleted the current session, should we create a new one, or load the "nearest" session?
     @Override
-    public Session getNextSession(CALCubeTimerFrame calCubeTimerFrame) {
+    @Deprecated
+    public Session getCurrentSession() {
         LOG.debug("getNextSession");
-
-        Session nextSession = sessionSolutionsTableModel.getCurrentSession();
-        if (!sessionsList.containsSession(nextSession)) {
-            LOG.debug("failed to find a session to continue. try to load newest session");
-            Optional<Session> nextSessionOptional = sessionsList.getSessions().stream()
-                    .max(Comparator.comparing(Session::getStartTime));
-
-            if (nextSessionOptional.isPresent()) {
-                LOG.debug("newest session found");
-                nextSession = nextSessionOptional.get();
-            } else {
-                nextSession = new Session(LocalDateTime.now(), configuration, scramblesList.getPuzzleType());
-                currentSessionSolutionsTableModel.setCurrentSession(nextSession);
-            }
-        }
-        return nextSession;
+        return sessionsList.getCurrentSession();
     }
 
     @Override
     public void setSelectedProfile(Profile currentProfile) {
+        LOG.info("setSelectedProfile: {}", currentProfile);
         this.currentProfile = currentProfile;
     }
 
     @Override
     public Profile getSelectedProfile() {
         return currentProfile;
-    }
-
-    @Override
-    public void sessionSelected(Session session) {
-        sessionSolutionsTableModel.setCurrentSession(session);
-        scramblesList.asGenerating().setSession(session);
-        scramblesList.setScrambleNumber(scramblesList.scramblesCount() + 1);
-
-        customizationEditsDisabled = true;
-        calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(session.getPuzzleType()); //this will update the scramble
-        customizationEditsDisabled = false;
-    }
-
-    @Override
-    public void sessionsDeleted() {
-        Session session = getNextSession(calCubeTimerGui.getMainFrame());
-        sessionSolutionsTableModel.setCurrentSession(session);
-        calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(session.getPuzzleType());
     }
 
     @Override
@@ -247,6 +228,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         if (promptNewTime(solution, sameAsLast)) {
             timingListener.timerAccepted(solution);
         }
+        getScramblesList().generateNext();
+        calCubeTimerGui.updateScramble();
     }
 
     private boolean promptNewTime(Solution protect, boolean sameAsLast) {
@@ -334,16 +317,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public void setLoadedLocale(LocaleAndIcon newLocale) {
         this.loadedLocale = newLocale;
-    }
-
-    @Override
-    public boolean getCustomizationEditsDisabled() {
-        return customizationEditsDisabled;
-    }
-
-    @Override
-    public void setCustomizationEditsDisabled(boolean b) {
-        this.customizationEditsDisabled = b;
     }
 
     @Override

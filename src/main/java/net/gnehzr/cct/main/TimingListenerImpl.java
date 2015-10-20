@@ -7,9 +7,8 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
-import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsList;
+import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.Solution;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +34,7 @@ class TimingListenerImpl implements TimingListener {
     @Inject
     private CalCubeTimerGui calCubeTimerFrame;
     @Inject
-    private CurrentSessionSolutionsList currentSessionSolutionsList;
+    private SessionsList sessionsList;
 
     private final Configuration configuration;
 
@@ -50,35 +49,19 @@ class TimingListenerImpl implements TimingListener {
     @Inject
     public TimingListenerImpl(Configuration configuration) {
         this.configuration = configuration;
+    }
+
+    @Inject
+    void init() {
         configuration.addConfigurationChangeListener(p -> configurationChanged());
     }
 
     @Override
     public void refreshDisplay(TimerState newTime) {
-        updateHandsState(newTime);
+        timeLabel.updateHandsState(newTime);
         if(!model.isInspecting()) {
-            setTimeLabels(newTime);
-        }
-    }
-
-    @Override
-    // todo move to TimerLabel?
-    public void initializeDisplay() {
-        TimerState zeroTimerState = TimerState.ZERO;
-        updateHandsState(zeroTimerState);
-        setTimeLabels(zeroTimerState);
-    }
-
-    private void setTimeLabels(TimerState newTime) {
-        timeLabel.setTime(newTime);
-        bigTimersDisplay.setTime(newTime);
-    }
-
-    private void updateHandsState(TimerState newTime) {
-        if(newTime instanceof StackmatState) {
-            StackmatState newState = (StackmatState) newTime;
-            timeLabel.setHands(newState.leftHand(), newState.rightHand());
-            timeLabel.setStackmatGreenLight(newState.isGreenLight());
+            timeLabel.setTime(newTime);
+            bigTimersDisplay.setTime(newTime);
         }
     }
 
@@ -128,7 +111,7 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerAccepted(Solution solution) {
-        currentSessionSolutionsList.addSolution(solution);
+        sessionsList.addSolutionToCurrentSession(solution);
     }
 
     @Override

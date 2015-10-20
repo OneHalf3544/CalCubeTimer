@@ -3,7 +3,6 @@ package net.gnehzr.cct.configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.SolveType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +24,6 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
 	private JTable parent;
 	private final Configuration configuration;
-	private final CurrentSessionSolutionsTableModel statsModel;
 
 	private List<TypeAndName> tags;
 	private List<TypeAndName> deletedTags;
@@ -33,11 +31,11 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 
 	private String origValue;
 
-	public SolveTypeTagEditorTableModel(JTable parent, Configuration configuration, CurrentSessionSolutionsTableModel statsModel) {
+	public SolveTypeTagEditorTableModel(JTable parent, Configuration configuration) {
 		this.parent = parent;
 		this.configuration = configuration;
-		this.statsModel = statsModel;
 	}
+
 	public class TypeAndName {
 
 		private String name;

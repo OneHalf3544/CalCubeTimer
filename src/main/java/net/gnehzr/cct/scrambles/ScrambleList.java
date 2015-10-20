@@ -1,7 +1,6 @@
 package net.gnehzr.cct.scrambles;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -20,12 +19,12 @@ public interface ScrambleList {
 
 	int scramblesCount();
 
-	@Nullable
+	@NotNull
 	ScrambleString getCurrentScramble();
 
 	boolean isLastScrambleInList();
 
-	ScrambleString getNext();
+	ScrambleString generateNext();
 
 	int getScrambleNumber();
 
@@ -33,13 +32,17 @@ public interface ScrambleList {
 
 	boolean isGenerating();
 
+	default boolean isImported() {
+		return !isGenerating();
+	}
+
 	default GeneratedScrambleList asGenerating() {
 		checkState(isGenerating());
 		return ((GeneratedScrambleList) this);
 	}
 
 	default ImportedScrambleList asImported() {
-		checkState(isGenerating());
+		checkState(isImported());
 		return ((ImportedScrambleList) this);
 	}
 }

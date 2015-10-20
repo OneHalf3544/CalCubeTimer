@@ -34,7 +34,7 @@ public interface CalCubeTimerGui {
 
     void updateGeneratorField(boolean generatorEnabled, String generator);
 
-    JSpinner getScrambleNumber();
+    JSpinner getScrambleNumberSpinner();
 
     JSpinner getScrambleLengthSpinner();
 

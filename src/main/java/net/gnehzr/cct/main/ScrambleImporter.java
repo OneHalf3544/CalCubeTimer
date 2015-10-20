@@ -31,7 +31,7 @@ public class ScrambleImporter {
     }
 
     public void importScrambles(PuzzleType puzzleType, List<ScrambleString> scramblePlugins, CALCubeTimerFrame calCubeTimer) {
-        model.setScramblesList(new ImportedScrambleList(puzzleType, scramblePlugins));
+        model.setScramblesList(new ImportedScrambleList(puzzleType, scramblePlugins, calCubeTimerFrame));
         calCubeTimer.getScrambleCustomizationComboBox().setSelectedItem(model.getScramblesList().getPuzzleType());
         calCubeTimer.updateScramble();
     }

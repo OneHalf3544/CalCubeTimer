@@ -4,10 +4,6 @@ import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.Solution;
 
 public interface TimingListener {
-	/**
-	 * Set 0.00 value for time labels
-	 */
-	void initializeDisplay();
 
 	void refreshDisplay(TimerState currTime);
 

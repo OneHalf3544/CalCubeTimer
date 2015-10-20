@@ -7,6 +7,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
 import net.gnehzr.cct.statistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,6 +53,8 @@ public class ActionMap {
     private CurrentSessionSolutionsTableModel statsModel;
     @Inject
     private ToggleFullscreenTimingAction toggleFullscreenTimingAction;
+    @Inject
+    private SessionsList sessionsList;
 
     @Inject
 	public ActionMap() {
@@ -84,7 +87,7 @@ public class ActionMap {
                 return a;
             }
             case RESET_ACTION: {
-                AbstractAction a = new ResetAction(calCubeTimerFrame, configuration);
+                AbstractAction a = new ResetAction(calCubeTimerFrame, configuration, sessionsList);
                 a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
                 return a;
             }
@@ -121,7 +124,7 @@ public class ActionMap {
                 return new StatusLightAction(calCubeTimerFrame);
             }
             case TOGGLE_HIDE_SCRAMBLES: {
-                return new HideScramblesAction(calCubeTimerFrame);
+                return new HideScramblesAction(calCubeTimerFrame, configuration, this);
             }
             case TOGGLE_SPACEBAR_STARTS_TIMER_ACTION: {
                 return new SpacebarOptionAction(configuration);

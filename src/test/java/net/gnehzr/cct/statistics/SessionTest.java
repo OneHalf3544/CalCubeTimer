@@ -1,6 +1,7 @@
 package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.scrambles.*;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.BeforeClass;
@@ -75,9 +76,9 @@ public class SessionTest {
     }
 
     private Session createSessionWithSolutions(String... time) {
-        Session session = new Session(LocalDateTime.now(), configuration, puzzleType);
+        Session session = new Session(LocalDateTime.now(), configuration, puzzleType, mock(SolutionDao.class));
         for (String s : time) {
-            session.addSolution(new Solution(new SolveTime(s), createScrambleString()), () -> {});
+            session.addSolution(new Solution(new SolveTime(s), createScrambleString()), () -> { });
         }
         assertEquals(session.getAttemptsCount(), time.length);
         return session;

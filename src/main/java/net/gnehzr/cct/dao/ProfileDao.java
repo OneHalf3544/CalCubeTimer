@@ -3,9 +3,9 @@ package net.gnehzr.cct.dao;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -32,13 +32,9 @@ public class ProfileDao extends HibernateDaoSupport {
 
     public static final String GUEST_NAME = "Guest";
 
-    private final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
-
     @Inject
-    public ProfileDao(CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel,
-                      SessionFactory sessionFactory) {
+    public ProfileDao(SessionFactory sessionFactory) {
         super(sessionFactory);
-        this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
     }
 
     public Profile loadProfile(@NotNull String name) {
@@ -64,7 +60,7 @@ public class ProfileDao extends HibernateDaoSupport {
         } else {
             LOG.info("save profile for {}", name);
             profile = new Profile(null, name);
-            saveProfileWithoutSession(profile);
+            saveProfile(profile, null);
             return profile;
         }
     }
@@ -72,12 +68,12 @@ public class ProfileDao extends HibernateDaoSupport {
     public void insertProfile(Profile profile) {
         if (profile.getId() == null) {
             LOG.info("insert profile for {}", profile);
-            saveProfileWithoutSession(profile);
+            saveProfile(profile, null);
         }
     }
 
-    private void saveProfileWithoutSession(Profile profile) {
-        ProfileEntity entity = profile.toEntity(currentSessionSolutionsTableModel.getCurrentSession().getSessionId());
+    private void saveProfile(Profile profile, Long lastSessionId) {
+        ProfileEntity entity = profile.toEntity(lastSessionId);
         insertOrUpdate(entity);
         profile.setId(entity.getProfileId());
     }
@@ -94,7 +90,7 @@ public class ProfileDao extends HibernateDaoSupport {
 
     public Profile getOrCreateGuestProfile() {
         Profile temp = loadProfile(GUEST_NAME);
-        saveProfileWithoutSession(temp);
+        saveProfile(temp, null);
         return temp;
     }
 
@@ -127,5 +123,10 @@ public class ProfileDao extends HibernateDaoSupport {
         for (Session session : sessions) {
             insertOrUpdate(session.toSessionEntity(anotherProfile.getProfileId()));
         }
+    }
+
+    public void saveLastSession(Profile profile, SessionsList sessionsList) {
+        LOG.debug("save last session id for profile {}", profile);
+        saveProfile(profile, sessionsList.getCurrentSession().getSessionId());
     }
 }

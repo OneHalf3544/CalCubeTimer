@@ -111,7 +111,7 @@ public class SessionEntity {
         return this;
     }
 
-    public Session toSession(Configuration configuration, ScramblePluginManager pluginManager) {
-        return new Session(sessionStart, configuration, pluginManager.getPuzzleTypeByString(scrambleCustomization));
+    public Session toSession(Configuration configuration, ScramblePluginManager pluginManager, SolutionDao solutionDao) {
+        return new Session(sessionStart, configuration, pluginManager.getPuzzleTypeByString(variationName), solutionDao);
     }
 }

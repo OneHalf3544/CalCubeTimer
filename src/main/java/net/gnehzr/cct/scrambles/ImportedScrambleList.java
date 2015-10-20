@@ -1,8 +1,10 @@
 package net.gnehzr.cct.scrambles;
 
 import com.google.common.collect.ImmutableList;
+import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CalCubeTimerGui;
+import net.gnehzr.cct.misc.Utils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -10,10 +12,13 @@ public class ImportedScrambleList implements ScrambleList {
 
 	private final List<ScrambleString> scrambles;
 	private final PuzzleType puzzleType;
+	private final CalCubeTimerGui cubeTimerFrame;
+
 	private int scrambleNumber = 0;
 
-	public ImportedScrambleList(PuzzleType puzzleType, List<ScrambleString> scrambles) {
+	public ImportedScrambleList(PuzzleType puzzleType, List<ScrambleString> scrambles, CalCubeTimerGui model) {
 		this.puzzleType = puzzleType;
+		cubeTimerFrame = model;
 		this.scrambles = ImmutableList.copyOf(scrambles);
 	}
 
@@ -29,19 +34,25 @@ public class ImportedScrambleList implements ScrambleList {
 	}
 	
 	@Override
-	@Nullable
+	@NotNull
 	public ScrambleString getCurrentScramble() {
-		return isLastScrambleInList() ? null : scrambles.get(scrambleNumber);
+		return scrambles.get(scrambleNumber);
 	}
 
 	@Override
 	public boolean isLastScrambleInList() {
-		return scrambleNumber == scrambles.size();
+		return getScrambleNumber() >= scrambles.size();
 	}
 
 	@Override
-	public ScrambleString getNext() {
-		scrambleNumber++;
+	public ScrambleString generateNext() {
+		if (!isLastScrambleInList()) {
+			scrambleNumber++;
+		} else {
+			Utils.showWarningDialog(cubeTimerFrame.getMainFrame(),
+					StringAccessor.getString("CALCubeTimer.outofimported") +
+							StringAccessor.getString("CALCubeTimer.generatedscrambles"));
+		}
 		return getCurrentScramble();
 	}
 

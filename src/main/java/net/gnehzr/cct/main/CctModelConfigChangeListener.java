@@ -1,18 +1,20 @@
 package net.gnehzr.cct.main;
 
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.dao.ProfileDao;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
 * <p>
@@ -25,6 +27,7 @@ import java.util.List;
 @Singleton
 class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
+    private static final Logger LOG = LogManager.getLogger(CctModelConfigChangeListener.class);
     @Inject
     private TimingListener timingListener;
 
@@ -49,16 +52,24 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
     @Override
     public void configurationChanged(Profile currentProfile) {
+        LOG.info("process configuration changing (profile: {})", currentProfile.getName());
         //Configuration for the cctbot to work.
         actionMap.refreshActions();
 
-        List<Profile> profiles = profileDao.getProfiles();
-        calCubeTimerGui.getMainFrame().profilesComboBox.setModel(new DefaultComboBoxModel<>(profiles.toArray(new Profile[profiles.size()])));
-        calCubeTimerGui.getMainFrame().selectProfileWithoutListenersNotify(calCubeTimerGui.getMainFrame().profilesComboBox, calCubeTimerModel.getSelectedProfile(), calCubeTimerGui.getMainFrame().profileComboboxListener);
+        DefaultComboBoxModel<Profile> profileComboBoxModel = new DefaultComboBoxModel<>(
+                Iterables.toArray(profileDao.getProfiles(), Profile.class));
+        calCubeTimerGui.getMainFrame().profilesComboBox.setModel(profileComboBoxModel);
+
+        calCubeTimerGui.getMainFrame().selectProfileWithoutListenersNotify(
+                calCubeTimerGui.getMainFrame().profilesComboBox,
+                calCubeTimerModel.getSelectedProfile(),
+                calCubeTimerGui.getMainFrame().profileComboboxListener);
+
         calCubeTimerGui.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
 
         scramblePluginManager.reloadLengthsFromConfiguration(false);
         PuzzleType newCustom = scramblePluginManager.getCurrentScrambleCustomization(currentProfile);
+        // TODO
         calCubeTimerGui.getMainFrame().getScrambleCustomizationComboBox().setSelectedItem(newCustom);
 
         //we need to notify the stackmatinterpreter package because it has been rewritten to

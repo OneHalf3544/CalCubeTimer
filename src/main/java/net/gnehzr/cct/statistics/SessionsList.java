@@ -10,14 +10,15 @@ import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jooq.lambda.tuple.Tuple2;
+import org.jetbrains.annotations.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toList;
 
 /**
  * <p>
@@ -30,47 +31,38 @@ import static java.util.stream.Collectors.toMap;
 @Singleton
 public class SessionsList implements Iterable<Session> {
 
-	private static final Logger LOG = LogManager.getLogger(SessionsListTableModel.class);
+	private static final Logger LOG = LogManager.getLogger(SessionsList.class);
 
 	protected final Configuration configuration;
 	private final SolutionDao solutionDao;
+	private final ScramblePluginManager scramblePluginManager;
 	protected final CalCubeTimerModel cubeTimerModel;
-	protected final CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 
-	private CopyOnWriteArrayList<Session> sessions = new CopyOnWriteArrayList<>();
+	private List<StatisticsUpdateListener> statisticsUpdateListeners = new ArrayList<>();
 
-	protected SessionListener listener;
+	private List<Session> sessions = new ArrayList<>();
+
+	protected List<SessionListener> listener = new ArrayList<>();
 	private Map<PuzzleType, GlobalPuzzleStatistics> statisticsByType = new HashMap<>();
 
+	private Session currentSession;
+
 	@Inject
-	public SessionsList(CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel,
-						Configuration configuration, CalCubeTimerModel cubeTimerModel,
-						SolutionDao solutionDao) {
-		this.currentSessionSolutionsTableModel = currentSessionSolutionsTableModel;
+	public SessionsList(Configuration configuration, CalCubeTimerModel cubeTimerModel,
+						SolutionDao solutionDao, ScramblePluginManager scramblePluginManager) {
 		this.configuration = configuration;
 		this.cubeTimerModel = cubeTimerModel;
 		this.solutionDao = solutionDao;
+		this.scramblePluginManager = scramblePluginManager;
+		this.currentSession =  new Session(LocalDateTime.now(), configuration, scramblePluginManager.NULL_PUZZLE_TYPE, solutionDao);
+		sessions.add(currentSession);
 	}
 
-	public GlobalPuzzleStatistics getGlobalPuzzleStatisticsForType(PuzzleType puzzleType) {
-		GlobalPuzzleStatistics globalPuzzleStatistics = statisticsByType.computeIfAbsent(puzzleType,
-				pt -> {
-					GlobalPuzzleStatistics gPuzzleStat = new GlobalPuzzleStatistics(pt, this);
-					// We need some way for each profile database to listen for updates,
-					// this seems fine to me, although nasty
-					currentSessionSolutionsTableModel.addStatisticsUpdateListener(gPuzzleStat::refreshStats);
-					return gPuzzleStat;
-				});
+	public GlobalPuzzleStatistics getGlobalPuzzleStatisticsForType(@NotNull PuzzleType puzzleType) {
+		GlobalPuzzleStatistics globalPuzzleStatistics = statisticsByType.computeIfAbsent(
+				puzzleType, pt -> new GlobalPuzzleStatistics(pt, this));
 		globalPuzzleStatistics.refreshStats();
 		return globalPuzzleStatistics;
-	}
-
-	public void removeEmptySessions() {
-		for(Session session : this) {
-			if(session.getPuzzleType().isNullType() || session.getAttemptsCount() == 0) {
-                removeSession(session);
-            }
-        }
 	}
 
 	@Override
@@ -87,13 +79,19 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 	public void setSessions(List</*todo puzzletype?*/Session> sessions) {
-		statisticsByType = sessions.stream()
-				.map(s -> new Tuple2<>(s.getPuzzleType(), getGlobalPuzzleStatisticsForType(s.getPuzzleType())))
-				.collect(toMap(t -> t.v1, t -> t.v2));
+		LOG.info("setSessions (count = {})", sessions.size());
+		this.sessions = sessions;
+
+		this.statisticsByType = new HashMap<>();
+		sessions.stream()
+				.map(Session::getPuzzleType)
+				.forEach(this::getGlobalPuzzleStatisticsForType);
+
+		this.loadOrCreateLatestSession(scramblePluginManager.NULL_PUZZLE_TYPE);
 	}
 
-	public void setSessionListener(SessionListener sl) {
-		listener = sl;
+	public void addSessionListener(@NotNull SessionListener sl) {
+		listener.add(sl);
 	}
 
 	public void sendSessionToAnotherProfile(Session[] sessions, String anotherProfileName, ProfileDao profileDao) {
@@ -108,28 +106,97 @@ public class SessionsList implements Iterable<Session> {
 
 
 	public void addSession(Session session) {
+		LOG.info("addSession {}", session);
 		sessions.add(session);
-
-		currentSessionSolutionsTableModel.setCurrentSession(session);
-
 		solutionDao.saveSession(cubeTimerModel.getSelectedProfile(), session);
+		configuration.addConfigurationChangeListener(profile -> session.getStatistics().refresh(this::fireStringUpdates));
 		getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats();
-		//sessionsListTableModel.fireTableDataChanged();
+		statisticsUpdateListeners.add(() -> listener.forEach(sl -> sl.sessionStatisticsChanged(session)));
+		listener.forEach(sessionListener -> sessionListener.sessionAdded(session));
+		fireStringUpdates();
 	}
 
-	public void removeSession(Session session) {
-		sessions.remove(session);
-		solutionDao.deleteSession(session);
-		getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats();
-		//sessionsListTableModel.fireTableDataChanged();
+	public void removeSession(Session removedSession) {
+		sessions.remove(removedSession);
+		solutionDao.deleteSession(removedSession);
+		getGlobalPuzzleStatisticsForType(removedSession.getPuzzleType()).refreshStats();
+
+		if (currentSession == removedSession) {
+			loadOrCreateLatestSession(removedSession.getPuzzleType());
+		}
+		listener.forEach(SessionListener::sessionsDeleted);
 	}
 
-	public boolean containsSession(Session s) {
-		return sessions.contains(s);
+	private void loadOrCreateLatestSession(PuzzleType puzzleType) {
+		removeNullSessions();
+		LOG.debug("try to load newest session");
+		Optional<Session> nextSessionOptional = getSessions().stream()
+                .max(Comparator.comparing(Session::getStartTime));
+
+		if (nextSessionOptional.isPresent()) {
+            LOG.debug("newest session found");
+            setCurrentSession(nextSessionOptional.get());
+        } else {
+            createSession(puzzleType);
+            LOG.info("create new session: {}", getCurrentSession());
+        }
 	}
 
+	private void removeNullSessions() {
+		LOG.info("remove nullSessions");
+		List<Session> emptySessions = sessions.stream()
+				.filter(s -> s.getPuzzleType() == scramblePluginManager.NULL_PUZZLE_TYPE)
+				.collect(toList());
+		sessions.removeAll(emptySessions);
+	}
+
+	@NotNull
 	public Session getCurrentSession() {
-		return currentSessionSolutionsTableModel.getCurrentSession();
+		return currentSession;
 	}
 
+	public void setCurrentSession(Session session) {
+		if (session == getCurrentSession()) {
+			return;
+		}
+		LOG.info("setCurrentSession {}", session);
+		if (!sessions.contains(session)) {
+			addSession(session);
+		}
+		this.currentSession = session;
+		listener.forEach(l -> l.sessionSelected(session));
+		fireStringUpdates();
+	}
+
+	public void createSession(PuzzleType puzzleType) {
+		addSession(new Session(LocalDateTime.now(), configuration, puzzleType, solutionDao));
+	}
+
+	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {
+		LOG.trace("addStatisticsUpdateListener: {}", listener);
+		statisticsUpdateListeners.add(listener);
+	}
+
+	//this is needed to update the i18n text
+	public void fireStringUpdates() {
+		LOG.debug("StatisticsTableModel.fireStringUpdates()");
+		ImmutableList.copyOf(statisticsUpdateListeners).forEach(StatisticsUpdateListener::statisticsUpdated);
+	}
+
+
+	public void addSolutionToCurrentSession(Solution solution) {
+		getCurrentSession().addSolution(solution, this::fireStringUpdates);
+	}
+
+	public void setComment(String comment, int index) {
+		getCurrentSession().getSolution(index).setComment(comment);
+		getCurrentSession().getStatistics().refresh(this::fireStringUpdates);
+	}
+
+	public void deleteSolutions(Solution[] solutions) {
+		for (Solution solution : solutions) {
+			getCurrentSession().removeSolution(solution, () -> {});
+		}
+		fireStringUpdates();
+	}
 }

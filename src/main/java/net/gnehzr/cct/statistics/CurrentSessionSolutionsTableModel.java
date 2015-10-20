@@ -20,13 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Singleton
 public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
-
-	private final CurrentSessionSolutionsList currentSessionSolutionsList;
-
-	private final Runnable notifier;
 
 	private String[] columnNames = new String[] {
 			"StatisticsTableModel.times",
@@ -35,11 +32,13 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			"StatisticsTableModel.comment",
 			"StatisticsTableModel.tags",
 			"StatisticsTableModel.puzzleName",
+			"StatisticsTableModel.scramble",
 	};
 	private Class<?>[] columnClasses = new Class<?>[] {
 			SolveTime.class,
 			SolveTime.class,
 			SolveTime.class,
+			String.class,
 			String.class,
 			String.class,
 			String.class,
@@ -49,33 +48,23 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	private Component prevFocusOwner;
 	private Map<SolveType, JMenuItem> typeButtons;
 	private final Configuration configuration;
+	private final SessionsList sessionsList;
 
 	@Inject
-	public CurrentSessionSolutionsTableModel(Configuration configuration,
-											 CurrentSessionSolutionsList currentSessionSolutionsList) {
-		this.currentSessionSolutionsList = currentSessionSolutionsList;
+	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList) {
 		this.configuration = configuration;
-		notifier = currentSessionSolutionsList::notifyListeners;
-	}
-
-	public void setCurrentSession(@NotNull Session newSession) {
-		currentSessionSolutionsList.setCurrentSession(newSession);
-		configuration.addConfigurationChangeListener(profile -> newSession.getStatistics().refresh(notifier));
-		currentSessionSolutionsList.notifyListeners();
+		this.sessionsList = sessionsList;
+		sessionsList.addStatisticsUpdateListener(() -> {
+			if (sessionsList.getCurrentSession().getAttemptsCount() > 0) {
+				fireTableDataChanged();
+			}
+		});
 	}
 
 	@NotNull
+	@Deprecated
 	public Session getCurrentSession() {
-		return currentSessionSolutionsList.getCurrentSession();
-	}
-
-	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {
-		currentSessionSolutionsList.addStatisticsUpdateListener(listener);
-	}
-
-	//this is needed to update the i18n text
-	public void fireStringUpdates() {
-		currentSessionSolutionsList.fireStringUpdates();
+		return sessionsList.getCurrentSession();
 	}
 
 	@Override
@@ -99,12 +88,12 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public int getRowCount() {
-		return currentSessionSolutionsList.getSize();
+		return sessionsList.getCurrentSession().getAttemptsCount();
 	}
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		Session currentSession = currentSessionSolutionsList.getCurrentSession();
+		Session currentSession = sessionsList.getCurrentSession();
 		switch(columnIndex) {
 		case 0: //get the solvetime for this index
 			return currentSession.getSolution(rowIndex).getTime();
@@ -118,6 +107,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			return Joiner.on(", ").join(currentSession.getSolution(rowIndex).getTime().getTypes());
 		case 5: // puzzle type
 			return currentSession.getSolution(rowIndex).getScrambleString().getPuzzleType().getVariationName();
+		case 6: // scramble
+			return currentSession.getSolution(rowIndex).getScrambleString().getScramble();
 		default:
 			throw new IllegalArgumentException("unsupported column index");
 		}
@@ -141,16 +132,19 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(columnIndex == 0 && value instanceof Solution) {
-			currentSessionSolutionsList.addSolution((Solution) value);
+			sessionsList.addSolutionToCurrentSession((Solution) value);
 		}
 		else if(columnIndex == 3 && value instanceof String) {
-			currentSessionSolutionsList.setComment((String) value, rowIndex);
+			sessionsList.setComment((String) value, rowIndex);
 		}
 	}
 
 	@Override
 	public void deleteRows(int[] indices) {
-		currentSessionSolutionsList.deleteRows(indices);
+		Session currentSession = sessionsList.getCurrentSession();
+		sessionsList.deleteSolutions(IntStream.of(indices)
+				.mapToObj(currentSession::getSolution)
+				.toArray(Solution[]::new));
 	}
 
 	@Override
@@ -160,7 +154,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public String getToolTip(int rowIndex, int columnIndex) {
-		String t = getCurrentSession().getSolution(rowIndex).getComment();
+		String t = sessionsList.getCurrentSession().getSolution(rowIndex).getComment();
 		return t.isEmpty() ? null : t;
 	}
 
@@ -183,7 +177,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		List<SolveType> types = typeButtons.keySet().stream()
                 .filter(key -> typeButtons.get(key).isSelected())
 				.collect(Collectors.toList());
-		getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types, currentSessionSolutionsList::notifyListeners);
+		sessionsList.getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types, sessionsList::fireStringUpdates);
 		if (prevFocusOwner != null) {
 			prevFocusOwner.requestFocusInWindow();
 		}
@@ -199,7 +193,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			return;
 		}
 		else if(selectedSolves.length == 1) {
-			Solution selectedSolve = getCurrentSession().getSolution(timesTable.getSelectedRow());
+			Solution selectedSolve = sessionsList.getCurrentSession().getSolution(timesTable.getSelectedRow());
 			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
 					+ Utils.formatTime(selectedSolve.getTime(), configuration.useClockFormat() ));
 			rawTime.setEnabled(false);
@@ -238,7 +232,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			jpopup.addSeparator();
 		}
 
-		JMenuItem discard = new JMenuItem(StringAccessor.getString("StatisticsTableModel.discard"));
+		JMenuItem discard = new JMenuItem(	StringAccessor.getString("StatisticsTableModel.discard"));
 		discard.addActionListener(this::discardSolution);
 		jpopup.add(discard);
 		timesTable.requestFocusInWindow();

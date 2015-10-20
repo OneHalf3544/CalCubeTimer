@@ -27,7 +27,7 @@ public class SolutionEntity {
     @Column
     private Duration solveTime;
 
-    @Column
+    @Column(length = 2000)
     private String scramble;
 
     @Column

@@ -1,7 +1,6 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.i18n.LocaleAndIcon;
-import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
@@ -20,7 +19,7 @@ import java.util.List;
  *
  * @author OneHalf
  */
-public interface CalCubeTimerModel extends SessionListener {
+public interface CalCubeTimerModel {
 
     String SCRAMBLE_ATTRIBUTE_CHANGED = "Scramble Attribute Changed";
 
@@ -61,10 +60,6 @@ public interface CalCubeTimerModel extends SessionListener {
 
     void setLoadedLocale(LocaleAndIcon newLocale);
 
-    boolean getCustomizationEditsDisabled();
-
-    void setCustomizationEditsDisabled(boolean b);
-
     void startMetronome();
 
     void addTime(TimerState newTime);
@@ -77,7 +72,7 @@ public interface CalCubeTimerModel extends SessionListener {
 
     void prepareForProfileSwitch();
 
-    Session getNextSession(CALCubeTimerFrame calCubeTimerFrame);
+    Session getCurrentSession();
 
     void setSelectedProfile(Profile currentProfile);
 

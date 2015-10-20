@@ -1,54 +1,55 @@
 package net.gnehzr.cct.scrambles;
 
-import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 public class GeneratedScrambleList implements ScrambleList {
 
 	private static final Logger LOG = LogManager.getLogger(GeneratedScrambleList.class);
 
 	private final ScramblePluginManager scramblePluginManager;
-	private Session session;
-	private int scrambleNumber = 0;
+	private SessionsList sessionsList;
+	private int scrambleNumber;
 
 	private ScrambleString currentScrambleString;
 
-	public GeneratedScrambleList(Session session) {
-		this.setSession(session);
-		this.scramblePluginManager = session.getPuzzleType().scramblePluginManager;
-		this.currentScrambleString = session.getPuzzleType().isNullType()
+	public GeneratedScrambleList(SessionsList sessionsList) {
+		this.sessionsList = sessionsList;
+		this.scramblePluginManager = getPuzzleType().scramblePluginManager;
+
+		this.scrambleNumber = 0;
+		this.currentScrambleString = getPuzzleType().isNullType()
 				? scramblePluginManager.NULL_IMPORTED_SCRUMBLE
-				: generateScramble();
+				: generateScrambleForCurrentSession();
 	}
 
 	@Override
 	@NotNull
 	public PuzzleType getPuzzleType() {
-		return session.getPuzzleType();
+		return sessionsList.getCurrentSession().getPuzzleType();
 	}
 
-	public void setSession(@NotNull Session session) {
-		this.session = Objects.requireNonNull(session);
-		LOG.info("set session to GeneratedScrambleList: {}", session);
-		this.currentScrambleString = generateScramble();
+	public ScrambleString generateScrambleForCurrentSession() {
+		LOG.info("generate scramble: {}", sessionsList.getCurrentSession());
+		return this.currentScrambleString = getPuzzleType().isNullType()
+				? currentScrambleString
+				: getPuzzleType().generateScramble();
 	}
-	
+
 	public void setScrambleLength(int scrambleLength) {
-		scramblePluginManager.getScrambleVariation(session.getPuzzleType()).setLength(scrambleLength);
+		scramblePluginManager.getScrambleVariation(getPuzzleType()).setLength(scrambleLength);
 	}
 
 	public void updateGeneratorGroup(String generatorGroup) {
-		scramblePluginManager.setScrambleSettings(getPuzzleType(), session.getPuzzleType().getScrambleVariation().withGeneratorGroup(generatorGroup));
-		scramblePluginManager.saveGeneratorToConfiguration(session.getPuzzleType());
+		scramblePluginManager.setScrambleSettings(getPuzzleType(), scramblePluginManager.getScrambleVariation(getPuzzleType()).withGeneratorGroup(generatorGroup));
+		scramblePluginManager.saveGeneratorToConfiguration(getPuzzleType());
 	}
 
 	@Override
 	public int scramblesCount() {
-		return session.getAttemptsCount();
+		return sessionsList.getCurrentSession().getAttemptsCount();
 	}
 
 	@Override
@@ -59,22 +60,18 @@ public class GeneratedScrambleList implements ScrambleList {
 
 	@Override
 	public boolean isLastScrambleInList() {
-		return scrambleNumber == session.getAttemptsCount();
+		return getScrambleNumber() > sessionsList.getCurrentSession().getAttemptsCount();
 	}
 
 	@Override
-	public ScrambleString getNext() {
+	public ScrambleString generateNext() {
 		scrambleNumber++;
 		if (isLastScrambleInList()) {
-			return currentScrambleString = generateScramble();
+			return generateScrambleForCurrentSession();
 		}
 		else {
-			return session.getSolution(scrambleNumber).getScrambleString();
+			return sessionsList.getCurrentSession().getSolution(scrambleNumber).getScrambleString();
 		}
-	}
-
-	private ScrambleString generateScramble() {
-		return getPuzzleType().isNullType() ? currentScrambleString : getPuzzleType().generateScramble();
 	}
 
 	@Override

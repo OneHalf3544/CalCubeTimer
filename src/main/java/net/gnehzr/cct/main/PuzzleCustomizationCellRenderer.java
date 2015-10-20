@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleSettings;
 import org.pushingpixels.substance.api.renderers.SubstanceDefaultListCellRenderer;
 
@@ -9,10 +10,12 @@ import java.awt.*;
 
 public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRenderer {
 
-	private boolean icons;
+	private final boolean icons;
+	private final ScramblePluginManager scramblePluginManager;
 
-	public PuzzleCustomizationCellRenderer(boolean i) {
-		icons = i;
+	public PuzzleCustomizationCellRenderer(boolean i, ScramblePluginManager scramblePluginManager) {
+		this.icons = i;
+		this.scramblePluginManager = scramblePluginManager;
 	}
 
 	@Override
@@ -23,7 +26,7 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 			PuzzleType puzzleType;
 			ScrambleSettings scrambleSettings;
 			puzzleType = (PuzzleType) value;
-			scrambleSettings = puzzleType.getScrambleVariation();
+			scrambleSettings = scramblePluginManager.getScrambleVariation(puzzleType);
 			if (icons) {
 				i = scrambleSettings.getImage();
 			}

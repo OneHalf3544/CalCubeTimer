@@ -20,7 +20,7 @@ public abstract class ScrambleChooserComboBox<T> extends JComboBox<T> implements
 								   Configuration configuration) {
 		this.scramblePluginManager = scramblePluginManager;
 		this.configuration = configuration;
-		this.setRenderer(new PuzzleCustomizationCellRenderer(icons));
+		this.setRenderer(new PuzzleCustomizationCellRenderer(icons, scramblePluginManager));
 		configuration.addConfigurationChangeListener(this);
 		// todo configurationChanged(profileDao.getSelectedProfile());
 	}

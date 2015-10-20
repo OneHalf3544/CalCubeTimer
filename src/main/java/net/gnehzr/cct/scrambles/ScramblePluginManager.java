@@ -57,6 +57,7 @@ public class ScramblePluginManager {
 
 		nullScrambleSettings = new ScrambleSettings(this.configuration, this, "", 0, null);
 		NULL_PUZZLE_TYPE = new PuzzleType(configuration, null, this, NULL_SCRAMBLE_PLUGIN);
+		NULL_PUZZLE_TYPE.setVariationName("nullPuzzle");
 
 		plugins = ImmutableList.copyOf(ServiceLoader.load(ScramblePlugin.class));
 		this.scramblePlugins = createScramblePlugins();
@@ -148,11 +149,12 @@ public class ScramblePluginManager {
 		return getPuzzleTypeByString(scrambleSettings.getVariationName());
 	}
 
-	public PuzzleType getPuzzleTypeByString(String customName) {
+	@NotNull
+	public PuzzleType getPuzzleTypeByString(String variationName) {
 		return getPuzzleTypes(null).stream()
-				.filter(c -> c.toString().equals(customName))
+				.filter(puzzleType -> puzzleType.getVariationName().equals(variationName))
 				.findAny()
-				.orElse(null);
+				.orElse(NULL_PUZZLE_TYPE);
 	}
 
 	public List<PuzzleType> getPuzzleTypes(@Nullable Profile selectedProfile) {

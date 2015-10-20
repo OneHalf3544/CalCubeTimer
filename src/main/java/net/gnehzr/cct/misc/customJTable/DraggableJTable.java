@@ -18,6 +18,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+import java.util.stream.IntStream;
+
+import static java.util.stream.Collectors.joining;
 
 public class DraggableJTable extends JTable implements MouseMotionListener, ActionListener {
 
@@ -444,23 +447,28 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 	}
 
 	public void deleteSelectedRows(boolean prompt) {
-		int[] selectedRows = this.getSelectedRows();
-		String temp = "";
-		for(int ch = 0; ch < selectedRows.length; ch++) {
-			int row = convertRowIndexToModel(selectedRows[ch]);
-			selectedRows[ch] = row;
-			if (model.isRowDeletable(row)) {
-				temp += ", " + model.getValueAt(row, 0);
-			}
-		}
-		if(temp.isEmpty()) //nothing to delete
+		int[] selectedRows = IntStream.of(this.getSelectedRows())
+				.map(this::convertRowIndexToModel)
+				.filter(model::isRowDeletable)
+				.sorted()
+				.toArray();
+
+		if (selectedRows.length == 0) {
+			//nothing to delete
 			return;
-		temp = temp.substring(2);
-		Arrays.sort(selectedRows);
+		}
+
 		int choice = JOptionPane.YES_OPTION;
-		if(prompt)
+		if (prompt) {
+			String firstColumnsToString = Arrays.stream(selectedRows)
+					.mapToObj(selectedRow -> model.getValueAt(selectedRow, 0))
+					.map(Object::toString)
+					.collect(joining(", "));
+
 			choice = Utils.showYesNoDialog(getParent(),
-					StringAccessor.getString("DraggableJTable.confirmdeletion") + "\n" + temp);
+					StringAccessor.getString("DraggableJTable.confirmdeletion") + "\n" + firstColumnsToString);
+		}
+
 		if(choice == JOptionPane.YES_OPTION) {
 			model.deleteRows(selectedRows);
 			if(selectedRows.length > 1) {
@@ -469,8 +477,9 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 				setRowSelectionInterval(selectedRows[0], selectedRows[0]);
 			} else if(selectedRows[0] != 0) {
 				int newRow = model.getRowCount() - 2;
-				if(addText == null)
+				if(addText == null) {
 					newRow++;
+				}
 				setRowSelectionInterval(newRow, newRow);
 			}
 		}
