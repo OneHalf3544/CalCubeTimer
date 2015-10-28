@@ -1,5 +1,6 @@
 package net.gnehzr.cct.statistics;
 
+import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -9,20 +10,27 @@ import java.util.*;
 public class SessionPuzzleStatistics {
 
     public enum AverageType {
-        CURRENT_ROLLING_AVERAGE {
-            public String toString() {
-                return StringAccessor.getString("Statistics.currentaverage");
-            }
-        },
-        BEST_ROLLING_AVERAGE {
-            public String toString() {
-                return StringAccessor.getString("Statistics.bestRA");
-            }
-        },
-        SESSION_AVERAGE {
-            public String toString() {
-                return StringAccessor.getString("Statistics.sessionAverage");
-            }
+        CURRENT_ROLLING_AVERAGE("Statistics.currentaverage", VariableKey.CURRENT_AVERAGE_STATISTICS),
+        BEST_ROLLING_AVERAGE("Statistics.bestRA", VariableKey.BEST_RA_STATISTICS),
+        SESSION_AVERAGE("Statistics.sessionAverage", VariableKey.SESSION_STATISTICS),
+        ;
+
+
+        private final String stringCode;
+        private final VariableKey<String> configurationKey;
+
+        AverageType(String stringCode, VariableKey<String> configurationKey) {
+            this.stringCode = stringCode;
+            this.configurationKey = configurationKey;
+        }
+
+        @Override
+        public String toString() {
+            return StringAccessor.getString(stringCode);
+        }
+
+        public VariableKey<String> getConfKey() {
+            return configurationKey;
         }
     }
 

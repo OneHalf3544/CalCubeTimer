@@ -4,9 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
-import net.gnehzr.cct.statistics.RollingAverageOf;
 import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +16,11 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static net.gnehzr.cct.statistics.RollingAverageOf.OF_12;
+import static net.gnehzr.cct.statistics.RollingAverageOf.OF_5;
+import static net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType.BEST_ROLLING_AVERAGE;
+import static net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType.CURRENT_ROLLING_AVERAGE;
 
 /**
 * <p>
@@ -41,7 +44,6 @@ public class ActionMap {
     public static final String ADD_TIME_ACTION = "addtime";
     public static final String RESET_ACTION = "reset";
     public static final String SHOW_DOCUMENTATION_ACTION = "showdocumentation";
-    public static final String SUBMIT_SUNDAY_CONTEST_ACTION = "submitsundaycontest";
     public static final String SHOW_ABOUT_ACTION = "showabout";
     public static final String SHOW_CONFIGURATION_ACTION = "showconfiguration";
 
@@ -49,8 +51,6 @@ public class ActionMap {
 
     @Inject
 	private Configuration configuration;
-    @Inject
-    private CurrentSessionSolutionsTableModel statsModel;
     @Inject
     private ToggleFullscreenTimingAction toggleFullscreenTimingAction;
     @Inject
@@ -92,20 +92,21 @@ public class ActionMap {
                 return a;
             }
             case "currentaverage0":
-                return new StatisticsAction(
-                        calCubeTimerFrame, statsModel, AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5, configuration);
+                return new ShowDetailedStatisticsAction(
+                        calCubeTimerFrame, CURRENT_ROLLING_AVERAGE, OF_5, configuration, sessionsList);
             case "bestaverage0":
-                return new StatisticsAction(
-                        calCubeTimerFrame, statsModel, AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5, configuration);
+                return new ShowDetailedStatisticsAction(
+                        calCubeTimerFrame, BEST_ROLLING_AVERAGE, OF_5, configuration, sessionsList);
             case "currentaverage1":
-                return new StatisticsAction(
-                        calCubeTimerFrame, statsModel, AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_12, configuration);
+                return new ShowDetailedStatisticsAction(
+                        calCubeTimerFrame, CURRENT_ROLLING_AVERAGE, OF_12, configuration, sessionsList);
             case "bestaverage1":
-                return new StatisticsAction(
-                        calCubeTimerFrame, statsModel, AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_12, configuration);
+                return new ShowDetailedStatisticsAction(
+                        calCubeTimerFrame, BEST_ROLLING_AVERAGE, OF_12, configuration, sessionsList);
             case "sessionaverage":
-                return new StatisticsAction(
-                        calCubeTimerFrame, statsModel, AverageType.SESSION_AVERAGE, null, configuration);
+                return new ShowDetailedStatisticsAction(
+                        calCubeTimerFrame, AverageType.SESSION_AVERAGE, null, configuration, sessionsList);
+
             case ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN:
                 // action to stop timing during fullscreen
                 return toggleFullscreenTimingAction;
@@ -129,15 +130,6 @@ public class ActionMap {
             case TOGGLE_SPACEBAR_STARTS_TIMER_ACTION: {
                 return new SpacebarOptionAction(configuration);
             }
-            case SUBMIT_SUNDAY_CONTEST_ACTION:
-                final SundayContestDialog submitter = new SundayContestDialog(calCubeTimerFrame, configuration);
-                return new AbstractAction() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        submitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
-                        submitter.setVisible(true);
-                    }
-                };
             case SHOW_DOCUMENTATION_ACTION:
                 return new DocumentationAction(calCubeTimerFrame);
             case SHOW_ABOUT_ACTION:

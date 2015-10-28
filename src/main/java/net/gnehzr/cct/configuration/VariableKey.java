@@ -67,16 +67,7 @@ public class VariableKey<H> {
 	public static final VariableKey<String> REGION = new VariableKey<>("GUI_I18N_region");
 	public static final VariableKey<String> VOICE = new VariableKey<>("Misc_Voices_person");
 	public static final VariableKey<String> DATE_FORMAT = new VariableKey<>("Misc_dateFormat");
-	public static final VariableKey<String> SUNDAY_SUBMIT_URL = new VariableKey<>("Sunday_submitURL");
-	public static final VariableKey<String> SUNDAY_NAME = new VariableKey<>("Sunday_name");
-	public static final VariableKey<String> SMTP_FROM_ADDRESS = new VariableKey<>("SMTP_fromAddress");
-	public static final VariableKey<String> SMTP_PASSWORD = new VariableKey<>("SMTP_password");
-	public static final VariableKey<String> SMTP_PORT = new VariableKey<String>("SMTP_port"); 
-	public static final VariableKey<String> SMTP_HOST = new VariableKey<>("SMTP_smtpHost");
-	public static final VariableKey<String> SMTP_USERNAME = new VariableKey<>("SMTP_username");
-	public static final VariableKey<String> SUNDAY_EMAIL_ADDRESS = new VariableKey<>("Sunday_emailAddress");
-	public static final VariableKey<String> SUNDAY_QUOTE = new VariableKey<>("Sunday_quote");
-	public static final VariableKey<String> SUNDAY_COUNTRY = new VariableKey<>("Sunday_country");
+
 	public static final VariableKey<String> BEST_RA_STATISTICS = new VariableKey<>("Statistics_String_bestRA");
 	public static final VariableKey<String> CURRENT_AVERAGE_STATISTICS = new VariableKey<>("Statistics_String_currentAverage");
 	public static final VariableKey<String> SESSION_STATISTICS = new VariableKey<>("Statistics_String_session");
@@ -116,12 +107,8 @@ public class VariableKey<H> {
 	public static final VariableKey<Boolean> INVERTED_HUNDREDTHS = new VariableKey<>("Stackmat_isInvertedHundredths");
 	public static final VariableKey<Boolean> INVERTED_SECONDS = new VariableKey<>("Stackmat_isInvertedSeconds");
 	public static final VariableKey<Boolean> INVERTED_MINUTES = new VariableKey<>("Stackmat_isInvertedMinutes");
-	public static final VariableKey<Boolean> SHOW_EMAIL = new VariableKey<>("Sunday_isShowAddress");
 	public static final VariableKey<Boolean> PROMPT_FOR_NEW_TIME = new VariableKey<>("Misc_isPromptForNewTime");
-	public static final VariableKey<Boolean> SMTP_ENABLED = new VariableKey<>("SMTP_isEnabled");
-	public static final VariableKey<Boolean> SMTP_AUTHENTICATION = new VariableKey<>("SMTP_isSmtpAuth");
 	public static final VariableKey<Boolean> SCRAMBLE_POPUP = new VariableKey<>("Scramble_Popup_isEnabled");
-	public static final VariableKey<Boolean> CHAT_WINDOW_FLASH = new VariableKey<>("IRC_Client_isChatWindowFlash");
 	public static final VariableKey<Boolean> TIMING_SPLITS = new VariableKey<>("Splits_isEnabled");
 	public static final VariableKey<Boolean> STACKMAT_ENABLED = new VariableKey<>("Stackmat_isEnabled");
 	public static final VariableKey<Boolean> HIDE_SCRAMBLES = new VariableKey<>("GUI_Timer_isHideScrambles");

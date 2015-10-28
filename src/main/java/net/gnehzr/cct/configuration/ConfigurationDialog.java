@@ -10,7 +10,6 @@ import net.gnehzr.cct.main.Metronome;
 import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.ProfileEditor;
-import net.gnehzr.cct.misc.dynamicGUI.AABorder;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.scrambles.ScrambleViewComponent;
@@ -18,14 +17,11 @@ import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SolveType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 import say.swing.JFontChooser;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URI;
@@ -33,9 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ConfigurationDialog extends JDialog implements KeyListener, ActionListener, ItemListener, HyperlinkListener {
-
-	private static final Logger LOG = LogManager.getLogger(ConfigurationDialog.class);
+public class ConfigurationDialog extends JDialog {
 
 	private static final float DISPLAY_FONT_SIZE = 20;
 	private static final String[] FONT_SIZES = { "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36" };
@@ -181,9 +175,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		tab = makeStackmatOptionsPanel();
 		tabbedPane.addTab(StringAccessor.getString("ConfigurationDialog.stackmatsettings"), tab);
 
-		tab = makeSundaySetupPanel();
-		tabbedPane.addTab(StringAccessor.getString("ConfigurationDialog.sundaycontest/email"), tab);
-
 		tab = makeStatisticsPanels();
 		tabbedPane.addTab(StringAccessor.getString("ConfigurationDialog.statistics"), tab);
 		
@@ -192,22 +183,22 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 
 		applyButton = new JButton(StringAccessor.getString("ConfigurationDialog.apply"));
 		applyButton.setMnemonic(KeyEvent.VK_A);
-		applyButton.addActionListener(this);
+		applyButton.addActionListener(this::actionPerformed);
 
 		saveButton = new JButton(StringAccessor.getString("ConfigurationDialog.save"));
 		saveButton.setMnemonic(KeyEvent.VK_S);
-		saveButton.addActionListener(this);
+		saveButton.addActionListener(this::actionPerformed);
 
 		cancelButton = new JButton(StringAccessor.getString("ConfigurationDialog.cancel"));
 		cancelButton.setMnemonic(KeyEvent.VK_C);
-		cancelButton.addActionListener(this);
+		cancelButton.addActionListener(this::actionPerformed);
 
 		resetAllButton = new JButton(StringAccessor.getString("ConfigurationDialog.resetall"));
 		resetAllButton.setMnemonic(KeyEvent.VK_R);
-		resetAllButton.addActionListener(this);
+		resetAllButton.addActionListener(this::actionPerformed);
 		
 		profiles = new JComboBox<>();
-		profiles.addItemListener(this);
+		profiles.addItemListener(this::itemStateChanged);
 
 		pane.add(sideBySide(BoxLayout.LINE_AXIS, profiles, Box.createHorizontalGlue(), resetAllButton, Box.createRigidArea(new Dimension(30, 0)), applyButton,
 				saveButton, cancelButton, Box.createHorizontalGlue()), BorderLayout.PAGE_END);
@@ -256,7 +247,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		rightPanel.add(sideBySide(null, scramblePopup, sideBySideScramble));
 		
 		inspectionCountdown = new JCheckBox(StringAccessor.getString("ConfigurationDialog.inspection"));
-		inspectionCountdown.addItemListener(this);
+		inspectionCountdown.addItemListener(this::itemStateChanged);
 		speakInspection = new JCheckBox(StringAccessor.getString("ConfigurationDialog.readinspection"));
 		JPanel sideBySide = new JPanel();
 		sideBySide.add(inspectionCountdown);
@@ -289,7 +280,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 
 		desktopPanel = new JPanel(); //this gets populated in refreshDesktops()
 		refreshDesktops = new JButton(StringAccessor.getString("ConfigurationDialog.refresh"));
-		refreshDesktops.addActionListener(this);
+		refreshDesktops.addActionListener(this::actionPerformed);
 
 		DraggableJTable profilesTable = new DraggableJTable(configuration, true, false);
 		profilesTable.refreshStrings(StringAccessor.getString("ConfigurationDialog.addprofile"));
@@ -368,13 +359,29 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		((JSpinner.DefaultEditor) minSplitTime.getEditor()).getTextField().setColumns(4);
 
 		splits = new JCheckBox(StringAccessor.getString("ConfigurationDialog.splits"));
-		splits.addActionListener(this);
+		splits.addActionListener(this::actionPerformed);
 
 		splitsKeySelector = new JTextArea();
 		splitsKeySelector.setColumns(10);
 		splitsKeySelector.setEditable(false);
 		splitsKeySelector.setToolTipText(StringAccessor.getString("ConfigurationDialog.clickhere"));
-		splitsKeySelector.addKeyListener(this);
+		splitsKeySelector.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(!TimerLabel.ignoreKey(e, false, false, 0, 0)) {
+                    if(e.getSource() == splitsKeySelector){
+                        splitkey = e.getKeyCode();
+                        splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
+                    } else if(e.getSource() == stackmatKeySelector1){
+                        sekey1 = e.getKeyCode();
+                        stackmatKeySelector1.setText(KeyEvent.getKeyText(sekey1));
+                    } else if(e.getSource() == stackmatKeySelector2){
+                        sekey2 = e.getKeyCode();
+                        stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
+                    }
+                }
+			}
+		});
 
 		panel.add(sideBySide(null, splits,
 				new JLabel(StringAccessor.getString("ConfigurationDialog.minsplittime")),
@@ -383,24 +390,56 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 				splitsKeySelector));
 
 		metronome = new JCheckBox(StringAccessor.getString("ConfigurationDialog.metronome"));
-		metronome.addActionListener(this);
+		metronome.addActionListener(this::actionPerformed);
 		metronomeDelay = new TickerSlider(tickTock);
 		panel.add(sideBySide(null, metronome, new JLabel(StringAccessor.getString("ConfigurationDialog.delay")), metronomeDelay));
 		
 		stackmatEmulation = new JCheckBox(StringAccessor.getString("ConfigurationDialog.emulatestackmat"));
-		stackmatEmulation.addActionListener(this);
+		stackmatEmulation.addActionListener(this::actionPerformed);
 
 		stackmatKeySelector1 = new JTextArea();
 		stackmatKeySelector1.setColumns(10);
 		stackmatKeySelector1.setEditable(false);
 		stackmatKeySelector1.setToolTipText(StringAccessor.getString("ConfigurationDialog.clickhere"));
-		stackmatKeySelector1.addKeyListener(this);
+		stackmatKeySelector1.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(!TimerLabel.ignoreKey(e, false, false, 0, 0)) {
+                    if(e.getSource() == splitsKeySelector){
+                        splitkey = e.getKeyCode();
+                        splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
+                    } else if(e.getSource() == stackmatKeySelector1){
+                        sekey1 = e.getKeyCode();
+                        stackmatKeySelector1.setText(KeyEvent.getKeyText(sekey1));
+                    } else if(e.getSource() == stackmatKeySelector2){
+                        sekey2 = e.getKeyCode();
+                        stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
+                    }
+                }
+			}
+		});
 
 		stackmatKeySelector2 = new JTextArea();
 		stackmatKeySelector2.setColumns(10);
 		stackmatKeySelector2.setEditable(false);
 		stackmatKeySelector2.setToolTipText(StringAccessor.getString("ConfigurationDialog.clickhere"));
-		stackmatKeySelector2.addKeyListener(this);
+		stackmatKeySelector2.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(!TimerLabel.ignoreKey(e, false, false, 0, 0)) {
+                    if(e.getSource() == splitsKeySelector){
+                        splitkey = e.getKeyCode();
+                        splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
+                    } else if(e.getSource() == stackmatKeySelector1){
+                        sekey1 = e.getKeyCode();
+                        stackmatKeySelector1.setText(KeyEvent.getKeyText(sekey1));
+                    } else if(e.getSource() == stackmatKeySelector2){
+                        sekey2 = e.getKeyCode();
+                        stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
+                    }
+                }
+			}
+		});
 
 		panel.add(sideBySide(null, stackmatEmulation,
 				new JLabel(StringAccessor.getString("ConfigurationDialog.stackmatkeys")),
@@ -411,11 +450,11 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		panel.add(flashyWindow);
 
 		isBackground = new JCheckBox(StringAccessor.getString("ConfigurationDialog.watermark"));
-		isBackground.addActionListener(this);
+		isBackground.addActionListener(this::actionPerformed);
 		backgroundFile = new JTextField(30);
 		backgroundFile.setToolTipText(StringAccessor.getString("ConfigurationDialog.clearfordefault"));
 		browse = new JButton(StringAccessor.getString("ConfigurationDialog.browse"));
-		browse.addActionListener(this);
+		browse.addActionListener(this::actionPerformed);
 		panel.add(sideBySide(null, isBackground, new JLabel(StringAccessor.getString("ConfigurationDialog.file")), backgroundFile, browse));
 
 		opacity = new JSlider(SwingConstants.HORIZONTAL, 0, 10, 0);
@@ -443,7 +482,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 				stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
 				stackmatKeySelector1.setEnabled(stackmatEmulation.isSelected());
 				stackmatKeySelector2.setEnabled(stackmatEmulation.isSelected());
-				flashyWindow.setSelected(configuration.getBoolean(VariableKey.CHAT_WINDOW_FLASH, defaults));
 				backgroundFile.setEnabled(isBackground.isSelected());
 				browse.setEnabled(isBackground.isSelected());
 				opacity.setEnabled(isBackground.isSelected());
@@ -548,7 +586,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		}
 
 		stackmatRefresh = new JButton(StringAccessor.getString("ConfigurationDialog.refreshmixers"));
-		stackmatRefresh.addActionListener(this);
+		stackmatRefresh.addActionListener(this::actionPerformed);
 		mixerPanel.add(stackmatRefresh);
 
 		options.add(mixerPanel);
@@ -590,246 +628,9 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		return mixers;
 	}
 
-	JTextField name;
-	JTextField country = null;
-	JTextField sundayQuote = null;
-	JTextField sundayEmailAddress = null;
-	JTextField smtpEmailAddress = null;
-	JTextField host;
-	JTextField port = null;
-	JTextField username = null;
-	JCheckBox SMTPauth = null;
-	JPasswordField password = null;
-	JCheckBox useSMTPServer;
-	JCheckBox showEmail = null;
-	JTextField ircname, ircnick;
-	JCheckBox identserver = null;
-	private JPanel emailOptions;
-	private JPanel makeSundaySetupPanel() {
-		JPanel sundayOptions = new JPanel(new GridBagLayout());
-		sundayOptions.setBorder(new AABorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), StringAccessor.getString("ConfigurationDialog.sundaycontest"))));
-		GridBagConstraints c = new GridBagConstraints();
-		c.insets = new Insets(2, 2, 2, 2);
-		c.fill = GridBagConstraints.BOTH;
-		c.ipady = 5;
-
-		name = new JTextField();
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 0;
-		c.gridy = 0;
-		sundayOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.name")), c);
-		c.weightx = 1;
-		c.gridwidth = 2;
-		c.gridx = 1;
-		c.gridy = 0;
-		sundayOptions.add(name, c);
-
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 4;
-		c.gridy = 0;
-		sundayOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.country")), c);
-		country = new JTextField(5);
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 5;
-		c.gridy = 0;
-		sundayOptions.add(country, c);
-
-		sundayQuote = new JTextField();
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 0;
-		c.gridy = 1;
-		sundayOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.defaultquote")), c);
-		c.weightx = 1;
-		c.gridwidth = 5;
-		c.gridx = 1;
-		c.gridy = 1;
-		sundayOptions.add(sundayQuote, c);
-
-		sundayEmailAddress = new JTextField();
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 0;
-		c.gridy = 2;
-		sundayOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.email")), c);
-		c.weightx = 1;
-		c.gridwidth = 3;
-		c.gridx = 1;
-		c.gridy = 2;
-		sundayOptions.add(sundayEmailAddress, c);
-		c.weightx = 0;
-		c.gridwidth = 2;
-		c.gridx = 4;
-		c.gridy = 2;
-		showEmail = new JCheckBox(StringAccessor.getString("ConfigurationDialog.address"));
-		sundayOptions.add(showEmail, c);
-		
-		JPanel ircOptions = new JPanel(new GridBagLayout());
-		ircOptions.setBorder(new AABorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), StringAccessor.getString("ConfigurationDialog.ircsetup"))));
-		c = new GridBagConstraints();
-		c.insets = new Insets(2, 2, 2, 2);
-		c.fill = GridBagConstraints.BOTH;
-		c.ipady = 5;
-		
-		ircname = new JTextField();
-		ircnick = new JTextField();
-		identserver = new JCheckBox(StringAccessor.getString("ConfigurationDialog.identserver"));
-		
-		c.weightx = 0;
-		c.gridx = 0;
-		c.gridy = 0;
-		ircOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.name")), c);
-		c.weightx = 1;
-		c.gridx = 1;
-		c.gridy = 0;
-		ircOptions.add(ircname, c);
-
-		c.weightx = 0;
-		c.gridx = 0;
-		c.gridy = 2;
-		ircOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.ircnick")), c);
-		c.weightx = 1;
-		c.gridx = 1;
-		c.gridy = 2;
-		ircOptions.add(ircnick, c);
-		
-		c.weightx = 0;
-		c.gridx = 1;
-		c.gridy = 3;
-		ircOptions.add(identserver, c);
-		
-		emailOptions = new JPanel(new GridBagLayout());
-		emailOptions.setBorder(new AABorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), StringAccessor.getString("ConfigurationDialog.emailsetup"))));
-		c = new GridBagConstraints();
-		c.insets = new Insets(2, 2, 2, 2);
-		c.fill = GridBagConstraints.BOTH;
-		c.ipady = 5;
-
-		useSMTPServer = new JCheckBox(StringAccessor.getString("ConfigurationDialog.smtpserver"));
-		useSMTPServer.addItemListener(this);
-
-		c.weightx = 0;
-		c.gridwidth = GridBagConstraints.REMAINDER;
-		c.gridx = 0;
-		c.gridy = 1;
-		emailOptions.add(useSMTPServer, c);
-
-		smtpEmailAddress = new JTextField();
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 0;
-		c.gridy = 2;
-		emailOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.emailaddress")), c);
-		c.weightx = 1;
-		c.gridwidth = GridBagConstraints.REMAINDER;
-		c.gridx = 1;
-		c.gridy = 2;
-		emailOptions.add(smtpEmailAddress, c);
-
-		host = new JTextField();
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 0;
-		c.gridy = 3;
-		emailOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.smtphost")), c);
-		c.weightx = 1;
-		c.gridwidth = 3;
-		c.gridx = 1;
-		c.gridy = 3;
-		emailOptions.add(host, c);
-
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 4;
-		c.gridy = 3;
-		emailOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.port")), c);
-		port = new JTextField(3);
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 5;
-		c.gridy = 3;
-		emailOptions.add(port, c);
-
-		username = new JTextField();
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 0;
-		c.gridy = 4;
-		emailOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.username")), c);
-		c.weightx = 1;
-		c.gridwidth = 2;
-		c.gridx = 1;
-		c.gridy = 4;
-		emailOptions.add(username, c);
-
-		SMTPauth = new JCheckBox(StringAccessor.getString("ConfigurationDialog.smtpauth"));
-		SMTPauth.addItemListener(this);
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 3;
-		c.gridy = 4;
-		emailOptions.add(SMTPauth, c);
-
-		c.weightx = 0;
-		c.gridwidth = 1;
-		c.gridx = 4;
-		c.gridy = 4;
-		emailOptions.add(new JLabel(StringAccessor.getString("ConfigurationDialog.password")), c);
-
-		c.weightx = 1;
-		c.gridx = 5;
-		c.gridwidth = GridBagConstraints.REMAINDER;
-		password = new JPasswordField();
-		password.setToolTipText(StringAccessor.getString("ConfigurationDialog.typepassword"));
-		emailOptions.add(password, c);
-		useSMTPServer.setSelected(true);
-		useSMTPServer.setSelected(false); // need both to ensure that an itemStateChanged event is fired
-
-		SyncGUIListener sl = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// makeSundaySetupPanel
-				useSMTPServer.setSelected(configuration.getBoolean(VariableKey.SMTP_ENABLED, defaults));
-				smtpEmailAddress.setText(configuration.getString(VariableKey.SMTP_FROM_ADDRESS, defaults));
-				name.setText(configuration.getString(VariableKey.SUNDAY_NAME, defaults));
-				country.setText(configuration.getString(VariableKey.SUNDAY_COUNTRY, defaults));
-				sundayQuote.setText(configuration.getString(VariableKey.SUNDAY_QUOTE, defaults));
-				sundayEmailAddress.setText(configuration.getString(VariableKey.SUNDAY_EMAIL_ADDRESS, defaults));
-				host.setText(configuration.getString(VariableKey.SMTP_HOST, defaults));
-				port.setText(configuration.getString(VariableKey.SMTP_PORT, defaults));
-				username.setText(configuration.getString(VariableKey.SMTP_USERNAME, defaults));
-				SMTPauth.setSelected(configuration.getBoolean(VariableKey.SMTP_AUTHENTICATION, defaults));
-				password.setText(configuration.getString(VariableKey.SMTP_PASSWORD, defaults));
-				password.setEnabled(SMTPauth.isSelected());
-				showEmail.setSelected(configuration.getBoolean(VariableKey.SHOW_EMAIL, defaults));
-			}
-		};
-		resetListeners.add(sl);
-		JButton reset = getResetButton(false);
-		reset.addActionListener(sl);
-		
-		JPanel side = sideBySide(BoxLayout.LINE_AXIS, sundayOptions, ircOptions);
-		side.setAlignmentX(Component.RIGHT_ALIGNMENT);
-		emailOptions.setAlignmentX(Component.RIGHT_ALIGNMENT);
-		reset.setAlignmentX(Component.RIGHT_ALIGNMENT);
-		return sideBySide(BoxLayout.PAGE_AXIS, side, emailOptions, reset);
-	}
-
-	@Override
 	public void itemStateChanged(ItemEvent e) {
-		boolean useSMTP = useSMTPServer.isSelected();
 		Object source = e.getSource();
-		if(source == useSMTPServer) {
-			for(Component c : emailOptions.getComponents()) {
-				if(c != useSMTPServer)
-					c.setEnabled(useSMTP);
-			}
-		} else if(source == SMTPauth) {
-			password.setEnabled(useSMTP && SMTPauth.isSelected());
-		} else if(source == inspectionCountdown) {
+		if(source == inspectionCountdown) {
 			speakInspection.setEnabled(inspectionCountdown.isSelected());
 		} else if(e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(cubeTimerModel.getSelectedProfile())) {
 			int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("ConfigurationDialog.saveprofile"));
@@ -861,10 +662,10 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		pane.setFocusable(false);
 		pane.setOpaque(false);
 		pane.setBorder(null);
-		pane.addHyperlinkListener(this);
+		pane.addHyperlinkListener(this::hyperlinkUpdate);
 		return pane;
 	}
-	@Override
+
 	public void hyperlinkUpdate(HyperlinkEvent e) {
 		if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
 			showDynamicStrings();
@@ -1000,7 +801,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		return scroller;
 	}
 
-	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if(source == applyButton) {
@@ -1066,7 +866,7 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 				temp.setSelected(true);
 			g.add(temp);
 			temp.setActionCommand("" + ch);
-			temp.addActionListener(this);
+			temp.addActionListener(this::actionPerformed);
 			desktopPanel.add(temp);
 		}
 		desktopPanel.add(refreshDesktops);
@@ -1123,19 +923,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		configuration.setLong(VariableKey.MIXER_NUMBER, lines.getSelectedIndex());
 		configuration.setLong(VariableKey.STACKMAT_SAMPLING_RATE, (Integer) stackmatSamplingRate.getValue());
 
-		configuration.setBoolean(VariableKey.SHOW_EMAIL, showEmail.isSelected());
-		configuration.setString(VariableKey.SUNDAY_NAME, name.getText());
-		configuration.setString(VariableKey.SUNDAY_COUNTRY, country.getText());
-		configuration.setString(VariableKey.SUNDAY_QUOTE, sundayQuote.getText());
-		configuration.setString(VariableKey.SUNDAY_EMAIL_ADDRESS, sundayEmailAddress.getText());
-		configuration.setString(VariableKey.SMTP_HOST, host.getText());
-		configuration.setString(VariableKey.SMTP_PORT, port.getText());
-		configuration.setString(VariableKey.SMTP_USERNAME, username.getText());
-		configuration.setBoolean(VariableKey.SMTP_AUTHENTICATION, SMTPauth.isSelected());
-		configuration.setString(VariableKey.SMTP_PASSWORD, new String(password.getPassword()));
-		configuration.setBoolean(VariableKey.SMTP_ENABLED, useSMTPServer.isSelected());
-		configuration.setString(VariableKey.SMTP_FROM_ADDRESS, smtpEmailAddress.getText());
-
 		configuration.setString(VariableKey.SESSION_STATISTICS, sessionStats.getText());
 		configuration.setString(VariableKey.CURRENT_AVERAGE_STATISTICS, currentAverageStats.getText());
 		configuration.setString(VariableKey.BEST_RA_STATISTICS, bestRAStats.getText());
@@ -1148,8 +935,6 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		configuration.setBoolean(VariableKey.STACKMAT_EMULATION, stackmatEmulation.isSelected());
 		configuration.setLong(VariableKey.STACKMAT_EMULATION_KEY1, sekey1);
 		configuration.setLong(VariableKey.STACKMAT_EMULATION_KEY2, sekey2);
-
-		configuration.setBoolean(VariableKey.CHAT_WINDOW_FLASH, flashyWindow.isSelected());
 
 		configuration.setFont(VariableKey.SCRAMBLE_FONT, scrambleFontChooser.getFont());
 		configuration.setColor(VariableKey.SCRAMBLE_SELECTED, scrambleFontChooser.getForeground());
@@ -1177,23 +962,4 @@ public class ConfigurationDialog extends JDialog implements KeyListener, ActionL
 		configuration.saveConfiguration(cubeTimerModel.getSelectedProfile());
 	}
 
-	@Override
-	public void keyPressed(KeyEvent e) {
-		if(!TimerLabel.ignoreKey(e, false, false, 0, 0)) {
-			if(e.getSource() == splitsKeySelector){
-				splitkey = e.getKeyCode();
-				splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
-			} else if(e.getSource() == stackmatKeySelector1){
-				sekey1 = e.getKeyCode();
-				stackmatKeySelector1.setText(KeyEvent.getKeyText(sekey1));
-			} else if(e.getSource() == stackmatKeySelector2){
-				sekey2 = e.getKeyCode();
-				stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
-			}
-		}
-	}
-	@Override
-	public void keyReleased(KeyEvent e) {}
-	@Override
-	public void keyTyped(KeyEvent e) {}
 }

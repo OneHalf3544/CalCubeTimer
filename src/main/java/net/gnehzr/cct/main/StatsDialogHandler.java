@@ -6,26 +6,20 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JTextAreaWithHistory;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
-import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
-import net.gnehzr.cct.statistics.RollingAverageOf;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
-public class StatsDialogHandler extends JDialog implements ActionListener, ChangeListener {
-    private JButton emailButton = null;
-    private JButton submitButton = null;
+public class StatsDialogHandler extends JDialog {
+
     private JButton saveButton = null;
     private JButton doneButton = null;
-    private JTextAreaWithHistory textArea = null;
-    private SundayContestDialog sundaySubmitter = null;
+    JTextAreaWithHistory textArea = null;
     private JSpinner sizeSpinner = null;
     private final Configuration configuration;
 
@@ -36,18 +30,11 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
         textArea = new JTextAreaWithHistory();
         JScrollPane textScroller = new JScrollPane(textArea);
 
-        emailButton = new JButton(StringAccessor.getString("StatsDialogHandler.email"));
-        emailButton.addActionListener(this);
-
-        sundaySubmitter = new SundayContestDialog(this, configuration);
-        submitButton = new JButton(StringAccessor.getString("StatsDialogHandler.sundaycontest"));
-        submitButton.addActionListener(this);
-
         saveButton = new JButton(StringAccessor.getString("StatsDialogHandler.save"));
-        saveButton.addActionListener(this);
+        saveButton.addActionListener(e -> promptToSaveStats());
 
         doneButton = new JButton(StringAccessor.getString("StatsDialogHandler.done"));
-        doneButton.addActionListener(this);
+        doneButton.addActionListener(e -> setVisible(false));
 
         sizeSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1)) {
             @Override
@@ -58,13 +45,11 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
                     super.setValue(value);
             }
         };
-        sizeSpinner.addChangeListener(this);
+        sizeSpinner.addChangeListener(this::sizeSpinnerChanged);
 
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.LINE_AXIS));
         bottomPanel.add(Box.createHorizontalGlue());
-        bottomPanel.add(emailButton);
-        bottomPanel.add(submitButton);
         bottomPanel.add(saveButton);
         bottomPanel.add(doneButton);
         bottomPanel.add(Box.createHorizontalGlue());
@@ -84,25 +69,6 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
         } else
             configuration.setDimension(VariableKey.STATS_DIALOG_DIMENSION, getSize());
         super.setVisible(b);
-    }
-
-    public void syncWithStats(CurrentSessionSolutionsTableModel statsModel, AverageType type, RollingAverageOf avgNum) {
-        sundaySubmitter.syncWithStats(statsModel.getCurrentSession().getStatistics(), type, avgNum);
-        setTitle(StringAccessor.getString("StatsDialogHandler.detailedstats") + " " + type.toString());
-        switch (type) {
-            case CURRENT_ROLLING_AVERAGE:
-                String currentAverageStatictic = configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, false);
-                textArea.setText(new DynamicString(currentAverageStatictic, null, configuration).toString(avgNum, null));
-                break;
-            case BEST_ROLLING_AVERAGE:
-                String bestRA = configuration.getString(VariableKey.BEST_RA_STATISTICS, false);
-                textArea.setText(new DynamicString(bestRA, null, configuration).toString(avgNum, null));
-                break;
-            case SESSION_AVERAGE:
-                String sessionAverage = configuration.getString(VariableKey.SESSION_STATISTICS, false);
-                textArea.setText(new DynamicString(sessionAverage, null, configuration).toString());
-                break;
-        }
     }
 
     public void promptToSaveStats() {
@@ -144,22 +110,7 @@ public class StatsDialogHandler extends JDialog implements ActionListener, Chang
         }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        Object source = e.getSource();
-        if (source == saveButton) {
-            promptToSaveStats();
-        } else if (source == submitButton) {
-            sundaySubmitter.setVisible(true);
-        } else if (source == doneButton) {
-            this.setVisible(false);
-        } else if (source == emailButton) {
-            new EmailDialog(this, textArea.getText(), configuration).setVisible(true);
-        }
-    }
-
-    @Override
-    public void stateChanged(ChangeEvent e) {
+    public void sizeSpinnerChanged(ChangeEvent e) {
         int fontSize = (Integer) sizeSpinner.getValue();
         configuration.setLong(VariableKey.STATS_DIALOG_FONT_SIZE, fontSize);
         textArea.setFont(textArea.getFont().deriveFont((float) fontSize));

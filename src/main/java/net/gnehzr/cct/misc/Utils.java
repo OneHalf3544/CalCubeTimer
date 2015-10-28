@@ -4,6 +4,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -120,7 +121,7 @@ public class Utils {
 				ok[0]);
 	}
 
-	public static void showErrorDialog(Window c, String message) {
+	public static void showErrorDialog(Window c, @NotNull String message) {
 		showErrorDialog(c, null, message, null);
 	}
 	
@@ -129,16 +130,16 @@ public class Utils {
 	}
 
 	public static void showErrorDialog(Window c, Throwable e) {
-		showErrorDialog(c, e, null);
+		showErrorDialog(c, e, "");
 	}
 
-	public static void showErrorDialog(Window window, Throwable e, String message) {
+	public static void showErrorDialog(Window window, Throwable e, @NotNull String message) {
 		showErrorDialog(window, e, message, null);
 	}
-	public static void showErrorDialog(Window window, Throwable e, String message, String title) {
+	public static void showErrorDialog(Window window, Throwable e, @NotNull String message, String title) {
 		StringBuilder msg = new StringBuilder();
-		if(message != null)
-			msg.append(message).append("\n");
+
+		msg.append(message).append("\n");
 		if(e != null) {
 			CharArrayWriter caw = new CharArrayWriter();
 			e.printStackTrace(new PrintWriter(caw));

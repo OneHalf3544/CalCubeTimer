@@ -61,12 +61,6 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		});
 	}
 
-	@NotNull
-	@Deprecated
-	public Session getCurrentSession() {
-		return sessionsList.getCurrentSession();
-	}
-
 	@Override
 	public String getColumnName(int column) {
 		return StringAccessor.getString(columnNames[column]);

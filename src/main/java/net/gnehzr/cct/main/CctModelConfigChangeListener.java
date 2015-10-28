@@ -53,7 +53,6 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
     @Override
     public void configurationChanged(Profile currentProfile) {
         LOG.info("process configuration changing (profile: {})", currentProfile.getName());
-        //Configuration for the cctbot to work.
         actionMap.refreshActions();
 
         DefaultComboBoxModel<Profile> profileComboBoxModel = new DefaultComboBoxModel<>(

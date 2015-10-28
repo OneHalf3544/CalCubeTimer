@@ -7,11 +7,11 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Date;
 
-public class SessionRenderer implements TableCellRenderer {
+public class SessionTableCellRenderer implements TableCellRenderer {
 
 	private final SessionsList sessionsList;
 
-	public SessionRenderer(SessionsList sessionsList) {
+	public SessionTableCellRenderer(SessionsList sessionsList) {
 		this.sessionsList = sessionsList;
 	}
 
@@ -29,9 +29,12 @@ public class SessionRenderer implements TableCellRenderer {
 		}
 
 		//emphasize the current session
-		label.setBackground(sessionsList.getCurrentSession() == sessionsList.getNthSession(row)
-				? Color.GREEN
-				: Color.WHITE);
+		if (sessionsList.getCurrentSession() == sessionsList.getNthSession(row)) {
+			label.setBackground(Color.GREEN);
+		}
+		else {
+			label.setBackground(Color.WHITE);
+		}
 
 		return label;
 	}

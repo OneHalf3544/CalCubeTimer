@@ -70,10 +70,8 @@ class CoordCube {
 	private static boolean loadTable(String tableName, byte[] table) {
 		tableName = "2phase." + tableName;
 		LOG.info("Attempting to load " + tableName);
-		try {
-			FileInputStream in = new FileInputStream(tableName);
+		try (FileInputStream in = new FileInputStream(tableName)) {
 			in.read(table);
-			in.close();
 			return true;
 		} catch (Exception e) {
 			LOG.error(e);
@@ -82,7 +80,7 @@ class CoordCube {
 	}
 	private static void writeTable(String tableName, byte[] table) {
 		tableName = "2phase." + tableName;
-		try(FileOutputStream out = new FileOutputStream(tableName)) {
+		try (FileOutputStream out = new FileOutputStream(tableName)) {
 			out.write(table);
 
 		} catch(Exception e) {

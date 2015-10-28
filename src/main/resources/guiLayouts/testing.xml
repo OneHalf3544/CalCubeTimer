@@ -23,7 +23,6 @@
 							</panel>
 						</scrollpane>
 						<panel layout="border">
-							<line_start><button action="submitSundayContest">%%submitsunday%%</button></line_start>
 							<center><panel><checkbox alignmentX=".5" action="keyboardTiming">%%usekeyboard%%</checkbox></panel></center>
 							<line_end>
 								<panel>
