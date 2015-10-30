@@ -45,7 +45,7 @@ public class DynamicStringTest {
         RollingAverage rollingAverage = mock(RollingAverage.class);
         when(rollingAverage.getAverage()).thenReturn(new SolveTime("23.12"));
 
-        SessionPuzzleStatistics statistics = mock(SessionPuzzleStatistics.class);
+        SessionSolutionsStatistics statistics = mock(SessionSolutionsStatistics.class);
         when(statistics.getBestAverage(any(RollingAverageOf.class))).thenReturn(rollingAverage);
 
         Session currentSession = mock(Session.class);

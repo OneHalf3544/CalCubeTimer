@@ -158,15 +158,14 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 				}
 				int keyCode = e.getKeyCode();
 				timeup.put(keyCode, e.getWhen());
-				ActionListener checkForKeyPress = evt -> {
+
+				new Timer(10, evt -> {
                     if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
                         keyDown.put(keyCode, false);
                         keyReallyReleased(e);
                     }
                     ((Timer) evt.getSource()).stop();
-                };
-
-				new Timer(10, checkForKeyPress).start();
+                }).start();
 			}
 		};
 	}

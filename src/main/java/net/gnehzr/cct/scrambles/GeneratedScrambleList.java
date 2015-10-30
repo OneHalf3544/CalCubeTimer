@@ -1,5 +1,6 @@
 package net.gnehzr.cct.scrambles;
 
+import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,14 +16,13 @@ public class GeneratedScrambleList implements ScrambleList {
 
 	private ScrambleString currentScrambleString;
 
-	public GeneratedScrambleList(SessionsList sessionsList) {
+	public GeneratedScrambleList(SessionsList sessionsList, Configuration configuration) {
 		this.sessionsList = sessionsList;
 		this.scramblePluginManager = getPuzzleType().scramblePluginManager;
 
 		this.scrambleNumber = 0;
-		this.currentScrambleString = getPuzzleType().isNullType()
-				? scramblePluginManager.NULL_IMPORTED_SCRUMBLE
-				: generateScrambleForCurrentSession();
+		this.currentScrambleString = null;
+		configuration.addConfigurationChangeListener(currentProfile -> generateNext());
 	}
 
 	@Override
@@ -33,9 +33,7 @@ public class GeneratedScrambleList implements ScrambleList {
 
 	public ScrambleString generateScrambleForCurrentSession() {
 		LOG.info("generate scramble: {}", sessionsList.getCurrentSession());
-		return this.currentScrambleString = getPuzzleType().isNullType()
-				? currentScrambleString
-				: getPuzzleType().generateScramble();
+		return this.currentScrambleString = getPuzzleType().generateScramble();
 	}
 
 	public void setScrambleLength(int scrambleLength) {

@@ -11,10 +11,10 @@ import java.net.URL;
 
 public class AboutScrollFrame extends JFrame {
 	private JScrollPane editorScrollPane;
-	private Timer autoscroll;
+	private Timer autoscrollTimer;
+
 	public AboutScrollFrame(URL helpURL, Image icon) throws Exception {
 		this.setIconImage(icon);
-//		this.setAlwaysOnTop(true);
 		JTextPane pane = new JTextPane();
 		pane.putClientProperty(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.FALSE);
 		pane.setOpaque(false);
@@ -36,18 +36,18 @@ public class AboutScrollFrame extends JFrame {
 		this.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowActivated(WindowEvent e) {
-				autoscroll.start();
+				autoscrollTimer.start();
 			}
 			@Override
 			public void windowDeactivated(WindowEvent e) {
-				autoscroll.stop();
+				autoscrollTimer.stop();
 			}
 		});
 		this.add(editorScrollPane);
 		this.setSize(600, 300);
 		this.setResizable(false);
 		this.setLocationRelativeTo(null);
-		autoscroll = new Timer(100, this::scrollByTimer);
+		autoscrollTimer = new Timer(100, this::scrollByTimer);
 	}
 
 	public void scrollByTimer(ActionEvent e) {

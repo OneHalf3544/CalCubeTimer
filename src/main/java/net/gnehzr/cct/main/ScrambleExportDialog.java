@@ -8,9 +8,7 @@ import net.gnehzr.cct.misc.JSpinnerWithText;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleSettings;
 import net.gnehzr.cct.scrambles.ScrambleString;
-import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,12 +29,13 @@ public class ScrambleExportDialog extends JDialog {
 	private final Configuration configuration;
 
 	private JTextField urlField;
-	private ScrambleChooserComboBox<PuzzleType> scrambleChooser;
+	private PuzzleTypeChooserComboBox scrambleChooser;
 	private JSpinnerWithText scrambleLengthJSpinner;
 	private JSpinnerWithText numberOfScramblesJSpinner;
 
-	public ScrambleExportDialog(JFrame owner, PuzzleType selectedPuzzleType, ScramblePluginManager scramblePluginManager,
-								Configuration configuration, Profile profile) {
+	public ScrambleExportDialog(JFrame owner, PuzzleType selectedPuzzleType,
+								ScramblePluginManager scramblePluginManager,
+								Configuration configuration) {
 		super(owner, StringAccessor.getString("ScrambleExportDialog.exportscrambles"), true);
 		this.scramblePluginManager = scramblePluginManager;
 		this.configuration = configuration;
@@ -52,7 +51,7 @@ public class ScrambleExportDialog extends JDialog {
 			}
 		});
 
-		scrambleChooser = new ScrambleVariationChooserComboBox(false, this.scramblePluginManager, this.configuration);
+		scrambleChooser = new PuzzleTypeChooserComboBox(false, this.scramblePluginManager, this.configuration);
 		scrambleChooser.setSelectedItem(selectedPuzzleType);
 		scrambleChooser.addActionListener(e -> {
             //if(scrambleLengthJSpinner != null) {
@@ -74,7 +73,7 @@ public class ScrambleExportDialog extends JDialog {
 		subPanel.add(scrambleChooser);
 
 		scrambleLengthJSpinner = new JSpinnerWithText(
-				selectedPuzzleType.getScrambleVariation().getLength(),
+				scramblePluginManager.getScrambleVariation(selectedPuzzleType).getLength(),
 				1,
 				StringAccessor.getString("ScrambleExportDialog.lengthscrambles"));
 
@@ -129,19 +128,11 @@ public class ScrambleExportDialog extends JDialog {
 		return numberOfScramblesJSpinner.getSpinnerValue();
 	}
 
-	private ScrambleSettings getVariation() {
-		ScrambleSettings var = (ScrambleSettings) scrambleChooser.getSelectedItem();
-		if(scrambleLengthJSpinner != null) {
-			var.setLength(scrambleLengthJSpinner.getSpinnerValue());
-		}
-		return var;
-	}
-
 	private boolean generateAndExportScrambles(URL outputFile, int numberOfScrambles, PuzzleType puzzleType) {
 		try (PrintWriter fileWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(outputFile.toURI())), "UTF-8"))) {
 
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
-				fileWriter.println(puzzleType.generateScramble(puzzleType.getScrambleVariation()).getScramble());
+				fileWriter.println(puzzleType.generateScramble(scramblePluginManager.getScrambleVariation(puzzleType)).getScramble());
 			}
 			Utils.showConfirmDialog(this, StringAccessor.getString("ScrambleExportDialog.successmessage") + "\n" + outputFile.getPath());
 			return true;
@@ -177,9 +168,10 @@ public class ScrambleExportDialog extends JDialog {
 			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP);
 			fileWriter.println("<html><head><title>Exported Scrambles</title></head><body><table>");
 			for(int ch = 0; ch < numberOfScrambles; ch++) {
-				ScrambleString scramble = puzzleType.generateScramble(puzzleType.getScrambleVariation());
+				ScrambleString scramble = puzzleType.generateScramble(scramblePluginManager.getScrambleVariation(puzzleType));
 				BufferedImage image = scramblePluginManager.getScrambleImage(scramble, popupGap,
-						scramble.getScramblePlugin().getDefaultUnitSize(), scramblePluginManager.getColorScheme(scramble.getScramblePlugin(), false));
+						scramble.getScramblePlugin().getDefaultUnitSize(),
+						scramblePluginManager.getColorScheme(scramble.getScramblePlugin(), false, configuration));
 
 				File file = new File(imageDir, "scramble" + ch + ".png");
 				ImageIO.write(image, "png", file);

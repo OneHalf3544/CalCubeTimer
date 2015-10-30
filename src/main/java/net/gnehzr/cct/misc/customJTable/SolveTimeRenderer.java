@@ -3,7 +3,7 @@ package net.gnehzr.cct.misc.customJTable;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
 import net.gnehzr.cct.statistics.RollingAverageOf;
 
 import javax.swing.*;
@@ -38,13 +38,13 @@ public class SolveTimeRenderer extends JLabel implements TableCellRenderer {
 		Color foreground = null;
 		Color background = null;
 
-		if(value instanceof SolveTime || value instanceof RollingAverageTime) {
-			SessionPuzzleStatistics sessionStatistics = sessionsList.getCurrentSession().getStatistics();
+		if(value instanceof SolveTime || value instanceof RollingAverage) {
+			SessionSolutionsStatistics sessionStatistics = sessionsList.getCurrentSession().getStatistics();
 			boolean memberOfBestRA;
 			boolean memberOfCurrentAverage = false;
 			SolveTime solveTime;
-			if (value instanceof RollingAverageTime) { //this indicates we're dealing with an average, not a solve time
-				RollingAverageOf whichRA = ((RollingAverageTime)value).getWhichRA();
+			if (value instanceof RollingAverage) { //this indicates we're dealing with an average, not a solve time
+				RollingAverageOf whichRA = ((RollingAverage)value).getRollingAverageOf();
 				int raSize = sessionStatistics.getRASize(whichRA);
 				int indexOfBestRA = sessionStatistics.getIndexOfBestRA(whichRA);
 				memberOfBestRA = indexOfBestRA != -1 && (indexOfBestRA + raSize == row + 1);

@@ -23,7 +23,7 @@ public class ScramblePopupFrame extends JDialog {
 	private JTextArea scrambleInfoTextArea;
 	private JScrollPane scrambleInfoScroller;
 	private ScrambleViewComponent incrementalScrambleView;
-	private ScrambleViewComponent finalView;
+	private ScrambleViewComponent scrambleFinalView;
 
 	@Inject
 	private ToggleScramblePopupAction visibilityAction;
@@ -33,8 +33,8 @@ public class ScramblePopupFrame extends JDialog {
 							  Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		super(parent);
 		this.configuration = configuration;
-		incrementalScrambleView = new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
-		finalView = 			  new ScrambleViewComponent(false, false, configuration, scramblePluginManager);
+		incrementalScrambleView = new ScrambleViewComponent(configuration, scramblePluginManager);
+		scrambleFinalView       = new ScrambleViewComponent(configuration, scramblePluginManager);
 		pane = new JPanel(new GridLayout(1, 0));
 		pane.add(incrementalScrambleView);
 		scrambleInfoTextArea = new JTextArea();
@@ -77,13 +77,14 @@ public class ScramblePopupFrame extends JDialog {
 		incrementalScrambleView.syncColorScheme(false);
 		refreshPopup();
 		Point location = configuration.getPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, false);
-		if(location != null)
+		if (location != null) {
 			setLocation(location);
+		}
 	}
 
 	public void setScramble(ScrambleString incrementalScramble, ScrambleString fullScramble) {
-		incrementalScrambleView.setScramble(incrementalScramble, incrementalScramble.getPuzzleType());
-		finalView.setScramble(fullScramble, incrementalScramble.getPuzzleType());
+		incrementalScrambleView.setScramble(incrementalScramble);
+		scrambleFinalView.setScramble(fullScramble);
 		String info = incrementalScramble.getTextComments();
 		if(info == null) {
 			pane.remove(scrambleInfoScroller);
@@ -113,7 +114,7 @@ public class ScramblePopupFrame extends JDialog {
 			}
 
 			private void maybeShowPopup(MouseEvent mouseEvent) {
-				if(mouseEvent.isPopupTrigger()) {
+				if (mouseEvent.isPopupTrigger()) {
 					JCheckBoxMenuItem showFinal = new JCheckBoxMenuItem(StringAccessor.getString("ScrambleFrame.showfinalview"), isFinalViewVisible());
 					showFinal.addActionListener(e1 -> {
                         JCheckBoxMenuItem src = (JCheckBoxMenuItem) e1.getSource();
@@ -129,7 +130,7 @@ public class ScramblePopupFrame extends JDialog {
 	}
 	
 	private boolean isFinalViewVisible() {
-		return finalView.getParent() == pane;
+		return scrambleFinalView.getParent() == pane;
 	}
 
 	public void setFinalViewVisible(boolean visible) {
@@ -138,10 +139,10 @@ public class ScramblePopupFrame extends JDialog {
 			return;
 		}
 		if(visible) {
-			pane.add(finalView, 1);
+			pane.add(scrambleFinalView, 1);
 		}
 		else {
-			pane.remove(finalView);
+			pane.remove(scrambleFinalView);
 		}
 		pack();
 	}

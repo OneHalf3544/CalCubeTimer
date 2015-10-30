@@ -67,7 +67,7 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
         calCubeTimerGui.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
 
         scramblePluginManager.reloadLengthsFromConfiguration(false);
-        PuzzleType newCustom = scramblePluginManager.getCurrentScrambleCustomization(currentProfile);
+        PuzzleType newCustom = scramblePluginManager.getCurrentScrambleCustomization();
         // TODO
         calCubeTimerGui.getMainFrame().getScrambleCustomizationComboBox().setSelectedItem(newCustom);
 

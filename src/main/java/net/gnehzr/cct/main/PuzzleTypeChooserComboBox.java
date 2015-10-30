@@ -1,8 +1,8 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 
@@ -10,18 +10,20 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-public abstract class ScrambleChooserComboBox<T> extends JComboBox<T> implements TableCellRenderer, ConfigurationChangeListener {
+import static com.google.common.collect.Iterables.toArray;
+
+public final class PuzzleTypeChooserComboBox extends JComboBox<PuzzleType> implements TableCellRenderer {
 
 	protected final ScramblePluginManager scramblePluginManager;
 	private final Configuration configuration;
 
-	public ScrambleChooserComboBox(boolean icons,
-								   ScramblePluginManager scramblePluginManager,
-								   Configuration configuration) {
+	public PuzzleTypeChooserComboBox(boolean icons,
+									 ScramblePluginManager scramblePluginManager,
+									 Configuration configuration) {
 		this.scramblePluginManager = scramblePluginManager;
 		this.configuration = configuration;
 		this.setRenderer(new PuzzleCustomizationCellRenderer(icons, scramblePluginManager));
-		configuration.addConfigurationChangeListener(this);
+		configuration.addConfigurationChangeListener(this::configurationChanged);
 		// todo configurationChanged(profileDao.getSelectedProfile());
 	}
 
@@ -40,11 +42,8 @@ public abstract class ScrambleChooserComboBox<T> extends JComboBox<T> implements
 		return this;
 	}
 	
-	@Override
-	public void configurationChanged(Profile profile) {
-		this.setModel(new DefaultComboBoxModel<>(getScramblesTypeArray(profile)));
+	private void configurationChanged(Profile profile) {
+		this.setModel(new DefaultComboBoxModel<>(toArray(scramblePluginManager.getPuzzleTypes(), PuzzleType.class)));
 		this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 	}
-
-	protected abstract T[] getScramblesTypeArray(Profile profile);
 }

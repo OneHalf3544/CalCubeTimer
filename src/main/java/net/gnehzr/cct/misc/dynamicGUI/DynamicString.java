@@ -4,7 +4,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.MessageAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -146,7 +146,7 @@ public class DynamicString{
 
 		String s = dStringPart.getString().toLowerCase();
 
-		SessionPuzzleStatistics stats = Objects.requireNonNull(sessions.getCurrentSession()).getStatistics();
+		SessionSolutionsStatistics stats = Objects.requireNonNull(sessions.getCurrentSession()).getStatistics();
 
 		Pattern p = Pattern.compile("^\\s*(global|session|ra|date)\\s*(.*)$");
 		Matcher m = p.matcher(s);
@@ -228,7 +228,7 @@ public class DynamicString{
 		}
 	}
 
-	private String getForSession(String originalString, SessionPuzzleStatistics stats, Matcher m) {
+	private String getForSession(String originalString, SessionSolutionsStatistics stats, Matcher m) {
 		Pattern progressPattern = Pattern.compile("^\\s*\\.\\s*(progress)\\s*(.*)$");
 		Pattern sessionPattern = Pattern.compile("^\\s*\\.\\s*(solvecount|average|sd|list|stats|time)\\s*(.*)$");
 		Matcher sessionMatcher = sessionPattern.matcher(m.group(2));
@@ -245,7 +245,7 @@ public class DynamicString{
                 if (sessionMatcher.group(2).isEmpty()) {
                     SolveTime ave = stats.getSessionAvg(); //this method returns zero if there are no solves to allow the global stats to be computed nicely
                     if (ave.isZero()) {
-                        ave = SolveTime.NA;
+                        ave = SolveTime.NOT_AVAILABLE;
                     }
                     return Utils.formatTime(ave, configuration.useClockFormat());
                 } else {
@@ -267,7 +267,7 @@ public class DynamicString{
 				if (progressMatcher.matches()) {
                     if (progressMatcher.group(1).equals("progress")) {
                         boolean parens = hasFilter(progressMatcher.group(2), "parens");
-                        return formatProgressTime(stats.getProgressSessionSD(), parens);
+                        return formatProgressTime(stats.getProgressSessionStandardDeviation(), parens);
                     }
                 }
 				throw unimplementedError(originalString);
@@ -306,7 +306,7 @@ public class DynamicString{
 		return "Invalid argument: " + argument  + " : " + originalString;
 	}
 
-	private String getForRollingAverage(RollingAverageOf num, String originalString, SessionPuzzleStatistics stats, Matcher m) {
+	private String getForRollingAverage(RollingAverageOf num, String originalString, SessionSolutionsStatistics stats, Matcher m) {
 		Tuple2<String[], String> raMatcher = parseArguments(m.group(2));
 		if (raMatcher.v1.length == 0) {
 			throw invalidNumberOfArguments(originalString);
@@ -329,7 +329,7 @@ public class DynamicString{
                     return Utils.formatTime(stats.getByBestStandardDeviation(num).getStandartDeviation(), configuration.useClockFormat());
                 }
                 else if (sdArgMatcher.v1[0].equals("worst")) {
-                    return Utils.formatTime(stats.getByWorstStandartDeviation(num), configuration.useClockFormat());
+                    return Utils.formatTime(stats.getByWorstStandardDeviation(num), configuration.useClockFormat());
                 }
             } else {
                 if (arg1Matcher.group(1).equals("progress")) {
@@ -376,13 +376,13 @@ public class DynamicString{
                     case "sd": {
                         switch (avg) {
                             case "best":
-                                return Utils.formatTime(stats.getBestAverageSD(num), configuration.useClockFormat());
+                                return Utils.formatTime(stats.getBestAverageStandardDeviation(num), configuration.useClockFormat());
                             case "worst":
-                                return Utils.formatTime(stats.getWorstAverageSD(num), configuration.useClockFormat());
+                                return Utils.formatTime(stats.getWorstAverageStandardDeviation(num), configuration.useClockFormat());
                             case "recent":
-                                return Utils.formatTime(stats.getCurrentSD(num), configuration.useClockFormat());
+                                return Utils.formatTime(stats.getCurrentStandardDeviation(num), configuration.useClockFormat());
                             case "last":
-                                return Utils.formatTime(stats.getLastSD(num), configuration.useClockFormat());
+                                return Utils.formatTime(stats.getLastStandardDeviation(num), configuration.useClockFormat());
                             default:
                                 throw unimplementedError(avg + " : " + originalString);
                         }

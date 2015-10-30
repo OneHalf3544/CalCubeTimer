@@ -54,7 +54,7 @@ public class SessionsList implements Iterable<Session> {
 		this.cubeTimerModel = cubeTimerModel;
 		this.solutionDao = solutionDao;
 		this.scramblePluginManager = scramblePluginManager;
-		this.currentSession =  new Session(LocalDateTime.now(), configuration, scramblePluginManager.NULL_PUZZLE_TYPE, solutionDao);
+		this.currentSession =  new Session(LocalDateTime.now(), scramblePluginManager.getDefaultPuzzleType(), solutionDao);
 		sessions.add(currentSession);
 	}
 
@@ -87,7 +87,7 @@ public class SessionsList implements Iterable<Session> {
 				.map(Session::getPuzzleType)
 				.forEach(this::getGlobalPuzzleStatisticsForType);
 
-		this.loadOrCreateLatestSession(scramblePluginManager.NULL_PUZZLE_TYPE);
+		this.loadOrCreateLatestSession(scramblePluginManager.getDefaultPuzzleType());
 	}
 
 	public void addSessionListener(@NotNull SessionListener sl) {
@@ -143,10 +143,10 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 	private void removeNullSessions() {
-		LOG.info("remove nullSessions");
 		List<Session> emptySessions = sessions.stream()
-				.filter(s -> s.getPuzzleType() == scramblePluginManager.NULL_PUZZLE_TYPE)
+				.filter(s -> s.getAttemptsCount() == 0)
 				.collect(toList());
+		LOG.info("remove nullSessions (count: {})", emptySessions.size());
 		sessions.removeAll(emptySessions);
 	}
 
@@ -169,7 +169,7 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 	public void createSession(PuzzleType puzzleType) {
-		addSession(new Session(LocalDateTime.now(), configuration, puzzleType, solutionDao));
+		addSession(new Session(LocalDateTime.now(), puzzleType, solutionDao));
 	}
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {

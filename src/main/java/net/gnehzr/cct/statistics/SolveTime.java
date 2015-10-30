@@ -19,16 +19,11 @@ public class SolveTime implements Comparable<SolveTime> {
 	public static final SolveTime ZERO_TIME = new SolveTime(Duration.ZERO);
 	public static final SolveTime BEST = ZERO_TIME;
 	public static final SolveTime WORST = new SolveTime((Duration)null);
-	public static final SolveTime NA = WORST;
+	public static final SolveTime NOT_AVAILABLE = WORST;
 
 	private final Set<SolveType> types = new HashSet<>();
 
 	private final Duration time;
-
-	@Deprecated
-	public SolveTime(double seconds) {
-		this(Duration.ofMillis(10 * (long) (100 * seconds + .5)));
-	}
 
 	public SolveTime(Duration time) {
 		this.time = time;
@@ -128,6 +123,10 @@ public class SolveTime implements Comparable<SolveTime> {
 			return "N/A";
 		}
 		return toString(true);
+	}
+
+	public String toStringWithParenthesis() {
+		return '(' + toString() + ')';
 	}
 
 	String toString(boolean useClockFormat) {
@@ -237,7 +236,7 @@ public class SolveTime implements Comparable<SolveTime> {
 
 	public static SolveTime substruct(SolveTime time1, SolveTime time2) {
 		if (time1.isInfiniteTime() || time2.isInfiniteTime()) {
-			return SolveTime.NA;
+			return SolveTime.NOT_AVAILABLE;
 		}
 		return new SolveTime(time1.getTime().minus(time2.getTime()));
 	}

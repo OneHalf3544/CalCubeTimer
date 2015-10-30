@@ -71,10 +71,11 @@ public class Configuration {
 		flagsFolder = new File(languagesFolder, "flags/");
 		defaultsFile = new File(rootDirectory, "profiles/defaults.properties");
 		jvmDefaultLocale = new LocaleAndIcon(flagsFolder, Locale.getDefault(), null);
+		userProperties = SortedProperties.loadDefaults(defaultsFile); //SortedProperties.NOT_LOADED_PROPERTIES;
 	}
 
 	// using for unit-tests
-	public Configuration(SortedProperties userProperties) {
+	public Configuration(@NotNull SortedProperties userProperties) {
 		this.configurationDao = null;
 		this.userProperties = userProperties;
 		documentationFile = null;
@@ -128,20 +129,25 @@ public class Configuration {
 	}
 
 	//returns empty string if everything is fine, error message otherwise
-	public String getStartupErrors() {
-		String seriousError = "";
+	public Collection<String> getStartupErrors() {
+		List<String> seriousError = new ArrayList<>();
 		if (!defaultsFile.exists()) {
-			seriousError += "Couldn't find file!\n" + defaultsFile.getAbsolutePath() + "\n";
+			seriousError.add(fileNotFound(defaultsFile));
 		}
 		List<File> layouts = getXMLLayoutsAvailable();
 		if (layouts == null || layouts.isEmpty()) {
-			seriousError += "Couldn't find file!\n" + guiLayoutsFolder.getAbsolutePath() + "\n";
+			seriousError.add(fileNotFound(guiLayoutsFolder));
 		}
 		return seriousError;
 	}
 
 	@NotNull
-	private SortedProperties userProperties = SortedProperties.NOT_LOADED_PROPERTIES;
+	private String fileNotFound(File file) {
+		return "Couldn't find file!\n" + file.getAbsolutePath();
+	}
+
+	@NotNull
+	private SortedProperties userProperties;
 
 	public void loadConfiguration(Profile profile) {
 		userProperties = SortedProperties.load(profile, configurationDao, defaultsFile);

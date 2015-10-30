@@ -36,12 +36,12 @@ public class ScrambleImportDialog extends JDialog {
 	private JButton importButton;
 	private JTextAreaWithHistory scramblesTextArea;
 	private JEditorPane qualityControl;
-	private ScrambleChooserComboBox<PuzzleType> scrambleChooser;
+	private PuzzleTypeChooserComboBox scrambleChooser;
 
 	private List<ScrambleString> scrambles = new ArrayList<>();
 
 	public ScrambleImportDialog(CALCubeTimerFrame calCubeTimerFrame, ScrambleImporter scrambleImporter,
-								PuzzleType sc,
+								PuzzleType puzzleType,
 								ScramblePluginManager scramblePluginManager, Configuration configuration) {
 		super(calCubeTimerFrame, StringAccessor.getString("ScrambleImportDialog.importscrambles"), true);
 		this.configuration = configuration;
@@ -66,9 +66,9 @@ public class ScrambleImportDialog extends JDialog {
 		sideBySide.add(addToAreaButton);
 		topBot.add(sideBySide);
 
-		scrambleChooser = new ScrambleCustomizationChooserComboBox(false, scramblePluginManager, configuration);
-		scrambleChooser.addItem(scramblePluginManager.NULL_PUZZLE_TYPE);
-		scrambleChooser.setSelectedItem(sc);
+		scrambleChooser = new PuzzleTypeChooserComboBox(false, scramblePluginManager, configuration);
+		scrambleChooser.addItem(puzzleType);
+		scrambleChooser.setSelectedItem(puzzleType);
 		scrambleChooser.addActionListener(e -> this.validateScrambles());
 		topBot.add(scrambleChooser);
 

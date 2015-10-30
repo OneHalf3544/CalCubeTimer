@@ -37,8 +37,8 @@ public class SessionsListTable extends DraggableJTable implements SelectionListe
 
 	@Override
 	public void rowSelected(int row) {
-		Session selected = sessionsList.getNthSession(row);
-		if(sessionsList.getCurrentSession() != selected) {
+		Session selected = sessionsList.getNthSession(convertRowIndexToModel(row));
+		if (sessionsList.getCurrentSession() != selected) {
 			sessionsList.setCurrentSession(selected);
 		}
 	}

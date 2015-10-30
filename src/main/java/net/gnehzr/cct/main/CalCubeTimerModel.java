@@ -70,7 +70,7 @@ public interface CalCubeTimerModel {
 
     void startUpdateInspectionTimer();
 
-    void prepareForProfileSwitch();
+    void saveProfileConfiguration();
 
     Session getCurrentSession();
 

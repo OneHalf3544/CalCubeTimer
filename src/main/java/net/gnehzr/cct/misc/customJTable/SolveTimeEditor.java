@@ -2,7 +2,6 @@ package net.gnehzr.cct.misc.customJTable;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.SolveTime;
 
@@ -13,13 +12,11 @@ import java.awt.event.ActionEvent;
 
 @Singleton
 public class SolveTimeEditor extends DefaultCellEditor {
-	private final Configuration configuration;
 	private SolveTime value;
 
 	@Inject
-	public SolveTimeEditor(Configuration configuration) {
+	public SolveTimeEditor() {
 		super(new JTextField());
-		this.configuration = configuration;
 	}
 	
 	//TODO - http://www.pushing-pixels.org/?p=69 ?
@@ -34,8 +31,7 @@ public class SolveTimeEditor extends DefaultCellEditor {
 			component.setToolTipText(e.getMessage());
 			Action toolTipAction = component.getActionMap().get("postTip");
 			if (toolTipAction != null) {
-				ActionEvent postTip = new ActionEvent(component,
-						ActionEvent.ACTION_PERFORMED, "");
+				ActionEvent postTip = new ActionEvent(component, ActionEvent.ACTION_PERFORMED, "");
 				toolTipAction.actionPerformed(postTip);
 			}
 			return false;

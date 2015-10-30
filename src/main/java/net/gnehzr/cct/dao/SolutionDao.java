@@ -66,8 +66,9 @@ public class SolutionDao extends HibernateDaoSupport {
         List<SessionEntity> sessionEntities = queryList("from SessionEntity where profile.profileId = :profileId",
                 Collections.singletonMap("profileId", profile.getId()));
 
+        // TODO lazy load solutions
         return sessionEntities.stream()
-                .map(s -> s.toSession(configuration, scramblePluginManager, this))
+                .map(s -> s.toSession(scramblePluginManager, this))
                 .collect(toList());
     }
 

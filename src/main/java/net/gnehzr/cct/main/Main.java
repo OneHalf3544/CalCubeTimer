@@ -1,5 +1,6 @@
 package net.gnehzr.cct.main;
 
+import com.google.common.base.Joiner;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -9,7 +10,6 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ConfigurationDao;
 import net.gnehzr.cct.dao.HibernateDaoSupport;
 import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicStringSettableManger;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.pushingpixels.lafwidget.LafWidget;
 
 import javax.swing.*;
+import java.util.Collection;
 
 /**
  * <p>
@@ -91,8 +92,6 @@ public class Main implements Module {
             LOG.debug("create injector");
             injector = Guice.createInjector(new Main(sessionFactory));
 
-            CalCubeTimerModel calCubeTimerModel = injector.getInstance(CalCubeTimerModel.class);
-            calCubeTimerModel.setSelectedProfile(loadProfile(args, injector.getInstance(ProfileDao.class)));
 
         } catch (Exception e) {
             LOG.error("initialisation error", e);
@@ -101,46 +100,39 @@ public class Main implements Module {
         }
 
         SwingUtilities.invokeLater(() -> {
-
             try {
-                CalCubeTimerModel calCubeTimerModel = injector.getInstance(CalCubeTimerModel.class);
-                Configuration configuration1 = injector.getInstance(Configuration.class);
-                String errors = configuration1.getStartupErrors();
+                setLookAndFeel();
+
+                injector.getInstance(CalCubeTimerModel.class).setSelectedProfile(
+                        loadProfile(args, injector.getInstance(ProfileDao.class)));
+
+                Collection<String> errors = injector.getInstance(Configuration.class).getStartupErrors();
                 if (!errors.isEmpty()) {
-                    Utils.showErrorDialog(null, errors, "Couldn't start CCT!");
+                    Utils.showErrorDialog(null, Joiner.on('\n').join(errors), "Couldn't start CCT!");
                     Main.exit(1);
                 }
 
-                JDialog.setDefaultLookAndFeelDecorated(true);
-                JFrame.setDefaultLookAndFeelDecorated(true);
-                UIManager.setLookAndFeel(new org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel());
 
-                UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
-                UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
-
-                CALCubeTimerFrame calCubeTimerFrame = injector.getInstance(CALCubeTimerFrame.class);
-                calCubeTimerFrame.setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
-                calCubeTimerFrame.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
-                calCubeTimerFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
-                configuration1.loadConfiguration(calCubeTimerModel.getSelectedProfile());
-
+                CalCubeTimerGui calCubeTimerFrame = injector.getInstance(CalCubeTimerGui.class);
+                calCubeTimerFrame.loadXMLGUI();
                 calCubeTimerFrame.setVisible(true);
 
-                calCubeTimerFrame.loadXMLGUI();
-
-                configuration1.apply(calCubeTimerModel.getSelectedProfile());
-                ScramblePluginManager scramblePluginManager = injector.getInstance(ScramblePluginManager.class);
-                SolutionDao solutionDao = injector.getInstance(SolutionDao.class);
-                calCubeTimerModel.getSessionsList().setSessions(solutionDao.loadSessions(calCubeTimerModel.getSelectedProfile(), scramblePluginManager));
-
-                calCubeTimerFrame.repaintTimes();
             } catch (Exception e) {
                 LOG.error("unexpected exception", e);
                 Utils.showErrorDialog(null, e, "Couldn't start CCT!");
                 Main.exit(1);
             }
         });
+    }
+
+    private static void setLookAndFeel() throws UnsupportedLookAndFeelException {
+
+        JDialog.setDefaultLookAndFeelDecorated(true);
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        UIManager.setLookAndFeel(new org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel());
+
+        UIManager.put(LafWidget.TEXT_EDIT_CONTEXT_MENU, Boolean.TRUE);
+        UIManager.put(LafWidget.TEXT_SELECT_ON_FOCUS, Boolean.TRUE);
     }
 
     private static Profile loadProfile(String[] args, ProfileDao profileDao) {
@@ -178,7 +170,7 @@ public class Main implements Module {
             System.exit(code);
         }
         try {
-            injector.getInstance(CalCubeTimerModel.class).prepareForProfileSwitch();
+            injector.getInstance(CalCubeTimerModel.class).saveProfileConfiguration();
         } catch (Exception e){
             LOG.error("save profile error", e);
         }

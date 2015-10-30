@@ -6,6 +6,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 mainClassName = "net.gnehzr.cct.main.Main"
+// todo
 applicationDefaultJvmArgs = ["-DrootDir=" + new File("${buildDir}/resources/main").toURI().toString()]
 
 jar {

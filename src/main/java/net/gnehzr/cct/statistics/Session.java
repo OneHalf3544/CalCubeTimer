@@ -1,6 +1,5 @@
 package net.gnehzr.cct.statistics;
 
-import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileEntity;
 import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.dao.SolutionDao;
@@ -11,28 +10,40 @@ import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.Seq;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-public class Session extends Commentable implements Comparable<Session> {
+public class Session implements Commentable, Comparable<Session> {
 
 	private static final Logger LOG = LogManager.getLogger(Session.class);
 
 	private Long lastSessionId;
-	private SessionPuzzleStatistics sessionPuzzleStatistics;
-	private final Configuration configuration;
+	private SessionSolutionsStatistics sessionSolutionsStatistics;
 	private final LocalDateTime dateStarted;
 	private final PuzzleType puzzleType;
 	private final List<Solution> solutions = new ArrayList<>();
 	private final SolutionDao solutionDao;
+	private String comment = "";
 
 	//adds itself to the puzzlestatistics to which it belongs
-	public Session(@NotNull LocalDateTime startSessionTime, @NotNull Configuration configuration,
+	public Session(@NotNull LocalDateTime startSessionTime,
 				   @NotNull PuzzleType puzzleType, @NotNull SolutionDao solutionDao) {
 		this.dateStarted = startSessionTime;
-		this.configuration = configuration;
 		this.puzzleType = puzzleType;
 		this.solutionDao = solutionDao;
-		sessionPuzzleStatistics = new SessionPuzzleStatistics(this);
+		sessionSolutionsStatistics = new SessionSolutionsStatistics(this);
+	}
+
+	@Override
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+
+	@Override
+	public String getComment() {
+		return comment;
 	}
 
 	public LocalDateTime getStartTime() {
@@ -40,8 +51,8 @@ public class Session extends Commentable implements Comparable<Session> {
 	}
 
 	@NotNull
-	public SessionPuzzleStatistics getStatistics() {
-		return sessionPuzzleStatistics;
+	public SessionSolutionsStatistics getStatistics() {
+		return sessionSolutionsStatistics;
 	}
 
 	public Long getSessionId() {
@@ -88,15 +99,11 @@ public class Session extends Commentable implements Comparable<Session> {
 		sessionEntity.setProfile(profile);
 		sessionEntity.setSolutions(Seq
 				.iterate(0, i -> i++)
-				.limit(sessionPuzzleStatistics.getSolveCounter().getSolveCount())
+				.limit(sessionSolutionsStatistics.getSolveCounter().getSolveCount())
 				.map(this::getSolution)
 				.map(Solution::toEntity)
 				.toList());
 		return sessionEntity;
-	}
-
-	public Session cloneEmpty() {
-		return new Session(LocalDateTime.now(), configuration, getPuzzleType(), solutionDao);
 	}
 
 	public int getAttemptsCount() {
@@ -115,11 +122,17 @@ public class Session extends Commentable implements Comparable<Session> {
 		this.getStatistics().refresh(notifier);
 	}
 
+	public void setSolutions(List<Solution> solutions) {
+		LOG.trace("add solutions (size: {})", solutions.size());
+		this.solutions.clear();
+		this.solutions.addAll(solutions);
+		this.getStatistics().refresh(() -> {});
+	}
+
 	public void removeSolution(Solution solution, Runnable notifier) {
 		LOG.info("remove solution {}", solution);
 		this.solutions.remove(solution);
 		solutionDao.deleteSolution(solution);
-		// todo it's will recalculate whole statistics. Can be optimized
 		this.getStatistics().refresh(notifier);
 
 	}
@@ -143,7 +156,7 @@ public class Session extends Commentable implements Comparable<Session> {
 				.filter(solution -> !solution.getTime().isInfiniteTime())
 				.toList(),
 				0,
-				solutions.size(), false);
+				solutions.size(), false, null);
 	}
 
 	public List<Solution> getSolutionList() {

@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
 import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,8 +19,8 @@ import java.util.Optional;
 
 import static net.gnehzr.cct.statistics.RollingAverageOf.OF_12;
 import static net.gnehzr.cct.statistics.RollingAverageOf.OF_5;
-import static net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType.BEST_ROLLING_AVERAGE;
-import static net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType.CURRENT_ROLLING_AVERAGE;
+import static net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType.BEST_ROLLING_AVERAGE;
+import static net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType.CURRENT_ROLLING_AVERAGE;
 
 /**
 * <p>
@@ -62,7 +62,7 @@ public class ActionMap {
     }
 
     void registerAction(String actionName, AbstractAction abstractAction) {
-        LOG.debug("register action " + actionName);
+        LOG.debug("register action {}", actionName);
         actionMap.put(actionName.toLowerCase(), abstractAction);
     }
 
@@ -74,8 +74,9 @@ public class ActionMap {
         return Optional.ofNullable(actionMap.get(s.toLowerCase()));
     }
 
-    private AbstractAction initializeAction(String s, final CALCubeTimerFrame calCubeTimerFrame){
-        switch (s) {
+    private AbstractAction initializeAction(String actionName, final CALCubeTimerFrame calCubeTimerFrame) {
+        LOG.debug("register action {}", actionName);
+        switch (actionName) {
             case KEYBOARDTIMING_ACTION: {
                 return new KeyboardTimingAction(calCubeTimerFrame);
             }
@@ -131,7 +132,8 @@ public class ActionMap {
                 return new SpacebarOptionAction(configuration);
             }
             case SHOW_DOCUMENTATION_ACTION:
-                return new DocumentationAction(calCubeTimerFrame);
+                return new DocumentationAction(calCubeTimerFrame, configuration);
+
             case SHOW_ABOUT_ACTION:
                 return new AboutAction();
             case "requestscramble": {
@@ -140,7 +142,7 @@ public class ActionMap {
                 return a;
             }
             default:
-                throw new IllegalArgumentException("unknown action: " + s);
+                throw new IllegalArgumentException("unknown action: " + actionName);
         }
     }
 

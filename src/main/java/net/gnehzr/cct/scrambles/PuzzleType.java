@@ -6,7 +6,6 @@ import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -34,11 +33,6 @@ public class PuzzleType {
 	}
 
 	public ScrambleString generateScramble(ScrambleSettings scrambleSettings) {
-		if (isNullType()) {
-			LOG.warn("null scramble generating");
-			return scramblePluginManager.NULL_IMPORTED_SCRUMBLE;
-		}
-
 		ScramblePlugin scramblePlugin = this.getScramblePlugin();
 		ScrambleString newScramble = scramblePlugin.createScramble(
 				this,
@@ -63,9 +57,7 @@ public class PuzzleType {
 	}
 
 	public void setPuzzleUnitSize(int size) {
-		if(!this.isNullType()) {
-			configuration.setLong(VariableKey.UNIT_SIZE(this), size);
-		}
+		configuration.setLong(VariableKey.UNIT_SIZE(this), size);
 	}
 
 	public void setRA(RollingAverageOf index, int newra, boolean trimmed) {
@@ -95,12 +87,6 @@ public class PuzzleType {
 		return plugin;
 	}
 
-	@NotNull
-	@Deprecated // use scramblePluginManager directly
-	public ScrambleSettings getScrambleVariation() {
-		return scramblePluginManager.getScrambleVariation(this);
-	}
-
 	public String getCustomization() {
 		return customization;
 	}
@@ -127,10 +113,6 @@ public class PuzzleType {
 		return Objects.equals(plugin, other.plugin)
 				&& Objects.equals(customization, other.customization)
 				&& Objects.equals(variationName, other.variationName);
-	}
-
-	public boolean isNullType() {
-		return this == scramblePluginManager.NULL_PUZZLE_TYPE;
 	}
 
 	public String getVariationName() {

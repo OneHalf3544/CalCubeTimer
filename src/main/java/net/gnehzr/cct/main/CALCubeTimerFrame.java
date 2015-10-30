@@ -8,14 +8,12 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationDialog;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.LocaleRenderer;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.keyboardTiming.KeyboardHandler;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
-import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.SessionsListTable;
 import net.gnehzr.cct.misc.customJTable.SolveTimeEditor;
@@ -33,7 +31,7 @@ import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.SessionPuzzleStatistics.AverageType;
+import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -53,8 +51,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 
@@ -76,10 +72,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private JLabel onLabel = null;
 	DraggableJTable timesTable = null;
 	private JScrollPane timesScroller = null;
-	@Inject
 	private SessionsListTable sessionsListTable;
 	ScrambleHyperlinkArea scrambleHyperlinkArea = null;
-	private ScrambleCustomizationChooserComboBox scrambleCustomizationComboBox;
+	private PuzzleTypeChooserComboBox scrambleCustomizationComboBox;
 	private JPanel scrambleAttributesPanel = null;
 	@Inject
 	private JTextField generatorTextField;
@@ -91,9 +86,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private TimerLabel timeLabel;
 	@Inject @Named("bigTimersDisplay")
 	TimerLabel bigTimersDisplay;
-
-	@Inject
-	private SolutionDao solutionDao;
 
 	@Inject
 	NumberSpeaker numberSpeaker;
@@ -125,19 +117,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 		@Override
 		public void itemStateChanged(ItemEvent e) {
-			Profile affectedProfile = (Profile) e.getItem();
-
-			if (e.getStateChange() == ItemEvent.DESELECTED) {
-				model.prepareForProfileSwitch();
-				return;
-			}
-
 			if (e.getStateChange() == ItemEvent.SELECTED) {
+				Profile affectedProfile = (Profile) e.getItem();
                 model.setSelectedProfile(affectedProfile);
-                configuration.loadConfiguration(affectedProfile);
-                configuration.apply(affectedProfile);
-
-                model.getSessionsList().setSessions(solutionDao.loadSessions(affectedProfile, scramblePluginManager));
 
 				//this needs to be here in the event that we loaded times from database
 				repaintTimes();
@@ -157,7 +139,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 			//change current session's scramble customization
 			if (!sessionsList.getCurrentSession().getPuzzleType().equals(newPuzzleType)) {
-				sessionsList.setCurrentSession(new Session(LocalDateTime.now(), configuration, newPuzzleType, solutionDao));
+				sessionsList.createSession(newPuzzleType);
 			}
 
 			model.getScramblesList().asGenerating().generateScrambleForCurrentSession();
@@ -233,20 +215,21 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 
 	@Override
-	public ScrambleChooserComboBox<PuzzleType> getScrambleCustomizationComboBox() {
+	public PuzzleTypeChooserComboBox getScrambleCustomizationComboBox() {
 		return scrambleCustomizationComboBox;
 	}
 
 	@Inject
-	private void initializeGUIComponents() {
+	private void initializeGUIComponents(SessionsListTable sessionsListTable) {
+		setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
+		setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+		this.sessionsListTable = sessionsListTable;
 		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
 		currentSessionSolutionsTableModel.addTableModelListener(this::newSolutionAdded);
 
-		//NOTE: all internationalizable text must go in the loadStringsFromDefaultLocale() method
-		DateTimeLabel currentTimeLabel = new DateTimeLabel(configuration);
-		configuration.addConfigurationChangeListener(p -> currentTimeLabel.updateDisplay());
-
-		scrambleCustomizationComboBox = new ScrambleCustomizationChooserComboBox(true, scramblePluginManager, configuration);
+		scrambleCustomizationComboBox = new PuzzleTypeChooserComboBox(true, scramblePluginManager, configuration);
 		scrambleCustomizationComboBox.addItemListener(scrambleChooserListener);
 
 		scrambleNumberSpinner = new JSpinner(new SpinnerNumberModel(1,	1, 1, 1));
@@ -314,7 +297,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		persistentComponents.put("languagecombobox", languages);
 		persistentComponents.put("profilecombobox", profilesComboBox);
 		persistentComponents.put("sessionslist", sessionsScroller);
-		persistentComponents.put("clock", currentTimeLabel);
 
 		stackmatInterpreter.execute();
 	}
@@ -487,7 +469,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	 */
 	@Override
 	public void repaintTimes() {
-		SessionPuzzleStatistics stats = sessionsList.getCurrentSession().getStatistics();
+		SessionSolutionsStatistics stats = sessionsList.getCurrentSession().getStatistics();
 
 		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
 		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_12);
@@ -496,7 +478,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		updateActionStatus(stats, "sessionaverage", AverageType.SESSION_AVERAGE, null);
 	}
 
-	private void updateActionStatus(SessionPuzzleStatistics sessionStatistics, String actionName,
+	private void updateActionStatus(SessionSolutionsStatistics sessionStatistics, String actionName,
 									AverageType statType, RollingAverageOf i) {
 		actionMap.getActionIfExist(actionName).ifPresent(action -> action.setEnabled(sessionStatistics.isValid(statType, i)));
 	}
@@ -607,15 +589,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
         });
 	}
 
-	public void showDocumentation() {
-		try {
-			URI uri = configuration.getDocumentationFile();
-			Desktop.getDesktop().browse(uri);
-		} catch(IOException error) {
-			Utils.showErrorDialog(this, error);
-		}
-	}
-
 	public void keyboardTimingAction() {
 		boolean selected = (Boolean)actionMap.getAction(KeyboardTimingAction.KEYBOARD_TIMING_ACTION, this).getValue(Action.SELECTED_KEY);
 		configuration.setBoolean(VariableKey.STACKMAT_ENABLED, !selected);
@@ -690,10 +663,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		LOG.debug("create scramble attributes panel");
 		PuzzleType sc = model.getScramblesList().getPuzzleType();
 		scrambleAttributesPanel.removeAll();
-		if (sc == scramblePluginManager.NULL_PUZZLE_TYPE) {
-			LOG.debug("skip creating scramble attributes panel");
-			return;
-		}
+
 		List<String> attrs = scramblePluginManager.getAvailablePuzzleAttributes(sc.getScramblePlugin().getClass());
 		attributes = new DynamicCheckBox[attrs.size()];
 		for (int ch = 0; ch < attrs.size(); ch++) { //create checkbox for each possible attribute

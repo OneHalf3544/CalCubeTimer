@@ -1,7 +1,12 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.misc.Utils;
+
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 
 /**
  * <p>
@@ -12,13 +17,21 @@ import java.awt.event.ActionEvent;
  * @author OneHalf
  */
 class DocumentationAction extends AbstractAction {
+
 	private CALCubeTimerFrame cct;
-	public DocumentationAction(CALCubeTimerFrame cct){
+	private Configuration configuration;
+
+	public DocumentationAction(CALCubeTimerFrame cct, Configuration configuration){
 		this.cct = cct;
+		this.configuration = configuration;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.showDocumentation();
+		try {
+			Desktop.getDesktop().browse(configuration.getDocumentationFile());
+		} catch(IOException error) {
+			Utils.showErrorDialog(cct, error);
+		}
 	}
 }

@@ -7,6 +7,7 @@ import net.gnehzr.cct.misc.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
@@ -27,7 +28,6 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 	private static final Logger LOG = LogManager.getLogger(DraggableJTable.class);
 
 	private final Configuration configuration;
-	String addText;
 	private boolean ignoreMoving;
 
 	private JTableHeader headers;
@@ -105,8 +105,9 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 			@Override
 			public void moveColumn(int fromIndex, int toIndex) {
 				HideableTableColumn col = getHideableTableColumn(getColumnModel().getColumn(fromIndex));
-				if(col == null)
+				if(col == null) {
 					return;
+				}
 				int from = col.viewIndex;
 				col = getHideableTableColumn(getColumnModel().getColumn(toIndex));
 				if(col == null)
@@ -127,7 +128,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 	//this will refresh any draggablejtable specific strings
 	//and the addtext for the editable row at bottom
 	public void refreshStrings(String addText) {
-		this.addText = addText;
+		LOG.warn("addText not supported. skip value {}", addText);
 	}
 
 	public void promptForNewRow() {
@@ -146,13 +147,13 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 	}
 
 	private HideableTableColumn getHideableTableColumn(int viewIndex) {
-		for(HideableTableColumn c : cols) {
-			if(viewIndex == c.viewIndex) { 
-				return c;
-			}
-		}
-		return null;
+		return cols.stream()
+				.filter(c -> c.viewIndex == viewIndex)
+				.findFirst()
+				.get();
 	}
+
+	@Nullable
 	HideableTableColumn getHideableTableColumn(TableColumn col) {
 		for(HideableTableColumn c : cols) {
 			if(col == c.col) { 
@@ -258,50 +259,9 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 	
 	public void computePreferredSizes(String value) {
 		TableColumnModel columns = this.getColumnModel();
-		if(addText == null) {
-			for(int ch = 0; ch < columns.getColumnCount(); ch++) {
-				columns.getColumn(ch).setPreferredWidth(getRendererPreferredSize(value, ch).width + 2); //need to add a bit of space for insets
-			}
-			return;
-		}
-		Dimension rendDim = getCellRenderer(0, 0).getTableCellRendererComponent(
-				this,
-				addText,
-				true,
-				true,
-				0,
-				0).getPreferredSize();
-		Dimension edDim = getEditorPreferredSize(addText, 0);
-
-		this.setRowHeight(Math.max(rendDim.height, edDim.height));
-		rendDim.height = 0;
-		for(int ch = 1; ch < getColumnModel().getColumnCount(); ch++) {
-			int edWidth = getEditorPreferredSize(null, ch).width;
-			int rendWidth = getCellRenderer(0, ch).getTableCellRendererComponent(
-					this,
-					addText,
-					true,
-					true,
-					0,
-					ch).getPreferredSize().width;
-			rendDim.width += Math.max(edWidth, rendWidth);
-		}
-		this.setPreferredScrollableViewportSize(rendDim);
-		Container par = this.getParent();
-		if(par != null) {
-			par.setMinimumSize(rendDim);
-		}
-		
-		Object render = addText;
 		for(int ch = 0; ch < columns.getColumnCount(); ch++) {
-			if(!model.isCellEditable(0, ch) && ch == 0) //it's probably allright to just always execute the else statement
-				columns.getColumn(ch).sizeWidthToFit();
-			else {
-				int width = Math.max(getRendererPreferredSize(render, ch).width, getEditorPreferredSize(render, ch).width);
-				columns.getColumn(ch).setPreferredWidth(width + 4); //adding 4 for the border, just a nasty fix to get things working
-			}
-			render = null;
-		}
+            columns.getColumn(ch).setPreferredWidth(getRendererPreferredSize(value, ch).width + 2); //need to add a bit of space for insets
+        }
 	}
 
 	private Dimension getRendererPreferredSize(Object value, int col) {
@@ -379,7 +339,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 	
 	
 	public interface SelectionListener {
-		public void rowSelected(int row);
+		void rowSelected(int row);
 	}
 
 	public void setSelectionListener(SelectionListener sl) {
@@ -476,10 +436,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 			} else if(selectedRows[0] < model.getRowCount() - 1) {
 				setRowSelectionInterval(selectedRows[0], selectedRows[0]);
 			} else if(selectedRows[0] != 0) {
-				int newRow = model.getRowCount() - 2;
-				if(addText == null) {
-					newRow++;
-				}
+				int newRow = model.getRowCount() - 1;
 				setRowSelectionInterval(newRow, newRow);
 			}
 		}

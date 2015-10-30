@@ -38,7 +38,7 @@ public class ScrambleImporter {
 
     public void exportScramblesAction(Profile selectedProfile, ScrambleList scramblesList) {
         new ScrambleExportDialog(calCubeTimerFrame.getMainFrame(), scramblesList.getPuzzleType(),
-                scramblePluginManager, configuration, selectedProfile);
+                scramblePluginManager, configuration);
     }
 
 }

@@ -76,7 +76,7 @@ public class SessionTest {
     }
 
     private Session createSessionWithSolutions(String... time) {
-        Session session = new Session(LocalDateTime.now(), configuration, puzzleType, mock(SolutionDao.class));
+        Session session = new Session(LocalDateTime.now(), puzzleType, mock(SolutionDao.class));
         for (String s : time) {
             session.addSolution(new Solution(new SolveTime(s), createScrambleString()), () -> { });
         }

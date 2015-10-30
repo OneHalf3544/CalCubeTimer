@@ -4,12 +4,14 @@ import com.google.inject.Inject;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.GeneratedScrambleList;
 import net.gnehzr.cct.scrambles.ScrambleList;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -54,6 +56,12 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     private TimingListener timingListener;
+
+    @Inject
+    private ScramblePluginManager scramblePluginManager;
+
+    @Inject
+    private SolutionDao solutionDao;
 
     private boolean timing = false;
     private final ProfileDao profileDao;
@@ -110,7 +118,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     @Inject
     void initialize() {
-        scramblesList = new GeneratedScrambleList(sessionsList);
+        scramblesList = new GeneratedScrambleList(sessionsList, configuration);
         sessionsList.addSessionListener(sessionListener);
         updateInspectionTimer = new Timer(90, e -> calCubeTimerGui.updateInspection());
         metronome = Metronome.createTickTockTimer(Duration.ofSeconds(1));
@@ -118,7 +126,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     }
 
     @Override
-    public void prepareForProfileSwitch() {
+    public void saveProfileConfiguration() {
+        LOG.info("save profile configuration");
         Profile profile = getSelectedProfile();
         profileDao.saveLastSession(profile, sessionsList);
         calCubeTimerGui.saveToConfiguration();
@@ -163,9 +172,18 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     }
 
     @Override
-    public void setSelectedProfile(Profile currentProfile) {
-        LOG.info("setSelectedProfile: {}", currentProfile);
-        this.currentProfile = currentProfile;
+    public void setSelectedProfile(Profile newCurrentProfile) {
+        if (this.currentProfile != null) {
+            saveProfileConfiguration();
+        }
+
+        LOG.info("setSelectedProfile: {}", newCurrentProfile);
+
+        this.currentProfile = newCurrentProfile;
+        configuration.loadConfiguration(newCurrentProfile);
+        configuration.apply(newCurrentProfile);
+
+        getSessionsList().setSessions(solutionDao.loadSessions(newCurrentProfile, scramblePluginManager));
     }
 
     @Override
@@ -219,7 +237,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         boolean sameAsLast = timerState.compareTo(lastAccepted) == 0;
         if(sameAsLast) {
             int choice = Utils.showYesNoDialog(calCubeTimerGui.getMainFrame(),
-                    timerState.toString() + "\n" + StringAccessor.getString("CALCubeTimer.confirmduplicate"));
+                    timerState.toString() + "\n"
+                            + StringAccessor.getString("CALCubeTimer.confirmduplicate"));
             if(choice != JOptionPane.YES_OPTION) {
                 return;
             }
@@ -239,7 +258,9 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             //This leaves +2 and DNF enabled, even if the user just got a +2 or DNF from inspection.
             //I don't really care however, since I doubt that anyone even uses this feature. --Jeremy
             choice = JOptionPane.showOptionDialog(null,
-                    StringAccessor.getString("CALCubeTimer.yourtime") + protect.getTime().toString() + StringAccessor.getString("CALCubeTimer.newtimedialog"),
+                    StringAccessor.getString("CALCubeTimer.yourtime")
+                            + protect.getTime().toString()
+                            + StringAccessor.getString("CALCubeTimer.newtimedialog"),
                     StringAccessor.getString("CALCubeTimer.confirm"),
                     JOptionPane.YES_NO_CANCEL_OPTION,
                     JOptionPane.QUESTION_MESSAGE,

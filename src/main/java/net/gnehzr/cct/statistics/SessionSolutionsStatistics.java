@@ -7,7 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class SessionPuzzleStatistics {
+import static net.gnehzr.cct.statistics.SolveTime.*;
+
+public class SessionSolutionsStatistics {
 
     public enum AverageType {
         CURRENT_ROLLING_AVERAGE("Statistics.currentaverage", VariableKey.CURRENT_AVERAGE_STATISTICS),
@@ -46,7 +48,7 @@ public class SessionPuzzleStatistics {
 
     private SolveCounter solveCounter;
 
-    public SessionPuzzleStatistics(Session session) {
+    public SessionSolutionsStatistics(Session session) {
         this.session = session;
 
         averages = new EnumMap<>(RollingAverageOf.class);
@@ -137,30 +139,6 @@ public class SessionPuzzleStatistics {
         return getRollingAverageList(whichRA).get(toIndex);
     }
 
-    @Deprecated
-    public SolveTime average(AverageType type, RollingAverageOf num) {
-        SolveTime average;
-        switch (type) {
-            case SESSION_AVERAGE:
-                average = wholeSessionAverage.getAverage();
-                break;
-            case BEST_ROLLING_AVERAGE:
-                average = bestRollingAverages.get(num).getAverage();
-                break;
-            case CURRENT_ROLLING_AVERAGE:
-                average = getCurrentRollingAverage(num).getAverage();
-                break;
-            default:
-                return SolveTime.NULL_TIME;
-        }
-
-        if (average.isZero() || average == SolveTime.NA) {
-            return SolveTime.NULL_TIME;
-        }
-
-        return average;
-    }
-
     public boolean isValid(AverageType type, RollingAverageOf num) {
         switch (type) {
             case BEST_ROLLING_AVERAGE:
@@ -177,14 +155,17 @@ public class SessionPuzzleStatistics {
         }
     }
 
-    private RollingAverage getSublist(RollingAverageOf ra, AverageType type) {
-        if (type == AverageType.SESSION_AVERAGE) {
-            return session.getRollingAverageForWholeSession();
+    private RollingAverage getRollingAverage(RollingAverageOf ra, AverageType type) {
+        switch (type) {
+            case SESSION_AVERAGE:
+                return session.getRollingAverageForWholeSession();
+            case CURRENT_ROLLING_AVERAGE:
+                return getCurrentRollingAverage(ra);
+            case BEST_ROLLING_AVERAGE:
+                return getBestAverage(ra);
+            default:
+                throw new IllegalArgumentException(String.valueOf(type));
         }
-
-        return type == AverageType.CURRENT_ROLLING_AVERAGE
-                ? getCurrentRollingAverage(ra)
-                : getBestAverage(ra);
     }
 
     public boolean containsTime(int indexOfSolve, AverageType type, RollingAverageOf num) {
@@ -193,41 +174,43 @@ public class SessionPuzzleStatistics {
     }
 
     public String toStatsString(AverageType type, boolean showSplits, RollingAverageOf num) {
-        RollingAverage times = getSublist(num, type);
-        StringBuilder ret = new StringBuilder();
+        RollingAverage times = getRollingAverage(num, type);
+        StringBuilder result = new StringBuilder();
         int i = 0;
-        for (Solution next : times.getSolutions()) {
-            String comment = next.getComment();
-            if (!comment.isEmpty())
-                comment = "\t" + comment;
-            boolean parens = next.getTime() == times.getBestTime() || next.getTime() == times.getWorstTime();
-
-            ret.append(++i).append(".\t");
-            if (parens) {
-                ret.append("(");
-            }
-            ret.append(next.getTime().toString());
-            if (parens) {
-                ret.append(")\t");
-            }
-            else {
-                ret.append("\t");
-            }
-            ret.append(next.getScrambleString());
-            if (showSplits) {
-                ret.append(StringAccessor.getString("Statistics.splits")).append(next.toSplitsString());
-            }
-            ret.append(comment);
-            ret.append("\n");
+        for (Solution solution : times.getSolutions()) {
+            appendSolutionToStatString(showSplits, times, result, ++i, solution);
         }
-        return ret.toString();
+        return result.toString();
+    }
+
+    private void appendSolutionToStatString(boolean showSplits, RollingAverage times, StringBuilder result, int i, Solution solution) {
+        boolean parenthesis = solution.getTime() == times.getBestTime() || solution.getTime() == times.getWorstTime();
+
+        result.append(i).append(".\t");
+
+        if (parenthesis) {
+            result.append(solution.getTime().toStringWithParenthesis());
+        } else {
+            result.append(solution.getTime().toString());
+        }
+        result.append("\t");
+
+        result.append(solution.getScrambleString());
+        if (showSplits) {
+            result.append(StringAccessor.getString("Statistics.splits")).append(solution.toSplitsString());
+        }
+
+        if (!solution.getComment().isEmpty()) {
+            result.append('\t').append(solution.getComment());
+        }
+        result.append("\n");
     }
 
     public String toTerseString(AverageType type, RollingAverageOf num, boolean showIncomplete) {
         if (type == AverageType.SESSION_AVERAGE) {
             return wholeSessionAverage.toTerseString();
         }
-        RollingAverage list = getSublist(num, type);
+        RollingAverage list = getRollingAverage(num, type);
         if (list.getSolutions().size() != getRASize(num) && !showIncomplete) {
             return "N/A";
         }
@@ -242,81 +225,74 @@ public class SessionPuzzleStatistics {
         return solveCounter;
     }
 
-    // access methods
     public SolveTime getSessionAvg() {
         return wholeSessionAverage.getAverage();
     }
 
     public SolveTime getTime(int n) {
         if (session.getAttemptsCount() == 0)
-            return SolveTime.NA;
+            return NOT_AVAILABLE;
 
         return Utils.getByCircularIndex(n, session.getSolutionList()).getTime();
     }
 
     public SolveTime getAverage(int n, RollingAverageOf num) {
         if (getRollingAverageList(num).isEmpty()) {
-            return SolveTime.NA;
+            return NOT_AVAILABLE;
         }
         return Utils.getByCircularIndex(n, getRollingAverageList(num)).getAverage();
     }
 
 
-    public SolveTime getSD(int n, RollingAverageOf num) {
+    public SolveTime getStandardDeviation(int n, RollingAverageOf num) {
         if (getRollingAverageList(num).isEmpty()) {
-            return SolveTime.NA;
+            return NOT_AVAILABLE;
         }
         return Utils.getByCircularIndex(n, getRollingAverageList(num)).getStandartDeviation();
     }
 
-    public SolveTime getSessionSD(int n) {
+    public SolveTime getSessionStandardDeviation(int n) {
         // TODO n
         return getWholeSessionAverage().getStandartDeviation();
     }
 
     public SolveTime getProgressTime() {
-        return SolveTime.substruct(getCurrentTime(), getPreviousTime());
+        return substruct(getCurrentTime(), getPreviousTime());
     }
 
     public SolveTime getProgressAverage(RollingAverageOf num) {
-        if (getRollingAverageList(num).size() == 0) {
-            return SolveTime.NA;
-        } else if (getRollingAverageList(num).size() == 1) {
-            return SolveTime.NA;
-        } else {
-            SolveTime t1 = getAverage(-1, num);
-            if (t1 == SolveTime.NA)
-                return SolveTime.NA;
-            SolveTime t2 = getAverage(-2, num);
-            if (t2 == SolveTime.NA)
-                return SolveTime.NA;
-            return SolveTime.substruct(t1, t2);
+        if(getSolveCounter().getAttemptCount() < 2) {
+            return NOT_AVAILABLE;
         }
+
+        SolveTime t1 = getAverage(-1, num);
+        SolveTime t2 = getAverage(-2, num);
+        if (t1 == NOT_AVAILABLE || t2 == NOT_AVAILABLE) {
+            return NOT_AVAILABLE;
+        }
+        return substruct(t1, t2);
     }
 
     public SolveTime getProgressSessionAverage() {
-        return SolveTime.substruct(wholeSessionAverage.getAverage(), previousWholeSessionAverage.getAverage());
+        return substruct(wholeSessionAverage.getAverage(), previousWholeSessionAverage.getAverage());
     }
 
-    public SolveTime getProgressSessionSD() {
+    public SolveTime getProgressSessionStandardDeviation() {
 		/*
 		return averages.get(num).stream()
                 .min(Comparator.comparing(RollingAverage::getStandartDeviation))
 				.orElse(RollingAverage.NOT_AVAILABLE);
          */
 		if(getSolveCounter().getAttemptCount() < 2) {
-            return SolveTime.NA;
+            return NOT_AVAILABLE;
         }
 
-		SolveTime t1 = getSessionSD(-1);
-		if(t1 == SolveTime.NA) {
-            return SolveTime.NA;
+		SolveTime t1 = getSessionStandardDeviation(-1);
+		SolveTime t2 = getSessionStandardDeviation(-2);
+        if (t1 == NOT_AVAILABLE || t2 == NOT_AVAILABLE) {
+            return NOT_AVAILABLE;
         }
-		SolveTime t2 = getSessionSD(-2);
-		if(t2 == SolveTime.NA) {
-            return SolveTime.NA;
-        }
-		return SolveTime.substruct(t1, t2);
+        return substruct(t1, t2);
     }
 
     public RollingAverage getBestAverage(RollingAverageOf num) {
@@ -329,21 +305,21 @@ public class SessionPuzzleStatistics {
                 .orElse(RollingAverage.NOT_AVAILABLE);
     }
 
-    public SolveTime getBestAverageSD(RollingAverageOf num) {
+    public SolveTime getBestAverageStandardDeviation(RollingAverageOf num) {
         // todo average
         return getByBestStandardDeviation(num).getStandartDeviation();
     }
 
-    public SolveTime getByWorstStandartDeviation(RollingAverageOf num) {
+    public SolveTime getByWorstStandardDeviation(RollingAverageOf num) {
         return getRollingAverageList(num).stream()
                 .max(Comparator.comparing(RollingAverage::getStandartDeviation))
                 .orElse(RollingAverage.NOT_AVAILABLE)
                 .getStandartDeviation();
     }
 
-    public SolveTime getWorstAverageSD(RollingAverageOf num) {
+    public SolveTime getWorstAverageStandardDeviation(RollingAverageOf num) {
         // todo average
-        return getByWorstStandartDeviation(num);
+        return getByWorstStandardDeviation(num);
     }
 
     public SolveTime getCurrentTime() {
@@ -358,16 +334,16 @@ public class SessionPuzzleStatistics {
         return averages.computeIfAbsent(num, raOf -> new ArrayList<>());
     }
 
-    public SolveTime getCurrentSD(RollingAverageOf num) {
-        return getSD(-1, num);
+    public SolveTime getCurrentStandardDeviation(RollingAverageOf num) {
+        return getStandardDeviation(-1, num);
+    }
+
+    public SolveTime getLastStandardDeviation(RollingAverageOf num) {
+        return getStandardDeviation(-2, num);
     }
 
     public SolveTime getPreviousTime() {
         return getTime(-2);
-    }
-
-    public SolveTime getLastSD(RollingAverageOf num) {
-        return getSD(-2, num);
     }
 
     public RollingAverage getWorstRollingAverage(RollingAverageOf num) {
@@ -387,10 +363,10 @@ public class SessionPuzzleStatistics {
     }
 
     public RollingAverage getPreviousRollingAverage(RollingAverageOf averageOf) {
-        if (averages.size() <= 2) {
+        if (averages.size() < 2) {
             return RollingAverage.NOT_AVAILABLE;
         }
-        return getRollingAverageList(averageOf).get(averages.size() - 2);
+        return Utils.getByCircularIndex(-2, getRollingAverageList(averageOf));
     }
 
     public RollingAverage getWholeSessionAverage() {

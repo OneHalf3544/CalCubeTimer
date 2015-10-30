@@ -84,6 +84,10 @@ public class ScrambleSettings {
 		this.length = length;
 	}
 
+	public void setGeneratorGroup(String generatorGroup) {
+		this.generatorGroup = generatorGroup;
+	}
+
 	public ScrambleSettings withLength(int length) {
 		return new ScrambleSettings(
 				configuration, scramblePluginManager, generatorGroup, length, getImage());

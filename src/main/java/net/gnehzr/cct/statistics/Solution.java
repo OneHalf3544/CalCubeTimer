@@ -21,7 +21,7 @@ import java.util.Objects;
  *
  * @author OneHalf
  */
-public class Solution extends Commentable {
+public class Solution implements Commentable {
 
     private static final Logger LOG = LogManager.getLogger(Solution.class);
 
@@ -34,6 +34,8 @@ public class Solution extends Commentable {
     private final ScrambleString scrambleString;
 
     private List<SolveTime> splits = ImmutableList.of();
+
+    private String comment = "";
 
     public Solution(@NotNull SolveTime time, @NotNull ScrambleString scrambleString) {
         this.solveTime = Objects.requireNonNull(time);
@@ -72,6 +74,16 @@ public class Solution extends Commentable {
 
     public SolveTime getTime() {
         return solveTime;
+    }
+
+    @Override
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    @Override
+    public String getComment() {
+        return comment;
     }
 
     @Override

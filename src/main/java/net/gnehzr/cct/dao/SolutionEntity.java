@@ -1,5 +1,10 @@
 package net.gnehzr.cct.dao;
 
+import com.google.common.base.Throwables;
+import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.statistics.Solution;
+import net.gnehzr.cct.statistics.SolveTime;
+
 import javax.persistence.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -112,5 +117,16 @@ public class SolutionEntity {
     public SolutionEntity withComment(String comment) {
         this.comment = comment;
         return this;
+    }
+
+    public Solution toSolution(PuzzleType puzzleType) {
+        try {
+            Solution result = new Solution(new SolveTime(getSolveTime()), puzzleType.importScramble(getScramble()));
+            result.setSolutionId(getId());
+            result.setComment(getComment());
+            return result;
+        } catch (InvalidScrambleException e) {
+            throw Throwables.propagate(e);
+        }
     }
 }

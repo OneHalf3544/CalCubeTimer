@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import net.gnehzr.cct.misc.Utils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jooq.lambda.Seq;
 
 import java.util.Collections;
@@ -23,7 +24,7 @@ import static java.util.stream.Collectors.joining;
 public class RollingAverage implements Comparable<RollingAverage> {
 
     public static final RollingAverage NOT_AVAILABLE = new RollingAverage(
-            Collections.<Solution>emptyList(), 0, 0, false);
+            Collections.<Solution>emptyList(), 0, 0, false, null);
 
     private final int toIndex;
     private final int count;
@@ -33,11 +34,14 @@ public class RollingAverage implements Comparable<RollingAverage> {
     private final SolveTime average;
     private final boolean trimmed;
     private final SolveTime standartDeviation;
+    private final RollingAverageOf rollingAverageOf;
 
-    public RollingAverage(List<Solution> solutions, int toIndex, int count, boolean trimmed) {
+    public RollingAverage(List<Solution> solutions, int toIndex, int count, boolean trimmed,
+                          @Nullable RollingAverageOf rollingAverageOf) {
         checkArgument(toIndex >= 0);
         checkArgument(count >= 0);
 
+        this.rollingAverageOf = rollingAverageOf;
         this.solutions = solutions;
         this.toIndex = toIndex;
         this.count = count;
@@ -50,14 +54,14 @@ public class RollingAverage implements Comparable<RollingAverage> {
 
     private SolveTime calculateAverage(List<Solution> solutions, boolean trimmed) {
         if (count == 0 || (trimmed && count <= 2 )) {
-            return SolveTime.NA;
+            return SolveTime.NOT_AVAILABLE;
         }
         return SolveTime.divide(
                 solutions.stream()
                         .map(Solution::getTime)
                         .filter(t -> !this.trimmed || (t != bestTime && t != worstTime))
                         .reduce((a, b) -> SolveTime.sum(a, b))
-                        .orElse(SolveTime.NA),
+                        .orElse(SolveTime.NOT_AVAILABLE),
                 trimmed ? count - 2 : count);
     }
 
@@ -71,7 +75,7 @@ public class RollingAverage implements Comparable<RollingAverage> {
                 .filter(i -> i < session.getAttemptsCount())
                 .map(session::getSolution)
                 .toList(),
-                toIndex, count, session.getPuzzleType().isTrimmed(rollingAverageOf));
+                toIndex, count, session.getPuzzleType().isTrimmed(rollingAverageOf), rollingAverageOf);
     }
 
     public int getToIndex() {
@@ -102,13 +106,17 @@ public class RollingAverage implements Comparable<RollingAverage> {
         return trimmed;
     }
 
+    public RollingAverageOf getRollingAverageOf() {
+        return rollingAverageOf;
+    }
+
     public SolveCounter getSolveCounter() {
         return SolveCounter.fromSolutions(solutions);
     }
 
     public String toTerseString() {
         if (average.isInfiniteTime()) {
-            return SolveTime.NA.toString();
+            return SolveTime.NOT_AVAILABLE.toString();
         }
         return solutions.stream()
                 .map(Solution::getTime)
@@ -122,8 +130,8 @@ public class RollingAverage implements Comparable<RollingAverage> {
     }
 
     private SolveTime calculateRSD() {
-        if (average == SolveTime.NA) {
-            return SolveTime.NA;
+        if (average == SolveTime.NOT_AVAILABLE) {
+            return SolveTime.NOT_AVAILABLE;
         }
         long deviation = 0;
         for (Solution solution : solutions) {
@@ -133,7 +141,7 @@ public class RollingAverage implements Comparable<RollingAverage> {
             }
         }
         int count2 = trimmed ? count - 2 : count;
-        return new SolveTime(Math.sqrt(deviation / (double) count2) / 1000.0);
+        return new SolveTime(Utils.format(Math.sqrt(deviation / (double) count2) / 1000.0));
     }
 
     private long pow2(long l) {

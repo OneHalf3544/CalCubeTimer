@@ -6,10 +6,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.InvalidScrambleException;
-import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pushingpixels.lafwidget.LafWidget;
@@ -206,14 +203,9 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 		}
 		catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
 			LOG.info("unexpected exception", e0);
-            currentCustomization = scramblePluginManager.NULL_PUZZLE_TYPE;
-            try {
-                return currentCustomization.importScramble(incrementScramble);
-            } catch (InvalidScrambleException e1) {
-                LOG.info("unexpected exception", e1);
-				return null;
-            }
-        }
+			ScrambleSettings scrambleSettings = new ScrambleSettings(configuration, scramblePluginManager, "", 0, null);
+			return new ScrambleString(currentCustomization, incrementScramble, true, scrambleSettings, null, "");
+		}
 	}
 
 	private void updateScramblePane() {

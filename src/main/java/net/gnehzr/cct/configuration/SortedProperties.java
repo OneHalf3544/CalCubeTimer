@@ -18,10 +18,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
 
 public class SortedProperties {
 
@@ -45,6 +43,11 @@ public class SortedProperties {
 	public static SortedProperties load(Profile profileName, ConfigurationDao configurationDao, File defaultsFile) {
 		//call loadConfiguration(null) when you want to use cct without dealing with config files
 		return new SortedProperties(configurationDao.getParametersForProfile(profileName), loadDefaultProperties(defaultsFile));
+	}
+
+	public static SortedProperties loadDefaults(File defaultsFile) {
+		//call loadConfiguration(null) when you want to use cct without dealing with config files
+		return new SortedProperties(Collections.emptyMap(), loadDefaultProperties(defaultsFile));
 	}
 
 	public void saveConfiguration(@NotNull Profile profile, @NotNull ConfigurationDao configurationDao) {

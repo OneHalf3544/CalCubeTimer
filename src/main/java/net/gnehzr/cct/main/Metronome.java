@@ -24,7 +24,6 @@ public class Metronome {
     private static final Logger log = LogManager.getLogger(Metronome.class);
 
     public static Metronome createTickTockTimer(Duration duration) {
-        // todo configuration.getString(VariableKey.METRONOME_CLICK_FILE, false));
         Clip clip = loadSoundFile("406__TicTacShutUp__click_1_d.wav");
 
         Timer timer = new Timer((int) duration.toMillis(), event -> {

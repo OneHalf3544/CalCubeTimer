@@ -1,12 +1,14 @@
 package net.gnehzr.cct.dao;
 
-import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Session;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * <p>
@@ -31,7 +33,7 @@ public class SessionEntity {
     @Column
     private String scrambleCustomization;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<SolutionEntity> solutions;
 
     @Column
@@ -111,7 +113,12 @@ public class SessionEntity {
         return this;
     }
 
-    public Session toSession(Configuration configuration, ScramblePluginManager pluginManager, SolutionDao solutionDao) {
-        return new Session(sessionStart, configuration, pluginManager.getPuzzleTypeByString(variationName), solutionDao);
+    public Session toSession(ScramblePluginManager pluginManager, SolutionDao solutionDao) {
+        PuzzleType puzzleType = pluginManager.getPuzzleTypeByString(variationName);
+        Session session = new Session(sessionStart, puzzleType, solutionDao);
+        session.setSolutions(getSolutions().stream()
+                .map(solutionEntity -> solutionEntity.toSolution(puzzleType))
+                .collect(toList()));
+        return session;
     }
 }

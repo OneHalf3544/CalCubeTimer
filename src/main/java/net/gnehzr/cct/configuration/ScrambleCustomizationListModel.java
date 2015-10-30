@@ -1,8 +1,7 @@
 package net.gnehzr.cct.configuration;
 
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.ScrambleChooserComboBox;
-import net.gnehzr.cct.main.ScrambleVariationChooserComboBox;
+import net.gnehzr.cct.main.PuzzleTypeChooserComboBox;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.scrambles.PuzzleType;
@@ -165,13 +164,8 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		if (value instanceof PuzzleType) {
 			puzzleType = ((PuzzleType) value);
-		}else {
-			if (value != null) {
-				puzzleType = scramblePluginManager.getPuzzleTypeByString(value.toString());
-				puzzleType = puzzleType == null ? scramblePluginManager.NULL_PUZZLE_TYPE : puzzleType;
-			} else {
-				puzzleType = scramblePluginManager.NULL_PUZZLE_TYPE;
-			}
+		} else {
+			puzzleType = scramblePluginManager.getPuzzleTypeByString(value.toString());
 		}
 		editingColumn = column;
 		if(column == 0) //customization
@@ -223,7 +217,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 	}
 
 	PuzzleType puzzleType;
-	ScrambleChooserComboBox<PuzzleType> scrambleVariations;
+	PuzzleTypeChooserComboBox scrambleVariations;
 	JSpinner scramLength;
 	private JTextField customField;
 
@@ -231,8 +225,8 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		JPanel customPanel = new JPanel();
 		customPanel.setLayout(new BoxLayout(customPanel, BoxLayout.LINE_AXIS));
 		if(custom.getCustomization() != null) {
-			scrambleVariations = new ScrambleVariationChooserComboBox(false, scramblePluginManager, configuration);
-			scrambleVariations.addItem(scramblePluginManager.NULL_PUZZLE_TYPE);
+			scrambleVariations = new PuzzleTypeChooserComboBox(false, scramblePluginManager, configuration);
+			scrambleVariations.addItem(custom);
 			scrambleVariations.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 			scrambleVariations.setSelectedItem(custom.scramblePluginManager.getScrambleVariation(custom));
 			scrambleVariations.addItemListener(e -> {
@@ -285,6 +279,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 	}
 
 	private List<Component> disabledComponents;
+
 	private void listenToContainer(Component c) {
 		c.addMouseListener(this);
 		c.setEnabled(false);

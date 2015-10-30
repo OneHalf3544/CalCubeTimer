@@ -22,10 +22,12 @@ class JTableModelWrapper extends DraggableJTableModel {
         wrapped.addTableModelListener(e -> {
 			fireTableChanged(e);
 			int[] rows = draggableJTable.getSelectedRows();
-			if(rows.length > 0)
-			draggableJTable.setRowSelectionInterval(rows[0], rows[0]);
+			if(rows.length > 0) {
+                draggableJTable.setRowSelectionInterval(rows[0], rows[0]);
+            }
 		});
     }
+
     @Override
     public void deleteRows(int[] indices) {
         wrapped.deleteRows(indices);
@@ -38,33 +40,22 @@ class JTableModelWrapper extends DraggableJTableModel {
 
 	@Override
     public int getRowCount() {
-        if(draggableJTable.addText == null)
-            return wrapped.getRowCount();
-        return wrapped.getRowCount() + 1;
+        return wrapped.getRowCount();
     }
 
 	@Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if(rowIndex == wrapped.getRowCount()) {
-            if(columnIndex == 0)
-                return draggableJTable.addText;
-            return "";
-        }
-
         return wrapped.getValueAt(rowIndex, columnIndex);
     }
 
 	@Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        if(rowIndex == wrapped.getRowCount())
-            return columnIndex == 0;
-
         return wrapped.isCellEditable(rowIndex, columnIndex);
     }
 
 	@Override
     public boolean isRowDeletable(int rowIndex) {
-        return rowIndex != wrapped.getRowCount() && wrapped.isRowDeletable(rowIndex);
+        return wrapped.isRowDeletable(rowIndex);
 
     }
 
@@ -80,8 +71,9 @@ class JTableModelWrapper extends DraggableJTableModel {
 
 	@Override
     public void showPopup(MouseEvent e, DraggableJTable source, Component prevFocusOwner) {
-        if(draggableJTable.rowAtPoint(e.getPoint()) != wrapped.getRowCount())
+        if(draggableJTable.rowAtPoint(e.getPoint()) != wrapped.getRowCount()) {
             wrapped.showPopup(e, source, prevFocusOwner);
+        }
     }
 
 	@Override
@@ -101,9 +93,6 @@ class JTableModelWrapper extends DraggableJTableModel {
 
 	@Override
     public String getToolTip(int rowIndex, int columnIndex) {
-        if(rowIndex == wrapped.getRowCount()) {
-			return null;
-		}
         return wrapped.getToolTip(rowIndex, columnIndex);
     }
 }

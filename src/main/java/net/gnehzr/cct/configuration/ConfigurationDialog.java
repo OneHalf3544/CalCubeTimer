@@ -10,9 +10,7 @@ import net.gnehzr.cct.main.Metronome;
 import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.ProfileEditor;
-import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleViewComponent;
+import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
@@ -86,13 +84,14 @@ public class ConfigurationDialog extends JDialog {
 		}
 	};
 
-	private static abstract class SyncGUIListener implements ActionListener {
+	private interface SyncGUIListener extends ActionListener {
 		@Override
-		public final void actionPerformed(ActionEvent e) {
+		default void actionPerformed(ActionEvent e) {
 			//this happens if the event was fired by a real button, which means we want to reset with the defaults
 			syncGUIWithConfig(true);
 		}
-		public abstract void syncGUIWithConfig(boolean defaults);
+
+		void syncGUIWithConfig(boolean defaults);
 	}
 	private List<SyncGUIListener> resetListeners = new ArrayList<>();
 	private ComboItem[] items;
@@ -299,30 +298,27 @@ public class ConfigurationDialog extends JDialog {
 		JScrollPane tagScroller = new JScrollPane(tagsTable);
 		tagScroller.setPreferredSize(new Dimension(100, 100));
 		
-		SyncGUIListener al = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// makeStandardOptionsPanel1
-				clockFormat.setSelected(configuration.getBoolean(VariableKey.CLOCK_FORMAT, defaults));
-				promptForNewTime.setSelected(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME, defaults));
-				scramblePopup.setSelected(configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, defaults));
-				sideBySideScramble.setSelected(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, defaults));
-				inspectionCountdown.setSelected(configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, defaults));
-				speakInspection.setSelected(configuration.getBoolean(VariableKey.SPEAK_INSPECTION, defaults));
-				speakInspection.setEnabled(inspectionCountdown.isSelected());
-				bestRA.setBackground(configuration.getColor(VariableKey.BEST_RA, defaults));
-				bestTime.setBackground(configuration.getColor(VariableKey.BEST_TIME, defaults));
-				worstTime.setBackground(configuration.getColor(VariableKey.WORST_TIME, defaults));
-				currentAverage.setBackground(configuration.getColor(VariableKey.CURRENT_AVERAGE, defaults));
-				speakTimes.setSelected(configuration.getBoolean(VariableKey.SPEAK_TIMES, defaults));
-				voices.setSelectedItem(numberSpeaker.getCurrentSpeaker());
-				tagsModel.setTags(
-						SolveType.getSolveTypes(configuration.getStringArray(VariableKey.SOLVE_TAGS, defaults)),
-						/*todo*/ Collections.<SolveType>emptyList());
+		SyncGUIListener al = defaults -> {
+            // makeStandardOptionsPanel1
+            clockFormat.setSelected(configuration.getBoolean(VariableKey.CLOCK_FORMAT, defaults));
+            promptForNewTime.setSelected(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME, defaults));
+            scramblePopup.setSelected(configuration.getBoolean(VariableKey.SCRAMBLE_POPUP, defaults));
+            sideBySideScramble.setSelected(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE, defaults));
+            inspectionCountdown.setSelected(configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, defaults));
+            speakInspection.setSelected(configuration.getBoolean(VariableKey.SPEAK_INSPECTION, defaults));
+            speakInspection.setEnabled(inspectionCountdown.isSelected());
+            bestRA.setBackground(configuration.getColor(VariableKey.BEST_RA, defaults));
+            bestTime.setBackground(configuration.getColor(VariableKey.BEST_TIME, defaults));
+            worstTime.setBackground(configuration.getColor(VariableKey.WORST_TIME, defaults));
+            currentAverage.setBackground(configuration.getColor(VariableKey.CURRENT_AVERAGE, defaults));
+            speakTimes.setSelected(configuration.getBoolean(VariableKey.SPEAK_TIMES, defaults));
+            voices.setSelectedItem(numberSpeaker.getCurrentSpeaker());
+            tagsModel.setTags(
+                    SolveType.getSolveTypes(configuration.getStringArray(VariableKey.SOLVE_TAGS, defaults)),
+                    /*todo*/ Collections.<SolveType>emptyList());
 
-				refreshDesktops();
-			}
-		};
+            refreshDesktops();
+        };
 		JButton reset = getResetButton(false);
 		reset.addActionListener(al);
 		resetListeners.add(al);
@@ -466,38 +462,35 @@ public class ConfigurationDialog extends JDialog {
 		timerFontChooser = new JColorComponent(StringAccessor.getString("ConfigurationDialog.timerfont"));
 		timerFontChooser.addMouseListener(mouseListener);
 		
-		SyncGUIListener al = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// makeStandardOptionsPanel2
-				minSplitTime.setValue(configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, defaults));
-				splits.setSelected(configuration.getBoolean(VariableKey.TIMING_SPLITS, defaults));
-				splitkey = configuration.getInt(VariableKey.SPLIT_KEY, defaults);
-				splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
-				splitsKeySelector.setEnabled(splits.isSelected());
-				stackmatEmulation.setSelected(configuration.getBoolean(VariableKey.STACKMAT_EMULATION, defaults));
-				sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, defaults);
-				sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, defaults);
-				stackmatKeySelector1.setText(KeyEvent.getKeyText(sekey1));
-				stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
-				stackmatKeySelector1.setEnabled(stackmatEmulation.isSelected());
-				stackmatKeySelector2.setEnabled(stackmatEmulation.isSelected());
-				backgroundFile.setEnabled(isBackground.isSelected());
-				browse.setEnabled(isBackground.isSelected());
-				opacity.setEnabled(isBackground.isSelected());
-				scrambleFontChooser.setFont(configuration.getFont(VariableKey.SCRAMBLE_FONT, defaults));
-				timerFontChooser.setFont(configuration.getFont(VariableKey.TIMER_FONT, defaults).deriveFont(DISPLAY_FONT_SIZE));
-				scrambleFontChooser.setBackground(configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, defaults));
-				scrambleFontChooser.setForeground(configuration.getColor(VariableKey.SCRAMBLE_SELECTED, defaults));
-				timerFontChooser.setBackground(configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, defaults));
-				timerFontChooser.setForeground(configuration.getColor(VariableKey.TIMER_FG, defaults));
-				minSplitTime.setEnabled(splits.isSelected());
-				metronome.setSelected(configuration.getBoolean(VariableKey.METRONOME_ENABLED, defaults));
-				metronomeDelay.setEnabled(metronome.isSelected());
-				metronomeDelay.setDelayBounds(configuration.getInt(VariableKey.METRONOME_DELAY_MIN, defaults), configuration.getInt(VariableKey.METRONOME_DELAY_MAX,
-						defaults), configuration.getInt(VariableKey.METRONOME_DELAY, defaults));
-			}
-		};
+		SyncGUIListener al = defaults -> {
+            // makeStandardOptionsPanel2
+            minSplitTime.setValue(configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, defaults));
+            splits.setSelected(configuration.getBoolean(VariableKey.TIMING_SPLITS, defaults));
+            splitkey = configuration.getInt(VariableKey.SPLIT_KEY, defaults);
+            splitsKeySelector.setText(KeyEvent.getKeyText(splitkey));
+            splitsKeySelector.setEnabled(splits.isSelected());
+            stackmatEmulation.setSelected(configuration.getBoolean(VariableKey.STACKMAT_EMULATION, defaults));
+            sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1, defaults);
+            sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2, defaults);
+            stackmatKeySelector1.setText(KeyEvent.getKeyText(sekey1));
+            stackmatKeySelector2.setText(KeyEvent.getKeyText(sekey2));
+            stackmatKeySelector1.setEnabled(stackmatEmulation.isSelected());
+            stackmatKeySelector2.setEnabled(stackmatEmulation.isSelected());
+            backgroundFile.setEnabled(isBackground.isSelected());
+            browse.setEnabled(isBackground.isSelected());
+            opacity.setEnabled(isBackground.isSelected());
+            scrambleFontChooser.setFont(configuration.getFont(VariableKey.SCRAMBLE_FONT, defaults));
+            timerFontChooser.setFont(configuration.getFont(VariableKey.TIMER_FONT, defaults).deriveFont(DISPLAY_FONT_SIZE));
+            scrambleFontChooser.setBackground(configuration.getColor(VariableKey.SCRAMBLE_UNSELECTED, defaults));
+            scrambleFontChooser.setForeground(configuration.getColor(VariableKey.SCRAMBLE_SELECTED, defaults));
+            timerFontChooser.setBackground(configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, defaults));
+            timerFontChooser.setForeground(configuration.getColor(VariableKey.TIMER_FG, defaults));
+            minSplitTime.setEnabled(splits.isSelected());
+            metronome.setSelected(configuration.getBoolean(VariableKey.METRONOME_ENABLED, defaults));
+            metronomeDelay.setEnabled(metronome.isSelected());
+            metronomeDelay.setDelayBounds(configuration.getInt(VariableKey.METRONOME_DELAY_MIN, defaults), configuration.getInt(VariableKey.METRONOME_DELAY_MAX,
+                    defaults), configuration.getInt(VariableKey.METRONOME_DELAY, defaults));
+        };
 		resetListeners.add(al);
 
 		JButton reset = getResetButton(false);
@@ -527,15 +520,12 @@ public class ConfigurationDialog extends JDialog {
 		jsp.setPreferredSize(new Dimension(300, 0));
 		panel.add(jsp, BorderLayout.CENTER);
 		
-		SyncGUIListener sl = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// profile settings
-				scramblePluginManager.reloadLengthsFromConfiguration(defaults);
-				puzzlesModel.setContents(scramblePluginManager.getPuzzleTypes(cubeTimerModel.getSelectedProfile()));
-				profilesModel.setContents(profileDao.getProfiles());
-			}
-		};
+		SyncGUIListener sl = defaults -> {
+            // profile settings
+            scramblePluginManager.reloadLengthsFromConfiguration(defaults);
+            puzzlesModel.setContents(scramblePluginManager.getPuzzleTypes(cubeTimerModel.getSelectedProfile()));
+            profilesModel.setContents(profileDao.getProfiles());
+        };
 		resetListeners.add(sl);
 		JButton reset = getResetButton(true);
 		reset.addActionListener(sl);
@@ -598,17 +588,14 @@ public class ConfigurationDialog extends JDialog {
 		options.add(sideBySide(BoxLayout.LINE_AXIS,
 				sideBySide(null, new JLabel(StringAccessor.getString("ConfigurationDialog.samplingrate")), stackmatSamplingRate), reset));
 
-		SyncGUIListener sl = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// makeStackmatOptionsPanel
-				stackmatValue.setValue(configuration.getInt(VariableKey.SWITCH_THRESHOLD, defaults));
-				invertedMinutes.setSelected(configuration.getBoolean(VariableKey.INVERTED_MINUTES, defaults));
-				invertedSeconds.setSelected(configuration.getBoolean(VariableKey.INVERTED_SECONDS, defaults));
-				invertedHundredths.setSelected(configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS, defaults));
-				stackmatSamplingRate.setValue(configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, defaults));
-			}
-		};
+		SyncGUIListener sl = defaults -> {
+            // makeStackmatOptionsPanel
+            stackmatValue.setValue(configuration.getInt(VariableKey.SWITCH_THRESHOLD, defaults));
+            invertedMinutes.setSelected(configuration.getBoolean(VariableKey.INVERTED_MINUTES, defaults));
+            invertedSeconds.setSelected(configuration.getBoolean(VariableKey.INVERTED_SECONDS, defaults));
+            invertedHundredths.setSelected(configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS, defaults));
+            stackmatSamplingRate.setValue(configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE, defaults));
+        };
 		resetListeners.add(sl);
 		reset.addActionListener(sl);
 		
@@ -704,13 +691,10 @@ public class ConfigurationDialog extends JDialog {
 		JScrollPane scroller = new JScrollPane(sessionStats);
 		options.add(scroller, BorderLayout.CENTER);
 
-		SyncGUIListener sl = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// makeSessionSetupPanel
-				sessionStats.setText(configuration.getString(VariableKey.SESSION_STATISTICS, defaults));
-			}
-		};
+		SyncGUIListener sl = defaults -> {
+            // makeSessionSetupPanel
+            sessionStats.setText(configuration.getString(VariableKey.SESSION_STATISTICS, defaults));
+        };
 		resetListeners.add(sl);
 		JButton reset = getResetButton(false);
 		reset.addActionListener(sl);
@@ -725,13 +709,10 @@ public class ConfigurationDialog extends JDialog {
 		JScrollPane scroller = new JScrollPane(currentAverageStats);
 		options.add(scroller, BorderLayout.CENTER);
 
-		SyncGUIListener sl = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// makeCurrentAverageSetupPanel
-				currentAverageStats.setText(configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, defaults));
-			}
-		};
+		SyncGUIListener sl = defaults -> {
+            // makeCurrentAverageSetupPanel
+            currentAverageStats.setText(configuration.getString(VariableKey.CURRENT_AVERAGE_STATISTICS, defaults));
+        };
 		resetListeners.add(sl);
 		JButton reset = getResetButton(false);
 		reset.addActionListener(sl);
@@ -746,13 +727,10 @@ public class ConfigurationDialog extends JDialog {
 		JScrollPane scroller = new JScrollPane(bestRAStats);
 		options.add(scroller, BorderLayout.CENTER);
 
-		SyncGUIListener sl = new SyncGUIListener() {
-			@Override
-			public void syncGUIWithConfig(boolean defaults) {
-				// makeBestRASetupPanel
-				bestRAStats.setText(configuration.getString(VariableKey.BEST_RA_STATISTICS, defaults));
-			}
-		};
+		SyncGUIListener sl = defaults -> {
+            // makeBestRASetupPanel
+            bestRAStats.setText(configuration.getString(VariableKey.BEST_RA_STATISTICS, defaults));
+        };
 		resetListeners.add(sl);
 		JButton reset = getResetButton(false);
 		reset.addActionListener(sl);
@@ -761,7 +739,7 @@ public class ConfigurationDialog extends JDialog {
 		return options;
 	}
 
-	private List<ScrambleViewComponent> solvedPuzzles;
+	private List<DefaultPuzzleViewComponent> solvedPuzzles;
 
 	private JScrollPane makePuzzleColorsPanel() {
 		JPanel options = new JPanel();
@@ -776,22 +754,17 @@ public class ConfigurationDialog extends JDialog {
 			if (!puzzleType.getScramblePlugin().supportsScrambleImage()) {
 				continue;
 			}
-			final ScrambleViewComponent scrambleViewComponent = new ScrambleViewComponent(true, true, configuration, scramblePluginManager);
+			final DefaultPuzzleViewComponent scrambleViewComponent = new DefaultPuzzleViewComponent(puzzleType, configuration, scramblePluginManager);
 			solvedPuzzles.add(scrambleViewComponent);
 
 			scrambleViewComponent.setDefaultPuzzleView(puzzleType);
 			scrambleViewComponent.setAlignmentY(Component.CENTER_ALIGNMENT);
 			scrambleViewComponent.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
-			SyncGUIListener sl = new SyncGUIListener() {
-				@Override
-				public void syncGUIWithConfig(boolean defaults) {
-					scrambleViewComponent.syncColorScheme(defaults);
-				}
-			};
-			resetListeners.add(sl);
+			SyncGUIListener syncGUIListener = scrambleViewComponent::syncColorScheme;
+			resetListeners.add(syncGUIListener);
 			JButton resetColors = getResetButton(false);
-			resetColors.addActionListener(sl);
+			resetColors.addActionListener(syncGUIListener);
 			resetColors.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
 			options.add(sideBySide(BoxLayout.PAGE_AXIS, scrambleViewComponent, resetColors));
@@ -861,7 +834,9 @@ public class ConfigurationDialog extends JDialog {
 		for(int ch = 0; ch < gs.length; ch++) {
 			GraphicsDevice gd = gs[ch];
 			DisplayMode screenSize = gd.getDisplayMode();
-			JRadioButton temp = new JRadioButton((ch+1) + ":" + screenSize.getWidth() + "x" + screenSize.getHeight() + " (" + StringAccessor.getString("ConfigurationDialog.desktopresolution") + ")");
+			JRadioButton temp = new JRadioButton(
+					(ch+1) + ":" + screenSize.getWidth() + "x" + screenSize.getHeight()
+							+ " (" + StringAccessor.getString("ConfigurationDialog.desktopresolution") + ")");
 			if(ch == configuration.getInt(VariableKey.FULLSCREEN_DESKTOP))
 				temp.setSelected(true);
 			g.add(temp);
@@ -927,7 +902,7 @@ public class ConfigurationDialog extends JDialog {
 		configuration.setString(VariableKey.CURRENT_AVERAGE_STATISTICS, currentAverageStats.getText());
 		configuration.setString(VariableKey.BEST_RA_STATISTICS, bestRAStats.getText());
 
-		solvedPuzzles.forEach(ScrambleViewComponent::commitColorSchemeToConfiguration);
+		solvedPuzzles.forEach(DefaultPuzzleViewComponent::commitColorSchemeToConfiguration);
 
 		configuration.setBoolean(VariableKey.TIMING_SPLITS, splits.isSelected());
 		configuration.setDouble(VariableKey.MIN_SPLIT_DIFFERENCE, (Double) minSplitTime.getValue());

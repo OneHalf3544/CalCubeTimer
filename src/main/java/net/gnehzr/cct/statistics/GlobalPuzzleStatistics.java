@@ -45,7 +45,7 @@ public class GlobalPuzzleStatistics {
 		globalAverage = new SolveTime(Duration.ZERO);
 
 		for(Session s : sessionsList) {
-			SessionPuzzleStatistics sessionStatistics = s.getStatistics();
+			SessionSolutionsStatistics sessionStatistics = s.getStatistics();
 			for(RollingAverageOf ra : RollingAverageOf.values()) {
 				SolveTime ave = sessionStatistics.getBestAverage(ra).getAverage();
 				if (Utils.lessThan(ave, bestRAs.get(ra))) {
