@@ -23,10 +23,8 @@ public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRen
 		String val;
 		Icon i = null;
 		if(value != null) {
-			PuzzleType puzzleType;
-			ScrambleSettings scrambleSettings;
-			puzzleType = (PuzzleType) value;
-			scrambleSettings = scramblePluginManager.getScrambleVariation(puzzleType);
+			PuzzleType puzzleType = (PuzzleType) value;
+			ScrambleSettings scrambleSettings = scramblePluginManager.getScrambleVariation(puzzleType);
 			if (icons) {
 				i = scrambleSettings.getImage();
 			}

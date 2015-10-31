@@ -67,10 +67,10 @@ public class RollingAverage implements Comparable<RollingAverage> {
 
     public static RollingAverage create(RollingAverageOf rollingAverageOf,
                                         Session session, int toIndex, int count) {
-        if (toIndex < count) {
+        if (toIndex < count - 1) {
             return NOT_AVAILABLE;
         }
-        return new RollingAverage(Seq.iterate(toIndex - count, index -> index + 1)
+        return new RollingAverage(Seq.iterate(toIndex - count + 1, index -> index + 1)
                 .limit(count)
                 .filter(i -> i < session.getAttemptsCount())
                 .map(session::getSolution)

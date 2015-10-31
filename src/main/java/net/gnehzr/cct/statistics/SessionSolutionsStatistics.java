@@ -113,7 +113,8 @@ public class SessionSolutionsStatistics {
 
         for (Solution solution : session.getSolutionList()) {
             for (RollingAverageOf averageOf : RollingAverageOf.values()) {
-                if (getRollingAverageList(averageOf).size() + 1 >= getRASize(averageOf)) {
+                int newSize = getRollingAverageList(averageOf).size() + 1;
+                if (newSize >= getRASize(averageOf)) {
                     calculateCurrentAverage(averageOf);
                 } else {
                     getRollingAverageList(averageOf).add(RollingAverage.NOT_AVAILABLE);
