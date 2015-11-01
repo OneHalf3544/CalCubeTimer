@@ -35,7 +35,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 
 	private SelectionListener selectionListener;
 	private DraggableJTableModel model;
-	Vector<HideableTableColumn> cols;
+	List<HideableTableColumn> cols;
 	private int fromRow;
 
 	//You must set any editors or renderers before setting this table's model
@@ -142,7 +142,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 		return temp;
 	}
 
-	public Vector<HideableTableColumn> getAllColumns() {
+	public List<HideableTableColumn> getAllColumns() {
 		return cols;
 	}
 
@@ -276,17 +276,6 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 		return c == null ? new Dimension(0, 0) : c.getPreferredSize();
 	}
 
-	private Dimension getEditorPreferredSize(Object value, int col) {
-		Component c = getCellEditor(0, col).getTableCellEditorComponent(
-				this,
-				value,
-				true,
-				0,
-				col);
-		//c == null if the class returned by getColumnClass(0) doesn't have a constructor of 1 string
-		return c == null ? new Dimension(0, 0) : c.getPreferredSize();
-	}
-	
 	public void sortByColumn(SortKey sortKey) {
 		if(sortKey == null) {
 			return;

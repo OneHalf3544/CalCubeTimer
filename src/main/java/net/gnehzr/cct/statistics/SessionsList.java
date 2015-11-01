@@ -90,6 +90,8 @@ public class SessionsList implements Iterable<Session> {
 				.forEach(this::getGlobalPuzzleStatisticsForType);
 
 		this.loadOrCreateLatestSession(scramblePluginManager.getDefaultPuzzleType());
+
+		listener.forEach(sessionListener -> sessionListener.sessionAdded(getCurrentSession()));
 	}
 
 	public void addSessionListener(@NotNull SessionListener sl) {
