@@ -108,7 +108,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		switch(columnIndex) {
 		case 0: //data started
 			return configuration.getDateFormat().format(session.getStartTime());
-		case 1: //customization
+		case 1: //puzzleType
 			return session.getPuzzleType().getVariationName();
 		case 2: //session average
 			return session.getStatistics().getWholeSessionAverage().getAverage();

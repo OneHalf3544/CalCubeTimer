@@ -74,7 +74,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private JScrollPane timesScroller = null;
 	private SessionsListTable sessionsListTable;
 	ScrambleHyperlinkArea scrambleHyperlinkArea = null;
-	private PuzzleTypeChooserComboBox scrambleCustomizationComboBox;
+	private PuzzleTypeComboBox puzzleTypeComboBox;
 	private JPanel scrambleAttributesPanel = null;
 	@Inject
 	private JTextField generatorTextField;
@@ -135,9 +135,9 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				return;
 			}
 
-			PuzzleType newPuzzleType = (PuzzleType) getScrambleCustomizationComboBox().getSelectedItem();
+			PuzzleType newPuzzleType = (PuzzleType) getPuzzleTypeComboBox().getSelectedItem();
 
-			//change current session's scramble customization
+			//change current session's scramble puzzleType
 			if (!sessionsList.getCurrentSession().getPuzzleType().equals(newPuzzleType)) {
 				sessionsList.createSession(newPuzzleType);
 			}
@@ -215,8 +215,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 
 	@Override
-	public PuzzleTypeChooserComboBox getScrambleCustomizationComboBox() {
-		return scrambleCustomizationComboBox;
+	public PuzzleTypeComboBox getPuzzleTypeComboBox() {
+		return puzzleTypeComboBox;
 	}
 
 	@Inject
@@ -229,8 +229,8 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
 		currentSessionSolutionsTableModel.addTableModelListener(this::newSolutionAdded);
 
-		scrambleCustomizationComboBox = new PuzzleTypeChooserComboBox(true, scramblePluginManager, configuration);
-		scrambleCustomizationComboBox.addItemListener(scrambleChooserListener);
+		puzzleTypeComboBox = new PuzzleTypeComboBox(true, scramblePluginManager, configuration);
+		puzzleTypeComboBox.addItemListener(scrambleChooserListener);
 
 		scrambleNumberSpinner = new JSpinner(new SpinnerNumberModel(1,	1, 1, 1));
 		((JSpinner.DefaultEditor) scrambleNumberSpinner.getEditor()).getTextField().setColumns(3);
@@ -264,7 +264,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		sessionsListTable.setName("sessionsTable");
 		//TODO - this wastes space, probably not easy to fix...
 		sessionsListTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		JScrollPane sessionsScroller = new JScrollPane(sessionsListTable);
+		JScrollPane sessionsListScrollPane = new JScrollPane(sessionsListTable);
 
 		scrambleHyperlinkArea = new ScrambleHyperlinkArea(scramblePopup, configuration, scramblePluginManager);
 		scrambleHyperlinkArea.setAlignmentX(.5f);
@@ -284,7 +284,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		languages.setRenderer(new LocaleRenderer(configuration));
 
 		persistentComponents = new ComponentsMap();
-		persistentComponents.put("scramblechooser", scrambleCustomizationComboBox);
+		persistentComponents.put("scramblechooser", puzzleTypeComboBox);
 		persistentComponents.put("scramblenumber", scrambleNumberSpinner);
 		persistentComponents.put("scramblelength", scrambleLengthSpinner);
 		persistentComponents.put("scrambleattributes", scrambleAttributesPanel);
@@ -296,7 +296,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		persistentComponents.put("customguimenu", customGUIMenu);
 		persistentComponents.put("languagecombobox", languages);
 		persistentComponents.put("profilecombobox", profilesComboBox);
-		persistentComponents.put("sessionslist", sessionsScroller);
+		persistentComponents.put("sessionslist", sessionsListScrollPane);
 
 		stackmatInterpreter.execute();
 	}
@@ -520,9 +520,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		safeSetValue(scrambleNumberSpinner, model.getScramblesList().getScrambleNumber(), scrambleNumberSpinnerListener);
 		scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getPuzzleType()); //this will update scramblePopup
 
-		boolean canChangeStuff = model.getScramblesList().isLastScrambleInList();
-		scrambleCustomizationComboBox.setEnabled(canChangeStuff);
-		scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && canChangeStuff && !current.isImported());
+		scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && !current.isImported());
 	}
 
 	@Override

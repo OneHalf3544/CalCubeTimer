@@ -146,7 +146,7 @@ public class DynamicString{
 	}
 
 	private String getForGlobal(RollingAverageOf num, SessionsList sessions, String originalString, String suffix) {
-		//Database queries for current scramble customization
+		//Database queries for current puzzleType
 		GlobalPuzzleStatistics globalPuzzleStatistics = sessions.getGlobalPuzzleStatisticsForType(sessions.getCurrentSession().getPuzzleType());
 		Pattern globalPattern = Pattern.compile("^\\s*\\.\\s*(time|ra|average|solvecount)\\s*(.*)$");
 		Matcher globalMatcher = globalPattern.matcher(suffix);

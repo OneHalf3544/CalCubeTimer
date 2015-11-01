@@ -91,7 +91,6 @@ public class Session implements Commentable, Comparable<Session> {
 				.withPluginName(getPuzzleType().getScramblePlugin().getPuzzleName())
 				.withVariationName(getPuzzleType().getVariationName());
 		sessionEntity.setSessionId(sessionId);
-		sessionEntity.setScrambleCustomization(puzzleType.getCustomization());
 		sessionEntity.setSessionStart(getStartTime());
 		sessionEntity.setComment(comment);
 

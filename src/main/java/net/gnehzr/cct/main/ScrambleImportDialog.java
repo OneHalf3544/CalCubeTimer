@@ -36,7 +36,7 @@ public class ScrambleImportDialog extends JDialog {
 	private JButton importButton;
 	private JTextAreaWithHistory scramblesTextArea;
 	private JEditorPane qualityControl;
-	private PuzzleTypeChooserComboBox scrambleChooser;
+	private PuzzleTypeComboBox scrambleChooser;
 
 	private List<ScrambleString> scrambles = new ArrayList<>();
 
@@ -66,7 +66,7 @@ public class ScrambleImportDialog extends JDialog {
 		sideBySide.add(addToAreaButton);
 		topBot.add(sideBySide);
 
-		scrambleChooser = new PuzzleTypeChooserComboBox(false, scramblePluginManager, configuration);
+		scrambleChooser = new PuzzleTypeComboBox(false, scramblePluginManager, configuration);
 		scrambleChooser.addItem(puzzleType);
 		scrambleChooser.setSelectedItem(puzzleType);
 		scrambleChooser.addActionListener(e -> this.validateScrambles());
@@ -91,7 +91,7 @@ public class ScrambleImportDialog extends JDialog {
 		importButton = new JButton(StringAccessor.getString("ScrambleImportDialog.import")); 
 		importButton.setEnabled(false);
 		importButton.addActionListener(e -> {
-			scrambleImporter.importScrambles(getSelectedCustomization(), scrambles, calCubeTimerFrame);
+			scrambleImporter.importScrambles(getSelectedPuzzleType(), scrambles, calCubeTimerFrame);
 			setVisible(false);
 		});
 		JButton cancelButton = new JButton(StringAccessor.getString("ScrambleImportDialog.cancel"));
@@ -162,12 +162,12 @@ public class ScrambleImportDialog extends JDialog {
         }
 	}
 
-	private PuzzleType getSelectedCustomization() {
+	private PuzzleType getSelectedPuzzleType() {
 		return (PuzzleType) scrambleChooser.getSelectedItem();
 	}
 
 	private void validateScrambles() {
-		PuzzleType sc = getSelectedCustomization();
+		PuzzleType sc = getSelectedPuzzleType();
 		
 		Font font = scramblesTextArea.getFont();
 		String fontStyle = ""; 

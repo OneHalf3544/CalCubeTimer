@@ -29,7 +29,7 @@ public class ScrambleExportDialog extends JDialog {
 	private final Configuration configuration;
 
 	private JTextField urlField;
-	private PuzzleTypeChooserComboBox scrambleChooser;
+	private PuzzleTypeComboBox scrambleChooser;
 	private JSpinnerWithText scrambleLengthJSpinner;
 	private JSpinnerWithText numberOfScramblesJSpinner;
 
@@ -51,7 +51,7 @@ public class ScrambleExportDialog extends JDialog {
 			}
 		});
 
-		scrambleChooser = new PuzzleTypeChooserComboBox(false, this.scramblePluginManager, this.configuration);
+		scrambleChooser = new PuzzleTypeComboBox(false, this.scramblePluginManager, this.configuration);
 		scrambleChooser.setSelectedItem(selectedPuzzleType);
 		scrambleChooser.addActionListener(e -> {
             //if(scrambleLengthJSpinner != null) {

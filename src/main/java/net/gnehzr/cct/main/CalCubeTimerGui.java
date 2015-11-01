@@ -21,7 +21,7 @@ public interface CalCubeTimerGui {
 
     void updateInspection();
 
-    PuzzleTypeChooserComboBox getScrambleCustomizationComboBox();
+    PuzzleTypeComboBox getPuzzleTypeComboBox();
 
     void loadXMLGUI();
 

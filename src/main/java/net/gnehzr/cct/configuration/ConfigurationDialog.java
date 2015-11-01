@@ -10,7 +10,9 @@ import net.gnehzr.cct.main.Metronome;
 import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.ProfileEditor;
-import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.scrambles.DefaultPuzzleViewComponent;
+import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Profile;
@@ -112,7 +114,8 @@ public class ConfigurationDialog extends JDialog {
 		this.stackmat = stackmat;
 		this.tickTock = tickTock;
 		this.timesTable = timesTable;
-		puzzlesModel = new ScrambleCustomizationListModel(this.configuration, scramblePluginManager);
+		this.puzzleTypeListModel = new PuzzleTypeListModel();
+		this.puzzlesCellEditor = new PuzzleSettingsTableEditor(configuration, scramblePluginManager);
 		profilesModel = new ProfileListModel(this.profileDao);
 		createGUI();
 		setLocationRelativeTo(parent);
@@ -501,8 +504,11 @@ public class ConfigurationDialog extends JDialog {
 		return panel;
 	}
 
-	ScrambleCustomizationListModel puzzlesModel;
+	PuzzleSettingsTableEditor puzzlesCellEditor;
+	PuzzleTypeListModel puzzleTypeListModel;
+
 	ProfileListModel profilesModel;
+
 	private JPanel makeScrambleTypeOptionsPanel() {
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 
@@ -511,10 +517,10 @@ public class ConfigurationDialog extends JDialog {
 		scramTable.getTableHeader().setReorderingAllowed(false);
 		scramTable.setShowGrid(false);
 		scramTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		scramTable.setDefaultRenderer(PuzzleType.class, puzzlesModel);
-		scramTable.setDefaultEditor(PuzzleType.class, puzzlesModel);
-		scramTable.setDefaultEditor(String.class, puzzlesModel);
-		scramTable.setModel(puzzlesModel);
+		scramTable.setDefaultRenderer(PuzzleType.class, puzzlesCellEditor);
+		scramTable.setDefaultEditor(PuzzleType.class, puzzlesCellEditor);
+		scramTable.setDefaultEditor(String.class, puzzlesCellEditor);
+		scramTable.setModel(puzzleTypeListModel);
 
 		JScrollPane jsp = new JScrollPane(scramTable);
 		jsp.setPreferredSize(new Dimension(300, 0));
@@ -523,7 +529,7 @@ public class ConfigurationDialog extends JDialog {
 		SyncGUIListener sl = defaults -> {
             // profile settings
             scramblePluginManager.reloadLengthsFromConfiguration(defaults);
-            puzzlesModel.setContents(scramblePluginManager.getPuzzleTypes(cubeTimerModel.getSelectedProfile()));
+            puzzleTypeListModel.setContents(scramblePluginManager.getPuzzleTypes(cubeTimerModel.getSelectedProfile()));
             profilesModel.setContents(profileDao.getProfiles());
         };
 		resetListeners.add(sl);
@@ -920,7 +926,7 @@ public class ConfigurationDialog extends JDialog {
 		configuration.setFont(VariableKey.TIMER_FONT, timerFontChooser.getFont());
 
 		scramblePluginManager.saveLengthsToConfiguration();
-		for(PuzzleType sc : puzzlesModel.getContents())
+		for(PuzzleType sc : puzzleTypeListModel.getContents())
 			sc.scramblePluginManager.saveGeneratorToConfiguration(sc);
 
 		profilesModel.commitChanges();

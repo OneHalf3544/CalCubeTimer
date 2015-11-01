@@ -57,9 +57,7 @@ public class CubeScramblePluginTest {
     }
 
     private PuzzleType createPuzzleType(String variationName) {
-        PuzzleType puzzleType = new PuzzleType(configuration, "", scramblePluginManager, cubeScramblePlugin);
-        puzzleType.setVariationName(variationName);
-        return puzzleType;
+        return new PuzzleType(configuration, scramblePluginManager, cubeScramblePlugin, variationName);
     }
 
 }

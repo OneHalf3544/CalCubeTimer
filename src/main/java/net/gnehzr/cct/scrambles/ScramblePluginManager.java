@@ -89,8 +89,7 @@ public class ScramblePluginManager {
 
 		for(ScramblePlugin plugin : scramblePlugins.values()) {
             for(String variationName : plugin.getVariations()) {
-				PuzzleType puzzleType = new PuzzleType(configuration, "", this, plugin);
-				puzzleType.setVariationName(variationName);
+				PuzzleType puzzleType = new PuzzleType(configuration, this, plugin, variationName);
 
 				ScrambleSettings scrambleSettings = ScrambleSettings.createScrambleVariation(
 						plugin, variationName, configuration, this, getDefaultGeneratorGroup(variationName, plugin))
@@ -105,15 +104,8 @@ public class ScramblePluginManager {
 		return variations;
 	}
 
-	public PuzzleType getCurrentScrambleCustomization() {
-		String scName = configuration.getString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, false);
-
-		//now we'll try to match the variation, if we couldn't match the customization
-		if(scName.contains(":")) {
-			scName = scName.substring(0, scName.indexOf(":"));
-			return getPuzzleTypeByString(scName);
-		}
-		return getPuzzleTypeByString(scName);
+	public PuzzleType getCurrentPuzzleType() {
+		return getPuzzleTypeByString(configuration.getString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, false));
 	}
 
 	public PuzzleType getPuzzleTypeByVariation(PuzzleType scrambleSettings) {

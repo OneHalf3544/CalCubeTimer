@@ -70,8 +70,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     Metronome metronome;
 
-    boolean customizationEditsDisabled = false;
-
     SolveType penalty = null;
 
     Timer updateInspectionTimer;
@@ -91,17 +89,14 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         @Override
         public void sessionSelected(Session session) {
             scramblesList.asGenerating().generateScrambleForCurrentSession();
-
-            customizationEditsDisabled = true;
-            calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(session.getPuzzleType()); //this will update the scramble
-            customizationEditsDisabled = false;
+            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(session.getPuzzleType()); //this will update the scramble
         }
 
         @Override
         public void sessionsDeleted() {
             Session session = sessionsList.getCurrentSession();
             sessionsList.removeSession(session);
-            calCubeTimerGui.getScrambleCustomizationComboBox().setSelectedItem(session.getPuzzleType());
+            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(session.getPuzzleType());
         }
     };
 
