@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -137,8 +138,8 @@ public class SessionsList implements Iterable<Session> {
             LOG.debug("newest session found");
             setCurrentSession(nextSessionOptional.get());
         } else {
+            LOG.info("create new session");
             createSession(puzzleType);
-            LOG.info("create new session: {}", getCurrentSession());
         }
 	}
 
@@ -163,13 +164,14 @@ public class SessionsList implements Iterable<Session> {
 		if (!sessions.contains(session)) {
 			addSession(session);
 		}
+		checkState(session.getSessionId() != null);
 		this.currentSession = session;
 		listener.forEach(l -> l.sessionSelected(session));
 		fireStringUpdates();
 	}
 
 	public void createSession(PuzzleType puzzleType) {
-		addSession(new Session(LocalDateTime.now(), puzzleType, solutionDao));
+		setCurrentSession(new Session(LocalDateTime.now(), puzzleType, solutionDao));
 	}
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {
@@ -185,7 +187,7 @@ public class SessionsList implements Iterable<Session> {
 
 
 	public void addSolutionToCurrentSession(Solution solution) {
-		getCurrentSession().addSolution(solution, this::fireStringUpdates);
+		getCurrentSession().addSolution(getCurrentSession(), solution, this::fireStringUpdates);
 	}
 
 	public void setComment(String comment, int index) {

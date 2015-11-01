@@ -33,7 +33,7 @@ public class SessionEntity {
     @Column
     private String scrambleCustomization;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, mappedBy = "session")
     private List<SolutionEntity> solutions;
 
     @Column
@@ -45,6 +45,12 @@ public class SessionEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PROFILEID")
     private ProfileEntity profile;
+
+    @Column
+    private String comment;
+
+    public SessionEntity() {
+    }
 
     public Long getSessionId() {
         return sessionId;
@@ -103,6 +109,14 @@ public class SessionEntity {
         this.variationName = variationName;
     }
 
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
     public SessionEntity withPluginName(String pluginName) {
         this.pluginName = pluginName;
         return this;
@@ -116,9 +130,16 @@ public class SessionEntity {
     public Session toSession(ScramblePluginManager pluginManager, SolutionDao solutionDao) {
         PuzzleType puzzleType = pluginManager.getPuzzleTypeByString(variationName);
         Session session = new Session(sessionStart, puzzleType, solutionDao);
+        session.setSessionId(sessionId);
+        session.setComment(comment);
         session.setSolutions(getSolutions().stream()
                 .map(solutionEntity -> solutionEntity.toSolution(puzzleType))
                 .collect(toList()));
         return session;
+    }
+
+    public SessionEntity withSessionId(Long sessionId) {
+        this.setSessionId(sessionId);
+        return this;
     }
 }

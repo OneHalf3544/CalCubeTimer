@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.stream.Collectors.toList;
 
@@ -72,15 +73,14 @@ public class SolutionDao extends HibernateDaoSupport {
                 .collect(toList());
     }
 
-    public void insertSolution(Solution solution) {
-        SolutionEntity entity = solution.toEntity();
-        doWithSession(session -> {
-            insert(entity);
-        });
+    public void insertSolution(@NotNull Session session, @NotNull Solution solution) {
+        SolutionEntity entity = solution.toEntity(new SessionEntity()
+                .withSessionId(Objects.requireNonNull(session.getSessionId())));
+        doWithSession(s -> insert(entity));
         solution.setSolutionId(entity.getId());
     }
 
-    public void deleteSolution(Solution solution) {
-        doWithSession(s -> s.delete(solution.toEntity()));
+    public void deleteSolution(Solution solution, Long sessionId) {
+        doWithSession(s -> s.delete(solution.toEntity(new SessionEntity().withSessionId(sessionId))));
     }
 }

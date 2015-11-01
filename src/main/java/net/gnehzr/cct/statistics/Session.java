@@ -19,7 +19,7 @@ public class Session implements Commentable, Comparable<Session> {
 
 	private static final Logger LOG = LogManager.getLogger(Session.class);
 
-	private Long lastSessionId;
+	private Long sessionId;
 	private SessionSolutionsStatistics sessionSolutionsStatistics;
 	private final LocalDateTime dateStarted;
 	private final PuzzleType puzzleType;
@@ -43,7 +43,7 @@ public class Session implements Commentable, Comparable<Session> {
 
 	@Override
 	public String getComment() {
-		return comment;
+		return comment == null ? "" : comment;
 	}
 
 	public LocalDateTime getStartTime() {
@@ -56,11 +56,11 @@ public class Session implements Commentable, Comparable<Session> {
 	}
 
 	public Long getSessionId() {
-		return lastSessionId;
+		return sessionId;
 	}
 
-	public void setSessionId(Long lastSessionId) {
-		this.lastSessionId = lastSessionId;
+	public void setSessionId(Long sessionId) {
+		this.sessionId = sessionId;
 	}
 
 	public PuzzleType getPuzzleType() {
@@ -90,9 +90,10 @@ public class Session implements Commentable, Comparable<Session> {
 		SessionEntity sessionEntity = new SessionEntity()
 				.withPluginName(getPuzzleType().getScramblePlugin().getPuzzleName())
 				.withVariationName(getPuzzleType().getVariationName());
-		sessionEntity.setSessionId(lastSessionId);
+		sessionEntity.setSessionId(sessionId);
 		sessionEntity.setScrambleCustomization(puzzleType.getCustomization());
 		sessionEntity.setSessionStart(getStartTime());
+		sessionEntity.setComment(comment);
 
 		ProfileEntity profile = new ProfileEntity();
 		profile.setProfileId(profileId);
@@ -101,7 +102,7 @@ public class Session implements Commentable, Comparable<Session> {
 				.iterate(0, i -> i++)
 				.limit(sessionSolutionsStatistics.getSolveCounter().getSolveCount())
 				.map(this::getSolution)
-				.map(Solution::toEntity)
+				.map(s -> s.toEntity(sessionEntity))
 				.toList());
 		return sessionEntity;
 	}
@@ -114,10 +115,10 @@ public class Session implements Commentable, Comparable<Session> {
 		return solutions.get(solutionIndex);
 	}
 
-	public void addSolution(Solution solution, Runnable notifier) {
+	public void addSolution(Session currentSession, Solution solution, Runnable notifier) {
 		LOG.info("add solution {}", solution);
 		this.solutions.add(solution);
-		solutionDao.insertSolution(solution);
+		solutionDao.insertSolution(currentSession, solution);
 		// todo it's will recalculate whole statistics. Can be optimized
 		this.getStatistics().refresh(notifier);
 	}
@@ -132,7 +133,7 @@ public class Session implements Commentable, Comparable<Session> {
 	public void removeSolution(Solution solution, Runnable notifier) {
 		LOG.info("remove solution {}", solution);
 		this.solutions.remove(solution);
-		solutionDao.deleteSolution(solution);
+		solutionDao.deleteSolution(solution, sessionId);
 		this.getStatistics().refresh(notifier);
 
 	}
@@ -140,7 +141,7 @@ public class Session implements Commentable, Comparable<Session> {
 	@Override
 	public String toString() {
 		return "Session{" +
-				"lastSessionId=" + lastSessionId +
+				"sessionId=" + sessionId +
 				", solutions count=" + getAttemptsCount() +
 				", dateStarted=" + dateStarted +
 				", puzzleType=" + puzzleType +

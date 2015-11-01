@@ -91,6 +91,7 @@ public class ScrambleCustomizationListModel extends DraggableJTableModel impleme
 		return customizations.get(rowIndex).getCustomization() != null;
 			
 	}
+
 	@Override
 	public boolean isRowDeletable(int rowIndex) {
 		return true;

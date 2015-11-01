@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.dao.SolutionEntity;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
@@ -91,9 +92,10 @@ public class Solution implements Commentable {
         return "Solution{" + solveTime  + ", " + scrambleString + "}";
     }
 
-    public SolutionEntity toEntity() {
+    public SolutionEntity toEntity(SessionEntity session) {
         return new SolutionEntity()
                 .withId(solutionId)
+                .withSession(session)
                 .withComment(getComment())
                 .withScramble(getScrambleString().getScramble())
                 .withSolveStart(LocalDateTime.now())

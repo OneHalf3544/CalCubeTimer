@@ -1,7 +1,8 @@
 package net.gnehzr.cct.dao;
 
 import com.google.common.base.Throwables;
-import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.scrambles.InvalidScrambleException;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.statistics.Solution;
 import net.gnehzr.cct.statistics.SolveTime;
 
@@ -24,6 +25,7 @@ public class SolutionEntity {
 
     @Id
     @GeneratedValue
+    @Column(name = "SOLUTION_ID")
     private Long id;
 
     @Column
@@ -40,6 +42,13 @@ public class SolutionEntity {
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<SplitTimesEntity> splits;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SESSION_ID")
+    private SessionEntity session;
+
+    public SolutionEntity() {
+    }
 
     public Long getId() {
         return id;
@@ -91,6 +100,11 @@ public class SolutionEntity {
 
     public SolutionEntity withId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public SolutionEntity withSession(SessionEntity session) {
+        this.session = session;
         return this;
     }
 
