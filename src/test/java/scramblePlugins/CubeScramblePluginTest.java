@@ -53,7 +53,7 @@ public class CubeScramblePluginTest {
     }
 
     private ScrambleSettings createVariation(int length, String generator) {
-        return new ScrambleSettings(configuration, scramblePluginManager, generator, length, null);
+        return new ScrambleSettings(configuration, scramblePluginManager, generator, length);
     }
 
     private PuzzleType createPuzzleType(String variationName) {

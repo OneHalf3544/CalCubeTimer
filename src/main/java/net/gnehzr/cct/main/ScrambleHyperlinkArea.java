@@ -203,7 +203,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 		}
 		catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
 			LOG.info("unexpected exception", e0);
-			ScrambleSettings scrambleSettings = new ScrambleSettings(configuration, scramblePluginManager, "", 0, null);
+			ScrambleSettings scrambleSettings = new ScrambleSettings(configuration, scramblePluginManager, "", 0);
 			return new ScrambleString(currentPuzzleType, incrementScramble, true, scrambleSettings, null, "");
 		}
 	}

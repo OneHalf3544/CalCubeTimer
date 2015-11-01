@@ -229,7 +229,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
 		currentSessionSolutionsTableModel.addTableModelListener(this::newSolutionAdded);
 
-		puzzleTypeComboBox = new PuzzleTypeComboBox(true, scramblePluginManager, configuration);
+		puzzleTypeComboBox = new PuzzleTypeComboBox(scramblePluginManager, configuration);
 		puzzleTypeComboBox.addItemListener(scrambleChooserListener);
 
 		scrambleNumberSpinner = new JSpinner(new SpinnerNumberModel(1,	1, 1, 1));

@@ -51,7 +51,7 @@ public class ScrambleExportDialog extends JDialog {
 			}
 		});
 
-		scrambleChooser = new PuzzleTypeComboBox(false, this.scramblePluginManager, this.configuration);
+		scrambleChooser = new PuzzleTypeComboBox(this.scramblePluginManager, this.configuration);
 		scrambleChooser.setSelectedItem(selectedPuzzleType);
 		scrambleChooser.addActionListener(e -> {
             //if(scrambleLengthJSpinner != null) {

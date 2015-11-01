@@ -5,8 +5,6 @@ import net.gnehzr.cct.configuration.VariableKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.swing.*;
-import java.net.URL;
 import java.util.Objects;
 
 public class ScrambleSettings {
@@ -18,36 +16,31 @@ public class ScrambleSettings {
 															ScramblePluginManager scramblePluginManager,
 															String generatorGroup) {
 		int length = getScrambleLength(scramblePlugin, variationName, configuration, false);
-		ImageIcon image = getImageIcon(variationName, scramblePlugin);
-		return new ScrambleSettings(configuration, scramblePluginManager, generatorGroup, length, image);
+		return new ScrambleSettings(configuration, scramblePluginManager, generatorGroup, length);
 	}
 
 	public interface WithoutLength {
 		ScrambleSettings withLength(int length);
 		String getGeneratorGroup();
-		WithoutLength withGeneratorGroup(String defaultGeneratorGroup);
-
 	}
 
 	private int length = 0;
 	private String generatorGroup;
-	private final ImageIcon image;
 	private final Configuration configuration;
 
 	private final ScramblePluginManager scramblePluginManager;
 
 	public ScrambleSettings(Configuration configuration,
 							ScramblePluginManager scramblePluginManager, String generatorGroup,
-							int length, ImageIcon imageIcon) {
+							int length) {
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
 		this.generatorGroup = generatorGroup;
 		this.length = length;
-		this.image = imageIcon;
 	}
 
 	public ScrambleSettings withGeneratorGroup(String generatorGroup) {
-		return new ScrambleSettings(configuration, scramblePluginManager, generatorGroup, length, image);
+		return new ScrambleSettings(configuration, scramblePluginManager, generatorGroup, length);
 	}
 
 	public WithoutLength withoutLength() {
@@ -58,15 +51,6 @@ public class ScrambleSettings {
 		return generatorGroup;
 	}
 
-	private static ImageIcon getImageIcon(String variation, ScramblePlugin scramblePlugin) {
-		URL resource = scramblePlugin.getClass().getResource(ScramblePlugin.class.getSimpleName() + "_" + variation + ".png");
-		return resource == null ? new ImageIcon() : new ImageIcon(resource);
-	}
-
-	public ImageIcon getImage() {
-		return image;
-	}
-	
 	public static int getScrambleLength(ScramblePlugin scramblePlugin, String variationName, Configuration configuration, boolean defaultValue) {
 		if (scramblePlugin == ScramblePluginManager.NULL_SCRAMBLE_PLUGIN) {
 			return 0;
@@ -90,7 +74,7 @@ public class ScrambleSettings {
 
 	public ScrambleSettings withLength(int length) {
 		return new ScrambleSettings(
-				configuration, scramblePluginManager, generatorGroup, length, getImage());
+				configuration, scramblePluginManager, generatorGroup, length);
 	}
 
 	public int getLength() {
@@ -115,7 +99,6 @@ public class ScrambleSettings {
 		return "ScrambleSettings{" +
 				"scrambleLength=" + length +
 				", generatorGroup='" + generatorGroup + '\'' +
-				", hasImage=" + (image != null) +
 				'}';
 	}
 

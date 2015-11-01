@@ -22,7 +22,6 @@ public class PuzzleType {
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
 		this.plugin = plugin;
-
 		this.variationName = variationName;
 	}
 

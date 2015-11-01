@@ -128,7 +128,7 @@ public class PuzzleSettingsTableEditor implements TableCellEditor, TableCellRend
 	private JPanel getPuzzleTypePanel(PuzzleType puzzleType) {
 		JPanel customPanel = new JPanel();
 		customPanel.setLayout(new BoxLayout(customPanel, BoxLayout.LINE_AXIS));
-		puzzleTypeComboBox = new PuzzleTypeComboBox(false, scramblePluginManager, configuration);
+		puzzleTypeComboBox = new PuzzleTypeComboBox(scramblePluginManager, configuration);
 		puzzleTypeComboBox.addItem(puzzleType);
 		puzzleTypeComboBox.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 		puzzleTypeComboBox.setSelectedItem(puzzleType.scramblePluginManager.getScrambleVariation(puzzleType));

@@ -27,19 +27,18 @@ import static org.testng.Assert.assertEquals;
 public class SessionTest {
 
     private PuzzleType puzzleType;
-    private Configuration configuration;
     private ScrambleSettings variation;
 
     @BeforeClass
     public void setUpClass() {
-        configuration = mock(Configuration.class);
+        Configuration configuration = mock(Configuration.class);
         puzzleType = mock(PuzzleType.class);
         when(puzzleType.isTrimmed(OF_5)).thenReturn(true);
         when(puzzleType.getRASize(OF_5)).thenReturn(5);
         when(puzzleType.isTrimmed(OF_12)).thenReturn(false);
         when(puzzleType.getRASize(OF_12)).thenReturn(12);
 
-        variation = new ScrambleSettings(configuration, mock(ScramblePluginManager.class), "U D", 25, null);
+        variation = new ScrambleSettings(configuration, mock(ScramblePluginManager.class), "U D", 25);
     }
 
     @Test

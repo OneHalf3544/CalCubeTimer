@@ -30,10 +30,6 @@ public class PyraminxScramblePluginTest {
     }
 
     private ScrambleSettings createVariation(int length) {
-
-        ScrambleSettings scrambleSettings = new ScrambleSettings(configuration, scramblePluginManager, "", 0, null);
-        scrambleSettings.setLength(length);
-
-        return scrambleSettings;
+        return new ScrambleSettings(configuration, scramblePluginManager, "", 0).withLength(length);
     }
 }

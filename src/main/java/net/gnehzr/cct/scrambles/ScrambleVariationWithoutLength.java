@@ -29,8 +29,7 @@ class ScrambleVariationWithoutLength implements ScrambleSettings.WithoutLength {
 				configuration,
 				this.scramblePluginManager,
 				this.scrambleSettings.getGeneratorGroup(),
-				0,
-				this.scrambleSettings.getImage());
+				0);
 		scrambleSettings.setLength(length);
 		return scrambleSettings;
 	}
@@ -40,14 +39,4 @@ class ScrambleVariationWithoutLength implements ScrambleSettings.WithoutLength {
 		return scrambleSettings.getGeneratorGroup();
 	}
 
-    @Override
-	public ScrambleSettings.WithoutLength withGeneratorGroup(String generatorGroup) {
-		return new ScrambleSettings(
-				configuration,
-				this.scramblePluginManager,
-				generatorGroup,
-				0,
-				this.scrambleSettings.getImage())
-				.withoutLength();
-	}
 }

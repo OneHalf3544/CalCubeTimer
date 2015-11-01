@@ -66,7 +66,7 @@ public class ScrambleImportDialog extends JDialog {
 		sideBySide.add(addToAreaButton);
 		topBot.add(sideBySide);
 
-		scrambleChooser = new PuzzleTypeComboBox(false, scramblePluginManager, configuration);
+		scrambleChooser = new PuzzleTypeComboBox(scramblePluginManager, configuration);
 		scrambleChooser.addItem(puzzleType);
 		scrambleChooser.setSelectedItem(puzzleType);
 		scrambleChooser.addActionListener(e -> this.validateScrambles());
