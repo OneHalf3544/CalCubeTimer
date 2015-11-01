@@ -30,9 +30,6 @@ public class SessionEntity {
     @Column
     private LocalDateTime sessionStart;
 
-    @Column
-    private String scrambleCustomization;
-
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, mappedBy = "session")
     private List<SolutionEntity> solutions;
 
@@ -74,14 +71,6 @@ public class SessionEntity {
 
     public void setSessionStart(LocalDateTime sessionStart) {
         this.sessionStart = sessionStart;
-    }
-
-    public String getScrambleCustomization() {
-        return scrambleCustomization;
-    }
-
-    public void setScrambleCustomization(String scrambleCustomization) {
-        this.scrambleCustomization = scrambleCustomization;
     }
 
     public ProfileEntity getProfile() {

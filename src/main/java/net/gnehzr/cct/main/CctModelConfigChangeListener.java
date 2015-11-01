@@ -7,7 +7,6 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
-import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.statistics.Profile;
@@ -67,9 +66,8 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
         calCubeTimerGui.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
 
         scramblePluginManager.reloadLengthsFromConfiguration(false);
-        PuzzleType newCustom = scramblePluginManager.getCurrentScrambleCustomization();
-        // TODO
-        calCubeTimerGui.getMainFrame().getScrambleCustomizationComboBox().setSelectedItem(newCustom);
+        calCubeTimerGui.getMainFrame().getPuzzleTypeComboBox().setSelectedItem(
+                scramblePluginManager.getCurrentPuzzleType());
 
         //we need to notify the stackmatinterpreter package because it has been rewritten to
         //avoid configuration entirely (which makes it easier to separate & use as a library)

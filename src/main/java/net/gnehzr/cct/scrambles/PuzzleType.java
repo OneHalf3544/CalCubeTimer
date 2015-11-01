@@ -2,7 +2,6 @@ package net.gnehzr.cct.scrambles;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,16 +15,15 @@ public class PuzzleType {
 	private final Configuration configuration;
 	public final ScramblePluginManager scramblePluginManager;
 	private final ScramblePlugin plugin;
-	private String customization;
-	private String variationName;
+	private final String variationName;
 
-	public PuzzleType(Configuration configuration,
-					  String customization, ScramblePluginManager scramblePluginManager, ScramblePlugin plugin) {
+	public PuzzleType(Configuration configuration, ScramblePluginManager scramblePluginManager,
+					  ScramblePlugin plugin, String variationName) {
 		this.configuration = configuration;
 		this.scramblePluginManager = scramblePluginManager;
-		this.customization = customization;
 		this.plugin = plugin;
 
+		this.variationName = variationName;
 	}
 
 	public ScrambleString generateScramble() {
@@ -79,29 +77,17 @@ public class PuzzleType {
 		return configuration.getBoolean(key, false);
 	}
 
-	public void setCustomization(String custom) {
-		customization = custom;
-	}
-
 	public ScramblePlugin getScramblePlugin() {
 		return plugin;
 	}
 
-	public String getCustomization() {
-		return customization;
-	}
-
 	public String toString() {
-		if(Utils.notEmpty(customization)) {
-			return getVariationName() + ":" + customization;
-		} else {
-			return getVariationName();
-		}
+		return getVariationName();
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(plugin, customization, variationName);
+		return Objects.hash(plugin, variationName);
 	}
 
 	@Override
@@ -111,16 +97,10 @@ public class PuzzleType {
 		}
 		PuzzleType other = (PuzzleType) o;
 		return Objects.equals(plugin, other.plugin)
-				&& Objects.equals(customization, other.customization)
 				&& Objects.equals(variationName, other.variationName);
 	}
 
 	public String getVariationName() {
 		return variationName;
 	}
-
-	public void setVariationName(String variationName) {
-		this.variationName = variationName;
-	}
-
 }

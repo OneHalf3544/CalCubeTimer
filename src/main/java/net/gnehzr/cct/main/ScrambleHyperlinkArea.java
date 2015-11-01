@@ -41,7 +41,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 	private ScrambleString currentScramble;
 	private String incrementScramble;
 	private ScrambleString fullScramble;
-	private PuzzleType currentCustomization;
+	private PuzzleType currentPuzzleType;
 	private StringBuilder part1, part2, part3;
 	private int moveNum;
 	private String backgroundColor;
@@ -126,7 +126,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 	}
 
 	public void setScramble(ScrambleString newScramble, PuzzleType sc) {
-		currentCustomization = sc;
+		currentPuzzleType = sc;
 		fullScramble = newScramble;
 		currentScramble = fullScramble;
 
@@ -159,7 +159,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 		StringBuilder plainScramble = new StringBuilder();
 		Matcher m;
 		int num = 0;
-		Pattern regex = currentCustomization.getScramblePlugin().getTokenRegex();
+		Pattern regex = currentPuzzleType.getScramblePlugin().getTokenRegex();
 		if(regex == null || fullScramble == null) {
 			regex = NULL_SCRAMBLE_REGEX;
 		}
@@ -167,7 +167,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 		while((m = regex.matcher(s)).matches()){
 			String str = m.group(1).trim();
 			plainScramble.append(" ").append(str);
-			part3.append("<a id='").append(num).append("' href=\"").append(num).append(plainScramble).append("\"><span>").append(currentCustomization.getScramblePlugin().htmlify(" " + str)).append("</span></a>");
+			part3.append("<a id='").append(num).append("' href=\"").append(num).append(plainScramble).append("\"><span>").append(currentPuzzleType.getScramblePlugin().htmlify(" " + str)).append("</span></a>");
 			s = m.group(2).trim();
 			num++;
 		}
@@ -199,12 +199,12 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 
 	private ScrambleString incrementalScramble() {
 		try {
-            return currentCustomization.importScramble(incrementScramble);
+            return currentPuzzleType.importScramble(incrementScramble);
 		}
 		catch(InvalidScrambleException e0) { //this could happen if a null scramble is imported
 			LOG.info("unexpected exception", e0);
 			ScrambleSettings scrambleSettings = new ScrambleSettings(configuration, scramblePluginManager, "", 0, null);
-			return new ScrambleString(currentCustomization, incrementScramble, true, scrambleSettings, null, "");
+			return new ScrambleString(currentPuzzleType, incrementScramble, true, scrambleSettings, null, "");
 		}
 	}
 
@@ -226,7 +226,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 
 	public void refresh() {
 		setTimerFocused(focused);
-		setScramble(currentScramble, currentCustomization);
+		setScramble(currentScramble, currentPuzzleType);
 	}
 	//this will be called by the KeyboardTimer to hide scrambles when necessary
 	public void setTimerFocused(boolean focused) {

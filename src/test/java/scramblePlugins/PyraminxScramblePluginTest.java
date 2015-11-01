@@ -24,7 +24,7 @@ public class PyraminxScramblePluginTest {
 
     @Test
     public void testGeneratePyraminx() {
-        PuzzleType puzzleType = new PuzzleType(configuration, "Pyraminx", scramblePluginManager, pyraminxScramblePlugin);
+        PuzzleType puzzleType = new PuzzleType(configuration, scramblePluginManager, pyraminxScramblePlugin, "Pyraminx");
         ScrambleString cubeScramble = pyraminxScramblePlugin.createScramble(puzzleType, createVariation(10), Collections.<String>emptyList());
         LOG.info("Scramble (pyraminx): " + cubeScramble);
     }
