@@ -178,7 +178,7 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
         configuration.loadConfiguration(newCurrentProfile);
         configuration.apply(newCurrentProfile);
 
-        getSessionsList().setSessions(solutionDao.loadSessions(newCurrentProfile, scramblePluginManager));
+        sessionsList.setSessions(solutionDao.loadSessions(newCurrentProfile, scramblePluginManager));
     }
 
     @Override
@@ -344,11 +344,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public void startUpdateInspectionTimer() {
         updateInspectionTimer.start();
-    }
-
-    @Override
-    public SessionsList getSessionsList() {
-        return sessionsList;
     }
 
     @Override

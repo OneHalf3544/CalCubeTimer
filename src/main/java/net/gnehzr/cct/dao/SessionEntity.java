@@ -1,5 +1,6 @@
 package net.gnehzr.cct.dao;
 
+import net.gnehzr.cct.main.CurrentProfileHolder;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Session;
@@ -116,9 +117,10 @@ public class SessionEntity {
         return this;
     }
 
-    public Session toSession(ScramblePluginManager pluginManager, SolutionDao solutionDao) {
+    public Session toSession(ScramblePluginManager pluginManager, SolutionDao solutionDao,
+                             CurrentProfileHolder currentProfileHolder) {
         PuzzleType puzzleType = pluginManager.getPuzzleTypeByString(variationName);
-        Session session = new Session(sessionStart, puzzleType, solutionDao);
+        Session session = new Session(sessionStart, puzzleType, solutionDao, currentProfileHolder);
         session.setSessionId(sessionId);
         session.setComment(comment);
         session.setSolutions(getSolutions().stream()

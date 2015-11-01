@@ -55,7 +55,8 @@ public class SessionsList implements Iterable<Session> {
 		this.cubeTimerModel = cubeTimerModel;
 		this.solutionDao = solutionDao;
 		this.scramblePluginManager = scramblePluginManager;
-		this.currentSession =  new Session(LocalDateTime.now(), scramblePluginManager.getDefaultPuzzleType(), solutionDao);
+		this.currentSession =  new Session(
+				LocalDateTime.now(), scramblePluginManager.getDefaultPuzzleType(), solutionDao, cubeTimerModel);
 		sessions.add(currentSession);
 	}
 
@@ -171,7 +172,7 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 	public void createSession(PuzzleType puzzleType) {
-		setCurrentSession(new Session(LocalDateTime.now(), puzzleType, solutionDao));
+		setCurrentSession(new Session(LocalDateTime.now(), puzzleType, solutionDao, cubeTimerModel));
 	}
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {
@@ -191,7 +192,9 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 	public void setComment(String comment, int index) {
-		getCurrentSession().getSolution(index).setComment(comment);
+		Solution solution = getCurrentSession().getSolution(index);
+		solution.setComment(comment);
+		solutionDao.updateSolution(getCurrentSession(), solution);
 		getCurrentSession().getStatistics().refresh(this::fireStringUpdates);
 	}
 

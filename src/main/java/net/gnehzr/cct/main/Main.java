@@ -47,6 +47,7 @@ public class Main implements Module {
     @Override
     public void configure(Binder binder) {
         binder.bind(CalCubeTimerModel.class).to(CalCubeTimerModelImpl.class).asEagerSingleton();
+        binder.bind(CurrentProfileHolder.class).to(CalCubeTimerModelImpl.class).asEagerSingleton();
         binder.bind(CalCubeTimerGui.class).to(CALCubeTimerFrame.class).asEagerSingleton();
 
         binder.bind(Configuration.class).asEagerSingleton();

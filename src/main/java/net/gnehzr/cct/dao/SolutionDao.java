@@ -3,7 +3,7 @@ package net.gnehzr.cct.dao;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.main.CurrentProfileHolder;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
@@ -33,7 +33,7 @@ public class SolutionDao extends HibernateDaoSupport {
     private static final Logger LOG = LogManager.getLogger(SolutionDao.class);
 
     @Inject
-    private Configuration configuration;
+    private CurrentProfileHolder currentProfileHolder;
 
     @Inject
     public SolutionDao(SessionFactory sessionFactory) {
@@ -69,7 +69,7 @@ public class SolutionDao extends HibernateDaoSupport {
 
         // TODO lazy load solutions
         return sessionEntities.stream()
-                .map(s -> s.toSession(scramblePluginManager, this))
+                .map(s -> s.toSession(scramblePluginManager, this, currentProfileHolder))
                 .collect(toList());
     }
 
@@ -78,6 +78,13 @@ public class SolutionDao extends HibernateDaoSupport {
                 .withSessionId(Objects.requireNonNull(session.getSessionId())));
         doWithSession(s -> insert(entity));
         solution.setSolutionId(entity.getId());
+    }
+
+    public void updateSolution(@NotNull Session session, @NotNull Solution solution) {
+        update(s -> {
+            s.update(solution.toEntity(new SessionEntity()
+                    .withSessionId(Objects.requireNonNull(session.getSessionId()))));
+        });
     }
 
     public void deleteSolution(Solution solution, Long sessionId) {
