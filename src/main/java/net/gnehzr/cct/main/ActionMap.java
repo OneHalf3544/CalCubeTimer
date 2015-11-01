@@ -80,17 +80,8 @@ public class ActionMap {
             case KEYBOARDTIMING_ACTION: {
                 return new KeyboardTimingAction(calCubeTimerFrame);
             }
-            case ADD_TIME_ACTION: {
-                AbstractAction a = new AddTimeAction(calCubeTimerFrame);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
-                a.putValue(Action.ACCELERATOR_KEY,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK));
-                return a;
-            }
             case RESET_ACTION: {
-                AbstractAction a = new ResetAction(calCubeTimerFrame, configuration, sessionsList);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
-                return a;
+                return new ResetAction(calCubeTimerFrame, sessionsList);
             }
             case "currentaverage0":
                 return new ShowDetailedStatisticsAction(
@@ -107,10 +98,6 @@ public class ActionMap {
             case "sessionaverage":
                 return new ShowDetailedStatisticsAction(
                         calCubeTimerFrame, AverageType.SESSION_AVERAGE, null, configuration, sessionsList);
-
-            case ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN:
-                // action to stop timing during fullscreen
-                return toggleFullscreenTimingAction;
 
             case SHOW_CONFIGURATION_ACTION: {
                 AbstractAction a = new ShowConfigurationDialogAction(calCubeTimerFrame);
@@ -177,6 +164,11 @@ public class ActionMap {
         @Override
         public void actionPerformed(ActionEvent e) {
             calCubeTimerFrame.setFullScreen(!cubeTimerModel.isFullscreen());
+        }
+
+        @Inject
+        public void registerAction(ActionMap actionMap) {
+            actionMap.registerAction(ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN, this);
         }
     }
 }

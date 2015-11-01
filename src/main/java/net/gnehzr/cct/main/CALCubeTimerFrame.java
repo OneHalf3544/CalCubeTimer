@@ -55,12 +55,9 @@ import java.util.*;
 import java.util.List;
 
 @Singleton
-public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
+class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	private static final Logger LOG = LogManager.getLogger(CALCubeTimerFrame.class);
-
-	public static final String CCT_VERSION = CALCubeTimerFrame.class.getPackage().getImplementationVersion();
-	public static final ImageIcon CUBE_ICON = new ImageIcon(CALCubeTimerFrame.class.getResource("cube.png"));
 
 	CalCubeTimerModel model;
 	private final StackmatInterpreter stackmatInterpreter;
@@ -574,16 +571,6 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
             repaintTimes();
             actionMap.refreshActions();
-        });
-	}
-
-	public void addTimeAction() {
-		SwingUtilities.invokeLater(() -> {
-            if(timesTable.isFocusOwner() || timesTable.requestFocusInWindow()) { //if the timestable is hidden behind a tab, we don't want to let the user add times
-                timesTable.promptForNewRow();
-                Rectangle newTimeRect = timesTable.getCellRect(currentSessionSolutionsTableModel.getRowCount(), 0, true);
-                timesTable.scrollRectToVisible(newTimeRect);
-            }
         });
 	}
 

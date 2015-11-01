@@ -15,6 +15,9 @@ import javax.swing.*;
  */
 public interface CalCubeTimerGui {
 
+    String CCT_VERSION = CALCubeTimerFrame.class.getPackage().getImplementationVersion();
+    ImageIcon CUBE_ICON = new ImageIcon(CALCubeTimerFrame.class.getResource("cube.png"));
+
     void updateScramble();
 
     CALCubeTimerFrame getMainFrame();

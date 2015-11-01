@@ -7,7 +7,7 @@ import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.JColorComponent;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.main.ScrambleHyperlinkArea;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
@@ -43,7 +43,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	private static BufferedImage loadImage(String imageName) {
 		try {
 			//can't use TimerLabel.class because the class hasn't been loaded yet
-			return ImageIO.read(CALCubeTimerFrame.class.getResourceAsStream(imageName));
+			return ImageIO.read(CalCubeTimerGui.class.getResourceAsStream(imageName));
 		} catch (IOException e) {
 			throw Throwables.propagate(e);
 		}

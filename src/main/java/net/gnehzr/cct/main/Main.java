@@ -54,11 +54,13 @@ public class Main implements Module {
         binder.bind(ConfigurationDao.class).asEagerSingleton();
         binder.bind(StackmatHandler.class).asEagerSingleton();
 
+        binder.bind(ActionMap.ToggleFullscreenTimingAction.class).asEagerSingleton();
+        binder.bind(AddTimeAction.class).asEagerSingleton();
+        binder.bind(ExportScramblesAction.class).asEagerSingleton();
+        binder.bind(FullScreenDuringTimingChangeSettingAction.class).asEagerSingleton();
+        binder.bind(ImportScramblesAction.class).asEagerSingleton();
         binder.bind(NewSessionAction.class).asEagerSingleton();
         binder.bind(ToggleScramblePopupAction.class).asEagerSingleton();
-        binder.bind(ExportScramblesAction.class).asEagerSingleton();
-        binder.bind(ImportScramblesAction.class).asEagerSingleton();
-        binder.bind(FullScreenDuringTimingChangeSettingAction.class).asEagerSingleton();
 
         binder.bind(TimingListener.class).to(TimingListenerImpl.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class).asEagerSingleton();
