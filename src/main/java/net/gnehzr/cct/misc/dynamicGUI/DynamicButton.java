@@ -1,43 +1,26 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import javax.swing.JButton;
-
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
-import net.gnehzr.cct.statistics.StatisticsUpdateListener;
+import net.gnehzr.cct.statistics.SessionsList;
 
-public class DynamicButton extends JButton implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+import javax.swing.*;
+
+public class DynamicButton extends JButton implements DynamicStringSettable {
+
 	private DynamicString s = null;
 
 	public DynamicButton(){
-		Configuration.addConfigurationChangeListener(this);
 	}
 
-	public DynamicButton(DynamicString s){
-		setDynamicString(s);
-	}
-
+	@Override
 	public void setDynamicString(DynamicString s){
-		if(this.s != null) {
-			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
-		}
 		this.s = s;
-		if(this.s != null) {
-			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
-			update();
+	}
+
+	@Override
+	public void updateTextFromDynamicString(Configuration configuration, SessionsList sessionsList) {
+		if(s != null) {
+			setText(s.toString(sessionsList));
 		}
-	}
-
-	public void update(){
-		if(s != null) setText(s.toString());
-	}
-
-	public void configurationChanged(){
-		update();
-	}
-
-	public void destroy(){
-		setDynamicString(null);
-		Configuration.removeConfigurationChangeListener(this);
 	}
 }

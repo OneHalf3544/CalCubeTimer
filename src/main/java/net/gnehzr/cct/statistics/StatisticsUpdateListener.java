@@ -1,5 +1,6 @@
 package net.gnehzr.cct.statistics;
 
-public interface StatisticsUpdateListener{
-	public void update();
+public interface StatisticsUpdateListener {
+
+	void statisticsUpdated();
 }

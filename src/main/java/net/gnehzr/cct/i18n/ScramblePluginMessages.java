@@ -1,40 +1,44 @@
 package net.gnehzr.cct.i18n;
 
 import net.gnehzr.cct.scrambles.ScramblePlugin;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 public class ScramblePluginMessages implements MessageAccessor {
 
-	private static final Logger LOG = Logger.getLogger(ScramblePluginMessages.class);
+	private static final Logger LOG = LogManager.getLogger(ScramblePluginMessages.class);
 
-	private static ResourceBundle RESOURCE_BUNDLE = null;
+	private final ResourceBundle resourceBundle;
 
-	public static final MessageAccessor SCRAMBLE_ACCESSOR = new ScramblePluginMessages();
-	private ScramblePluginMessages() {}
-	
-	private static String bundleFileName;
-	public static void loadResources(String pluginName) {
-		bundleFileName = ScramblePlugin.SCRAMBLE_PLUGIN_PACKAGE + pluginName;
+	private final Class<? extends ScramblePlugin> pluginClass;
+
+	public ScramblePluginMessages(Class<? extends ScramblePlugin> pluginClass) {
+		this.pluginClass = pluginClass;
+		this.resourceBundle = loadResources(this.pluginClass);
+	}
+
+	private ResourceBundle loadResources(Class<? extends ScramblePlugin> pluginClass) {
 		try {
-			RESOURCE_BUNDLE = ResourceBundle.getBundle(bundleFileName);
+			return ResourceBundle.getBundle(pluginClass.getName());
 		} catch(MissingResourceException e) {
-			RESOURCE_BUNDLE = null;
+			return null;
 		}
 	}
 
+	@Override
 	public String getString(String key) {
-		if(RESOURCE_BUNDLE == null) {
-			String error = "Could not find " + bundleFileName + ".properties!";
+		if (resourceBundle == null) {
+			String error = "Could not find " + pluginClass.getSimpleName() + ".properties!";
 			LOG.error(error);
 			return error;
 		}
 		try {
-			return RESOURCE_BUNDLE.getString(key);
+			return resourceBundle.getString(key);
 		} catch (MissingResourceException e) {
-			LOG.error("Could not find " + key + " in " + bundleFileName + "!");
+			LOG.error("Could not find " + key + " in " + pluginClass.getSimpleName() + "!");
 			return '!' + key + '!';
 		}
 	}

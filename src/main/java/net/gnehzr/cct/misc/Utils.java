@@ -1,26 +1,25 @@
 package net.gnehzr.cct.misc;
 
-import com.google.common.base.Throwables;
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CALCubeTimer;
-import org.apache.log4j.Logger;
+import net.gnehzr.cct.statistics.SolveTime;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.CharArrayWriter;
+import java.io.PrintWriter;
 import java.math.RoundingMode;
-import java.nio.channels.FileLock;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.Locale;
-import java.util.function.Consumer;
+import java.time.Duration;
+import java.util.*;
+import java.util.List;
 
 public class Utils {
 
-	private static final Logger LOG = Logger.getLogger(Utils.class);
+	private static final Logger LOG = LogManager.getLogger(Utils.class);
 
 	private static DecimalFormat getDecimalFormat() {
 		DecimalFormat df = new DecimalFormat("0.00");
@@ -29,92 +28,78 @@ public class Utils {
 		return df;
 	}
 
-	public static String getDecimalSeparator() {
-		return "" + getDecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
-	}
-	
-	public static String join(Object[] arr, String sep) {
-		StringBuilder s = new StringBuilder();
-		for(Object o : arr) {
-			s.append(sep + o.toString());
-		}
-		return s.substring(sep.length());
-	}
-
 	private Utils() {}
-	
-	public static int positiveModulo(int a, int b){
-		int y = a % b;
-		if(y >= 0) return y;
-		return y+b;
+
+	public static <T extends Comparable<T>> boolean lessThan(T v1, T v2) {
+		return v1.compareTo(v2) < 0;
 	}
 
-	public static boolean equalDouble(double a, double b) {
-		return round(a, 2) == round(b, 2);
+	public static <T extends Comparable<T>> boolean moreThan(T v1, T v2) {
+		return v1.compareTo(v2) > 0;
 	}
 
-	private static double round(double c, int decimalPlaces) {
-		int pow = (int) Math.pow(10, decimalPlaces);
-		return Math.round(c * pow) / (double) pow;
-	}
-
-	public static String formatTime(double seconds) {
-		if(seconds == Double.POSITIVE_INFINITY) {
+	public static String formatTime(SolveTime solveTime, boolean useClockFormat) {
+		if(solveTime.isInfiniteTime()) {
 			return "N/A";
 		}
-		seconds = round(seconds, 2);
-		return Configuration.getBoolean(VariableKey.CLOCK_FORMAT, false) ? clockFormat(seconds) : format(seconds);
+		return useClockFormat ? clockFormat(solveTime) : format(solveTime);
+	}
+
+	public static String format(SolveTime seconds) {
+		return getDecimalFormat().format(seconds.getTime().toMillis() / 1000.0);
 	}
 
 	public static String format(double seconds) {
 		return getDecimalFormat().format(seconds);
 	}
 
-	static String clockFormat(double seconds) {
-		int hours = (int) (seconds / 3600.);
-		seconds %= 3600;
-		int minutes = (int) (seconds / 60.);
-		seconds %= 60;
-		if(seconds >= 59.995) {
-			seconds = 0;
-			minutes++;
-		}
-		if(minutes >= 60) {
-			minutes -= 60;
-			hours++;
-		}
+	static String clockFormat(SolveTime solveTime) {
+		Duration time = solveTime.getTime();
+		long hours = time.toHours();
+		time = time.minusHours(hours);
+		long minutes = time.toMinutes();
+		time = time.minusMinutes(minutes);
+		long seconds = time.toMillis() / 1000;
+
 		return (hours == 0 ? (minutes == 0 ? "" : minutes + ":" + (seconds < 10 ? "0" : "")) :
 				hours + ":" + (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : ""))
-				+ format(seconds);
+				+ format(time.toMillis() / 1000.0 );
 	}
 
 	public static Color invertColor(Color c) {
-		if(c == null)
+		if(c == null) {
 			return Color.BLACK;
+		}
 		return new Color(255 - c.getRed(), 255 - c.getGreen(), 255 - c.getBlue());
 	}
 
 	public static String colorToString(Color c) {
-		if(c == null)
+		if(c == null) {
 			return "";
+		}
 		return padWith0s(Integer.toHexString(c.getRGB() & 0xffffff));
 	}
 
 	private static String padWith0s(String s) {
 		int pad = 6 - s.length();
 		if(pad > 0) {
-			for(int i = 0; i < pad; i++)
+			for(int i = 0; i < pad; i++) {
 				s = "0" + s;
+			}
 		}
 		return s;
 	}
 
 	public static Color stringToColor(String s, boolean nullIfInvalid) {
 		try {
-			return new Color(Integer.parseInt(s, 16));
+			return stringToColor(s);
 		} catch(Exception e) {
 			return nullIfInvalid ? null : Color.WHITE;
 		}
+	}
+
+	public static Color stringToColor(String s) {
+		return new Color(Integer.parseInt(s, 16));
 	}
 
 	public static String fontToString(Font f) {
@@ -136,25 +121,25 @@ public class Utils {
 				ok[0]);
 	}
 
-	public static void showErrorDialog(Window c, String s) {
-		showErrorDialog(c, null, s, null);
+	public static void showErrorDialog(Window c, @NotNull String message) {
+		showErrorDialog(c, null, message, null);
 	}
 	
-	public static void showErrorDialog(Window c, String s, String t) {
-		showErrorDialog(c, null, s, t);
+	public static void showErrorDialog(Window c, String message, String title) {
+		showErrorDialog(c, null, message, title);
 	}
 
 	public static void showErrorDialog(Window c, Throwable e) {
-		showErrorDialog(c, e, null);
+		showErrorDialog(c, e, "");
 	}
 
-	public static void showErrorDialog(Window w, Throwable e, String message) {
-		showErrorDialog(w, e, message, null);
+	public static void showErrorDialog(Window window, Throwable e, @NotNull String message) {
+		showErrorDialog(window, e, message, null);
 	}
-	public static void showErrorDialog(Window w, Throwable e, String message, String title) {
+	public static void showErrorDialog(Window window, Throwable e, @NotNull String message, String title) {
 		StringBuilder msg = new StringBuilder();
-		if(message != null)
-			msg.append(message).append("\n");
+
+		msg.append(message).append("\n");
 		if(e != null) {
 			CharArrayWriter caw = new CharArrayWriter();
 			e.printStackTrace(new PrintWriter(caw));
@@ -162,7 +147,7 @@ public class Utils {
 		}
 		if(title == null)
 			title = StringAccessor.getString("Utils.error");
-		new DialogWithDetails(w, title, message, msg.toString()).setVisible(true);
+		new DialogWithDetails(window, title, message, msg.toString()).setVisible(true);
 	}
 
 	public static int showYesNoDialog(Component c, String message) {
@@ -183,41 +168,19 @@ public class Utils {
 				null, yesNo, yesNo[0]);
 	}
 
-	public static void doInWaitingState(Runnable runnable) {
-        try {
-            CALCubeTimer.setWaiting(true);
-            runnable.run();
+	public static boolean notEmpty(String string) {
+		return string != null && !string.trim().isEmpty();
+	}
 
-        } finally {
-            CALCubeTimer.setWaiting(false);
-        }
-    }
-
-	/**
-     * @param file file to be locked. Lock is not released after method execution
-     * @param fileConsumer
-     * @return true, if file was processed. false, if file locked by another task
-     */
-    public static boolean doWithLockedFile(@NotNull File file,
-										   @NotNull Consumer<RandomAccessFile> fileConsumer) {
-        RandomAccessFile t;
-		try {
-			t = new RandomAccessFile(file, "rw");
-		} catch (FileNotFoundException e) {
-			throw Throwables.propagate(e);
+	public static <T> T getByCircularIndex(int n, List<T> list, T defaultValue) {
+		if (list == null || list.isEmpty()) {
+			return defaultValue;
 		}
+		return getByCircularIndex(n, list);
+	}
 
-		try (FileLock fileLock = t.getChannel().tryLock()) {
-			if (fileLock != null) {
-				LOG.debug("lock file " + file);
-				fileConsumer.accept(t);
-                return true;
-            }
-            LOG.warn("cannot lock file " + file);
-            return false;
-
-        } catch (IOException e) {
-            throw Throwables.propagate(e);
-        }
-    }
+	public static <T> T getByCircularIndex(int n, List<T> list) {
+		int size = list.size();
+		return list.get(((n % size) + size) % size);
+	}
 }

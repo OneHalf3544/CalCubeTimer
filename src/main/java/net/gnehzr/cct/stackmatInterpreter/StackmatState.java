@@ -1,18 +1,19 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.misc.Utils;
+import net.gnehzr.cct.statistics.SolveTime;
 
 import java.time.Duration;
 import java.util.List;
 
 public class StackmatState extends TimerState {
+
 	private Boolean rightHand = false;
 	private Boolean leftHand = false;
 	private boolean running = false;
 	private boolean reset = true;
-	private int minutes = 0;
-	private int seconds = 0;
-	private int hundredths = 0;
 	private boolean isValid = false;
 	private boolean greenLight = false;
 
@@ -26,74 +27,77 @@ public class StackmatState extends TimerState {
 		invertedHun = hundredths;
 	}
 
-	public static boolean isInvertedMinutes() {
-		return invertedMin;
-	}
-	public static boolean isInvertedSeconds() {
-		return invertedSec;
-	}
-	public static boolean isInvertedHundredths() {
-		return invertedHun;
-	}
-	
-	public StackmatState() {
-    }
-
 	public StackmatState(StackmatState previous, List<Integer> periodData) {
+		super(getCurrentTime(periodData, previous));
+
 		if (periodData.size() == 89) { //all data present
 			isValid = true;
-			Duration value = parseTime(periodData);
-			setTime(value);
-			running = previous == null || this.compareTo(previous) > 0 && !value.isZero();
-			reset = value.isZero();
-		} else if (previous != null) { //if corrupt and previous not null, make time equal to previous
-			this.rightHand = previous.rightHand;
-			this.leftHand = previous.leftHand;
-			this.running = previous.running;
-			this.reset = previous.reset;
-			this.minutes = previous.minutes;
-			this.seconds = previous.seconds;
-			this.hundredths = previous.hundredths;
-			this.isValid = previous.isValid;
-			this.greenLight = previous.greenLight;
-			setTime(previous.getTime());
+			parseHeader(periodData);
+			reset = getTime().isZero();
+			running = previous == null || this.compareTo(previous) > 0 && !reset;
+		} else {
+			if (previous != null) { //if corrupt and previous not null, make time equal to previous
+				this.rightHand = previous.rightHand;
+				this.leftHand = previous.leftHand;
+				this.running = previous.running;
+				this.reset = previous.reset;
+				this.isValid = previous.isValid;
+				this.greenLight = previous.greenLight;
+			}
 		}
 	}
 
-	private Duration parseTime(List<Integer> periodData){
-		parseHeader(periodData);
-		minutes = parseDigit(periodData, 1, invertedMin);
-		seconds = parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec);
-		hundredths = parseDigit(periodData, 4, invertedHun) * 10 + parseDigit(periodData, 5, invertedHun);
+	private static Duration getCurrentTime(List<Integer> periodData, StackmatState previous) {
+		if (periodData.size() == 89) { //all data present
+			return parseTime(periodData);
+
+		} else {
+		 	//if corrupt and previous not null, make time equal to previous
+			return previous != null ? previous.getTime() : Duration.ZERO;
+		}
+	}
+
+	private static Duration parseTime(List<Integer> periodData){
 		return Duration
-                .ofMinutes(minutes)
-                .plus(Duration.ofSeconds(seconds))
-                .plus(Duration.ofMillis(hundredths * 10));
+                .ofMinutes(parseDigit(periodData, 1, invertedMin))
+                .plus(Duration.ofSeconds(parseDigit(periodData, 2, invertedSec) * 10 + parseDigit(periodData, 3, invertedSec)))
+                .plus(Duration.ofMillis((parseDigit(periodData, 4, invertedHun) * 10 + parseDigit(periodData, 5, invertedHun)) * 10));
 	}
 
 	private void parseHeader(List<Integer> periodData){
 		int temp = 0;
-		for(int i = 1; i <= 5; i++) temp += periodData.get(i) << (5 - i);
+		for(int i = 1; i <= 5; i++) {
+			temp += periodData.get(i) << (5 - i);
+		}
 
-		leftHand = temp == 6;
-		rightHand = temp == 9;
-		if(temp == 24 || temp == 16) rightHand = leftHand = true;
+		leftHand = (temp == 6);
+		rightHand = (temp == 9);
+
+		if(temp == 24 || temp == 16) {
+			leftHand = true;
+			rightHand = true;
+		}
 		greenLight = temp == 16;
 	}
 
-	private int parseDigit(List<Integer> periodData, int pos, boolean invert){
+	private static int parseDigit(List<Integer> periodData, int position, boolean invert){
 		int temp = 0;
 		for(int i = 1; i <= 4; i++) {
-			temp += periodData.get(pos * 10 + i) << (i - 1);
+			temp += periodData.get(position * 10 + i) << (i - 1);
 		}
-
 		return invert ? 15 - temp : temp;
 	}
+
 	public boolean oneHand() {
-		return rightHand^leftHand;
+		return rightHand ^ leftHand;
 	}
+
 	public boolean bothHands() {
 		return rightHand && leftHand;
+	}
+
+	public boolean noHands() {
+		return !bothHands();
 	}
 	//Added just for completeness
 	public boolean isRedLight() {
@@ -125,7 +129,18 @@ public class StackmatState extends TimerState {
 		return greenLight;
 	}
 
+	@Override
+	public boolean isInspecting() {
+		return false;
+	}
+
+	@Override
+	public String toString(Configuration configuration) {
+		return Utils.formatTime(new SolveTime(getTime()), configuration.useClockFormat());
+	}
+
+	@Override
 	public String toString() {
-		return Utils.formatTime(getTime().toMillis() / 1000.0);
+		return Utils.formatTime(new SolveTime(getTime()), true);
 	}
 }

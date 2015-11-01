@@ -1,43 +1,27 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import javax.swing.JCheckBoxMenuItem;
-
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
-import net.gnehzr.cct.statistics.StatisticsUpdateListener;
+import net.gnehzr.cct.statistics.SessionsList;
 
-public class DynamicCheckBoxMenuItem extends JCheckBoxMenuItem implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
-	private DynamicString s = null;
+import javax.swing.*;
 
-	public DynamicCheckBoxMenuItem(){
-		Configuration.addConfigurationChangeListener(this);
+public class DynamicCheckBoxMenuItem extends JCheckBoxMenuItem implements DynamicStringSettable {
+
+	private DynamicString currentDynamicString = null;
+
+	public DynamicCheckBoxMenuItem(Configuration configuration){
 	}
 
-	public DynamicCheckBoxMenuItem(DynamicString s){
-		setDynamicString(s);
+	@Override
+	public void setDynamicString(DynamicString newDynamicString){
+		this.currentDynamicString = newDynamicString;
 	}
 
-	public void setDynamicString(DynamicString s){
-		if(this.s != null) {
-			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
-		}
-		this.s = s;
-		if(this.s != null) {
-			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
-			update();
+	@Override
+	public void updateTextFromDynamicString(Configuration configuration, SessionsList sessionsList) {
+		if(currentDynamicString != null) {
+			setText(currentDynamicString.toString(sessionsList));
 		}
 	}
 
-	public void update(){
-		if(s != null) setText(s.toString());
-	}
-
-	public void configurationChanged(){
-		update();
-	}
-
-	public void destroy(){
-		setDynamicString(null);
-		Configuration.removeConfigurationChangeListener(this);
-	}
 }

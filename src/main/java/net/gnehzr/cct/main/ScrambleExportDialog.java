@@ -6,40 +6,60 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.CCTFileChooser;
 import net.gnehzr.cct.misc.JSpinnerWithText;
 import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.*;
-import org.apache.log4j.Logger;
+import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.statistics.RollingAverageOf;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-public class ScrambleExportDialog extends JDialog implements ActionListener {
+public class ScrambleExportDialog extends JDialog {
 
-	private static final Logger LOG = Logger.getLogger(ScrambleExportDialog.class);
+	private static final Logger LOG = LogManager.getLogger(ScrambleExportDialog.class);
+
+	private final ScramblePluginManager scramblePluginManager;
+	private final Configuration configuration;
 
 	private JTextField urlField;
-	private JButton browse;
-	private ScrambleChooserComboBox scrambleChooser;
-	private JSpinnerWithText scrambleLength, numberOfScrambles;
-	private JButton htmlExportButton, exportButton, cancelButton;
-	public ScrambleExportDialog(JFrame owner, ScrambleVariation selected) {
-		super(owner, StringAccessor.getString("ScrambleExportDialog.exportscrambles"), true); 
-		urlField = new JTextField(40);
-		urlField.setToolTipText(StringAccessor.getString("ScrambleExportDialog.choosefile")); 
-		browse = new JButton(StringAccessor.getString("ScrambleExportDialog.browse")); 
-		browse.addActionListener(this);
+	private PuzzleTypeChooserComboBox scrambleChooser;
+	private JSpinnerWithText scrambleLengthJSpinner;
+	private JSpinnerWithText numberOfScramblesJSpinner;
 
-		scrambleChooser = new ScrambleChooserComboBox(false, false);
-		scrambleChooser.setSelectedItem(selected);
-		scrambleChooser.addActionListener(this);
+	public ScrambleExportDialog(JFrame owner, PuzzleType selectedPuzzleType,
+								ScramblePluginManager scramblePluginManager,
+								Configuration configuration) {
+		super(owner, StringAccessor.getString("ScrambleExportDialog.exportscrambles"), true);
+		this.scramblePluginManager = scramblePluginManager;
+		this.configuration = configuration;
+		urlField = new JTextField(40);
+		urlField.setToolTipText(StringAccessor.getString("ScrambleExportDialog.choosefile"));
+
+		JButton browseButton = new JButton(StringAccessor.getString("ScrambleExportDialog.browse"));
+		browseButton.addActionListener(e -> {
+			CCTFileChooser fc = new CCTFileChooser(configuration);
+			if (fc.showDialog(ScrambleExportDialog.this, StringAccessor.getString("ScrambleExportDialog.save")) == CCTFileChooser.APPROVE_OPTION) {
+				File selectedFile = fc.getSelectedFile();
+				urlField.setText(selectedFile.toURI().toString());
+			}
+		});
+
+		scrambleChooser = new PuzzleTypeChooserComboBox(false, this.scramblePluginManager, this.configuration);
+		scrambleChooser.setSelectedItem(selectedPuzzleType);
+		scrambleChooser.addActionListener(e -> {
+            //if(scrambleLengthJSpinner != null) {
+                PuzzleType puzzleType = (PuzzleType) scrambleChooser.getSelectedItem();
+                scrambleLengthJSpinner.setValue(scramblePluginManager.getScrambleVariation(puzzleType).getLength());
+                numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType).getRASize(RollingAverageOf.OF_5));
+            //}
+        });
 
 		JPanel subPanel = new JPanel();
 		subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
@@ -47,22 +67,50 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 		JPanel sideBySide = new JPanel();
 		sideBySide.setLayout(new BoxLayout(sideBySide, BoxLayout.X_AXIS));
 		sideBySide.add(urlField);
-		sideBySide.add(browse);
+		sideBySide.add(browseButton);
 		
 		subPanel.add(sideBySide);
 		subPanel.add(scrambleChooser);
 
-		scrambleLength = new JSpinnerWithText(selected.getLength(), 1, StringAccessor.getString("ScrambleExportDialog.lengthscrambles")); 
-		numberOfScrambles = new JSpinnerWithText(ScramblePlugin.getCustomizationFromVariation(selected).getRASize(0), 1, StringAccessor.getString("ScrambleExportDialog.numberscrambles")); 
-		subPanel.add(scrambleLength);
-		subPanel.add(numberOfScrambles);
-		
-		exportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.export")); 
-		exportButton.addActionListener(this);
-		htmlExportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.htmlexport")); 
-		htmlExportButton.addActionListener(this);
-		cancelButton = new JButton(StringAccessor.getString("ScrambleExportDialog.cancel")); 
-		cancelButton.addActionListener(this);
+		scrambleLengthJSpinner = new JSpinnerWithText(
+				scramblePluginManager.getScrambleVariation(selectedPuzzleType).getLength(),
+				1,
+				StringAccessor.getString("ScrambleExportDialog.lengthscrambles"));
+
+		numberOfScramblesJSpinner = new JSpinnerWithText(
+				selectedPuzzleType.getRASize(RollingAverageOf.OF_5),
+				1,
+				StringAccessor.getString("ScrambleExportDialog.numberscrambles"));
+
+		subPanel.add(scrambleLengthJSpinner);
+		subPanel.add(numberOfScramblesJSpinner);
+
+		JButton exportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.export"));
+		exportButton.addActionListener(e -> {
+			URL file;
+			try {
+				file = new URI(urlField.getText()).toURL();
+			} catch (Exception e1) {
+				Utils.showErrorDialog(ScrambleExportDialog.this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
+				return;
+			}
+			if (generateAndExportScrambles(file, getNumberOfScramblesJSpinner(), selectedPuzzleType))
+				setVisible(false);
+		});
+		JButton htmlExportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.htmlexport"));
+		htmlExportButton.addActionListener(e -> {
+			URL file;
+			try {
+				file = new URI(urlField.getText()).toURL();
+			} catch (Exception e1) {
+				Utils.showErrorDialog(ScrambleExportDialog.this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
+				return;
+			}
+			if (exportScramblesToHTML(file, getNumberOfScramblesJSpinner(), selectedPuzzleType))
+				setVisible(false);
+		});
+		JButton cancelButton = new JButton(StringAccessor.getString("ScrambleExportDialog.cancel"));
+		cancelButton.addActionListener(e -> setVisible(false));
 		sideBySide = new JPanel();
 		sideBySide.add(exportButton);
 		sideBySide.add(htmlExportButton);
@@ -76,73 +124,27 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 		setVisible(true);
 	}
 
-	public void actionPerformed(ActionEvent e) {
-		Object source = e.getSource();
-		if(source == browse) {
-			CCTFileChooser fc = new CCTFileChooser(); 
-			if(fc.showDialog(this, StringAccessor.getString("ScrambleExportDialog.save")) == CCTFileChooser.APPROVE_OPTION) { 
-				File selectedFile = fc.getSelectedFile();
-				urlField.setText(selectedFile.toURI().toString());
-			}
-		} else if(source == scrambleChooser && scrambleLength != null) {
-			ScrambleVariation curr = (ScrambleVariation) scrambleChooser.getSelectedItem();
-			scrambleLength.setValue(curr.getLength());
-			numberOfScrambles.setValue(ScramblePlugin.getCustomizationFromVariation(curr).getRASize(0));
-		} else if(source == htmlExportButton) {
-			URL file = null;
-			try {
-				file = new URI(urlField.getText()).toURL();
-			} catch (Exception e1) {
-				Utils.showErrorDialog(this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
-				return;
-			}
-			if(exportScramblesToHTML(file, getNumberOfScrambles(), getVariation()))
-				setVisible(false);
-		} else if(source == exportButton) {
-			URL file = null;
-			try {
-				file = new URI(urlField.getText()).toURL();
-			} catch (Exception e1) {
-				Utils.showErrorDialog(this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
-				return;
-			}
-			if(exportScrambles(file, getNumberOfScrambles(), getVariation()))
-				setVisible(false);
-		} else if(source == cancelButton) {
-			setVisible(false);
-		}
-	}
-	
-	private int getNumberOfScrambles() {
-		return numberOfScrambles.getSpinnerValue();
+	private int getNumberOfScramblesJSpinner() {
+		return numberOfScramblesJSpinner.getSpinnerValue();
 	}
 
-	private ScrambleVariation getVariation() {
-		ScrambleVariation var = (ScrambleVariation) scrambleChooser.getSelectedItem();
-		if(scrambleLength != null)
-			var.setLength(scrambleLength.getSpinnerValue());
-		return var;
-	}
+	private boolean generateAndExportScrambles(URL outputFile, int numberOfScrambles, PuzzleType puzzleType) {
+		try (PrintWriter fileWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(outputFile.toURI())), "UTF-8"))) {
 
-	private boolean exportScrambles(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
-		try {
-			PrintWriter out = new PrintWriter(new FileWriter(new File(outputFile.toURI())));
-			ScrambleList generatedScrambles = new ScrambleList();
-			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(scrambleVariation, null));
-			for(int ch = 0; ch < numberOfScrambles; ch++, generatedScrambles.getNext()) {
-				out.println(generatedScrambles.getCurrent().getScramble());
+			for(int ch = 0; ch < numberOfScrambles; ch++) {
+				fileWriter.println(puzzleType.generateScramble(scramblePluginManager.getScrambleVariation(puzzleType)).getScramble());
 			}
-			out.close();
 			Utils.showConfirmDialog(this, StringAccessor.getString("ScrambleExportDialog.successmessage") + "\n" + outputFile.getPath());
+			return true;
+
 		} catch(Exception e) {
 			Utils.showErrorDialog(this, e);
 			return false;
 		}
-		return true;
 	}
 	
-	private boolean exportScramblesToHTML(URL outputFile, int numberOfScrambles, ScrambleVariation scrambleVariation) {
-		File htmlFile = null;
+	private boolean exportScramblesToHTML(URL outputFile, int numberOfScrambles, PuzzleType puzzleType) {
+		File htmlFile;
 		try {
 			htmlFile = new File(outputFile.toURI());
 		} catch (URISyntaxException e1) {
@@ -161,31 +163,30 @@ public class ScrambleExportDialog extends JDialog implements ActionListener {
 			return false;
 		}
 
-		ScramblePlugin sp = scrambleVariation.getScramblePlugin();
+		try (PrintWriter fileWriter = new PrintWriter(new FileWriter(new File(outputFile.toURI())))) {
 
-		try {
-			PrintWriter out = new PrintWriter(new FileWriter(new File(outputFile.toURI())));
-			out.println("<html><head><title>Exported Scrambles</title></head><body><table>");
-			ScrambleList generatedScrambles = new ScrambleList();
-			generatedScrambles.setScrambleCustomization(new ScrambleCustomization(scrambleVariation, null));
-
-			for(int ch = 0; ch < numberOfScrambles; ch++, generatedScrambles.getNext()) {
-				Scramble s = scrambleVariation.generateScramble(generatedScrambles.getCurrent().getScramble());
-				String str = s.toString();
-				BufferedImage image = sp.getScrambleImage(s, Configuration.getInt(VariableKey.POPUP_GAP, false).intValue(), sp.getDefaultUnitSize(), sp.getColorScheme(false));
+			Integer popupGap = configuration.getInt(VariableKey.POPUP_GAP);
+			fileWriter.println("<html><head><title>Exported Scrambles</title></head><body><table>");
+			for(int ch = 0; ch < numberOfScrambles; ch++) {
+				ScrambleString scramble = puzzleType.generateScramble(scramblePluginManager.getScrambleVariation(puzzleType));
+				BufferedImage image = scramblePluginManager.getScrambleImage(scramble, popupGap,
+						scramble.getScramblePlugin().getDefaultUnitSize(),
+						scramblePluginManager.getColorScheme(scramble.getScramblePlugin(), false, configuration));
 
 				File file = new File(imageDir, "scramble" + ch + ".png");
 				ImageIO.write(image, "png", file);
-				out.println("<tr><td>" + (ch+1) + "</td><td width='100%'>" + str + "</td><td><img src='" + imageDir.getName() + File.separator + file.getName() + "'></td></tr>");
+				fileWriter.println("<tr><td>" + (ch + 1) + "</td><td width='100%'>" + scramble.toString()
+						+ "</td><td><img src='" + imageDir.getName() + File.separator + file.getName() + "'></td></tr>");
 			}
-			out.println("</table></body></html>");
-			out.close();
+			fileWriter.println("</table></body></html>");
+
 			Utils.showConfirmDialog(this, StringAccessor.getString("ScrambleExportDialog.successmessage") + "\n" + outputFile.getPath());
+			return true;
+
 		} catch(Exception e) {
 			LOG.info("unexpected exception", e);
 			Utils.showErrorDialog(this, e);
 			return false;
 		}
-		return true;
 	}
 }

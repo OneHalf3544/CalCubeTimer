@@ -1,7 +1,7 @@
 package net.gnehzr.cct.i18n;
 
-import net.gnehzr.cct.configuration.Configuration;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.io.File;
@@ -10,12 +10,14 @@ import java.util.Locale;
 
 public class LocaleAndIcon {
 
-	private static final Logger LOG = Logger.getLogger(LocaleAndIcon.class);
+	private static final Logger LOG = LogManager.getLogger(LocaleAndIcon.class);
 
+	private final File flagFolder;
 	private Locale l;
 	private String language;
 	private ImageIcon flag;
-	public LocaleAndIcon(Locale l, String language) {
+	public LocaleAndIcon(File flagFolder, Locale l, String language) {
+		this.flagFolder = flagFolder;
 		this.l = l;
 		if(language != null)
 			this.language = language;
@@ -28,7 +30,7 @@ public class LocaleAndIcon {
 	public ImageIcon getFlag() {
 		if(flag == null) {
 			try {
-				flag = new ImageIcon(new File(Configuration.flagsFolder, l.getCountry() + ".png").toURI().toURL()); 
+				flag = new ImageIcon(new File(flagFolder, l.getCountry() + ".png").toURI().toURL());
 			} catch (MalformedURLException e) {
 				LOG.info("unexpected exception", e);
 				flag = new ImageIcon();

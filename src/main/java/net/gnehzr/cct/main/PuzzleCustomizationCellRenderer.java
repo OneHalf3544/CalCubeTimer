@@ -1,42 +1,41 @@
 package net.gnehzr.cct.main;
 
-import java.awt.Component;
+import net.gnehzr.cct.scrambles.PuzzleType;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleSettings;
+import org.pushingpixels.substance.api.renderers.SubstanceDefaultListCellRenderer;
 
-import javax.swing.Icon;
-import javax.swing.JList;
-
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScrambleVariation;
-
-import org.jvnet.substance.api.renderers.SubstanceDefaultListCellRenderer;
+import javax.swing.*;
+import java.awt.*;
 
 public class PuzzleCustomizationCellRenderer extends SubstanceDefaultListCellRenderer {
-	private boolean icons;
-	public PuzzleCustomizationCellRenderer(boolean i) {
-		icons = i;
+
+	private final boolean icons;
+	private final ScramblePluginManager scramblePluginManager;
+
+	public PuzzleCustomizationCellRenderer(boolean i, ScramblePluginManager scramblePluginManager) {
+		this.icons = i;
+		this.scramblePluginManager = scramblePluginManager;
 	}
+
+	@Override
 	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 		String val;
 		Icon i = null;
 		if(value != null) {
-			ScrambleCustomization customization = null;
-			ScrambleVariation sv = null;
-			if(value instanceof ScrambleCustomization) {
-				customization = (ScrambleCustomization) value;
-				sv = customization.getScrambleVariation();
-			} else if(value instanceof ScrambleVariation) {
-				sv = (ScrambleVariation) value;
-			} else {
-				throw new NullPointerException("Value must be an instance of ScrambleCustomization or ScrambleVariation!"); 
+			PuzzleType puzzleType = (PuzzleType) value;
+			ScrambleSettings scrambleSettings = scramblePluginManager.getScrambleVariation(puzzleType);
+			if (icons) {
+				i = scrambleSettings.getImage();
 			}
-			if(icons)
-				i = sv.getImage();
-			String bolded = sv.getVariation();
-			if(bolded.isEmpty())
-				bolded = sv.getScramblePlugin().getPuzzleName();
+			String bolded = puzzleType.getVariationName();
+			if(bolded.isEmpty()) {
+				bolded = puzzleType.getScramblePlugin().getPuzzleName();
+			}
 			val = "<html><b>" + bolded + "</b>";  
-			if(customization != null && customization.getCustomization() != null)
-				val += ":" + customization.getCustomization(); 
+			if (puzzleType.getCustomization() != null) {
+				val += ":" + puzzleType.getCustomization();
+			}
 			val += "</html>"; 
 		} else
 			val = ""; 

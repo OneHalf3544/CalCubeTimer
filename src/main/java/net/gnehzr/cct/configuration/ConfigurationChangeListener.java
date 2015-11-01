@@ -1,5 +1,9 @@
 package net.gnehzr.cct.configuration;
 
+import net.gnehzr.cct.statistics.Profile;
+
+@FunctionalInterface
 public interface ConfigurationChangeListener {
-	public void configurationChanged();
+
+	void configurationChanged(Profile currentProfile);
 }

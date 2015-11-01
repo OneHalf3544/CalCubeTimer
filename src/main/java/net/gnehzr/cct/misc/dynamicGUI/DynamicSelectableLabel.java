@@ -1,15 +1,14 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import javax.swing.JEditorPane;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.statistics.SessionsList;
+import org.pushingpixels.lafwidget.LafWidget;
+
+import javax.swing.*;
 import javax.swing.border.Border;
 
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
-import net.gnehzr.cct.statistics.StatisticsUpdateListener;
+public class DynamicSelectableLabel extends JEditorPane implements DynamicStringSettable {
 
-import org.jvnet.lafwidget.LafWidget;
-
-public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
 	private DynamicString s = null;
 
 	public DynamicSelectableLabel(){
@@ -18,41 +17,24 @@ public class DynamicSelectableLabel extends JEditorPane implements StatisticsUpd
 		setEditable(false);
 		setBorder(null);
 		setOpaque(false);
-		Configuration.addConfigurationChangeListener(this);
 	}
 	
+	@Override
 	public void updateUI() {
 		Border b = getBorder();
 		super.updateUI();
 		setBorder(b);
 	}
 
-	public DynamicSelectableLabel(DynamicString s){
-		this();
-		setDynamicString(s);
-	}
-
+	@Override
 	public void setDynamicString(DynamicString s){
-		if(this.s != null) {
-			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
-		}
 		this.s = s;
-		if(this.s != null) {
-			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
-			update();
+	}
+
+	@Override
+	public void updateTextFromDynamicString(Configuration configuration, SessionsList sessionsList) {
+		if(s != null) {
+			setText(s.toString(sessionsList));
 		}
-	}
-
-	public void update(){
-		if(s != null) setText(s.toString());
-	}
-
-	public void configurationChanged(){
-		update();
-	}
-
-	public void destroy(){
-		setDynamicString(null);
-		Configuration.removeConfigurationChangeListener(this);
 	}
 }

@@ -1,47 +1,38 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import javax.swing.JCheckBox;
-
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
-import net.gnehzr.cct.statistics.StatisticsUpdateListener;
+import net.gnehzr.cct.statistics.SessionsList;
+import org.jetbrains.annotations.NotNull;
 
-public class DynamicCheckBox extends JCheckBox implements StatisticsUpdateListener, DynamicStringSettable, ConfigurationChangeListener, DynamicDestroyable{
+import javax.swing.*;
+
+public class DynamicCheckBox extends JCheckBox implements DynamicStringSettable {
+
 	private DynamicString s = null;
 
 	public DynamicCheckBox(){
-		Configuration.addConfigurationChangeListener(this);
 	}
 
-	public DynamicCheckBox(DynamicString s){
-		setDynamicString(s);
+	public DynamicCheckBox(@NotNull DynamicString s){
+		this();
+		this.s = s;
+		setText(s.toString(null));
 	}
 
 	public DynamicString getDynamicString() {
 		return s;
 	}
 	
+	@Override
 	public void setDynamicString(DynamicString s){
-		if(this.s != null) {
-			this.s.getStatisticsModel().removeStatisticsUpdateListener(this);
-		}
 		this.s = s;
-		if(this.s != null) {
-			this.s.getStatisticsModel().addStatisticsUpdateListener(this);
-			update();
+	}
+
+	@Override
+	public void updateTextFromDynamicString(Configuration configuration, SessionsList sessionsList) {
+		if(s != null) {
+			setText(s.toString(sessionsList));
 		}
 	}
 
-	public void update(){
-		if(s != null) setText(s.toString());
-	}
-
-	public void configurationChanged(){
-		update();
-	}
-
-	public void destroy(){
-		setDynamicString(null);
-		Configuration.removeConfigurationChangeListener(this);
-	}
 }

@@ -33,12 +33,12 @@
 							<panel layout="border" border="Session Statistics">
 								<center>
 									<panel layout="box" orientation="page">
-										<label>Recent Time: $$session.time(recent)$$</label>
-										<label>Previous Time: $$session.time(last)$$</label>
-										<label>Progress: $$session.time(progress)$$ seconds</label>
-										<panel preferredsize="10x15"></panel>
-										<label>Cubes Solved: $$session.solvecount(solved)$$</label>
-										<label>Session Average: $$session.average$$ seconds</label>
+										<label>Recent Time: stats[session.time(recent)]</label>
+										<label>Previous Time: stats[session.time(last)]</label>
+										<label>Progress: stats[session.time(progress)] seconds</label>
+										<panel preferredsize="10x15"/>
+										<label>Cubes Solved: stats[session.solvecount(solved)]</label>
+										<label>Session Average: stats[session.average] seconds</label>
 									</panel>
 								</center>
 								<line_end>
@@ -51,19 +51,19 @@
 							</panel>
 							<panel layout="border" border="Rolling Average">
 								<panel layout="box" orientation="page">
-									<label>Current Average: $$ra(0, recent)$$</label>
-									<label>Progress: $$ra(0).progress$$</label>
-									<panel preferredsize="10x15"></panel>
-									<label>Fastest Time: $$ra(0, recent).time(best)$$</label>
-									<label>Slowest Time: $$ra(0, recent).time(worst)$$</label>
-									<label>Standard Deviation: $$ra(0, recent).sd$$</label>
+									<label>Current Average: stats[ra(0, recent)]</label>
+									<label>Progress: stats[ra(0).progress]</label>
+									<panel preferredsize="10x15"/>
+									<label>Fastest Time: stats[ra(0, recent).time(best)]</label>
+									<label>Slowest Time: stats[ra(0, recent).time(worst)]</label>
+									<label>Standard Deviation: stats[ra(0, recent).sd]</label>
 								</panel>
 							</panel>
 						</panel>
 						<panel border="Best Average" layout="box" orientation="page">
 							<button action="bestAverage0" alignmentX=".99">Details</button>
 							<selectablelabel border=";000000" alignmentX=".99">
-								<![CDATA[<html>Average: $$ra(0, best)$$<br/>Individual Times: $$ra(0, best).list$$</html>]]>
+								<![CDATA[<html>Average: stats[ra(0, best)]<br/>Individual Times: stats[ra(0, best).list]</html>]]>
 							</selectablelabel>
 						</panel>
 					</panel>
@@ -100,9 +100,6 @@
 				<checkboxmenuitem action="toggleSpacebarStartsTimer">Only spacebar starts timer</checkboxmenuitem>
 				<checkboxmenuitem action="toggleFullscreenTiming">Fullscreen while timing</checkboxmenuitem>
 			</menu>
-		</menu>
-		<menu>Network Timer
-			<menuitem action="connectToServer">Connect to server</menuitem>
 		</menu>
 		<menu mnemonic="h">Help
 			<menuitem action="showAbout">About</menuitem>

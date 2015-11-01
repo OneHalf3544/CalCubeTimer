@@ -1,47 +1,51 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import java.awt.Component;
-import java.util.ArrayList;
-
-import javax.swing.JTabbedPane;
-
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
-import net.gnehzr.cct.main.CALCubeTimer;
-import net.gnehzr.cct.statistics.StatisticsUpdateListener;
+import net.gnehzr.cct.statistics.SessionsList;
 
-public class DynamicTabbedPane extends JTabbedPane implements StatisticsUpdateListener, ConfigurationChangeListener, DynamicDestroyable {
-	private ArrayList<DynamicString> tabNames = new ArrayList<DynamicString>();
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
-	public DynamicTabbedPane() {
-		Configuration.addConfigurationChangeListener(this);
-		CALCubeTimer.statsModel.addStatisticsUpdateListener(this);
+public class DynamicTabbedPane extends JTabbedPane implements DynamicStringSettable {
+
+	private final Configuration configuration;
+
+	private List<DynamicString> tabNames = new ArrayList<>();
+	private final XMLGuiMessages xmlGuiMessages;
+	private final SessionsList sessionList;
+
+	public DynamicTabbedPane(Configuration configuration, XMLGuiMessages xmlGuiMessages, SessionsList sessionList) {
+		this.configuration = configuration;
+		this.xmlGuiMessages = xmlGuiMessages;
+		this.sessionList = sessionList;
 	}
 	
+	@Override
 	public void addTab(String title, Component component) {
-		DynamicString s = new DynamicString(title, CALCubeTimer.statsModel, XMLGuiMessages.XMLGUI_ACCESSOR);
+		DynamicString s = new DynamicString(title, xmlGuiMessages.XMLGUI_ACCESSOR, configuration);
 		tabNames.add(s);
-		super.addTab(s.toString(), component);
+		super.addTab(s.toString(sessionList), component);
 	}
 	
+	@Override
 	public void removeTabAt(int index) {
 		tabNames.remove(index);
 		super.removeTabAt(index);
 	}
-	
-	public void update() {
-		for(int c = 0; c < tabNames.size(); c++) {
-			setTitleAt(c, tabNames.get(c).toString());
+
+	@Override
+	public void setDynamicString(DynamicString s) {
+		// todo
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void updateTextFromDynamicString(Configuration configuration, SessionsList sessionsList) {
+		for(int tabIndex = 0; tabIndex < tabNames.size(); tabIndex++) {
+			setTitleAt(tabIndex, tabNames.get(tabIndex).toString(sessionsList));
 		}
-	}
-
-	public void configurationChanged() {
-		update();
-	}
-
-	public void destroy(){
-		Configuration.removeConfigurationChangeListener(this);
-		CALCubeTimer.statsModel.removeStatisticsUpdateListener(this);
 	}
 }

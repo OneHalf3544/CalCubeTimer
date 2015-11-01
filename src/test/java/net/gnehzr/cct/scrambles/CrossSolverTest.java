@@ -2,14 +2,15 @@ package net.gnehzr.cct.scrambles;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
 public class CrossSolverTest {
 
-    private static final Logger LOG = Logger.getLogger(CrossSolverTest.class);
+    private static final Logger LOG = LogManager.getLogger(CrossSolverTest.class);
 
     @Test
     public void testSolveCross() throws Exception {

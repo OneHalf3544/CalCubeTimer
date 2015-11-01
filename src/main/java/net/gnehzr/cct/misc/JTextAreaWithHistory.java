@@ -1,20 +1,18 @@
 package net.gnehzr.cct.misc;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import org.pushingpixels.lafwidget.LafWidget;
 
-import javax.swing.AbstractAction;
-import javax.swing.JTextArea;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.text.Document;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
-import org.jvnet.lafwidget.LafWidget;
 
 public class JTextAreaWithHistory extends JTextArea {
 	public JTextAreaWithHistory() {

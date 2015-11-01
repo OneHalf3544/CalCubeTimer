@@ -1,81 +1,171 @@
 package net.gnehzr.cct.statistics;
 
-import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.main.CALCubeTimer;
-import net.gnehzr.cct.scrambles.ScrambleCustomization;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
+import net.gnehzr.cct.dao.ProfileEntity;
+import net.gnehzr.cct.dao.SessionEntity;
+import net.gnehzr.cct.dao.SolutionDao;
+import net.gnehzr.cct.scrambles.PuzzleType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jooq.lambda.Seq;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-public class Session extends Commentable implements Comparable<Session> {
+public class Session implements Commentable, Comparable<Session> {
 
-	public static final Session OLDEST_SESSION = new Session(new Date(0));
+	private static final Logger LOG = LogManager.getLogger(Session.class);
 
-	private Statistics s;
-
-	private PuzzleStatistics puzzStats;
+	private Long sessionId;
+	private SessionSolutionsStatistics sessionSolutionsStatistics;
+	private final LocalDateTime dateStarted;
+	private final PuzzleType puzzleType;
+	private final List<Solution> solutions = new ArrayList<>();
+	private final SolutionDao solutionDao;
+	private String comment = "";
 
 	//adds itself to the puzzlestatistics to which it belongs
-	public Session(Date d) {
-		s = new Statistics(d);
+	public Session(@NotNull LocalDateTime startSessionTime,
+				   @NotNull PuzzleType puzzleType, @NotNull SolutionDao solutionDao) {
+		this.dateStarted = startSessionTime;
+		this.puzzleType = puzzleType;
+		this.solutionDao = solutionDao;
+		sessionSolutionsStatistics = new SessionSolutionsStatistics(this);
 	}
 
-	public Statistics getStatistics() {
-		return s;
+	@Override
+	public void setComment(String comment) {
+		this.comment = comment;
 	}
 
-	private ScrambleCustomization sc;
-
-	//this should only be called by PuzzleStatistics
-	public void setPuzzleStatistics(PuzzleStatistics puzzStats) {
-		sc = ScramblePlugin.getCustomizationFromString(puzzStats.getCustomization());
-		s.setCustomization(sc);
-		this.puzzStats = puzzStats;
+	@Override
+	public String getComment() {
+		return comment == null ? "" : comment;
 	}
 
-	public ScrambleCustomization getCustomization() {
-		return sc;
+	public LocalDateTime getStartTime() {
+		return dateStarted;
 	}
 
-	public PuzzleStatistics getPuzzleStatistics() {
-		return puzzStats;
+	@NotNull
+	public SessionSolutionsStatistics getStatistics() {
+		return sessionSolutionsStatistics;
 	}
 
+	public Long getSessionId() {
+		return sessionId;
+	}
+
+	public void setSessionId(Long sessionId) {
+		this.sessionId = sessionId;
+	}
+
+	public PuzzleType getPuzzleType() {
+		return puzzleType;
+	}
+
+	@Override
 	public int hashCode() {
-		return s.getStartDate().hashCode();
+		return getStartTime().hashCode();
 	}
 
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Session) {
 			Session o = (Session) obj;
-			return o.s.getStartDate().equals(this.s.getStartDate());
+			return o.getStartTime().equals(this.getStartTime());
 		}
 		return false;
 	}
-	public int compareTo(Session o) {
-		return this.s.getStartDate().compareTo(o.s.getStartDate());
+
+	@Override
+	public int compareTo(@NotNull Session o) {
+		return Comparator.comparing(Session::getStartTime).compare(this, o);
 	}
 
-	public String toDateString() {
-		return Configuration.getDateFormat().format(s.getStartDate());
+	public SessionEntity toSessionEntity(Long profileId) {
+		SessionEntity sessionEntity = new SessionEntity()
+				.withPluginName(getPuzzleType().getScramblePlugin().getPuzzleName())
+				.withVariationName(getPuzzleType().getVariationName());
+		sessionEntity.setSessionId(sessionId);
+		sessionEntity.setScrambleCustomization(puzzleType.getCustomization());
+		sessionEntity.setSessionStart(getStartTime());
+		sessionEntity.setComment(comment);
+
+		ProfileEntity profile = new ProfileEntity();
+		profile.setProfileId(profileId);
+		sessionEntity.setProfile(profile);
+		sessionEntity.setSolutions(Seq
+				.iterate(0, i -> i++)
+				.limit(sessionSolutionsStatistics.getSolveCounter().getSolveCount())
+				.map(this::getSolution)
+				.map(s -> s.toEntity(sessionEntity))
+				.toList());
+		return sessionEntity;
 	}
 
+	public int getAttemptsCount() {
+		return solutions.size();
+	}
+
+	public Solution getSolution(int solutionIndex) {
+		return solutions.get(solutionIndex);
+	}
+
+	public void addSolution(Session currentSession, Solution solution, Runnable notifier) {
+		LOG.info("add solution {}", solution);
+		this.solutions.add(solution);
+		solutionDao.insertSolution(currentSession, solution);
+		// todo it's will recalculate whole statistics. Can be optimized
+		this.getStatistics().refresh(notifier);
+	}
+
+	public void setSolutions(List<Solution> solutions) {
+		LOG.trace("add solutions (size: {})", solutions.size());
+		this.solutions.clear();
+		this.solutions.addAll(solutions);
+		this.getStatistics().refresh(() -> {});
+	}
+
+	public void removeSolution(Solution solution, Runnable notifier) {
+		LOG.info("remove solution {}", solution);
+		this.solutions.remove(solution);
+		solutionDao.deleteSolution(solution, sessionId);
+		this.getStatistics().refresh(notifier);
+
+	}
+
+	@Override
 	public String toString() {
-		return toDateString();
+		return "Session{" +
+				"sessionId=" + sessionId +
+				", solutions count=" + getAttemptsCount() +
+				", dateStarted=" + dateStarted +
+				", puzzleType=" + puzzleType +
+				'}';
 	}
 
-	public void setCustomization(String customization) {
-		if(!customization.equals(puzzStats.getCustomization())) {
-			puzzStats.removeSession(this);
-			puzzStats = puzzStats.getPuzzleDatabase().getPuzzleStatistics(customization);
-			puzzStats.addSession(this);
-			sc = ScramblePlugin.getCustomizationFromString(puzzStats.getCustomization());
-			s.setCustomization(sc);
-//			s.notifyListeners(false); //If we're changing an unselected session to the current sessions customization, we won't see the global stats updates if we just do this
-			CALCubeTimer.statsModel.fireStringUpdates();
-		}
+	public RollingAverage getRollingAverage(RollingAverageOf ra, int count, int toIndex) {
+		return RollingAverage.create(ra, this, toIndex, count);
 	}
-	public void delete() {
-		puzzStats.removeSession(this);
+
+	public RollingAverage getRollingAverageForWholeSession() {
+		return new RollingAverage(Seq.seq(solutions)
+				.filter(solution -> !solution.getTime().isInfiniteTime())
+				.toList(),
+				0,
+				solutions.size(), false, null);
+	}
+
+	public List<Solution> getSolutionList() {
+		return Collections.unmodifiableList(solutions);
+	}
+
+	@NotNull
+	public Solution getLastSolution() {
+		return getSolution(getAttemptsCount() - 1);
 	}
 }

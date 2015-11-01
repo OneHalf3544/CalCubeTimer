@@ -1,65 +1,105 @@
 package net.gnehzr.cct.keyboardTiming;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.TimingListener;
+import net.gnehzr.cct.stackmatInterpreter.InspectionState;
+import net.gnehzr.cct.stackmatInterpreter.KeyboardTimerState;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-public class KeyboardHandler extends Timer {
+@Singleton
+public class KeyboardHandler {
 
-	private static final int PERIOD = 90; //measured in milliseconds
+	private static final Logger LOGGER = LogManager.getLogger(KeyboardHandler.class);
+
+	private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
+
+	private static final Duration PERIOD = Duration.ofMillis(45);
 
 	private TimingListener timingListener;
+	private final Configuration configuration;
 
-	public KeyboardHandler(TimingListener timingListener) {
-		super(PERIOD, null);
+	private boolean reset;
+	private boolean inspecting;
+
+	private Instant start;
+	private Instant current;
+	private ScheduledFuture<?> scheduledFuture;
+
+	public boolean isReset() {
+		return reset;
+	}
+	public boolean isInspecting() {
+		return inspecting;
+	}
+
+	@Inject
+	public KeyboardHandler(TimingListener timingListener, Configuration configuration) {
 		this.timingListener = timingListener;
-		reset();
+		this.configuration = configuration;
+	}
+
+	@Inject
+	void initialize() {
+		reset = true;
+		inspecting = false;
+		current = Instant.now();
 	}
 
 	public void reset() {
 		reset = true;
 		inspecting = false;
-		this.stop();
+		stop();
 	}
 	
 	public boolean canStartTimer() {
-		return Duration.between(current, Instant.now()).toMillis() > Configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES, false);
+		return Duration.between(current, Instant.now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES);
 	}
 
-	private Instant start;
-
 	public void startTimer() {
-		boolean inspectionEnabled = Configuration.getBoolean(VariableKey.COMPETITION_INSPECTION, false);
 		if(!canStartTimer()) {
 			return;
 		}
-		current = start = Instant.now();
-		if(!inspectionEnabled || inspecting) {
-			start();
-			inspecting = false;
-			reset = false;
-			timingListener.timerStarted();
-		} else {
+		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION);
+		current = Instant.now();
+		start = current;
+
+		if (inspectionEnabled && !inspecting) {
 			inspecting = true;
 			timingListener.inspectionStarted();
 		}
+		else {
+			scheduledFuture = EXECUTOR.scheduleAtFixedRate(
+					this::refreshTime, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
+			inspecting = false;
+			reset = false;
+			timingListener.timerStarted();
+		}
 	}
-	
-	private Instant current;
-	@Override
-	protected void fireActionPerformed(ActionEvent e) {
+
+	protected void refreshTime() {
 		current = Instant.now();
 		timingListener.refreshDisplay(getTimerState());
 	}
 	
 	private TimerState getTimerState() {
-		return new TimerState(getElapsedTimeSeconds());
+		return new KeyboardTimerState(getElapsedTimeSeconds(), getInspectionState());
+	}
+
+	private Optional<InspectionState> getInspectionState() {
+		return inspecting ? Optional.of(new InspectionState(start, current)) : Optional.<InspectionState>empty();
 	}
 
 	private Duration getElapsedTimeSeconds() {
@@ -69,23 +109,18 @@ public class KeyboardHandler extends Timer {
 		return Duration.between(start, current);
 	}
 
-	private boolean reset;
-	private boolean inspecting;
-	public boolean isReset() {
-		return reset;
-	}
-	public boolean isInspecting() {
-		return inspecting;
-	}
-
 	public void split() {
 		timingListener.timerSplit(getTimerState());
 	}
 
-	@Override
 	public void stop() {
 		current = Instant.now();
-		super.stop();
+		if (isRunning()) {
+			scheduledFuture.cancel(true);
+			scheduledFuture = null;
+		} else {
+			LOGGER.info("nothing to stop");
+		}
 		timingListener.refreshDisplay(getTimerState());
 	}
 
@@ -93,5 +128,9 @@ public class KeyboardHandler extends Timer {
 		timingListener.timerStopped(getTimerState());
 		reset = true;
 		current = Instant.now();
+	}
+
+	public boolean isRunning() {
+		return scheduledFuture != null && !scheduledFuture.isCancelled();
 	}
 }

@@ -4,7 +4,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.statistics.ProfileDao;
+import net.gnehzr.cct.dao.ProfileDao;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -13,42 +13,53 @@ import java.util.List;
 
 public class ProfileListModel extends DraggableJTableModel {
 
-	private static final ProfileDao PROFILE_DAO = ProfileDao.INSTANCE;
+	private final ProfileDao profileDao;
 
-    private enum EditAction { ADDED, RENAMED, REMOVED }
+	public ProfileListModel(ProfileDao profileDao) {
+		this.profileDao = profileDao;
+	}
+
+	private enum EditAction { ADDED, RENAMED, REMOVED }
 
 	private static class ProfileEditAction {
+		private final ProfileDao profileDao;
 		private EditAction act;
 		private Profile profile;
-		public ProfileEditAction(EditAction act, Profile profile) {
+
+		public ProfileEditAction(ProfileDao profileDao, EditAction act, Profile profile) {
+			this.profileDao = profileDao;
 			this.act = act;
 			this.profile = profile;
 		}
 		public void executeAction() {
 			switch(act) {
 			case ADDED:
-				PROFILE_DAO.createProfileDirectory(profile);
+				profileDao.insertProfile(profile);
 				break;
 			case RENAMED:
-				PROFILE_DAO.commitRename(profile);
+				profileDao.commitRename(profile);
 				break;
 			case REMOVED:
-				PROFILE_DAO.delete(profile);
+				profileDao.delete(profile);
 				break;
 			}
 		}
 	}
+
 	public void commitChanges() {
 		for(ProfileEditAction a : actions)
 			a.executeAction();
 	}
+
 	public void discardChanges() {
 		for(Profile p : contents)
 			p.discardRename();
 	}
 
 	private List<ProfileEditAction> actions;
+
 	private List<Profile> contents;
+
 	public void setContents(List<Profile> contents) {
 		this.contents = contents;
 		actions = new ArrayList<>();
@@ -58,41 +69,57 @@ public class ProfileListModel extends DraggableJTableModel {
 		return contents;
 	}
 
+	@Override
 	public void deleteRows(int[] indices) {
 		for(int i : indices) {
 			if(i >= 0 && i < contents.size())
-				actions.add(new ProfileEditAction(EditAction.REMOVED, contents.get(i)));
+				actions.add(new ProfileEditAction(profileDao, EditAction.REMOVED, contents.get(i)));
 		}
 		removeRows(indices);
 	}
+
+	@Override
 	public String getColumnName(int column) {
 		return StringAccessor.getString("ProfileListModel.profiles");
 	}
+
+	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return Profile.class;
 	}
+
+	@Override
 	public int getColumnCount() {
 		return 1;
 	}
+
+	@Override
 	public int getRowCount() {
 		return (contents == null) ? 0 : contents.size();
 	}
+
+	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		return contents.get(rowIndex);
 	}
+
+	@Override
 	public void insertValueAt(Object value, int rowIndex) {
 		contents.add(rowIndex, (Profile) value);
 		fireTableRowsUpdated(rowIndex, rowIndex);
 	}
 
+	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return !contents.get(rowIndex).equals(Configuration.guestProfile) && contents.get(rowIndex).isSaveable();
+        return !contents.get(rowIndex).getName().equals(ProfileDao.GUEST_NAME);
     }
 
+	@Override
 	public boolean isRowDeletable(int rowIndex) {
 		return isCellEditable(rowIndex, 0);
 	}
 
+	@Override
 	public void removeRows(int[] indices) {
 		for(int ch = indices.length - 1; ch >= 0; ch--) {
 			int i = indices[ch];
@@ -103,20 +130,22 @@ public class ProfileListModel extends DraggableJTableModel {
 		}
 		fireTableRowsDeleted(indices[0], indices[indices.length - 1]);
 	}
+	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(value == null) //null if the name was equal to the addText
 			return;
 		Profile newProfile = (Profile)value;
 		if(rowIndex == contents.size()) {
-			actions.add(new ProfileEditAction(EditAction.ADDED, newProfile));
+			actions.add(new ProfileEditAction(profileDao, EditAction.ADDED, newProfile));
 			contents.add(newProfile);
 		} else {
 			Profile oldProfile = contents.get(rowIndex);
-			actions.add(new ProfileEditAction(EditAction.RENAMED, oldProfile));
+			actions.add(new ProfileEditAction(profileDao, EditAction.RENAMED, oldProfile));
 			oldProfile.renameTo(newProfile.getName());
 		}
 		fireTableDataChanged();
 	}
 
+	@Override
 	public void showPopup(MouseEvent e, DraggableJTable source, Component prevFocusOwner) {}
 }
