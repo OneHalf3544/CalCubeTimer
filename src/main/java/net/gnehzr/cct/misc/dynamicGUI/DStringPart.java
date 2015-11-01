@@ -1,5 +1,11 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.i18n.MessageAccessor;
+import net.gnehzr.cct.statistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.SessionsList;
+
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
 /**
@@ -19,8 +25,8 @@ class DStringPart {
         CONFIGURATION_TEXT,
     }
 
-    DStringPart(String string, Type type) {
-        this.string = string;
+    DStringPart(@Nonnull String string, @Nonnull Type type) {
+        this.string = Objects.requireNonNull(string);
         this.type = type;
     }
 
@@ -29,6 +35,22 @@ class DStringPart {
 
     public String getString() {
         return string;
+    }
+
+    public String toString(DynamicString dynamicString, MessageAccessor accessor, RollingAverageOf num,
+                           SessionsList sessions, Configuration configuration) {
+        switch (getType()) {
+            case I18N_TEXT:
+                return Objects.requireNonNull(accessor).getString(string);
+            case STATISTICS_TEXT:
+                return dynamicString.getReplacement(this, num, sessions);
+            case CONFIGURATION_TEXT:
+                return configuration.getString(string);
+            case RAW_TEXT:
+                return string;
+            default:
+                throw new IllegalArgumentException(getType().toString());
+        }
     }
 
     public Type getType() {

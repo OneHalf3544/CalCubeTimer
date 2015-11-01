@@ -14,7 +14,7 @@ public class ClockScramblePlugin extends ScramblePlugin {
 	private static final String PUZZLE_NAME = "Clock";
 	private static final List<String> VARIATIONS = ImmutableList.of("Clock");
 	private static final int[] DEFAULT_LENGTHS = {10};
-	private static final List<String> ATTRIBUTES = ImmutableList.of("%%verbose%%");
+	private static final List<String> ATTRIBUTES = ImmutableList.of("i18n[verbose]");
 
 	private boolean verbose;
 
@@ -39,7 +39,7 @@ public class ClockScramblePlugin extends ScramblePlugin {
 	}
 
 	private boolean hasVerboseAttribute(List<String> attributes) {
-		return attributes.contains("%%verbose%%");
+		return attributes.contains("i18n[verbose]");
 	}
 
 	@Override

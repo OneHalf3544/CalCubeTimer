@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="CalCubeTimer" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="1.0" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="CalCubeTimer" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="" external.system.module.version="0.9.7" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="hibernate" name="Hibernate">
       <configuration>
@@ -36,7 +36,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Gradle: javax.mail:mailapi:1.4.3" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: com.sun.mail:smtp:1.5.2" level="project" />
     <orderEntry type="library" exported="" name="Gradle: javazoom:jlayer:1.0.1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.google.guava:guava:18.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.jetbrains:annotations:13.0" level="project" />
@@ -48,11 +47,9 @@
     <orderEntry type="library" exported="" name="Gradle: org.jboss.logging:jboss-logging-annotations:1.2.0.Beta1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.jboss.spec.javax.transaction:jboss-transaction-api_1.2_spec:1.0.0.Final" level="project" />
     <orderEntry type="library" exported="" name="Gradle: dom4j:dom4j:1.6.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.hibernate.common:hibernate-commons-annotations:4.0.5.Final" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.javassist:javassist:3.18.1-GA" level="project" />
     <orderEntry type="library" exported="" name="Gradle: antlr:antlr:2.7.7" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.jboss:jandex:1.1.0.Final" level="project" />
     <orderEntry type="library" exported="" name="Gradle: xml-apis:xml-apis:1.0.b2" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.h2database:h2:1.4.182" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.hibernate:hibernate-entitymanager:4.3.7.Final" level="project" />
@@ -61,15 +58,18 @@
     <orderEntry type="library" scope="TEST" name="Gradle: org.mockito:mockito-all:1.9.5" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.jooq:jool:0.9.4" level="project" />
     <orderEntry type="library" exported="" name="Gradle: commons-io:commons-io:2.4" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.apache.logging.log4j:log4j-api:2.2" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.apache.logging.log4j:log4j-core:2.2" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.hibernate:hibernate-core:4.3.8.Final" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.jboss.logging:jboss-logging:3.2.0.Final" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.google.inject:guice:4.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.github.insubstantial:substance:7.3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.github.insubstantial:trident:7.3:swing" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.github.insubstantial:laf-plugin:7.3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.github.insubstantial:laf-widget:7.3" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: com.google.code.findbugs:jsr305:3.0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.apache.logging.log4j:log4j-api:2.4.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.apache.logging.log4j:log4j-core:2.4.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.hibernate:hibernate-core:4.3.8.Final" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.jboss.logging:jboss-logging:3.2.0.Final" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.hibernate.common:hibernate-commons-annotations:4.0.5.Final" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: org.jboss:jandex:1.1.0.Final" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

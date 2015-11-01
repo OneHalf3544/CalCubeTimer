@@ -33,7 +33,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 
 	private static final String FACES_ORDER = "LBRFUD";
 	private static final String PUZZLE_NAME = "Square-1";
-	public static final String SLASHES_ATTRIBUTE = "%%slashes%%";
+	public static final String SLASHES_ATTRIBUTE = "i18n[slashes]";
 	private static final int[] DEFAULT_LENGTHS = { 40 };
 	private static final int DEFAULT_UNIT_SIZE = 32;
 	private static final Pattern TOKEN_REGEX = Pattern.compile("^(\\( *-?\\d+ *, *-?\\d+ *\\)|/)(.*)$");

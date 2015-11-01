@@ -49,9 +49,9 @@ public class CubeScramblePlugin extends ScramblePlugin {
     private static final String REGEXP = "^(\\d+)?([LDBRUF])(?:\\((\\d+)\\))?[2']?$";
     private static final Pattern SHORT_PATTERN = Pattern.compile(REGEXP);
 
-    public static final String MULTISLICE_ATTRIBUTE = "%%multislice%%";
-    public static final String OPTIMAL_CROSS_ATTRIBUTE = "%%optimalcross%%";
-    public static final String WIDE_NOTATION_ATTRIBUTE = "%%widenotation%%";
+    public static final String MULTISLICE_ATTRIBUTE = "i18n[multislice]";
+    public static final String OPTIMAL_CROSS_ATTRIBUTE = "i18n[optimalcross]";
+    public static final String WIDE_NOTATION_ATTRIBUTE = "i18n[widenotation]";
 
     private static final boolean shortNotation = true;
 

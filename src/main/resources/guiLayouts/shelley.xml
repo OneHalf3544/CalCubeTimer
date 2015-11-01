@@ -11,12 +11,12 @@
 								<component type="stackmatStatusLabel"/>
 								<component type="scrambleChooser"/>
 								<component type="scrambleGenerator"/>
-								<button action="newSession">%%newsession%%</button>
-						 		<button action="reset">%%clearsession%%</button>
+								<button action="newSession">i18n[newsession]</button>
+						 		<button action="reset">i18n[clearsession]</button>
 							</panel>
 							<panel>
 								<checkbox alignmentX=".5" action="togglescramblepopup">Show scramble?</checkbox>
-								<checkbox alignmentX=".5" action="keyboardTiming">%%usekeyboard%%</checkbox>
+								<checkbox alignmentX=".5" action="keyboardTiming">i18n[usekeyboard]</checkbox>
 								<component type="scrambleAttributes"/>
 							</panel>
 						</panel>
@@ -32,23 +32,23 @@
 					<panel layout="box" orientation="page">
 
 						<panel layout="box" orientation="line">
-							<panel border="%%seshstats%%" layout="grid" hgap="2" vgap="2" cols="3">
-								<label>%%raof%% $$ra(0).size$$</label>
-								<button action="currentAverage0">%%currave%% $$ra(0, recent)$$ $$ra(0).progress|parens$$</button>
-								<button action="bestAverage0">%%bestra%% $$ra(0, best)$$</button>
+							<panel border="i18n[seshstats]" layout="grid" hgap="2" vgap="2" cols="3">
+								<label>i18n[raof] stats[ra(0).size]</label>
+								<button action="currentAverage0">i18n[currave] stats[ra(0, recent)] stats[ra(0).progress|parens]</button>
+								<button action="bestAverage0">i18n[bestra] stats[ra(0, best)]</button>
 								
-								<label>%%raof%% $$ra(1).size$$</label>
-								<button action="currentAverage1">%%currave%% $$ra(1, recent)$$ $$ra(1).progress|parens$$</button>
-								<button action="bestAverage1">%%bestra%% $$ra(1, best)$$</button>
+								<label>i18n[raof] stats[ra(1).size]</label>
+								<button action="currentAverage1">i18n[currave] stats[ra(1, recent)] stats[ra(1).progress|parens]</button>
+								<button action="bestAverage1">i18n[bestra] stats[ra(1, best)]</button>
 
-								<label>Cubes solved: $$session.solvecount(solved)$$/$$session.solvecount(attempt)$$</label>
-								<button action="sessionAverage">%%seshave%% $$session.average$$ $$session.average.progress|parens$$</button>
+								<label>Cubes solved: stats[session.solvecount(solved)]/stats[session.solvecount(attempt)]</label>
+								<button action="sessionAverage">i18n[seshave] stats[session.average] stats[session.average.progress|parens]</button>
 							</panel>
-							<panel border="%%history%%" layout="grid" cols="1" vgap="2">
-								<panel><label alignmentX=".5">%%bestever%% $$global.time(best)$$</label></panel>
-								<panel><label alignmentX=".5">%%bestraof%% $$ra(0).size$$: $$global.ra(0, best)$$</label></panel>
-								<panel><label alignmentX=".5">%%bestraof%% $$ra(1).size$$: $$global.ra(1, best)$$</label></panel>
-								<panel><label alignmentX=".5">$$global.solvecount(solved)$$/$$global.solvecount(attempt)$$ %%globalaverage%% $$global.average$$</label></panel>
+							<panel border="i18n[history]" layout="grid" cols="1" vgap="2">
+								<panel><label alignmentX=".5">i18n[bestever] stats[global.time(best)]</label></panel>
+								<panel><label alignmentX=".5">i18n[bestraof] stats[ra(0).size]: stats[global.ra(0, best)]</label></panel>
+								<panel><label alignmentX=".5">i18n[bestraof] stats[ra(1).size]: stats[global.ra(1, best)]</label></panel>
+								<panel><label alignmentX=".5">stats[global.solvecount(solved)]/stats[global.solvecount(attempt)] i18n[globalaverage] stats[global.average]</label></panel>
 							</panel>
 						</panel>
 					</panel>
@@ -56,31 +56,31 @@
 			</panel>
 			<panel nominsize="false" layout="border">
 				<tabbedpane>
-					<component name="%%times%%" type="timesList"/>
-					<component name="%%sessions%%" type="sessionsList"/>
+					<component name="i18n[times] %%session.puzzleType%%" type="timesList"/>
+					<component name="i18n[sessions]" type="sessionsList"/>
 				</tabbedpane>
 			</panel>
 		</splitpane>
 	</panel>
 	<menubar>
-		<menu mnemonic="f">%%file%%
-			<menuitem action="importScrambles">%%import%%</menuitem>
-			<menuitem action="exportScrambles">%%export%%</menuitem>
+		<menu mnemonic="f">i18n[file]
+			<menuitem action="importScrambles">i18n[import]</menuitem>
+			<menuitem action="exportScrambles">i18n[export]</menuitem>
 			<separator/>
-			<menuitem action="addTime">%%addtime%%</menuitem>
+			<menuitem action="addTime">i18n[addtime]</menuitem>
 			<separator/>
-			<menuitem action="showConfiguration">%%configuration%%</menuitem>
+			<menuitem action="showConfiguration">i18n[configuration]</menuitem>
 			<separator/>
-			<menuitem action="exit">%%exit%%</menuitem>
+			<menuitem action="exit">i18n[exit]</menuitem>
 		</menu>
-		<menu mnemonic="o">%%options%%
-			<checkboxmenuitem action="toggleScramblePopup">%%togglescramblepopup%%</checkboxmenuitem>
-			<menu mnemonic="k">%%keyboardtimer%%
-				<checkboxmenuitem action="keyboardTiming">%%usekeyboard%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleStatusLight">%%statuslight%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleHideScrambles">%%hidescrambles%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleSpacebarStartsTimer">%%spacebaronly%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleFullscreenTiming">%%fullscreentiming%%</checkboxmenuitem>
+		<menu mnemonic="o">i18n[options]
+			<checkboxmenuitem action="toggleScramblePopup">i18n[togglescramblepopup]</checkboxmenuitem>
+			<menu mnemonic="k">i18n[keyboardtimer]
+				<checkboxmenuitem action="keyboardTiming">i18n[usekeyboard]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleStatusLight">i18n[statuslight]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleHideScrambles">i18n[hidescrambles]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleSpacebarStartsTimer">i18n[spacebaronly]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleFullscreenTiming">i18n[fullscreentiming]</checkboxmenuitem>
 			</menu>
 			<component type="customGUIMenu"/>
 		</menu>
@@ -88,9 +88,9 @@
 		<component type="languagecombobox"/>
 		<component type="profilecombobox"/>
 		<glue orientation="horizontal"/>
-		<menu mnemonic="h">%%help%%
-			<menuitem action="showDocumentation">%%documentation%%</menuitem>
-			<menuitem action="showAbout">%%about%%</menuitem>
+		<menu mnemonic="h">i18n[help]
+			<menuitem action="showDocumentation">i18n[documentation]</menuitem>
+			<menuitem action="showAbout">i18n[about]</menuitem>
 		</menu>
 		<button nominsize="true" action="togglefullscreen">+</button>
 	</menubar>

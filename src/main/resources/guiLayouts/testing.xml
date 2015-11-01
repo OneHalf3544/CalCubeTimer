@@ -23,82 +23,82 @@
 							</panel>
 						</scrollpane>
 						<panel layout="border">
-							<center><panel><checkbox alignmentX=".5" action="keyboardTiming">%%usekeyboard%%</checkbox></panel></center>
+							<center><panel><checkbox alignmentX=".5" action="keyboardTiming">"i18n[usekeyboard]</checkbox></panel></center>
 							<line_end>
 								<panel>
-									<button action="newSession">%%newsession%%</button>
-									<button action="reset">%%clearsession%%</button>
+									<button action="newSession">"i18n[newsession]</button>
+									<button action="reset">"i18n[clearsession]</button>
 								</panel>
 							</line_end>
 						</panel>
 						<panel layout="box" orientation="line">
-							<panel border="%%seshstats%%" layout="grid" cols="1">
+							<panel border="i18n[seshstats]" layout="grid" cols="1">
 								<panel layout="box" orientation="line">
-									<label>%%raof%% $$ra(0).size$$</label>
-									<button action="currentAverage0"><![CDATA[<html><font color="@@Statistics_Color_currentAverage@@">%%currave%% $$ra(0, recent)$$ $$ra(0).progress|parens$$</font></html>]]></button>
-									<button action="bestAverage0"><![CDATA[<html><font color="@@Statistics_Color_bestRA@@">%%bestra%% $$ra(0, best)$$</font></html>]]></button>
+									<label>"i18n[raof] stats[ra(0).size]</label>
+									<button action="currentAverage0"><![CDATA[<html><font color="config[Statistics_Color_currentAverage]">"i18n[currave] stats[ra(0, recent)] stats[ra(0).progress|parens]</font></html>]]></button>
+									<button action="bestAverage0"><![CDATA[<html><font color="config[Statistics_Color_bestRA]">"i18n[bestra] stats[ra(0, best)]</font></html>]]></button>
 								</panel>
 								<panel layout="box" orientation="line">
-									<label>%%raof%% $$ra(1).size$$</label>
-									<button action="currentAverage1"><![CDATA[<html><font color="@@Statistics_Color_currentAverage@@">%%currave%% $$ra(1, recent)$$ $$ra(1).progress|parens$$</font></html>]]></button>
-									<button action="bestAverage1"><![CDATA[<html><font color="@@Statistics_Color_bestRA@@">%%bestra%% $$ra(1, best)$$</font></html>]]></button>
+									<label>"i18n[raof] stats[ra(1).size]</label>
+									<button action="currentAverage1"><![CDATA[<html><font color="config[Statistics_Color_currentAverage]">"i18n[currave] stats[ra(1, recent)] stats[ra(1).progress|parens]</font></html>]]></button>
+									<button action="bestAverage1"><![CDATA[<html><font color="config[Statistics_Color_bestRA]">"i18n[bestra] stats[ra(1, best)]</font></html>]]></button>
 								</panel>
 								<panel layout="box" orientation="line">
-									<label>$$session.solvecount(solved)$$/$$session.solvecount(attempt)$$ (%%solves%%/%%attempts%%)</label>
-									<button action="sessionAverage"><![CDATA[<html>%%seshave%% $$session.average$$ $$session.average.progress|parens$$</html>]]></button>
+									<label>stats[session.solvecount(solved)]/stats[session.solvecount(attempt)] i18n[solves]/i18n[attempts])</label>
+									<button action="sessionAverage"><![CDATA[<html>"i18n[seshave] stats[session.average] stats[session.average.progress|parens]</html>]]></button>
 								</panel>
 							</panel>
-							<panel border="%%history%%" layout="box" orientation="page">
-								<panel><label alignmentX=".5">%%bestever%% $$global.time(best)$$</label></panel>
-								<panel><label alignmentX=".5">%%bestraof%% $$ra(0).size$$: $$global.ra(0, best)$$</label></panel>
-								<panel><label alignmentX=".5">$$global.solvecount(solved)$$/$$global.solvecount(attempt)$$ %%globalaverage%% $$global.average$$</label></panel>
+							<panel border="i18n[history]" layout="box" orientation="page">
+								<panel><label alignmentX=".5">"i18n[bestever] stats[global.time(best)]</label></panel>
+								<panel><label alignmentX=".5">"i18n[bestraof] stats[ra(0).size]: stats[global.ra(0, best)]</label></panel>
+								<panel><label alignmentX=".5">stats[global.solvecount(solved)]/stats[global.solvecount(attempt)] i18n[globalaverage] stats[global.average]</label></panel>
 							</panel>
 						</panel>
 						<panel layout="border" hgap="5" vgap="5">
 							<north>
 								<panel border="Variables;000000" layout="grid" rows="1">
 									<label><![CDATA[<html>
-											Session Average: $$session.average$$<br/>
-											Session SD: $$session.sd$$<br/>
-											Pops: $$session.solvecount(pop)$$<br/>
-											+2s: $$session.solvecount(+2)$$<br/>
-											DNFs: $$session.solvecount(dnf)$$<br/>
-											Solves: $$session.solvecount(solved)$$<br/>
-											Attempts: $$session.solvecount(attempt)$$<br/>
-											Progress Time: $$session.time(progress)$$<br/>
-											Progress Average: $$ra(0).progress$$<br/>
-											Best Time: $$session.time(best)$$<br/>
-											Best Average: $$ra(0, best)$$<br/>
+											Session Average: stats[session.average]<br/>
+											Session SD: stats[session.sd]<br/>
+											Pops: stats[session.solvecount(pop)]<br/>
+											+2s: stats[session.solvecount(+2)]<br/>
+											DNFs: stats[session.solvecount(dnf)]<br/>
+											Solves: stats[session.solvecount(solved)]<br/>
+											Attempts: stats[session.solvecount(attempt)]<br/>
+											Progress Time: stats[session.time(progress)]<br/>
+											Progress Average: stats[ra(0).progress]<br/>
+											Best Time: stats[session.time(best)]<br/>
+											Best Average: stats[ra(0, best)]<br/>
 										</html>]]>
 									</label>
 									<label><![CDATA[<html>
-											Best SD: $$session.sd(best)$$<br/>
-											Best Average's SD: $$ra(0, best).sd$$<br/>
-											Worst Time: $$session.time(worst)$$<br/>
-											Worst Average: $$ra(0, worst)$$<br/>
-											Worst SD: $$session.sd(worst)$$<br/>
-											Worst Average's SD: $$ra(0, worst).sd$$<br/>
-											Current Time: $$session.time(recent)$$<br/>
-											Current Average: $$ra(0, recent)$$<br/>
-											Current SD: $$ra(0, recent).sd$$<br/>
-											Last Time: $$session.time(last)$$<br/>
-											Last Average: $$ra(0, last)$$<br/>
-											Last SD: $$ra(0, last).sd$$<br/>
+											Best SD: stats[session.sd(best)]<br/>
+											Best Average's SD: stats[ra(0, best).sd]<br/>
+											Worst Time: stats[session.time(worst)]<br/>
+											Worst Average: stats[ra(0, worst)]<br/>
+											Worst SD: stats[session.sd(worst)]<br/>
+											Worst Average's SD: stats[ra(0, worst).sd]<br/>
+											Current Time: stats[session.time(recent)]<br/>
+											Current Average: stats[ra(0, recent)]<br/>
+											Current SD: stats[ra(0, recent).sd]<br/>
+											Last Time: stats[session.time(last)]<br/>
+											Last Average: stats[ra(0, last)]<br/>
+											Last SD: stats[ra(0, last).sd]<br/>
 										</html>]]>
 									</label>
 									<label><![CDATA[<html>
-											Best Time of Current Average: $$ra(0, recent).time(best)$$<br/>
-											Worst Time of Current Average: $$ra(0, recent).time(worst)$$<br/>
-											Best Time of Best Average: $$ra(0, best).time(best)$$<br/>
-											Worst Time of Best Average: $$ra(0, best).time(worst)$$<br/>
-											Best Time of Worst Average: $$ra(0, worst).time(best)$$<br/>
-											Worst Time of Worst Average: $$ra(0, worst).time(worst)$$<br/>
+											Best Time of Current Average: stats[ra(0, recent).time(best)]<br/>
+											Worst Time of Current Average: stats[ra(0, recent).time(worst)]<br/>
+											Best Time of Best Average: stats[ra(0, best).time(best)]<br/>
+											Worst Time of Best Average: stats[ra(0, best).time(worst)]<br/>
+											Best Time of Worst Average: stats[ra(0, worst).time(best)]<br/>
+											Worst Time of Worst Average: stats[ra(0, worst).time(worst)]<br/>
 											<br/>
-											Color of Best Average: @@Statistics_Color_bestRA@@<br/>
-											Color of Best and Current Average: @@Statistics_Color_bestAndCurrentAverage)$$<br/>
-											Color of Current Average: @@Statistics_Color_currentAverage@@<br/>
-											Color of Best Time: @@Statistics_Color_bestTime@@<br/>
-											Color of Worst Time: @@Statistics_Color_worstTime@@<br/>
+											Color of Best Average: config[Statistics_Color_bestRA]<br/>
+											Color of Best and Current Average: config[Statistics_Color_bestAndCurrentAverage)]<br/>
+											Color of Current Average: config[Statistics_Color_currentAverage]<br/>
+											Color of Best Time: config[Statistics_Color_bestTime]<br/>
+											Color of Worst Time: config[Statistics_Color_worstTime]<br/>
 										</html>
 										]]>
 									</label>
@@ -106,10 +106,10 @@
 							</north>
 							<center>
 								<selectablelabel><![CDATA[<html>
-										best average list: $$ra(0, best).list$$<br/>
-										current average list: $$ra(0, recent).list$$<br/>
-										session average list: $$session.list$$<br/>
-										worst average list: $$ra(0, worst).list$$<br/>
+										best average list: stats[ra(0, best).list]<br/>
+										current average list: stats[ra(0, recent).list]<br/>
+										session average list: stats[session.list]<br/>
+										worst average list: stats[ra(0, worst).list`<br/>
 									</html>]]>
 								</selectablelabel>
 							</center>
@@ -126,31 +126,31 @@
 			</panel>
 			<panel nominsize="false" layout="border">
 				<tabbedpane>
-					<component name="%%times%%" type="timesList"/>
-					<component name="%%sessions%%" type="sessionsList"/>
+					<component name="i18n[times] %%session.puzzleType%%" type="timesList"/>
+					<component name="i18n[sessions]" type="sessionsList"/>
 				</tabbedpane>
 			</panel>
 		</splitpane>
 	</panel>
 	<menubar>
-		<menu mnemonic="f">%%file%%
-			<menuitem action="importScrambles">%%import%%</menuitem>
-			<menuitem action="exportScrambles">%%export%%</menuitem>
+		<menu mnemonic="f">i18n[file]
+			<menuitem action="importScrambles">i18n[import]</menuitem>
+			<menuitem action="exportScrambles">i18n[export]</menuitem>
 			<separator/>
-			<menuitem action="addTime">%%addtime%%</menuitem>
+			<menuitem action="addTime">i18n[addtime]</menuitem>
 			<separator/>
-			<menuitem action="showConfiguration">%%configuration%%</menuitem>
+			<menuitem action="showConfiguration">i18n[configuration]</menuitem>
 			<separator/>
-			<menuitem action="exit">%%exit%%</menuitem>
+			<menuitem action="exit">i18n[exit]</menuitem>
 		</menu>
-		<menu mnemonic="o">%%options%%
-			<checkboxmenuitem action="toggleScramblePopup">%%togglescramblepopup%%</checkboxmenuitem>
-			<menu mnemonic="k">%%keyboardtimer%%
-				<checkboxmenuitem action="keyboardTiming">%%usekeyboard%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleStatusLight">%%statuslight%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleHideScrambles">%%hidescrambles%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleSpacebarStartsTimer">%%spacebaronly%%</checkboxmenuitem>
-				<checkboxmenuitem action="toggleFullscreenTiming">%%fullscreentiming%%</checkboxmenuitem>
+		<menu mnemonic="o">i18n[options]
+			<checkboxmenuitem action="toggleScramblePopup">i18n[togglescramblepopup]</checkboxmenuitem>
+			<menu mnemonic="k">i18n[keyboardtimer]
+				<checkboxmenuitem action="keyboardTiming">i18n[usekeyboard]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleStatusLight">i18n[statuslight]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleHideScrambles">i18n[hidescrambles]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleSpacebarStartsTimer">i18n[spacebaronly]</checkboxmenuitem>
+				<checkboxmenuitem action="toggleFullscreenTiming">i18n[fullscreentiming]</checkboxmenuitem>
 			</menu>
 			<component type="customGUIMenu"/>
 		</menu>
@@ -158,9 +158,9 @@
 		<component type="languagecombobox"/>
 		<component type="profilecombobox"/>
 		<glue orientation="horizontal"/>
-		<menu mnemonic="h">%%help%%
-			<menuitem action="showDocumentation">%%documentation%%</menuitem>
-			<menuitem action="showAbout">%%about%%</menuitem>
+		<menu mnemonic="h">i18n[help]
+			<menuitem action="showDocumentation">i18n[documentation]</menuitem>
+			<menuitem action="showAbout">i18n[about]</menuitem>
 		</menu>
 		<button nominsize="true" action="togglefullscreen">+</button>
 	</menubar>

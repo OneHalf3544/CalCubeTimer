@@ -13,7 +13,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
 import static net.gnehzr.cct.misc.dynamicGUI.DStringPart.Type.*;
 
 public class DynamicString{
@@ -22,7 +24,7 @@ public class DynamicString{
 	private static final Pattern ARG_PATTERN = Pattern.compile("^\\s*\\(([^)]*)\\)\\s*(.*)$");
 
 	private final String rawString;
-	private final List<DStringPart> splitText;
+	private final List<DStringPart> dStringParts;
 	private final MessageAccessor accessor;
 	private final Configuration configuration;
 
@@ -31,40 +33,36 @@ public class DynamicString{
 		this.rawString = rawString;
 		this.accessor = accessor;
 		this.configuration = configuration;
-		splitText = parsePlaceholders(rawString);
+		dStringParts = parsePlaceholders(rawString);
 	}
 
 	private List<DStringPart> parsePlaceholders(String rawString) {
-		return parsePlaceholders(rawString, I18N_TEXT, "%%",
-				s1 -> parsePlaceholders(s1, STATISTICS_TEXT, "$$",
-						s2 -> parsePlaceholders(s2, CONFIGURATION_TEXT, "@@",
+		return parsePlaceholders(rawString, I18N_TEXT, "i18n[", "]",
+				s1 -> parsePlaceholders(s1, STATISTICS_TEXT, "stats[", "]",
+						s2 -> parsePlaceholders(s2, CONFIGURATION_TEXT, "config[", "]",
 								s3 -> Collections.singletonList(new DStringPart(s3, RAW_TEXT)))));
 	}
 
-	static List<DStringPart> parsePlaceholders(String rawString, DStringPart.Type type, String placeholderBorder,
+	static List<DStringPart> parsePlaceholders(String rawString, DStringPart.Type type,
+											   String startBorder, String endBorder,
 											   Function<String, List<DStringPart>> subparser) {
-		List<DStringPart> splitUp = new ArrayList<>();
-		String[] splitText = rawString.split(Matcher.quoteReplacement(placeholderBorder));
-		for (int ch = 0; ch < splitText.length; ch++) {
-			String string = unescapeString(splitText, ch,
-					Matcher.quoteReplacement("\\" + placeholderBorder.charAt(0)),
-					placeholderBorder.substring(0, 1));
-
-			if (ch % 2 != 0) {
-				// is $$ placeholder name
-				string = string.trim();
-				if (!string.isEmpty()) {
-					splitUp.add(new DStringPart(string, type));
-				}
-			} else {
-				// unprocessed text between placeholders
-				if (string.isEmpty()) {
-					continue;
-				}
-				splitUp.addAll(subparser.apply(splitText[ch]));
-			}
+		if (!rawString.contains(startBorder) || !rawString.contains(endBorder)) {
+			return subparser.apply(rawString);
 		}
-		return splitUp;
+
+		List<DStringPart> splitUp = new ArrayList<>();
+
+		String before = rawString.substring(0, rawString.indexOf(startBorder, 0));
+		String dString = rawString.substring(before.length() + startBorder.length(), rawString.indexOf(endBorder, before.length() + startBorder.length()));
+		String after = rawString.substring(before.length() + startBorder.length() + endBorder.length() + dString.length());
+
+		splitUp.addAll(subparser.apply(before));
+		splitUp.add(new DStringPart(dString, type));
+		splitUp.addAll(parsePlaceholders(after, type, startBorder, endBorder, subparser));
+
+		return splitUp.stream()
+				.filter(s -> !s.getString().isEmpty())
+				.collect(toList());
 	}
 
 	static Tuple2<String[], String> parseArguments(String originalString) {
@@ -79,12 +77,8 @@ public class DynamicString{
 		return new Tuple2<>(arguments, matcher.group(2));
 	}
 
-	private static String unescapeString(String[] splitText, int i, String regex, String replacement) {
-		return splitText[i].replaceAll(regex, replacement);
-	}
-
 	public List<DStringPart> getParts() {
-		return splitText;
+		return dStringParts;
 	}
 
 	@Override
@@ -98,27 +92,9 @@ public class DynamicString{
 	}
 
 	public String toString(RollingAverageOf num, SessionsList sessions) {
-		StringBuilder stringBuilder = new StringBuilder();
-
-		for (DStringPart aSplitText : splitText) {
-			String t = Objects.requireNonNull(aSplitText).getString();
-			switch (aSplitText.getType()) {
-				case I18N_TEXT:
-					if (accessor != null) {
-						stringBuilder.append(accessor.getString(t));
-						break;
-					}
-				case STATISTICS_TEXT:
-				case CONFIGURATION_TEXT:
-					stringBuilder.append(getReplacement(aSplitText, num, sessions));
-					break;
-
-				case RAW_TEXT:
-					stringBuilder.append(t);
-					break;
-			}
-		}
-		return stringBuilder.toString();
+		return dStringParts.stream()
+				.map(s -> s.toString(this, accessor, num, sessions, configuration))
+				.collect(Collectors.joining());
 	}
 
 	public String getRawText() {
@@ -138,17 +114,15 @@ public class DynamicString{
 		return addParens ? "(" + result + ")" : result;
 	}
 
-	private String getReplacement(DStringPart dStringPart, RollingAverageOf num, SessionsList sessions){
-		//Configuration section
-		if (dStringPart.getType() == CONFIGURATION_TEXT) {
-			return configuration.getString(dStringPart.getString());
+	String getReplacement(DStringPart dStringPart, RollingAverageOf num, SessionsList sessions){
+		if ("date".equalsIgnoreCase(dStringPart.getString())) {
+			return configuration.getDateFormat().format(LocalDateTime.now());
 		}
 
-		String s = dStringPart.getString().toLowerCase();
-
 		SessionSolutionsStatistics stats = Objects.requireNonNull(sessions.getCurrentSession()).getStatistics();
+		Pattern p = Pattern.compile("^\\s*(global|session|ra)\\s*(.*)$");
 
-		Pattern p = Pattern.compile("^\\s*(global|session|ra|date)\\s*(.*)$");
+		String s = dStringPart.getString().toLowerCase();
 		Matcher m = p.matcher(s);
 		String originalString = dStringPart.getString();
 
@@ -159,30 +133,26 @@ public class DynamicString{
 			throw unimplementedError(originalString);
 		}
 
-
 		switch (s) {
 			case "global":
-				return getForGlobal(num, sessions, originalString, m);
+				return getForGlobal(num, sessions, originalString, m.group(2));
 
 			case "session":
-				return getForSession(originalString, stats, m);
+				return getForSession(originalString, stats, m.group(2));
 
 			case "ra":
-				return getForRollingAverage(num, originalString, stats, m);
-
-			case "date":
-				return configuration.getDateFormat().format(LocalDateTime.now());
+				return getForRollingAverage(num, originalString, stats, m.group(2));
 
 			default:
 				throw unimplementedError(originalString);
 		}
 	}
 
-	private String getForGlobal(RollingAverageOf num, SessionsList sessions, String originalString, Matcher m) {
+	private String getForGlobal(RollingAverageOf num, SessionsList sessions, String originalString, String suffix) {
 		//Database queries for current scramble customization
 		GlobalPuzzleStatistics globalPuzzleStatistics = sessions.getGlobalPuzzleStatisticsForType(sessions.getCurrentSession().getPuzzleType());
 		Pattern globalPattern = Pattern.compile("^\\s*\\.\\s*(time|ra|average|solvecount)\\s*(.*)$");
-		Matcher globalMatcher = globalPattern.matcher(m.group(2));
+		Matcher globalMatcher = globalPattern.matcher(suffix);
 
 		if (!globalMatcher.matches()) {
             throw unimplementedError(originalString);
@@ -228,10 +198,10 @@ public class DynamicString{
 		}
 	}
 
-	private String getForSession(String originalString, SessionSolutionsStatistics stats, Matcher m) {
+	private String getForSession(String originalString, SessionSolutionsStatistics stats, String suffix) {
 		Pattern progressPattern = Pattern.compile("^\\s*\\.\\s*(progress)\\s*(.*)$");
 		Pattern sessionPattern = Pattern.compile("^\\s*\\.\\s*(solvecount|average|sd|list|stats|time)\\s*(.*)$");
-		Matcher sessionMatcher = sessionPattern.matcher(m.group(2));
+		Matcher sessionMatcher = sessionPattern.matcher(suffix);
 		if (!sessionMatcher.matches()) {
             throw unimplementedError(originalString);
         }
@@ -306,8 +276,8 @@ public class DynamicString{
 		return "Invalid argument: " + argument  + " : " + originalString;
 	}
 
-	private String getForRollingAverage(RollingAverageOf num, String originalString, SessionSolutionsStatistics stats, Matcher m) {
-		Tuple2<String[], String> raMatcher = parseArguments(m.group(2));
+	private String getForRollingAverage(RollingAverageOf num, String originalString, SessionSolutionsStatistics stats, String suffix) {
+		Tuple2<String[], String> raMatcher = parseArguments(suffix);
 		if (raMatcher.v1.length == 0) {
 			throw invalidNumberOfArguments(originalString);
 		}

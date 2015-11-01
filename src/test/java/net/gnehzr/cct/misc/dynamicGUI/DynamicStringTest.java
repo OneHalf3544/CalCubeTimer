@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static net.gnehzr.cct.misc.dynamicGUI.DStringPart.Type.I18N_TEXT;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,7 +61,7 @@ public class DynamicStringTest {
 
     @Test
     public void testParsing() throws Exception {
-        String rawString = "%%Best_rolling_average_of%% @@RA0.size@@: $$ra(0,best)$$";
+        String rawString = "i18n[Best_rolling_average_of] config[RA0.size]: stats[ra(0,best)]";
 
         DynamicString dynamicString = new DynamicString(
                 rawString,
@@ -69,13 +71,13 @@ public class DynamicStringTest {
         assertEquals(dynamicString.getRawText(), rawString);
 
         List<DStringPart> splitString = dynamicString.getParts();
-        assertEquals(splitString, ImmutableList.of(
+        assertThat(splitString, is(ImmutableList.of(
                 new DStringPart("Best_rolling_average_of", DStringPart.Type.I18N_TEXT),
                 new DStringPart(" ", DStringPart.Type.RAW_TEXT),
                 new DStringPart("RA0.size", DStringPart.Type.CONFIGURATION_TEXT),
                 new DStringPart(": ", DStringPart.Type.RAW_TEXT),
                 new DStringPart("ra(0,best)", DStringPart.Type.STATISTICS_TEXT)
-                ));
+        )));
 
         String processedString = dynamicString.toString(RollingAverageOf.OF_5, sessionsList);
         assertEquals(processedString, "Best rolling average 10 of 12: 23.12");
@@ -83,17 +85,17 @@ public class DynamicStringTest {
 
     @Test
     public void testParsePlaceholders() throws Exception {
-        String dynamicString = "raw-string1 %%stat-value%% raw-string2";
+        String dynamicString = "raw-string1 i18n[stat-value] raw-string2";
 
         List<DStringPart> parts = DynamicString.parsePlaceholders(
                 dynamicString,
-                I18N_TEXT, "%%",
+                I18N_TEXT, "i18n[", "]",
                 s -> Collections.singletonList(new DStringPart(s, DStringPart.Type.RAW_TEXT)));
 
-        assertEquals(parts, ImmutableList.of(
+        assertThat(parts, is(ImmutableList.of(
                 new DStringPart("raw-string1 ", DStringPart.Type.RAW_TEXT),
                 new DStringPart("stat-value", DStringPart.Type.I18N_TEXT),
                 new DStringPart(" raw-string2", DStringPart.Type.RAW_TEXT)
-        ));
+        )));
     }
 }
