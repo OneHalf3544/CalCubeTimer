@@ -9,7 +9,6 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,14 +30,12 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			"StatisticsTableModel.ra1",
 			"StatisticsTableModel.comment",
 			"StatisticsTableModel.tags",
-			"StatisticsTableModel.puzzleName",
 			"StatisticsTableModel.scramble",
 	};
 	private Class<?>[] columnClasses = new Class<?>[] {
 			SolveTime.class,
 			SolveTime.class,
 			SolveTime.class,
-			String.class,
 			String.class,
 			String.class,
 			String.class,
@@ -99,9 +96,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			return currentSession.getSolution(rowIndex).getComment();
 		case 4: //tags
 			return Joiner.on(", ").join(currentSession.getSolution(rowIndex).getTime().getTypes());
-		case 5: // puzzle type
-			return currentSession.getSolution(rowIndex).getScrambleString().getPuzzleType().getVariationName();
-		case 6: // scramble
+		case 5: // scramble
 			return currentSession.getSolution(rowIndex).getScrambleString().getScramble();
 		default:
 			throw new IllegalArgumentException("unsupported column index");

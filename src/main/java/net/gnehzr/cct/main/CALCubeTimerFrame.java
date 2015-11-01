@@ -420,7 +420,7 @@ public class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 		xmlGuiMessages.reloadResources();
 
-		DefaultHandler handler = new GuiParseSaxHandler(this, this, configuration, dynamicBorderSetter, xmlGuiMessages, actionMap);
+		DefaultHandler handler = new GuiParseSaxHandler(this, this, configuration, dynamicBorderSetter, sessionsList, xmlGuiMessages, actionMap);
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try {
 			SAXParser saxParser = factory.newSAXParser();

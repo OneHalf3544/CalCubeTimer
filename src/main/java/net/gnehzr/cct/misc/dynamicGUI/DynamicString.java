@@ -27,6 +27,7 @@ public class DynamicString{
 	private final List<DStringPart> dStringParts;
 	private final MessageAccessor accessor;
 	private final Configuration configuration;
+	public static final Pattern PROGRESS_PATTERN = Pattern.compile("^\\.(progress)\\s*(.*)$");
 
 	public DynamicString(@NotNull String rawString,
 						 MessageAccessor accessor, Configuration configuration){
@@ -83,7 +84,7 @@ public class DynamicString{
 
 	@Override
 	public String toString(){
-		return toString(null);
+		return "DynamicString: " + rawString;
 	}
 
 
@@ -122,23 +123,19 @@ public class DynamicString{
 		SessionSolutionsStatistics stats = Objects.requireNonNull(sessions.getCurrentSession()).getStatistics();
 		Pattern p = Pattern.compile("^\\s*(global|session|ra)\\s*(.*)$");
 
-		String s = dStringPart.getString().toLowerCase();
-		Matcher m = p.matcher(s);
+		Matcher m = p.matcher(dStringPart.getString().toLowerCase());
 		String originalString = dStringPart.getString();
 
-		if (m.matches()){
-			s = m.group(1);
-		}
-		else {
+		if (!m.matches()) {
 			throw unimplementedError(originalString);
 		}
 
-		switch (s) {
+		switch (m.group(1)) {
 			case "global":
 				return getForGlobal(num, sessions, originalString, m.group(2));
 
 			case "session":
-				return getForSession(originalString, stats, m.group(2));
+				return getForSession(sessions, originalString, stats, m.group(2));
 
 			case "ra":
 				return getForRollingAverage(num, originalString, stats, m.group(2));
@@ -198,16 +195,17 @@ public class DynamicString{
 		}
 	}
 
-	private String getForSession(String originalString, SessionSolutionsStatistics stats, String suffix) {
-		Pattern progressPattern = Pattern.compile("^\\s*\\.\\s*(progress)\\s*(.*)$");
-		Pattern sessionPattern = Pattern.compile("^\\s*\\.\\s*(solvecount|average|sd|list|stats|time)\\s*(.*)$");
+	private String getForSession(SessionsList sessions, String originalString, SessionSolutionsStatistics stats, String suffix) {
+		Pattern sessionPattern = Pattern.compile("^\\.(solvecount|average|sd|list|stats|time|puzzletype)(.*)$");
 		Matcher sessionMatcher = sessionPattern.matcher(suffix);
 		if (!sessionMatcher.matches()) {
             throw unimplementedError(originalString);
         }
 
-		String t = sessionMatcher.group(1);
-		switch (t) {
+		switch (sessionMatcher.group(1)) {
+            case "puzzletype":
+				return sessions.getCurrentSession().getPuzzleType().toString();
+
             case "solvecount":
 				return handleSolveCount(sessionMatcher.group(2), stats.getSolveCounter());
 
@@ -219,7 +217,7 @@ public class DynamicString{
                     }
                     return Utils.formatTime(ave, configuration.useClockFormat());
                 } else {
-                    Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));
+                    Matcher progressMatcher = PROGRESS_PATTERN.matcher(sessionMatcher.group(2));
                     if (progressMatcher.matches()) {
                         if (progressMatcher.group(1).equals("progress")) {
                             boolean parens = hasFilter(progressMatcher.group(2), "parens");
@@ -233,7 +231,7 @@ public class DynamicString{
                 if (sessionMatcher.group(2).isEmpty()) {
                     return Utils.formatTime(stats.getWholeSessionAverage().getStandartDeviation(), configuration.useClockFormat());
                 }
-				Matcher progressMatcher = progressPattern.matcher(sessionMatcher.group(2));
+				Matcher progressMatcher = PROGRESS_PATTERN.matcher(sessionMatcher.group(2));
 				if (progressMatcher.matches()) {
                     if (progressMatcher.group(1).equals("progress")) {
                         boolean parens = hasFilter(progressMatcher.group(2), "parens");
@@ -268,7 +266,7 @@ public class DynamicString{
                         throw unimplementedError(u + " : " + originalString);
                 }
 			default:
-                throw unimplementedError(t + " : " + originalString);
+                throw unimplementedError(sessionMatcher.group(1) + " : " + originalString);
         }
 	}
 

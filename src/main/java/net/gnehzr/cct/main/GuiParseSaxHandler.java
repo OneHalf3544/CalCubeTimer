@@ -5,6 +5,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.dynamicGUI.*;
+import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -43,9 +44,10 @@ class GuiParseSaxHandler extends DefaultHandler {
     private final DynamicBorderSetter dynamicBorderSetter;
     private final XMLGuiMessages xmlGuiMessages;
     private final ActionMap actionMap;
+    private final SessionsList sessionList;
 
     public GuiParseSaxHandler(CALCubeTimerFrame calCubeTimerFrame, JFrame frame, Configuration configuration,
-                              DynamicBorderSetter dynamicBorderSetter,
+                              DynamicBorderSetter dynamicBorderSetter, SessionsList sessionsList,
                               XMLGuiMessages xmlGuiMessages, ActionMap actionMap){
         this.calCubeTimerFrame = calCubeTimerFrame;
         this.frame = frame;
@@ -53,6 +55,7 @@ class GuiParseSaxHandler extends DefaultHandler {
         this.dynamicBorderSetter = dynamicBorderSetter;
         this.xmlGuiMessages = xmlGuiMessages;
         this.actionMap = actionMap;
+        this.sessionList = sessionsList;
 
         componentTree = new ArrayList<>();
         strings = new ArrayList<>();
@@ -254,7 +257,7 @@ class GuiParseSaxHandler extends DefaultHandler {
                 com = scroll;
                 break;
             case "tabbedpane":
-                com = new DynamicTabbedPane(configuration, xmlGuiMessages);
+                com = new DynamicTabbedPane(configuration, xmlGuiMessages, sessionList);
                 com.setName(componentID + "");
                 calCubeTimerFrame.tabbedPanes.add((JTabbedPane) com);
                 break;

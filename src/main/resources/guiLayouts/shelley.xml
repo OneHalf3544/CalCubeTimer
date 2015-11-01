@@ -56,7 +56,7 @@
 			</panel>
 			<panel nominsize="false" layout="border">
 				<tabbedpane>
-					<component name="i18n[times] %%session.puzzleType%%" type="timesList"/>
+					<component name="i18n[times] (stats[session.puzzleType])" type="timesList"/>
 					<component name="i18n[sessions]" type="sessionsList"/>
 				</tabbedpane>
 			</panel>
