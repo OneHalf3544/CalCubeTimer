@@ -79,7 +79,7 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerStarted() {
-        LOG.info("timer started");
+        LOG.debug("timer started");
         model.setTiming(true);
         model.stopInspection();
 
@@ -97,7 +97,7 @@ class TimingListenerImpl implements TimingListener {
 
     @Override
     public void timerStopped(TimerState newTime) {
-        LOG.info("timer stopped: " + new SolveTime(newTime.getTime()));
+        LOG.debug("timer stopped: " + new SolveTime(newTime.getTime()));
         model.setTiming(false);
         model.stopMetronome();
 
@@ -106,7 +106,6 @@ class TimingListenerImpl implements TimingListener {
         if(fullScreenTiming) {
             calCubeTimerFrame.setFullScreen(false);
         }
-
     }
 
     @Override

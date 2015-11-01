@@ -35,6 +35,7 @@ public interface CalCubeTimerModel extends CurrentProfileHolder {
 
     TimingListener getTimingListener();
 
+    @Deprecated // todo move to TimerState
     long getLastSplit();
 
     StackmatInterpreter getStackmatInterpreter();
@@ -46,7 +47,7 @@ public interface CalCubeTimerModel extends CurrentProfileHolder {
 
     boolean isInspecting();
 
-    @Deprecated // move to timerState
+    @Deprecated // todo move to TimerState
     List<SolveTime> getSplits();
 
     void stopInspection();

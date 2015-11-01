@@ -30,7 +30,6 @@ public class Session implements Commentable, Comparable<Session> {
 	@NotNull
 	private final CurrentProfileHolder currentProfileHolder;
 
-	//adds itself to the puzzlestatistics to which it belongs
 	public Session(@NotNull LocalDateTime startSessionTime, @NotNull PuzzleType puzzleType,
 				   @NotNull SolutionDao solutionDao, @NotNull CurrentProfileHolder currentProfileHolder) {
 		this.dateStarted = startSessionTime;

@@ -44,6 +44,7 @@ public interface CalCubeTimerGui {
 
     void saveToConfiguration();
 
+    @Deprecated // todo move to TimerState
     void addSplit(TimerState newSplit);
 
     void setFullScreen(boolean b);
