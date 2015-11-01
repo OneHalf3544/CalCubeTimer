@@ -23,34 +23,34 @@
 							</panel>
 						</scrollpane>
 						<panel layout="border">
-							<center><panel><checkbox alignmentX=".5" action="keyboardTiming">"i18n[usekeyboard]</checkbox></panel></center>
+							<center><panel><checkbox alignmentX=".5" action="keyboardTiming">i18n[usekeyboard]</checkbox></panel></center>
 							<line_end>
 								<panel>
-									<button action="newSession">"i18n[newsession]</button>
-									<button action="reset">"i18n[clearsession]</button>
+									<button action="newSession">i18n[newsession]</button>
+									<button action="reset">i18n[clearsession]</button>
 								</panel>
 							</line_end>
 						</panel>
 						<panel layout="box" orientation="line">
 							<panel border="i18n[seshstats]" layout="grid" cols="1">
 								<panel layout="box" orientation="line">
-									<label>"i18n[raof] stats[ra(0).size]</label>
-									<button action="currentAverage0"><![CDATA[<html><font color="config[Statistics_Color_currentAverage]">"i18n[currave] stats[ra(0, recent)] stats[ra(0).progress|parens]</font></html>]]></button>
-									<button action="bestAverage0"><![CDATA[<html><font color="config[Statistics_Color_bestRA]">"i18n[bestra] stats[ra(0, best)]</font></html>]]></button>
+									<label>i18n[raof] stats[ra(0).size]</label>
+									<button action="currentAverage0"><![CDATA[<html><font color="config[Statistics_Color_currentAverage]">i18n[currave] stats[ra(0, recent)] stats[ra(0).progress|parens]</font></html>]]></button>
+									<button action="bestAverage0"><![CDATA[<html><font color="config[Statistics_Color_bestRA]">i18n[bestra] stats[ra(0, best)]</font></html>]]></button>
 								</panel>
 								<panel layout="box" orientation="line">
-									<label>"i18n[raof] stats[ra(1).size]</label>
-									<button action="currentAverage1"><![CDATA[<html><font color="config[Statistics_Color_currentAverage]">"i18n[currave] stats[ra(1, recent)] stats[ra(1).progress|parens]</font></html>]]></button>
-									<button action="bestAverage1"><![CDATA[<html><font color="config[Statistics_Color_bestRA]">"i18n[bestra] stats[ra(1, best)]</font></html>]]></button>
+									<label>i18n[raof] stats[ra(1).size]</label>
+									<button action="currentAverage1"><![CDATA[<html><font color="config[Statistics_Color_currentAverage]">i18n[currave] stats[ra(1, recent)] stats[ra(1).progress|parens]</font></html>]]></button>
+									<button action="bestAverage1"><![CDATA[<html><font color="config[Statistics_Color_bestRA]">i18n[bestra] stats[ra(1, best)]</font></html>]]></button>
 								</panel>
 								<panel layout="box" orientation="line">
 									<label>stats[session.solvecount(solved)]/stats[session.solvecount(attempt)] i18n[solves]/i18n[attempts])</label>
-									<button action="sessionAverage"><![CDATA[<html>"i18n[seshave] stats[session.average] stats[session.average.progress|parens]</html>]]></button>
+									<button action="sessionAverage"><![CDATA[<html>i18n[seshave] stats[session.average] stats[session.average.progress|parens]</html>]]></button>
 								</panel>
 							</panel>
 							<panel border="i18n[history]" layout="box" orientation="page">
-								<panel><label alignmentX=".5">"i18n[bestever] stats[global.time(best)]</label></panel>
-								<panel><label alignmentX=".5">"i18n[bestraof] stats[ra(0).size]: stats[global.ra(0, best)]</label></panel>
+								<panel><label alignmentX=".5">i18n[bestever] stats[global.time(best)]</label></panel>
+								<panel><label alignmentX=".5">i18n[bestraof] stats[ra(0).size]: stats[global.ra(0, best)]</label></panel>
 								<panel><label alignmentX=".5">stats[global.solvecount(solved)]/stats[global.solvecount(attempt)] i18n[globalaverage] stats[global.average]</label></panel>
 							</panel>
 						</panel>
@@ -109,7 +109,7 @@
 										best average list: stats[ra(0, best).list]<br/>
 										current average list: stats[ra(0, recent).list]<br/>
 										session average list: stats[session.list]<br/>
-										worst average list: stats[ra(0, worst).list`<br/>
+										worst average list: stats[ra(0, worst).list]<br/>
 									</html>]]>
 								</selectablelabel>
 							</center>

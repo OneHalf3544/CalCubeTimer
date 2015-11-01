@@ -5,7 +5,7 @@
         <Property name="filename">target/cct-0.9.5.log</Property>
         <Property name="format">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %m%n</Property>
     </Properties>
-    <ThresholdFilter level="TRACE"/>
+    <ThresholdFilter level="INFO"/>
 
     <Appenders>
         <Console name="STDOUT">
@@ -21,7 +21,7 @@
     </Appenders>
 
     <Loggers>
-        <logger name="net.gnehzr" level="DEBUG"/>
+        <logger name="net.gnehzr" level="TRACE"/>
         <logger name="org.kociemba" level="ERROR"/>
         <logger name="scramblePlugins" level="DEBUG"/>
         <Root level="ERROR">

@@ -5,6 +5,8 @@ import net.gnehzr.cct.i18n.MessageAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -19,6 +21,8 @@ import static java.util.stream.Collectors.toList;
 import static net.gnehzr.cct.misc.dynamicGUI.DStringPart.Type.*;
 
 public class DynamicString{
+
+	private static final Logger LOG = LogManager.getLogger(DynamicString.class);
 
 	// 1 group - content of parenthesis, 2 group - rest of line
 	private static final Pattern ARG_PATTERN = Pattern.compile("^\\s*\\(([^)]*)\\)\\s*(.*)$");
@@ -93,6 +97,7 @@ public class DynamicString{
 	}
 
 	public String toString(RollingAverageOf num, SessionsList sessions) {
+		LOG.trace("process string {}", this);
 		return dStringParts.stream()
 				.map(s -> s.toString(this, accessor, num, sessions, configuration))
 				.collect(Collectors.joining());
@@ -228,9 +233,16 @@ public class DynamicString{
 				throw unimplementedError(originalString);
 
 			case "sd":
-                if (sessionMatcher.group(2).isEmpty()) {
-                    return Utils.formatTime(stats.getWholeSessionAverage().getStandartDeviation(), configuration.useClockFormat());
-                }
+				switch (sessionMatcher.group(2)) {
+					case "":
+                    	return Utils.formatTime(stats.getWholeSessionAverage().getStandartDeviation(), configuration.useClockFormat());
+					case "(best)" :
+						// TODO make search value with best standardDeviation.
+						return Utils.formatTime(stats.getWholeSessionAverage().getStandartDeviation(), configuration.useClockFormat());
+					case "(worst)":
+						// TODO make search value with worst standardDeviation.
+						return Utils.formatTime(stats.getWholeSessionAverage().getStandartDeviation(), configuration.useClockFormat());
+				}
 				Matcher progressMatcher = PROGRESS_PATTERN.matcher(sessionMatcher.group(2));
 				if (progressMatcher.matches()) {
                     if (progressMatcher.group(1).equals("progress")) {
