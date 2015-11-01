@@ -3,6 +3,7 @@ package net.gnehzr.cct.statistics;
 import net.gnehzr.cct.dao.ProfileEntity;
 import net.gnehzr.cct.dao.SessionEntity;
 import net.gnehzr.cct.dao.SolutionDao;
+import net.gnehzr.cct.main.CurrentProfileHolder;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,19 +27,27 @@ public class Session implements Commentable, Comparable<Session> {
 	private final List<Solution> solutions = new ArrayList<>();
 	private final SolutionDao solutionDao;
 	private String comment = "";
+	@NotNull
+	private final CurrentProfileHolder currentProfileHolder;
 
 	//adds itself to the puzzlestatistics to which it belongs
-	public Session(@NotNull LocalDateTime startSessionTime,
-				   @NotNull PuzzleType puzzleType, @NotNull SolutionDao solutionDao) {
+	public Session(@NotNull LocalDateTime startSessionTime, @NotNull PuzzleType puzzleType,
+				   @NotNull SolutionDao solutionDao, @NotNull CurrentProfileHolder currentProfileHolder) {
 		this.dateStarted = startSessionTime;
 		this.puzzleType = puzzleType;
 		this.solutionDao = solutionDao;
+		this.currentProfileHolder = currentProfileHolder;
 		sessionSolutionsStatistics = new SessionSolutionsStatistics(this);
 	}
 
 	@Override
 	public void setComment(String comment) {
 		this.comment = comment;
+	}
+
+	public void saveCommentInDB(String comment) {
+		setComment(comment);
+		solutionDao.saveSession(currentProfileHolder.getSelectedProfile(), this);
 	}
 
 	@Override

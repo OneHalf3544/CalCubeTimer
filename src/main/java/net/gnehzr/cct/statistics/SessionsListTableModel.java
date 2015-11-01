@@ -131,7 +131,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		if(columnIndex == 8 && value instanceof String) {
-			sessionsList.getNthSession(rowIndex).setComment((String) value);
+			sessionsList.getNthSession(rowIndex).saveCommentInDB((String) value);
 		}
 	}
 

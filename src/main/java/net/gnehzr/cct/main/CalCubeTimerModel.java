@@ -19,7 +19,7 @@ import java.util.List;
  *
  * @author OneHalf
  */
-public interface CalCubeTimerModel {
+public interface CalCubeTimerModel extends CurrentProfileHolder {
 
     String SCRAMBLE_ATTRIBUTE_CHANGED = "Scramble Attribute Changed";
 
@@ -46,6 +46,7 @@ public interface CalCubeTimerModel {
 
     boolean isInspecting();
 
+    @Deprecated // move to timerState
     List<SolveTime> getSplits();
 
     void stopInspection();
@@ -75,10 +76,6 @@ public interface CalCubeTimerModel {
     Session getCurrentSession();
 
     void setSelectedProfile(Profile currentProfile);
-
-    Profile getSelectedProfile();
-
-    SessionsList getSessionsList();
 
     void setScramblesList(ScrambleList scrambleList);
 }
