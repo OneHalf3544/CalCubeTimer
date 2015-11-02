@@ -6,15 +6,16 @@ import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,12 +44,13 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	private DraggableJTable timesTable;
 	private Component prevFocusOwner;
-	private Map<SolveType, JMenuItem> typeButtons;
+	private Map<SolveType, JMenuItem> solveTypeMenuItems;
 	private final Configuration configuration;
 	private final SessionsList sessionsList;
 
 	@Inject
-	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList) {
+	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList,
+											 CalCubeTimerGui calCubeTimerGui) {
 		this.configuration = configuration;
 		this.sessionsList = sessionsList;
 		sessionsList.addStatisticsUpdateListener(() -> {
@@ -56,6 +58,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 				fireTableDataChanged();
 			}
 		});
+		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
+		addTableModelListener(calCubeTimerGui::newSolutionAdded);
 	}
 
 	@Override
@@ -71,10 +75,6 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return columnClasses[columnIndex];
-	}
-
-	public int getSize() {
-		return getRowCount();
 	}
 
 	@Override
@@ -163,8 +163,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	private void setTagRadioButton(ActionEvent e) {
 		//one of the jradio buttons
-		List<SolveType> types = typeButtons.keySet().stream()
-                .filter(key -> typeButtons.get(key).isSelected())
+		List<SolveType> types = solveTypeMenuItems.keySet().stream()
+                .filter(key -> solveTypeMenuItems.get(key).isSelected())
 				.collect(Collectors.toList());
 		sessionsList.getCurrentSession().getStatistics().setSolveTypes(timesTable.getSelectedRow(), types, sessionsList::fireStringUpdates);
 		if (prevFocusOwner != null) {
@@ -176,56 +176,89 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	public void showPopup(MouseEvent e, DraggableJTable timesTable, Component prevFocusOwner) {
 		this.timesTable = timesTable;
 		this.prevFocusOwner = prevFocusOwner;
-		JPopupMenu jpopup = new JPopupMenu();
+
 		int[] selectedSolves = timesTable.getSelectedRows();
 		if (selectedSolves.length == 0) {
 			return;
 		}
-		else if(selectedSolves.length == 1) {
+
+		JPopupMenu jpopup = new JPopupMenu();
+		if(selectedSolves.length == 1) {
 			Solution selectedSolve = sessionsList.getCurrentSession().getSolution(timesTable.getSelectedRow());
-			JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
-					+ Utils.formatTime(selectedSolve.getTime(), configuration.useClockFormat() ));
-			rawTime.setEnabled(false);
-			jpopup.add(rawTime);
 
+			jpopup.add(showRawTimeLabel(selectedSolve));
 			addSplitsPopup(jpopup, selectedSolve);
-
-			JMenuItem edit = new JMenuItem(StringAccessor.getString("StatisticsTableModel.edittime"));
-			edit.addActionListener(this::editTimeMenuItemClicked);
-			jpopup.add(edit);
-
+			jpopup.add(editTimeItem());
 			jpopup.addSeparator();
-			
-			typeButtons = new HashMap<>();
+
+			solveTypeMenuItems = new HashMap<>();
 			ButtonGroup independent = new ButtonGroup();
-			JMenuItem attr = new JRadioButtonMenuItem("<html><b>" + StringAccessor.getString("StatisticsTableModel.nopenalty") + "</b></html>", !selectedSolve.getTime().isPenalty());
-			attr.setEnabled(!selectedSolve.getTime().isTrueWorstTime());
-			attr.addActionListener(this::setTagRadioButton);
-			jpopup.add(attr);
-			independent.add(attr);
-			List<String> solveTagsArray = configuration.getStringArray(VariableKey.SOLVE_TAGS, false);
-			Collection<SolveType> types = SolveType.getSolveTypes(solveTagsArray);
-			for(SolveType type : types) {
-				if(type.isIndependent()) {
-					attr = new JRadioButtonMenuItem("<html><b>" + type.toString() + "</b></html>", selectedSolve.getTime().isType(type));
-					attr.setEnabled(!selectedSolve.getTime().isTrueWorstTime());
-					independent.add(attr);
-				} else {
-					attr = new JCheckBoxMenuItem(type.toString(), selectedSolve.getTime().isType(type));
-				}
-				attr.addActionListener(this::setTagRadioButton);
-				jpopup.add(attr);
-				typeButtons.put(type, attr);
-			}
-			
+			JMenuItem penaltyItem = penaltyItem(selectedSolve);
+			jpopup.add(penaltyItem);
+			independent.add(penaltyItem);
+
+			addTagMenuItems(jpopup, selectedSolve, independent);
+
 			jpopup.addSeparator();
 		}
 
-		JMenuItem discard = new JMenuItem(	StringAccessor.getString("StatisticsTableModel.discard"));
-		discard.addActionListener(this::discardSolution);
-		jpopup.add(discard);
+		jpopup.add(discardItem());
 		timesTable.requestFocusInWindow();
 		jpopup.show(e.getComponent(), e.getX(), e.getY());
+	}
+
+	@NotNull
+	private JMenuItem discardItem() {
+		JMenuItem discard = new JMenuItem(StringAccessor.getString("StatisticsTableModel.discard"));
+		discard.addActionListener(this::discardSolution);
+		return discard;
+	}
+
+	private void addTagMenuItems(JPopupMenu jpopup, Solution selectedSolve, ButtonGroup independent) {
+		for(SolveType type : SolveType.getSolveTypes(configuration.getStringArray(VariableKey.SOLVE_TAGS, false))) {
+            JMenuItem attr;
+            if(type.isIndependent()) {
+                attr = new JRadioButtonMenuItem("<html><b>" + type.toString() + "</b></html>", selectedSolve.getTime().isType(type));
+                attr.setEnabled(!selectedSolve.getTime().isTrueWorstTime());
+                independent.add(attr);
+                attr.addActionListener(this::setTagRadioButton);
+            } else {
+                attr = tagMenuItem(selectedSolve, type);
+            }
+            jpopup.add(attr);
+            solveTypeMenuItems.put(type, attr);
+        }
+	}
+
+	@NotNull
+	private JMenuItem tagMenuItem(Solution selectedSolve, SolveType type) {
+		JMenuItem attr;
+		attr = new JCheckBoxMenuItem(type.toString(), selectedSolve.getTime().isType(type));
+		attr.addActionListener(this::setTagRadioButton);
+		return attr;
+	}
+
+	@NotNull
+	private JMenuItem penaltyItem(Solution selectedSolve) {
+		JMenuItem attr = new JRadioButtonMenuItem("<html><b>" + StringAccessor.getString("StatisticsTableModel.nopenalty") + "</b></html>", !selectedSolve.getTime().isPenalty());
+		attr.setEnabled(!selectedSolve.getTime().isTrueWorstTime());
+		attr.addActionListener(this::setTagRadioButton);
+		return attr;
+	}
+
+	@NotNull
+	private JMenuItem editTimeItem() {
+		JMenuItem edit = new JMenuItem(StringAccessor.getString("StatisticsTableModel.edittime"));
+		edit.addActionListener(this::editTimeMenuItemClicked);
+		return edit;
+	}
+
+	@NotNull
+	private JMenuItem showRawTimeLabel(Solution selectedSolve) {
+		JMenuItem rawTime = new JMenuItem(StringAccessor.getString("StatisticsTableModel.rawtime")
+                + Utils.formatTime(selectedSolve.getTime(), configuration.useClockFormat()));
+		rawTime.setEnabled(false);
+		return rawTime;
 	}
 
 	void addSplitsPopup(JPopupMenu jpopup, Solution selectedSolve) {

@@ -4,6 +4,7 @@ import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 
 /**
  * <p>
@@ -27,6 +28,8 @@ public interface CalCubeTimerGui {
     PuzzleTypeComboBox getPuzzleTypeComboBox();
 
     void loadXMLGUI();
+
+    void newSolutionAdded(TableModelEvent event);
 
     void loadStringsFromDefaultLocale();
 

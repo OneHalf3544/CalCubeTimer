@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
 import com.google.inject.Inject;
+import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,6 +22,11 @@ public class AddTimeAction extends AbstractAction {
 	private CALCubeTimerFrame cct;
 
 	@Inject
+	private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
+	@Inject
+	private CurrentSessionSolutionsTable currentSessionSolutionsTable;
+
+	@Inject
 	public AddTimeAction(CALCubeTimerFrame cct){
 		this.cct = cct;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
@@ -29,11 +35,11 @@ public class AddTimeAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		if(cct.timesTable.isFocusOwner() || cct.timesTable.requestFocusInWindow()) {
+		if (currentSessionSolutionsTable.isFocusOwner() || currentSessionSolutionsTable.requestFocusInWindow()) {
 			//if the timestable is hidden behind a tab, we don't want to let the user add times
-			cct.timesTable.promptForNewRow();
-			Rectangle newTimeRect = cct.timesTable.getCellRect(cct.currentSessionSolutionsTableModel.getRowCount(), 0, true);
-			cct.timesTable.scrollRectToVisible(newTimeRect);
+			currentSessionSolutionsTable.promptForNewRow();
+			Rectangle newTimeRect = currentSessionSolutionsTable.getCellRect(currentSessionSolutionsTableModel.getRowCount(), 0, true);
+			currentSessionSolutionsTable.scrollRectToVisible(newTimeRect);
 		}
 	}
 

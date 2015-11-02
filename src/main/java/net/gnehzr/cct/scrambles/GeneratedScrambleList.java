@@ -35,11 +35,6 @@ public class GeneratedScrambleList implements ScrambleList {
 	}
 
 	@Deprecated
-	public void setScrambleLength(int scrambleLength) {
-		scramblePluginManager.getScrambleVariation(getPuzzleType()).setLength(scrambleLength);
-	}
-
-	@Deprecated
 	public void updateGeneratorGroup(String generatorGroup) {
 		scramblePluginManager.setScrambleSettings(getPuzzleType(), scramblePluginManager.getScrambleVariation(getPuzzleType()).withGeneratorGroup(generatorGroup));
 		scramblePluginManager.saveGeneratorToConfiguration(getPuzzleType());

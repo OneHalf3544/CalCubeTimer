@@ -33,6 +33,10 @@ public class SessionsListTable extends DraggableJTable implements SelectionListe
 		
 		super.setSelectionListener(this);
 		configuration.addConfigurationChangeListener((p) -> refreshModel());
+
+		setName("sessionsTable");
+		//TODO - this wastes space, probably not easy to fix...
+		setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 	}
 
 	@Override
