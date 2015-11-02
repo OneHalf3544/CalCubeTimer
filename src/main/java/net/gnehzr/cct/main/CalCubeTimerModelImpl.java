@@ -87,6 +87,9 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     SessionListener sessionListener = new SessionListener() {
         @Override
         public void sessionSelected(Session session) {
+            if (scramblesList.isImported()) {
+                setScramblesList(new GeneratedScrambleList(sessionsList, configuration));
+            }
             scramblesList.asGenerating().generateScrambleForCurrentSession();
             calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(session.getPuzzleType()); //this will update the scramble
         }
