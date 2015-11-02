@@ -49,10 +49,8 @@ public abstract class ScramblePlugin {
 
 	public List<String> getEnabledPuzzleAttributes(ScramblePluginManager scramblePluginManager, Configuration configuration) {
 		if (scramblePluginManager.getAttributes() == null) {
-			scramblePluginManager.setAttributes(configuration.getStringArray(VariableKey.PUZZLE_ATTRIBUTES(this), false));
-			if(scramblePluginManager.getAttributes() == null) {
-				scramblePluginManager.setAttributes(getDefaultAttributes());
-			}
+			List<String> attributes = configuration.getStringArray(VariableKey.PUZZLE_ATTRIBUTES(this), false);
+			scramblePluginManager.setAttributes(attributes == null ? getDefaultAttributes() : attributes);
 		}
 		return scramblePluginManager.getAttributes();
 	}

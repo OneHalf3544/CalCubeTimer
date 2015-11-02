@@ -2,6 +2,7 @@ package net.gnehzr.cct.main;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * <p>
@@ -16,6 +17,7 @@ class RequestScrambleAction extends AbstractAction {
 	private CALCubeTimerFrame cct;
 
 	public RequestScrambleAction(CALCubeTimerFrame cct){
+		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
 		this.cct = cct;
 	}
 

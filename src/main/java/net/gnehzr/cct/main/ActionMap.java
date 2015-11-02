@@ -11,8 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -51,8 +49,6 @@ public class ActionMap {
 
     @Inject
 	private Configuration configuration;
-    @Inject
-    private ToggleFullscreenTimingAction toggleFullscreenTimingAction;
     @Inject
     private SessionsList sessionsList;
 
@@ -100,11 +96,7 @@ public class ActionMap {
                         calCubeTimerFrame, AverageType.SESSION_AVERAGE, null, configuration, sessionsList);
 
             case SHOW_CONFIGURATION_ACTION: {
-                AbstractAction a = new ShowConfigurationDialogAction(calCubeTimerFrame);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
-                a.putValue(Action.ACCELERATOR_KEY,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK));
-                return a;
+                return new ShowConfigurationDialogAction(calCubeTimerFrame);
             }
             case "exit": {
                 return new ExitAction(calCubeTimerFrame);
@@ -124,9 +116,7 @@ public class ActionMap {
             case SHOW_ABOUT_ACTION:
                 return new AboutAction();
             case "requestscramble": {
-                AbstractAction a = new RequestScrambleAction(calCubeTimerFrame);
-                a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
-                return a;
+                return new RequestScrambleAction(calCubeTimerFrame);
             }
             default:
                 throw new IllegalArgumentException("unknown action: " + actionName);
@@ -151,19 +141,17 @@ public class ActionMap {
 
         public static final String TOGGLE_FULLSCREEN = "togglefullscreen";
 
-        private final CalCubeTimerModel cubeTimerModel;
         private final CalCubeTimerGui calCubeTimerFrame;
 
         @Inject
-        public ToggleFullscreenTimingAction(CalCubeTimerModel cubeTimerModel, CalCubeTimerGui calCubeTimerFrame) {
+        public ToggleFullscreenTimingAction(CalCubeTimerGui calCubeTimerFrame) {
             super("+");
-            this.cubeTimerModel = cubeTimerModel;
             this.calCubeTimerFrame = calCubeTimerFrame;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            calCubeTimerFrame.setFullScreen(!cubeTimerModel.isFullscreen());
+            calCubeTimerFrame.setFullScreen(!calCubeTimerFrame.isFullscreen());
         }
 
         @Inject

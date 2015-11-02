@@ -79,7 +79,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
     private StackmatState lastAccepted = new StackmatState(null, Collections.emptyList());
 
-    private boolean fullscreen = false;
     private Instant inspectionStart = null;
     private Profile currentProfile;
     @Inject
@@ -140,17 +139,6 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
             Objects.requireNonNull(scramblesList.getCurrentScramble());
         }
         this.timing = timing;
-    }
-
-    @Override
-    public boolean isFullscreen() {
-        return fullscreen;
-    }
-
-    @Override
-    public void setFullscreen(boolean fullscreen) {
-        LOG.trace("toggle fullscreen. was {}, new: {}", this.fullscreen, fullscreen);
-        this.fullscreen = fullscreen;
     }
 
     @Override

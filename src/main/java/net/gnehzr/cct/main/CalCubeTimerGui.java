@@ -52,4 +52,8 @@ public interface CalCubeTimerGui {
     JLabel getOnLabel();
 
     void setVisible(boolean visible);
+
+    boolean isFullscreen();
+
+    void setFullscreen(boolean fullscreen);
 }

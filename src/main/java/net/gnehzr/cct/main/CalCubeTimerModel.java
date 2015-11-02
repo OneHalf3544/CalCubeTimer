@@ -3,13 +3,11 @@ package net.gnehzr.cct.main;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.speaking.NumberSpeaker;
-import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.stackmatInterpreter.TimerState;
-import net.gnehzr.cct.statistics.*;
-
-import java.time.Instant;
-import java.util.List;
+import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SolveType;
 
 /**
  * <p>
@@ -19,42 +17,19 @@ import java.util.List;
  *
  * @author OneHalf
  */
-public interface CalCubeTimerModel extends CurrentProfileHolder {
+public interface CalCubeTimerModel extends CurrentProfileHolder, SolvingProcess {
 
     String SCRAMBLE_ATTRIBUTE_CHANGED = "Scramble Attribute Changed";
 
-    boolean isTiming();
-
-    void setTiming(boolean timing);
-
-    boolean isFullscreen();
-
-    void setFullscreen(boolean fullscreen);
-
-    ScrambleList getScramblesList();
-
-    TimingListener getTimingListener();
-
-    @Deprecated // todo move to TimerState
-    long getLastSplit();
-
     StackmatInterpreter getStackmatInterpreter();
 
-    void setLastSplit(long lastSplit);
-
-    //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
-    InspectionState getInspectionValue();
-
-    boolean isInspecting();
-
-    @Deprecated // todo move to TimerState
-    List<SolveTime> getSplits();
-
-    void stopInspection();
+    Metronome getMetronome();
 
     void setPenalty(SolveType plusTwo);
 
-    Metronome getMetronome();
+    void addTime(TimerState newTime);
+
+    void startUpdateInspectionTimer();
 
     NumberSpeaker getNumberSpeaker();
 
@@ -62,21 +37,13 @@ public interface CalCubeTimerModel extends CurrentProfileHolder {
 
     void setLoadedLocale(LocaleAndIcon newLocale);
 
-    void startMetronome();
-
-    void addTime(TimerState newTime);
-
-    void stopMetronome();
-
-    void setInspectionStart(Instant now);
-
-    void startUpdateInspectionTimer();
-
     void saveProfileConfiguration();
 
     Session getCurrentSession();
 
     void setSelectedProfile(Profile currentProfile);
+
+    ScrambleList getScramblesList();
 
     void setScramblesList(ScrambleList scrambleList);
 }

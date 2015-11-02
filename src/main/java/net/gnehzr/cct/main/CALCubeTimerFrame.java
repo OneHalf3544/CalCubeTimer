@@ -54,10 +54,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
+
 @Singleton
 class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	private static final Logger LOG = LogManager.getLogger(CALCubeTimerFrame.class);
+
+	private boolean fullscreen = false;
 
 	CalCubeTimerModel model;
 	private final StackmatInterpreter stackmatInterpreter;
@@ -101,7 +105,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private JMenu customGUIMenu;
 	//This is a more appropriate way of doing gui's, to prevent weird resizing issues
 	private static final Dimension min = new Dimension(235, 30);
-	private DynamicCheckBox[] attributes;
+	private List<DynamicCheckBox> attributeCheckBoxes;
 
 	//{{{ GUIParser
 	//we save these guys to help us save the tabbedPane selection and
@@ -199,7 +203,8 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	public CALCubeTimerFrame(CalCubeTimerModel calCubeTimerModel, StackmatInterpreter stackmatInterpreter,
 							 Configuration configuration, ProfileDao profileDao, ScramblePluginManager scramblePluginManager,
 							 DynamicBorderSetter dynamicBorderSetter,
-							 XMLGuiMessages xmlGuiMessages, ActionMap actionMap, DynamicStringSettableManger dynamicStringComponents) {
+							 XMLGuiMessages xmlGuiMessages, ActionMap actionMap,
+							 DynamicStringSettableManger dynamicStringComponents) {
 		this.model = calCubeTimerModel;
 		this.stackmatInterpreter = stackmatInterpreter;
 		this.configuration = configuration;
@@ -296,6 +301,17 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		persistentComponents.put("sessionslist", sessionsListScrollPane);
 
 		stackmatInterpreter.execute();
+	}
+
+	@Override
+	public boolean isFullscreen() {
+		return fullscreen;
+	}
+
+	@Override
+	public void setFullscreen(boolean fullscreen) {
+		LOG.trace("toggle fullscreen. was {}, new: {}", this.fullscreen, fullscreen);
+		this.fullscreen = fullscreen;
 	}
 
 	@Override
@@ -522,56 +538,55 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void setFullScreen(boolean value) {
-		if(value == model.isFullscreen()) {
-			model.setFullscreen(fullscreenFrame.isVisible());
+		if(value == isFullscreen()) {
+			setFullscreen(fullscreenFrame.isVisible());
 			return;
 		}
-		model.setFullscreen(value);
+		setFullscreen(value);
 		SwingUtilities.invokeLater(() -> {
-			if (model.isFullscreen()) {
+			if (isFullscreen()) {
 				fullscreenFrame.resizeFrame();
 				bigTimersDisplay.requestFocusInWindow();
 			}
-			fullscreenFrame.setVisible(model.isFullscreen());
+			fullscreenFrame.setVisible(isFullscreen());
 		});
 	}
 
 	@Override
 	public void loadXMLGUI() {
 		SwingUtilities.invokeLater(() -> {
-            refreshCustomGUIMenu();
-            Component focusedComponent = CALCubeTimerFrame.this.getFocusOwner();
-            parseXML_GUI(configuration.getXMLGUILayout());
-            Dimension size = configuration.getDimension(VariableKey.MAIN_FRAME_DIMENSION);
-            if(size == null) {
+			refreshCustomGUIMenu();
+			Component focusedComponent = CALCubeTimerFrame.this.getFocusOwner();
+			parseXML_GUI(configuration.getXMLGUILayout());
+			Dimension size = configuration.getDimension(VariableKey.MAIN_FRAME_DIMENSION);
+			if (size == null) {
 				CALCubeTimerFrame.this.pack();
-			}
-            else {
+			} else {
 				CALCubeTimerFrame.this.setSize(size);
 			}
-            Point location = configuration.getPoint(VariableKey.MAIN_FRAME_LOCATION, false);
-            if(location == null)
-                CALCubeTimerFrame.this.setLocationRelativeTo(null);
-            else {
-                if(location.y < 0) //on windows, it is really bad if we let the window appear above the screen
-                    location.y = 0;
-                CALCubeTimerFrame.this.setLocation(location);
-            }
-            CALCubeTimerFrame.this.validate(); //this is needed to get the dividers to show up in the right place
+			Point location = configuration.getPoint(VariableKey.MAIN_FRAME_LOCATION, false);
+			if (location == null)
+				CALCubeTimerFrame.this.setLocationRelativeTo(null);
+			else {
+				if (location.y < 0) //on windows, it is really bad if we let the window appear above the screen
+					location.y = 0;
+				CALCubeTimerFrame.this.setLocation(location);
+			}
+			CALCubeTimerFrame.this.validate(); //this is needed to get the dividers to show up in the right place
 
-            if(!configuration.getBoolean(VariableKey.STACKMAT_ENABLED)) //This is to ensure that the keyboard is focused
-                getTimeLabel().requestFocusInWindow();
-            else if(focusedComponent != null)
-                focusedComponent.requestFocusInWindow();
-            else
-                scrambleHyperlinkArea.requestFocusInWindow();
-            getTimeLabel().componentResized(null);
+			if (!configuration.getBoolean(VariableKey.STACKMAT_ENABLED)) //This is to ensure that the keyboard is focused
+				getTimeLabel().requestFocusInWindow();
+			else if (focusedComponent != null)
+				focusedComponent.requestFocusInWindow();
+			else
+				scrambleHyperlinkArea.requestFocusInWindow();
+			getTimeLabel().componentResized(null);
 
-			setFullScreen(model.isFullscreen());
+			setFullScreen(isFullscreen());
 
-            repaintTimes();
-            actionMap.refreshActions();
-        });
+			repaintTimes();
+			actionMap.refreshActions();
+		});
 	}
 
 	public void keyboardTimingAction() {
@@ -627,7 +642,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	private void setTextToTimeLabels(String time) {
 		getTimeLabel().setText(time);
-		if (model.isFullscreen()) {
+		if (isFullscreen()) {
 			bigTimersDisplay.setText(time);
 		}
 	}
@@ -646,37 +661,23 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	@Override
 	public void createScrambleAttributesPanel() {
 		LOG.debug("create scramble attributes panel");
-		PuzzleType sc = model.getScramblesList().getPuzzleType();
+		PuzzleType puzzleType = model.getScramblesList().getPuzzleType();
 		scrambleAttributesPanel.removeAll();
 
-		List<String> attrs = scramblePluginManager.getAvailablePuzzleAttributes(sc.getScramblePlugin().getClass());
-		attributes = new DynamicCheckBox[attrs.size()];
-		for (int ch = 0; ch < attrs.size(); ch++) { //create checkbox for each possible attribute
-			boolean selected = false;
-			for (String attr : sc.getScramblePlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration)) { //see if attribute is selected
-				if (attrs.get(ch).equals(attr)) {
-					selected = true;
-					break;
-				}
-			}
-			attributes[ch] = new DynamicCheckBox(new DynamicString(attrs.get(ch), sc.getScramblePlugin().getMessageAccessor(), configuration));
-			attributes[ch].setSelected(selected);
-			attributes[ch].setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
-			attributes[ch].setActionCommand(CalCubeTimerModel.SCRAMBLE_ATTRIBUTE_CHANGED);
-			attributes[ch].addActionListener(e -> {
-				ArrayList<String> attrs1 = new ArrayList<>();
-				for (DynamicCheckBox attr : attributes) {
-					if (attr.isSelected()) {
-						attrs1.add(attr.getDynamicString().getRawText());
-					}
-				}
-				scramblePluginManager.setEnabledPuzzleAttributes(attrs1);
-				updateScramble();
-			});
-			scrambleAttributesPanel.add(attributes[ch]);
+		List<String> attrs = scramblePluginManager.getAvailablePuzzleAttributes(puzzleType.getScramblePlugin().getClass());
+		attributeCheckBoxes = new ArrayList<>();
+		for (String availableAttributeName : attrs) {
+			//create checkbox for each possible attribute
+			boolean selected = puzzleType.getScramblePlugin().getEnabledPuzzleAttributes(scramblePluginManager, configuration).stream()
+					.anyMatch(availableAttributeName::equals);
+
+			DynamicCheckBox dynamicCheckBox = new PuzzleAttributeCheckBox(availableAttributeName, puzzleType, selected);
+			attributeCheckBoxes.add(dynamicCheckBox);
+			scrambleAttributesPanel.add(dynamicCheckBox);
 		}
-		if (scrambleAttributesPanel.isDisplayable())
+		if (scrambleAttributesPanel.isDisplayable()) {
 			scrambleAttributesPanel.getParent().validate();
+		}
 	}
 
 	@Override
@@ -733,5 +734,27 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	public JLabel getOnLabel() {
 		return onLabel;
 	}
+
+	private class PuzzleAttributeCheckBox extends DynamicCheckBox {
+		public PuzzleAttributeCheckBox(String availableAttributeName, PuzzleType puzzleType, boolean selected) {
+			super(new DynamicString(
+					availableAttributeName,
+					puzzleType.getScramblePlugin().getMessageAccessor(),
+					CALCubeTimerFrame.this.configuration));
+
+			setSelected(selected);
+			setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
+			setActionCommand(CalCubeTimerModel.SCRAMBLE_ATTRIBUTE_CHANGED);
+			addActionListener(e -> {
+				scramblePluginManager.setEnabledPuzzleAttributes(attributeCheckBoxes.stream()
+						.filter(AbstractButton::isSelected)
+						.map(DynamicCheckBox::getDynamicString)
+						.map(DynamicString::getRawText)
+						.collect(toList()));
+				updateScramble();
+			});
+		}
+	}
+
 }
 
