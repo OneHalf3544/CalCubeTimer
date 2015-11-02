@@ -12,7 +12,6 @@ public class GeneratedScrambleList implements ScrambleList {
 
 	private final ScramblePluginManager scramblePluginManager;
 	private SessionsList sessionsList;
-	private int scrambleNumber;
 
 	private ScrambleString currentScrambleString;
 
@@ -20,7 +19,6 @@ public class GeneratedScrambleList implements ScrambleList {
 		this.sessionsList = sessionsList;
 		this.scramblePluginManager = getPuzzleType().scramblePluginManager;
 
-		this.scrambleNumber = 0;
 		this.currentScrambleString = null;
 		configuration.addConfigurationChangeListener(currentProfile -> generateNext());
 	}
@@ -36,10 +34,12 @@ public class GeneratedScrambleList implements ScrambleList {
 		return this.currentScrambleString = getPuzzleType().generateScramble();
 	}
 
+	@Deprecated
 	public void setScrambleLength(int scrambleLength) {
 		scramblePluginManager.getScrambleVariation(getPuzzleType()).setLength(scrambleLength);
 	}
 
+	@Deprecated
 	public void updateGeneratorGroup(String generatorGroup) {
 		scramblePluginManager.setScrambleSettings(getPuzzleType(), scramblePluginManager.getScrambleVariation(getPuzzleType()).withGeneratorGroup(generatorGroup));
 		scramblePluginManager.saveGeneratorToConfiguration(getPuzzleType());
@@ -57,33 +57,17 @@ public class GeneratedScrambleList implements ScrambleList {
 	}
 
 	@Override
-	public boolean isLastScrambleInList() {
-		return getScrambleNumber() > sessionsList.getCurrentSession().getAttemptsCount();
-	}
-
-	@Override
 	public ScrambleString generateNext() {
-		scrambleNumber++;
-		if (isLastScrambleInList()) {
-			return generateScrambleForCurrentSession();
-		}
-		else {
-			return sessionsList.getCurrentSession().getSolution(scrambleNumber).getScrambleString();
-		}
-	}
-
-	@Override
-	public int getScrambleNumber() {
-		return scrambleNumber + 1;
-	}
-
-	@Override
-	public void setScrambleNumber(int scrambleNumber) {
-		this.scrambleNumber = scrambleNumber - 1;
+		return generateScrambleForCurrentSession();
 	}
 
 	@Override
 	public boolean isGenerating() {
 		return true;
+	}
+
+	@Override
+	public int getScrambleNumber() {
+		return sessionsList.getCurrentSession().getAttemptsCount();
 	}
 }

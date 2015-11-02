@@ -39,7 +39,6 @@ public class ImportedScrambleList implements ScrambleList {
 		return scrambles.get(scrambleNumber);
 	}
 
-	@Override
 	public boolean isLastScrambleInList() {
 		return getScrambleNumber() >= scrambles.size();
 	}
@@ -61,7 +60,6 @@ public class ImportedScrambleList implements ScrambleList {
 		return scrambleNumber + 1;
 	}
 
-	@Override
 	public void setScrambleNumber(int scrambleNumber) {
 		this.scrambleNumber = scrambleNumber - 1;
 	}

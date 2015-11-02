@@ -22,10 +22,7 @@ import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicStringSettableManger;
-import net.gnehzr.cct.scrambles.PuzzleType;
-import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
-import net.gnehzr.cct.scrambles.ScrambleString;
+import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -34,6 +31,7 @@ import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -114,6 +112,9 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	List<JSplitPane> splitPanes = new ArrayList<>();
 	DynamicStringSettableManger dynamicStringComponents;
 
+	@Inject
+	private SessionsList sessionsList;
+
 	final ItemListener profileComboboxListener = new ItemListener() {
 
 		@Override
@@ -176,9 +177,23 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	};
 
 	private ChangeListener scrambleNumberSpinnerListener = e -> {
-		model.getScramblesList().setScrambleNumber((Integer) getScrambleNumberSpinner().getValue());
+		if (model.getScramblesList().isGenerating()) {
+			ScrambleList oldScramblesList = model.getScramblesList();
+			model.setScramblesList(convertCurrentSessionToImportedList(oldScramblesList));
+		}
+		model.getScramblesList().asImported().setScrambleNumber((Integer) getScrambleNumberSpinner().getValue());
 		updateScramble();
 	};
+
+	@NotNull
+	private ImportedScrambleList convertCurrentSessionToImportedList(ScrambleList oldScramblesList) {
+		return new ImportedScrambleList(
+                oldScramblesList.getPuzzleType(),
+                sessionsList.getCurrentSession().getSolutionList().stream()
+                        .map(Solution::getScrambleString)
+                        .collect(toList()),
+                        this);
+	}
 
 	private ChangeListener scrambleLengthListener = e -> {
 		model.getScramblesList().asGenerating().setScrambleLength((Integer) getScrambleLengthSpinner().getValue());
@@ -196,8 +211,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Inject
 	private KeyboardHandler keyHandler;
-	@Inject
-	private SessionsList sessionsList;
 
 	@Inject
 	public CALCubeTimerFrame(CalCubeTimerModel calCubeTimerModel, StackmatInterpreter stackmatInterpreter,
