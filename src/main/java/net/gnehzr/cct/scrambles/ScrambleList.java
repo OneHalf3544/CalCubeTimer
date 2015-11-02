@@ -22,13 +22,7 @@ public interface ScrambleList {
 	@NotNull
 	ScrambleString getCurrentScramble();
 
-	boolean isLastScrambleInList();
-
 	ScrambleString generateNext();
-
-	int getScrambleNumber();
-
-	void setScrambleNumber(int scrambleNumber);
 
 	boolean isGenerating();
 
@@ -45,4 +39,6 @@ public interface ScrambleList {
 		checkState(isImported());
 		return ((ImportedScrambleList) this);
 	}
+
+	int getScrambleNumber();
 }
