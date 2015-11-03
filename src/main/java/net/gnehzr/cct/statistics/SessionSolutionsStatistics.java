@@ -132,7 +132,7 @@ public class SessionSolutionsStatistics {
         notifier.run();
     }
 
-    public int getRASize(RollingAverageOf num) {
+    public int getRASize(@NotNull RollingAverageOf num) {
         return session.getPuzzleType().getRASize(num);
     }
 
@@ -281,7 +281,7 @@ public class SessionSolutionsStatistics {
     public SolveTime getProgressSessionStandardDeviation() {
 		/*
 		return averages.get(num).stream()
-                .min(Comparator.comparing(RollingAverage::getStandartDeviation))
+                .min(Comparator.comparing(RollingAverage::getStandardDeviation))
 				.orElse(RollingAverage.NOT_AVAILABLE);
          */
 		if(getSolveCounter().getAttemptCount() < 2) {

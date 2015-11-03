@@ -247,7 +247,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 			model = (DraggableJTableModel) tableModel;
 			model = new JTableModelWrapper(this, model);
 			super.setModel(model);
-			computePreferredSizes(null);
+			// TODO  computePreferredSizes(null);
 			cols = new Vector<>();
 			for(int ch = 0; ch < getColumnCount(); ch++) {
 				cols.add(new HideableTableColumn(getColumnModel().getColumn(ch), true, ch, ch));

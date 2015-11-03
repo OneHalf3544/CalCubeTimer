@@ -6,6 +6,7 @@ import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.RollingAverageOf;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,12 +44,17 @@ public class VariableKey<H> {
 		return new VariableKey<>("Puzzle_ScrambleLength_" + variationName);
 	}
 
-	public static VariableKey<Integer> RA_SIZE(RollingAverageOf index, PuzzleType custom) {
-		String key = "Puzzle_RA" + index.getCode() + "Size";
-		if(custom != null) {
-			key += "_" + custom.toString();
-		}
-		return new VariableKey<>(key);
+	public static VariableKey<Integer> RA_SIZE(@NotNull RollingAverageOf index, @NotNull PuzzleType puzzleType) {
+		return new VariableKey<>(defaultRaSizeKey(index) + "_" + puzzleType.getVariationName());
+	}
+
+	public static VariableKey<Integer> defaultRaSize(RollingAverageOf index) {
+		return new VariableKey<>(defaultRaSizeKey(index));
+	}
+
+	@NotNull
+	private static String defaultRaSizeKey(RollingAverageOf index) {
+		return "Puzzle_RA" + index.getCode() + "Size";
 	}
 
 	public static VariableKey<Integer> JCOMPONENT_VALUE(String componentID, boolean xmlSpecific, File xmlguiLayout) {

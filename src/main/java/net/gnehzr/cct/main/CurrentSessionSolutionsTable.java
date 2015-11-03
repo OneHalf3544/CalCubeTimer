@@ -4,9 +4,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
+import net.gnehzr.cct.misc.customJTable.RollingAverageRenderer;
 import net.gnehzr.cct.misc.customJTable.SolveTimeEditor;
 import net.gnehzr.cct.misc.customJTable.SolveTimeRenderer;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import net.gnehzr.cct.statistics.RollingAverage;
 import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.SolveTime;
 
@@ -31,6 +33,7 @@ public class CurrentSessionSolutionsTable extends DraggableJTable {
         setName("timesTable");
         setDefaultEditor(SolveTime.class, solveTimeEditor);
         setDefaultRenderer(SolveTime.class, new SolveTimeRenderer(sessionsList, configuration));
+        setDefaultRenderer(RollingAverage.class, new RollingAverageRenderer(sessionsList, configuration));
         setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         setModel(currentSessionSolutionsTableModel);
         //TODO - this wastes space, probably not easy to fix...

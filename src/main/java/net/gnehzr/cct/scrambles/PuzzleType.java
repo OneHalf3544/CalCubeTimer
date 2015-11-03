@@ -65,10 +65,11 @@ public class PuzzleType {
 	public int getRASize(RollingAverageOf index) {
 		Integer size = configuration.getInt(VariableKey.RA_SIZE(index, this));
 		if(size == null) {
-			size = Objects.requireNonNull(configuration.getInt(VariableKey.RA_SIZE(index, null)));
+			size = Objects.requireNonNull(configuration.getInt(VariableKey.defaultRaSize(index)));
 		}
 		return size;
 	}
+
 	public boolean isTrimmed(RollingAverageOf index) {
 		VariableKey<Boolean> key = VariableKey.RA_TRIMMED(index, this);
 		if(!configuration.keyExists(key))

@@ -450,5 +450,4 @@ public class Configuration {
 		return Optional.empty();
 	}
 
-	//********* End of specialized methods ***************//
 }

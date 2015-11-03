@@ -35,8 +35,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	};
 	private Class<?>[] columnClasses = new Class<?>[] {
 			SolveTime.class,
-			SolveTime.class,
-			SolveTime.class,
+			RollingAverage.class,
+			RollingAverage.class,
 			String.class,
 			String.class,
 			String.class,
@@ -89,9 +89,9 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		case 0: //get the solvetime for this index
 			return currentSession.getSolution(rowIndex).getTime();
 		case 1:
-			return currentSession.getStatistics().getRA(rowIndex, RollingAverageOf.OF_5).getAverage();
+			return currentSession.getStatistics().getRA(rowIndex, RollingAverageOf.OF_5);
 		case 2:
-			return currentSession.getStatistics().getRA(rowIndex, RollingAverageOf.OF_12).getAverage();
+			return currentSession.getStatistics().getRA(rowIndex, RollingAverageOf.OF_12);
 		case 3:
 			return currentSession.getSolution(rowIndex).getComment();
 		case 4: //tags
