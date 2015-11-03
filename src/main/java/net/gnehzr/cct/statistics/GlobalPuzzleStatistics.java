@@ -34,6 +34,7 @@ public class GlobalPuzzleStatistics {
 		solvesCounter = new SolveCounter();
 
 		bestTime = sessionsList.getSessions().stream()
+				.filter(session -> session.getPuzzleType() == puzzleType)
 				.map(s -> s.getStatistics().getSession().getRollingAverageForWholeSession().getBestTime())
 				.min(Comparator.comparing(Function.<SolveTime>identity()))
 				.orElse(SolveTime.WORST);
@@ -45,6 +46,9 @@ public class GlobalPuzzleStatistics {
 		globalAverage = new SolveTime(Duration.ZERO);
 
 		for(Session s : sessionsList) {
+			if (s.getPuzzleType() != puzzleType) {
+				continue;
+			}
 			SessionSolutionsStatistics sessionStatistics = s.getStatistics();
 			for(RollingAverageOf ra : RollingAverageOf.values()) {
 				SolveTime ave = sessionStatistics.getBestAverage(ra).getAverage();
@@ -56,7 +60,7 @@ public class GlobalPuzzleStatistics {
 			globalAverage = SolveTime.sum(globalAverage, SolveTime.multiply(sessionStatistics.getSessionAvg(), solves));
 		}
 
-		solvesCounter = SolveCounter.fromSessions(sessionsList);
+		solvesCounter = SolveCounter.fromSessionsForPuzzle(sessionsList, puzzleType);
 
 		if(getSolveCounter().getSolveCount() != 0) {
 			globalAverage = SolveTime.divide(globalAverage, getSolveCounter().getSolveCount());
