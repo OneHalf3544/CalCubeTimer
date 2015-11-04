@@ -1,14 +1,13 @@
 package net.gnehzr.cct.misc.customJTable;
 
 import net.gnehzr.cct.configuration.ProfileListModel;
+import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.dao.ProfileDao;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 
 public class ProfileEditor extends DefaultCellEditor {
 	private Profile value;
@@ -40,12 +39,6 @@ public class ProfileEditor extends DefaultCellEditor {
 				JComponent component = (JComponent) getComponent();
 				component.setBorder(new LineBorder(Color.RED));
 				component.setToolTipText(error);
-				Action toolTipAction = component.getActionMap().get("postTip");
-				if (toolTipAction != null) {
-					ActionEvent postTip = new ActionEvent(component,
-							ActionEvent.ACTION_PERFORMED, "");
-					toolTipAction.actionPerformed(postTip);
-				}
 				return false;
 			}
 		} else

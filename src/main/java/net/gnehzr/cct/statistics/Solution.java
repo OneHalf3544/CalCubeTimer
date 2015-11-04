@@ -29,10 +29,10 @@ public class Solution implements Commentable {
     private Long solutionId;
 
     @NotNull
-    private final SolveTime solveTime;
+    private SolveTime solveTime;
 
     @NotNull
-    private final ScrambleString scrambleString;
+    private ScrambleString scrambleString;
 
     private List<SolveTime> splits = ImmutableList.of();
 
@@ -44,13 +44,9 @@ public class Solution implements Commentable {
     }
 
     public Solution(@NotNull TimerState time, @NotNull ScrambleString scrambleString, List<SolveTime> splits) {
-        this(time, scrambleString);
-        this.splits = splits;
-    }
-
-    private Solution(@NotNull TimerState time, @NotNull ScrambleString scrambleString) {
         this.solveTime = new SolveTime(time.getTime());
         this.scrambleString = scrambleString;
+        this.splits = splits;
     }
 
     public Long getSolutionId() {
@@ -75,6 +71,10 @@ public class Solution implements Commentable {
 
     public SolveTime getTime() {
         return solveTime;
+    }
+
+    public void setSolveTime(@NotNull SolveTime solveTime) {
+        this.solveTime = solveTime;
     }
 
     @Override
@@ -102,5 +102,9 @@ public class Solution implements Commentable {
                 .withSolveTime(getTime().getTime())
                 // todo .withSplits(getSplits())
                 ;
+    }
+
+    public void setScrambleString(@NotNull ScrambleString scrambleString) {
+        this.scrambleString = scrambleString;
     }
 }

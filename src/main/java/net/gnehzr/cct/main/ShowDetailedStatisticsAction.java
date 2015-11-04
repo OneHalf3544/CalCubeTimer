@@ -40,13 +40,15 @@ class ShowDetailedStatisticsAction extends AbstractAction {
 	@Override
 	public void actionPerformed(ActionEvent e){
 		statsHandler.setTitle(StringAccessor.getString("StatsDialogHandler.detailedstats") + " " + type.toString());
-		statsHandler.textArea.setText(getTemplateFor(type).toString(num, sessionsList));
+		statsHandler.textArea.setText(getTemplateFor(type).toString(sessionsList));
 		statsHandler.setVisible(true);
 	}
 
 
 	@NotNull
 	private DynamicString getTemplateFor(SessionSolutionsStatistics.AverageType currentAverageStatistics) {
-		return new DynamicString(configuration.getString(currentAverageStatistics.getConfKey(), false), null, configuration);
+		String template = configuration.getString(currentAverageStatistics.getConfKey(), false);
+		template = template.replace("ra(-1", "ra(" + num.getCode());
+		return new DynamicString(template, null, configuration);
 	}
 }

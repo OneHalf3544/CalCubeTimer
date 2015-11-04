@@ -25,7 +25,7 @@ public class DynamicTabbedPane extends JTabbedPane implements DynamicStringSetta
 	
 	@Override
 	public void addTab(String title, Component component) {
-		DynamicString s = new DynamicString(title, xmlGuiMessages.XMLGUI_ACCESSOR, configuration);
+		DynamicString s = new DynamicString(title, xmlGuiMessages, configuration);
 		tabNames.add(s);
 		super.addTab(s.toString(sessionList), component);
 	}

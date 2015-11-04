@@ -18,23 +18,22 @@ public class XMLGuiMessages implements MessageAccessor {
 
 	private static ResourceBundle RESOURCE_BUNDLE = null;
 
-	public final MessageAccessor XMLGUI_ACCESSOR;
 	private final Configuration configuration;
 
 	@Inject
 	public XMLGuiMessages(Configuration configuration) {
 		this.configuration = configuration;
-		XMLGUI_ACCESSOR = this;
 	}
 	
 	private static String bundleFileName;
 
+	@Inject
 	public void reloadResources() {
 		//we need to load this xml gui's language properties file
 		String fileName = configuration.getXMLGUILayout().getName();
 		fileName = fileName.substring(0, fileName.lastIndexOf('.'));
 		
-		bundleFileName = BUNDLE_NAME + fileName;
+		bundleFileName = Objects.requireNonNull(BUNDLE_NAME) + fileName;
 		try {
 			RESOURCE_BUNDLE = ResourceBundle.getBundle(bundleFileName);
 		} catch(MissingResourceException e) {

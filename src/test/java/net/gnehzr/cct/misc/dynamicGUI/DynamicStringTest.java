@@ -79,7 +79,7 @@ public class DynamicStringTest {
                 new DStringPart("ra(0,best)", DStringPart.Type.STATISTICS_TEXT)
         )));
 
-        String processedString = dynamicString.toString(RollingAverageOf.OF_5, sessionsList);
+        String processedString = dynamicString.toString(sessionsList);
         assertEquals(processedString, "Best rolling average 10 of 12: 23.12");
     }
 

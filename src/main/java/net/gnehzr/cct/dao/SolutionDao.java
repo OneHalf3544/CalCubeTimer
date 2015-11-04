@@ -42,19 +42,14 @@ public class SolutionDao extends HibernateDaoSupport {
 
     public void saveSession(Profile profile, Session session) {
         LOG.info("save current session for {}", profile);
-        SessionEntity sessionEntity = session.toSessionEntity(profile.getId());
+        SessionEntity sessionEntity = session.toSessionEntity(profile.toEntity());
         insertOrUpdate(sessionEntity);
         session.setSessionId(sessionEntity.getSessionId());
     }
 
-    public void deleteSession(Session session) {
+    public void deleteSession(Session session, ProfileEntity profile) {
         LOG.info("remove session {}", session);
-        doWithSession(s -> s.delete(session.toSessionEntity(0L)));
-    }
-
-    public SessionEntity loadSession(Session session) {
-        return queryFirst("FROM SessionEntity WHERE sessionId = :id", ImmutableMap.of(
-                "id", session.getSessionId()));
+        doWithSession(s -> s.delete(session.toSessionEntity(profile)));
     }
 
     public List<String> getUsedPuzzleTypes(Profile profile) {

@@ -11,6 +11,7 @@ import net.gnehzr.cct.main.CalCubeTimerModel;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.toList;
 
 /**
  * <p>
@@ -80,7 +80,7 @@ public class SessionsList implements Iterable<Session> {
 		return ImmutableList.copyOf(sessions);
 	}
 
-	public void setSessions(List</*todo puzzletype?*/Session> sessions) {
+	public void setSessions(List<Session> sessions) {
 		LOG.info("setSessions (count = {})", sessions.size());
 		this.sessions = sessions;
 
@@ -89,9 +89,24 @@ public class SessionsList implements Iterable<Session> {
 				.map(Session::getPuzzleType)
 				.forEach(this::getGlobalPuzzleStatisticsForType);
 
-		this.loadOrCreateLatestSession(scramblePluginManager.getDefaultPuzzleType());
+		Optional<Session> lastSession = findSessionById(sessions, cubeTimerModel.getSelectedProfile().getLastSessionId());
+
+		if (lastSession.isPresent()) {
+			setCurrentSession(lastSession.get());
+		} else {
+			this.loadOrCreateLatestSession(scramblePluginManager.getDefaultPuzzleType());
+		}
 
 		listener.forEach(sessionListener -> sessionListener.sessionAdded(getCurrentSession()));
+	}
+
+	private Optional<Session> findSessionById(List<Session> sessions, Long lastSessionId) {
+		if (lastSessionId == null) {
+			return Optional.empty();
+		}
+		return sessions.stream()
+				.filter(s -> Objects.equals(s.getSessionId(), lastSessionId))
+				.findAny();
 	}
 
 	public void addSessionListener(@NotNull SessionListener sl) {
@@ -122,7 +137,7 @@ public class SessionsList implements Iterable<Session> {
 
 	public void removeSession(Session removedSession) {
 		sessions.remove(removedSession);
-		solutionDao.deleteSession(removedSession);
+		solutionDao.deleteSession(removedSession, cubeTimerModel.getSelectedProfile().toEntity());
 		getGlobalPuzzleStatisticsForType(removedSession.getPuzzleType()).refreshStats();
 
 		if (currentSession == removedSession) {
@@ -147,11 +162,10 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 	private void removeNullSessions() {
-		List<Session> emptySessions = sessions.stream()
-				.filter(s -> s.getAttemptsCount() == 0)
-				.collect(toList());
-		LOG.info("remove nullSessions (count: {})", emptySessions.size());
-		sessions.removeAll(emptySessions);
+		ImmutableList.copyOf(sessions).stream()
+				.filter(session -> session.getAttemptsCount() == 0)
+				.peek(emptySession -> LOG.info("remove empty session {}", emptySession))
+				.forEach(this::removeSession);
 	}
 
 	@NotNull
@@ -193,9 +207,16 @@ public class SessionsList implements Iterable<Session> {
 		getCurrentSession().addSolution(getCurrentSession(), solution, this::fireStringUpdates);
 	}
 
-	public void setComment(String comment, int index) {
+	public void setCommentToSolution(String comment, int index) {
 		Solution solution = getCurrentSession().getSolution(index);
 		solution.setComment(comment);
+		solutionDao.updateSolution(getCurrentSession(), solution);
+		getCurrentSession().getStatistics().refresh(this::fireStringUpdates);
+	}
+
+	public void setScrambleToSolution(ScrambleString scrambleString, int index) {
+		Solution solution = getCurrentSession().getSolution(index);
+		solution.setScrambleString(scrambleString);
 		solutionDao.updateSolution(getCurrentSession(), solution);
 		getCurrentSession().getStatistics().refresh(this::fireStringUpdates);
 	}

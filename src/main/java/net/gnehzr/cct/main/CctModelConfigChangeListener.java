@@ -10,6 +10,7 @@ import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,17 +37,20 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
     private final Configuration configuration;
     private final ScramblePluginManager scramblePluginManager;
     private final ActionMap actionMap;
+    private final SessionsList sessionList;
 
     @Inject
     public CctModelConfigChangeListener(CalCubeTimerGui calCubeTimerGui,
                                         CalCubeTimerModel calCubeTimerModel, ProfileDao profileDao,
-                                        Configuration configuration, ScramblePluginManager scramblePluginManager, ActionMap actionMap) {
+                                        Configuration configuration, ScramblePluginManager scramblePluginManager,
+                                        ActionMap actionMap, SessionsList sessionList) {
         this.calCubeTimerGui = calCubeTimerGui;
         this.calCubeTimerModel = calCubeTimerModel;
         this.profileDao = profileDao;
         this.configuration = configuration;
         this.scramblePluginManager = scramblePluginManager;
         this.actionMap = actionMap;
+        this.sessionList = sessionList;
     }
 
     @Override
@@ -66,8 +70,7 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
         calCubeTimerGui.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
 
         scramblePluginManager.reloadLengthsFromConfiguration(false);
-        calCubeTimerGui.getMainFrame().getPuzzleTypeComboBox().setSelectedItem(
-                scramblePluginManager.getCurrentPuzzleType());
+        calCubeTimerGui.getMainFrame().getPuzzleTypeComboBox().setSelectedItem(sessionList.getCurrentSession().getPuzzleType());
 
         //we need to notify the stackmatinterpreter package because it has been rewritten to
         //avoid configuration entirely (which makes it easier to separate & use as a library)

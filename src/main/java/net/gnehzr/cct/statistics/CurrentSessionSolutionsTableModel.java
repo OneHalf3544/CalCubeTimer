@@ -10,6 +10,8 @@ import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
+import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
+import net.gnehzr.cct.scrambles.ScrambleString;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,32 +23,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 @Singleton
 public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
-	private String[] columnNames = new String[] {
-			"StatisticsTableModel.times",
-			"StatisticsTableModel.ra0",
-			"StatisticsTableModel.ra1",
-			"StatisticsTableModel.comment",
-			"StatisticsTableModel.tags",
-			"StatisticsTableModel.scramble",
-	};
+	private DynamicString[] columnNames;
 	private Class<?>[] columnClasses = new Class<?>[] {
 			SolveTime.class,
 			RollingAverage.class,
 			RollingAverage.class,
 			String.class,
 			String.class,
-			String.class,
+			ScrambleString.class,
 	};
 
 	private DraggableJTable timesTable;
-	private Component prevFocusOwner;
 	private Map<SolveType, JMenuItem> solveTypeMenuItems;
 	private final Configuration configuration;
 	private final SessionsList sessionsList;
+
+	// todo move to DraggableJTableModel
+	private Component prevFocusOwner;
 
 	@Inject
 	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList,
@@ -60,11 +60,20 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		});
 		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
 		addTableModelListener(calCubeTimerGui::newSolutionAdded);
+		columnNames = Stream.of(
+                "i18n[StatisticsTableModel.times]",
+                "i18n[StatisticsTableModel.ra] (stats[ra(1).size])",
+                "i18n[StatisticsTableModel.ra] (stats[ra(0).size])",
+                "i18n[StatisticsTableModel.comment]",
+                "i18n[StatisticsTableModel.tags]",
+                "i18n[StatisticsTableModel.scramble]")
+                .map(s -> new DynamicString(s, StringAccessor::getString, configuration))
+				.toArray(DynamicString[]::new);
 	}
 
 	@Override
 	public String getColumnName(int column) {
-		return StringAccessor.getString(columnNames[column]);
+		return columnNames[column].toString(sessionsList);
 	}
 
 	@Override
@@ -97,7 +106,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		case 4: //tags
 			return Joiner.on(", ").join(currentSession.getSolution(rowIndex).getTime().getTypes());
 		case 5: // scramble
-			return currentSession.getSolution(rowIndex).getScrambleString().getScramble();
+			return currentSession.getSolution(rowIndex).getScrambleString();
 		default:
 			throw new IllegalArgumentException("unsupported column index");
 		}
@@ -105,7 +114,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		return columnIndex == 0 || columnIndex == 3;
+		return columnIndex == 0 || columnIndex == 3 || columnIndex == 5;
 	}
 
 	@Override
@@ -120,11 +129,22 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Override
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
-		if(columnIndex == 0 && value instanceof Solution) {
-			sessionsList.addSolutionToCurrentSession((Solution) value);
-		}
-		else if(columnIndex == 3 && value instanceof String) {
-			sessionsList.setComment((String) value, rowIndex);
+		switch (columnIndex) {
+			case 0:
+				checkArgument(value instanceof SolveTime);
+				Solution solution = sessionsList.getCurrentSession().getSolution(rowIndex);
+				solution.setSolveTime((SolveTime) value);
+				break;
+			case 3:
+				checkArgument(value instanceof String);
+				sessionsList.setCommentToSolution((String) value, rowIndex);
+				break;
+			case 5:
+				checkArgument(value instanceof ScrambleString);
+				sessionsList.setScrambleToSolution((ScrambleString) value, rowIndex);
+				break;
+			default:
+				throw new IllegalArgumentException(String.format("value=%s, column=%s", value, columnIndex));
 		}
 	}
 
@@ -149,6 +169,13 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	private void editTimeMenuItemClicked(ActionEvent e) {
 		timesTable.editCellAt(timesTable.getSelectedRow(), 0);
+		if(prevFocusOwner != null) {
+			prevFocusOwner.requestFocusInWindow();
+		}
+	}
+
+	private void editScrambleMenuItemClicked(ActionEvent e) {
+		timesTable.editCellAt(timesTable.getSelectedRow(), 5);
 		if(prevFocusOwner != null) {
 			prevFocusOwner.requestFocusInWindow();
 		}
@@ -189,6 +216,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			jpopup.add(showRawTimeLabel(selectedSolve));
 			addSplitsPopup(jpopup, selectedSolve);
 			jpopup.add(editTimeItem());
+			jpopup.add(editScrambleItem());
 			jpopup.addSeparator();
 
 			solveTypeMenuItems = new HashMap<>();
@@ -250,6 +278,14 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	private JMenuItem editTimeItem() {
 		JMenuItem edit = new JMenuItem(StringAccessor.getString("StatisticsTableModel.edittime"));
 		edit.addActionListener(this::editTimeMenuItemClicked);
+		return edit;
+	}
+
+
+	@NotNull
+	private JMenuItem editScrambleItem() {
+		JMenuItem edit = new JMenuItem(StringAccessor.getString("StatisticsTableModel.editscramble"));
+		edit.addActionListener(this::editScrambleMenuItemClicked);
 		return edit;
 	}
 

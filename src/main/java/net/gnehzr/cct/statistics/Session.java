@@ -95,6 +95,32 @@ public class Session implements Commentable, Comparable<Session> {
 	}
 
 	public SessionEntity toSessionEntity(Long profileId) {
+		ProfileEntity profile = new ProfileEntity();
+		profile.setProfileId(profileId);
+
+		return toSessionEntity(profile);
+	}
+
+	@NotNull
+	public SessionEntity toSessionEntity(ProfileEntity profile) {
+		SessionEntity sessionEntity = new SessionEntity()
+				.withPluginName(getPuzzleType().getScramblePlugin().getPuzzleName())
+				.withVariationName(getPuzzleType().getVariationName());
+		sessionEntity.setSessionId(sessionId);
+		sessionEntity.setSessionStart(getStartTime());
+		sessionEntity.setComment(comment);
+		sessionEntity.setProfile(profile);
+		sessionEntity.setSolutions(Seq
+				.iterate(0, i -> i++)
+				.limit(sessionSolutionsStatistics.getSolveCounter().getSolveCount())
+				.map(this::getSolution)
+				.map(s -> s.toEntity(sessionEntity))
+				.toList());
+		return sessionEntity;
+	}
+
+
+	public SessionEntity toSessionEntityForDeletion(Long profileId) {
 		SessionEntity sessionEntity = new SessionEntity()
 				.withPluginName(getPuzzleType().getScramblePlugin().getPuzzleName())
 				.withVariationName(getPuzzleType().getVariationName());
@@ -105,12 +131,6 @@ public class Session implements Commentable, Comparable<Session> {
 		ProfileEntity profile = new ProfileEntity();
 		profile.setProfileId(profileId);
 		sessionEntity.setProfile(profile);
-		sessionEntity.setSolutions(Seq
-				.iterate(0, i -> i++)
-				.limit(sessionSolutionsStatistics.getSolveCounter().getSolveCount())
-				.map(this::getSolution)
-				.map(s -> s.toEntity(sessionEntity))
-				.toList());
 		return sessionEntity;
 	}
 

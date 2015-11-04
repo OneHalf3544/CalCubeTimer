@@ -19,8 +19,6 @@ import java.awt.event.KeyEvent;
  */
 public class AddTimeAction extends AbstractAction {
 
-	private CALCubeTimerFrame cct;
-
 	@Inject
 	private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 	@Inject
@@ -28,7 +26,6 @@ public class AddTimeAction extends AbstractAction {
 
 	@Inject
 	public AddTimeAction(CALCubeTimerFrame cct){
-		this.cct = cct;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
 		this.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK));
 	}

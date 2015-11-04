@@ -10,6 +10,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.GeneratedScrambleList;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.speaking.NumberSpeaker;
@@ -93,9 +94,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
 
         @Override
         public void sessionsDeleted() {
-            Session session = sessionsList.getCurrentSession();
-            sessionsList.removeSession(session);
-            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(session.getPuzzleType());
+            PuzzleType currentPuzzleType = sessionsList.getCurrentSession().getPuzzleType();
+            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(currentPuzzleType);
         }
     };
 
