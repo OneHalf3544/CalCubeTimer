@@ -55,7 +55,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		}
 		
 		//parse time to determine raw seconds
-		if(time.endsWith("+")) {
+		if (time.endsWith("+")) {
 			types.add(SolveType.PLUS_TWO);
 			time = time.substring(0, time.length() - 1);
 		}
@@ -84,7 +84,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		}
 
 		double seconds = 0;
-		for(int i = 0; i < temp.length; i++) {
+		for (int i = 0; i < temp.length; i++) {
 			seconds *= 60;
 			double d;
 			try {
@@ -92,7 +92,7 @@ public class SolveTime implements Comparable<SolveTime> {
 			} catch(NumberFormatException e) {
 				throw new IllegalArgumentException(StringAccessor.getString("SolveTime.invalidnumerals"));
 			}
-			if(i != 0 && d >= 60) {
+			if (i != 0 && d >= 60) {
 				throw new IllegalArgumentException(StringAccessor.getString("SolveTime.toolarge"));
 			}
 			seconds += d;
@@ -102,6 +102,9 @@ public class SolveTime implements Comparable<SolveTime> {
 	}
 
 	public Duration getTime() {
+		if (isType(SolveType.PLUS_TWO)) {
+			return time.plusSeconds(2);
+		}
 		return time;
 	}
 
@@ -137,16 +140,12 @@ public class SolveTime implements Comparable<SolveTime> {
 				.orElseGet(() -> Utils.formatTime(this, useClockFormat) + (isType(SolveType.PLUS_TWO) ? "+" : ""));
 	}
 
-	private int value() {
-		return (int) (time.toMillis() / 10  + (isType(SolveType.PLUS_TWO) ? 200 : 0));
-	}
-
 	//the behavior of the following 3 methods is kinda contradictory,
 	//keep this in mind if you're ever going to use SolveTimes in complicated
 	//data structures that depend on these methods
 	@Override
 	public int hashCode() {
-		return this.value();
+		return this.getTime().hashCode();
 	}
 
 	public boolean equals(Object obj) {
@@ -163,7 +162,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		if (this.isInfiniteTime() || another.isInfiniteTime()) {
 			return false;
 		}
-		return this.value() == another.value();
+		return this.getTime().toMillis() == another.getTime().toMillis();
 	}
 
 	@Override
@@ -180,7 +179,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		if(this.isInfiniteTime()) {
 			return 1;
 		}
-		return this.value() - o.value();
+		return this.getTime().compareTo(o.getTime());
 	}
 
 	public List<SolveType> getTypes() {
@@ -191,7 +190,7 @@ public class SolveTime implements Comparable<SolveTime> {
 		return types.contains(t);
 	}
 
-	public void clearType() {
+	public void deleteTypes() {
 		types.clear();
 	}
 
@@ -255,5 +254,15 @@ public class SolveTime implements Comparable<SolveTime> {
 
 	public boolean better(SolveTime solveTime) {
 		return Utils.lessThan(this, solveTime);
+	}
+
+	public SolveTime withTypes(Collection<SolveType> plusTwo) {
+		setTypes(plusTwo);
+		return this;
+	}
+
+	public SolveTime withTypes(SolveType... plusTwo) {
+		setTypes(Arrays.asList(plusTwo));
+		return this;
 	}
 }
