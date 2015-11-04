@@ -212,8 +212,8 @@ public class CalCubeTimerModelImpl implements CalCubeTimerModel {
     @Override
     public void addTime(TimerState timerState) {
         Solution solution = timerState.toSolution(Objects.requireNonNull(scramblesList.getCurrentScramble()), splits);
-        if(penalty == null) {
-            solution.getTime().clearType();
+        if (penalty == null) {
+            solution.getTime().deleteTypes();
         }
         else {
             solution.getTime().setTypes(Collections.singletonList(penalty));

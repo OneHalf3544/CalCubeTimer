@@ -16,15 +16,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 
 public class SolveTimeTest {
 
     Configuration configuration = new Configuration(new SortedProperties(ImmutableMap.<String, String>of(), ImmutableMap.<String, String>of()));
 
     @Test
-    public void testParseDouble() {
-        SolveTime solveTime = new SolveTime("123.45");
-        assertEquals(solveTime.getTime(), Duration.parse("PT123.45S"));
+    public void testEquals() {
+        SolveTime solveTime1 = new SolveTime("123.45");
+        SolveTime solveTime2 = new SolveTime("123.45").withTypes(SolveType.PLUS_TWO);
+        assertNotEquals(solveTime1, solveTime2);
+        assertEquals(solveTime1, new SolveTime("123.45"));
     }
 
     @Test
