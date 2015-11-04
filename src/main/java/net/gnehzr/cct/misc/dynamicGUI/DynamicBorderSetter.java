@@ -28,11 +28,11 @@ public class DynamicBorderSetter {
 
 	public Border getBorder(String dynamicString) {
 		String[] titleAttrs = dynamicString.split(";");
-		DynamicString titleString = new DynamicString(titleAttrs[0], xmlGuiMessages.XMLGUI_ACCESSOR, configuration);
+		DynamicString titleString = new DynamicString(titleAttrs[0], xmlGuiMessages, configuration);
 
 		DynamicString colorString = null;
 		if (titleAttrs.length > 1) {
-			colorString = new DynamicString(titleAttrs[1], xmlGuiMessages.XMLGUI_ACCESSOR, configuration);
+			colorString = new DynamicString(titleAttrs[1], xmlGuiMessages, configuration);
 		}
 
 		Border border = colorString == null

@@ -11,12 +11,14 @@ public class Profile {
     private String name;
 
     private String newName;
+    private Long lastSessionId;
 
     //constructors are private because we want only 1 instance of a profile
     //pointing to a given database
-    public Profile(Long id, String name) {
+    public Profile(Long id, String name, Long lastSessionId) {
         this.id = id;
         this.name = name;
+        this.lastSessionId = lastSessionId;
     }
 
     public Long getId() {
@@ -31,10 +33,10 @@ public class Profile {
         newName = null;
     }
 
-    public ProfileEntity toEntity(Long lastSessionId) {
+    public ProfileEntity toEntity() {
         ProfileEntity profileEntity = new ProfileEntity(name);
         profileEntity.setProfileId(id);
-        profileEntity.setLastSessionId(lastSessionId);
+        profileEntity.setLastSessionId(getLastSessionId());
         profileEntity.setLastLoad(LocalDateTime.now());
         return profileEntity;
     }
@@ -52,7 +54,7 @@ public class Profile {
         if (!(o instanceof Profile)) {
             return false;
         }
-        return Objects.equals(this.getName(), ((Profile)o).getName());
+        return Objects.equals(this.getName(), ((Profile) o).getName());
     }
 
     //this is the only indication to the user of whether we successfully loaded the database file
@@ -75,5 +77,14 @@ public class Profile {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getLastSessionId() {
+        return lastSessionId;
+    }
+
+
+    public void setLastSessionId(Long sessionId) {
+        this.lastSessionId = sessionId;
     }
 }

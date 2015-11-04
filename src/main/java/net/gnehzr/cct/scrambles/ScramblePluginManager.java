@@ -104,10 +104,6 @@ public class ScramblePluginManager {
 		return variations;
 	}
 
-	public PuzzleType getCurrentPuzzleType() {
-		return getPuzzleTypeByString(configuration.getString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, false));
-	}
-
 	public PuzzleType getPuzzleTypeByVariation(PuzzleType scrambleSettings) {
 		return getPuzzleTypeByString(scrambleSettings.getVariationName());
 	}
@@ -233,6 +229,6 @@ public class ScramblePluginManager {
 	}
 
 	public PuzzleType getDefaultPuzzleType() {
-		return getPuzzleTypeByString("3x3x3");
+		return getPuzzleTypeByString(configuration.getString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, false));
 	}
 }

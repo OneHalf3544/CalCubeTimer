@@ -55,12 +55,12 @@ public class ProfileDao extends HibernateDaoSupport {
     private Profile mapEntityToProfile(@NotNull String name, ProfileEntity profileEntity) {
         Profile profile;
         if (profileEntity != null) {
-            profile = new Profile(profileEntity.getProfileId(), name);
+            profile = new Profile(profileEntity.getProfileId(), name, profileEntity.getLastSessionId());
             return profile;
         } else {
             LOG.info("save profile for {}", name);
-            profile = new Profile(null, name);
-            saveProfile(profile, null);
+            profile = new Profile(null, name, null);
+            saveProfile(profile);
             return profile;
         }
     }
@@ -68,12 +68,12 @@ public class ProfileDao extends HibernateDaoSupport {
     public void insertProfile(Profile profile) {
         if (profile.getId() == null) {
             LOG.info("insert profile for {}", profile);
-            saveProfile(profile, null);
+            saveProfile(profile);
         }
     }
 
-    private void saveProfile(Profile profile, Long lastSessionId) {
-        ProfileEntity entity = profile.toEntity(lastSessionId);
+    private void saveProfile(Profile profile) {
+        ProfileEntity entity = profile.toEntity();
         insertOrUpdate(entity);
         profile.setId(entity.getProfileId());
     }
@@ -90,7 +90,7 @@ public class ProfileDao extends HibernateDaoSupport {
 
     public Profile getOrCreateGuestProfile() {
         Profile temp = loadProfile(GUEST_NAME);
-        saveProfile(temp, null);
+        saveProfile(temp);
         return temp;
     }
 
@@ -127,6 +127,7 @@ public class ProfileDao extends HibernateDaoSupport {
 
     public void saveLastSession(Profile profile, SessionsList sessionsList) {
         LOG.debug("save last session id for profile {}", profile);
-        saveProfile(profile, sessionsList.getCurrentSession().getSessionId());
+        profile.setLastSessionId(sessionsList.getCurrentSession().getSessionId());
+        saveProfile(profile);
     }
 }

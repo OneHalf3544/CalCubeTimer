@@ -91,15 +91,10 @@ public class DynamicString{
 		return "DynamicString: " + rawString;
 	}
 
-
 	public String toString(SessionsList sessions) {
-		return toString(null, sessions);
-	}
-
-	public String toString(RollingAverageOf num, SessionsList sessions) {
 		LOG.trace("process string {}", this);
 		return dStringParts.stream()
-				.map(s -> s.toString(this, accessor, num, sessions, configuration))
+				.map(s -> s.toString(this, accessor, sessions, configuration))
 				.collect(Collectors.joining());
 	}
 
@@ -120,7 +115,7 @@ public class DynamicString{
 		return addParens ? "(" + result + ")" : result;
 	}
 
-	String getReplacement(DStringPart dStringPart, RollingAverageOf num, SessionsList sessions){
+	String getReplacement(DStringPart dStringPart, SessionsList sessions){
 		if ("date".equalsIgnoreCase(dStringPart.getString())) {
 			return configuration.getDateFormat().format(LocalDateTime.now());
 		}
@@ -137,20 +132,20 @@ public class DynamicString{
 
 		switch (m.group(1)) {
 			case "global":
-				return getForGlobal(num, sessions, originalString, m.group(2));
+				return getForGlobal(sessions, originalString, m.group(2));
 
 			case "session":
 				return getForSession(sessions, originalString, stats, m.group(2));
 
 			case "ra":
-				return getForRollingAverage(num, originalString, stats, m.group(2));
+				return getForRollingAverage(originalString, stats, m.group(2));
 
 			default:
 				throw unimplementedError(originalString);
 		}
 	}
 
-	private String getForGlobal(RollingAverageOf num, SessionsList sessions, String originalString, String suffix) {
+	private String getForGlobal(SessionsList sessions, String originalString, String suffix) {
 		//Database queries for current puzzleType
 		GlobalPuzzleStatistics globalPuzzleStatistics = sessions.getGlobalPuzzleStatisticsForType(sessions.getCurrentSession().getPuzzleType());
 		Pattern globalPattern = Pattern.compile("^\\s*\\.\\s*(time|ra|average|solvecount)\\s*(.*)$");
@@ -165,7 +160,7 @@ public class DynamicString{
 				return getGlobalBestTime(originalString, globalPuzzleStatistics, globalMatcher);
 
 			case "ra":
-				return getGlobalRollingAverage(num, originalString, globalPuzzleStatistics, globalMatcher);
+				return getGlobalRollingAverage(originalString, globalPuzzleStatistics, globalMatcher);
 
 			case "average":
 				return Utils.formatTime(globalPuzzleStatistics.getGlobalAverage(), configuration.useClockFormat());
@@ -178,15 +173,9 @@ public class DynamicString{
 		}
 	}
 
-	private String getGlobalRollingAverage(RollingAverageOf num, String originalString, GlobalPuzzleStatistics globalPuzzleStatistics, Matcher globalMatcher) {
+	private String getGlobalRollingAverage(String originalString, GlobalPuzzleStatistics globalPuzzleStatistics, Matcher globalMatcher) {
 		Tuple2<String[], String> arguments = parseArguments(globalMatcher.group(2));
-		if (num == null) {
-            try {
-                num = RollingAverageOf.byCode(arguments.v1[0]);
-            } catch (NumberFormatException e) {
-                return invalidArgument(arguments.v1[0], originalString);
-            }
-        }
+		RollingAverageOf num = RollingAverageOf.byCode(arguments.v1[0]);
 
 		if (arguments.v1.length < 2) {
             throw invalidNumberOfArguments(originalString);
@@ -286,14 +275,12 @@ public class DynamicString{
 		return "Invalid argument: " + argument  + " : " + originalString;
 	}
 
-	private String getForRollingAverage(RollingAverageOf num, String originalString, SessionSolutionsStatistics stats, String suffix) {
+	private String getForRollingAverage(String originalString, SessionSolutionsStatistics stats, String suffix) {
 		Tuple2<String[], String> raMatcher = parseArguments(suffix);
 		if (raMatcher.v1.length == 0) {
 			throw invalidNumberOfArguments(originalString);
 		}
-		if (num == null) {
-            num = RollingAverageOf.byCode(raMatcher.v1[0]);
-        }
+		RollingAverageOf num = RollingAverageOf.byCode(raMatcher.v1[0]);
 
 		if (raMatcher.v1.length == 1) {
             Pattern arg1Pattern = Pattern.compile("^\\s*\\.\\s*(sd|progress|size)\\s*(.*)$");
@@ -322,7 +309,7 @@ public class DynamicString{
             }
 		} else {
             String avg = raMatcher.v1[1];
-            Pattern raPattern = Pattern.compile("^\\s*\\.\\s*(list|sd|time|stats)\\s*(.*)$");
+            Pattern raPattern = Pattern.compile("^\\s*\\.\\s*(list|sd|time|stats|progress|size)\\s*(.*)$");
             Matcher raMatcher2 = raPattern.matcher(raMatcher.v2);
 
 			if (!raMatcher2.matches()) {

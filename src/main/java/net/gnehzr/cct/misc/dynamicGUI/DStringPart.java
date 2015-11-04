@@ -37,13 +37,13 @@ class DStringPart {
         return string;
     }
 
-    public String toString(DynamicString dynamicString, MessageAccessor accessor, RollingAverageOf num,
+    public String toString(DynamicString dynamicString, MessageAccessor accessor,
                            SessionsList sessions, Configuration configuration) {
         switch (getType()) {
             case I18N_TEXT:
                 return Objects.requireNonNull(accessor).getString(string);
             case STATISTICS_TEXT:
-                return dynamicString.getReplacement(this, num, sessions);
+                return dynamicString.getReplacement(this, sessions);
             case CONFIGURATION_TEXT:
                 return configuration.getString(string);
             case RAW_TEXT:

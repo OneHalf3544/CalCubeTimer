@@ -450,7 +450,7 @@ class GuiParseSaxHandler extends DefaultHandler {
         if(level >= 0){
             if(needText.get(level) && strings.get(level).length() > 0) {
                 if(componentTree.get(level) instanceof DynamicStringSettable)
-                    ((DynamicStringSettable)componentTree.get(level)).setDynamicString(new DynamicString(strings.get(level), xmlGuiMessages.XMLGUI_ACCESSOR, configuration));
+                    ((DynamicStringSettable)componentTree.get(level)).setDynamicString(new DynamicString(strings.get(level), xmlGuiMessages, configuration));
             }
             if(componentTree.get(level) instanceof JTabbedPane) {
                 JTabbedPane temp = (JTabbedPane) componentTree.get(level);

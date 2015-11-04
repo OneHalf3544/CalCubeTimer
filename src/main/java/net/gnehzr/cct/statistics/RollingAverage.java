@@ -180,4 +180,23 @@ public class RollingAverage implements Comparable<RollingAverage> {
     public String toString() {
         return toTerseString();
     }
+
+    public boolean containsTime(SolveTime solveTime) {
+        return solutions.stream()
+                .anyMatch(s -> s.getTime() == solveTime);
+    }
+
+    public SolveTime getFirst() {
+        if (count == 0) {
+            return SolveTime.NOT_AVAILABLE;
+        }
+        return solutions.get(0).getTime();
+    }
+
+    public SolveTime getLast() {
+        if (count == 0) {
+            return SolveTime.NOT_AVAILABLE;
+        }
+        return Utils.getByCircularIndex(-1, solutions).getTime();
+    }
 }

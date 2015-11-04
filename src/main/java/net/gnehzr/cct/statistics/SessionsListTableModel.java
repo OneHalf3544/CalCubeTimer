@@ -15,7 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 
 @Singleton
@@ -35,7 +34,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 			"ProfileDatabase.comment" };
 
 	private static final Class<?>[] COLUMN_CLASSES = new Class<?>[] {
-			LocalDateTime.class,
+			String.class,
 			String.class,
 			SolveTime.class,
 			SolveTime.class,

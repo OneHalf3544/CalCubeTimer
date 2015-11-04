@@ -2,6 +2,7 @@ package net.gnehzr.cct.statistics;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -50,6 +51,13 @@ public class SolveCounter {
 
 	public static SolveCounter fromSessions(SessionsList sessions) {
 		return sessions.getSessions().stream()
+				.map(session -> session.getStatistics().getSolveCounter())
+				.reduce(new SolveCounter(), (solveCounter1, solveCounter2) -> SolveCounter.sum(solveCounter1, solveCounter2));
+	}
+
+	public static SolveCounter fromSessionsForPuzzle(SessionsList sessions, PuzzleType puzzleType) {
+		return sessions.getSessions().stream()
+				.filter(s -> s.getPuzzleType() == puzzleType)
 				.map(session -> session.getStatistics().getSolveCounter())
 				.reduce(new SolveCounter(), (solveCounter1, solveCounter2) -> SolveCounter.sum(solveCounter1, solveCounter2));
 	}

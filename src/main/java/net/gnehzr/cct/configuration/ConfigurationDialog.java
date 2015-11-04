@@ -512,17 +512,7 @@ public class ConfigurationDialog extends JDialog {
 	private JPanel makeScrambleTypeOptionsPanel() {
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 
-		DraggableJTable scramTable = new DraggableJTable(configuration, true, false);
-		scramTable.refreshStrings(StringAccessor.getString("ConfigurationDialog.addpuzzle"));
-		scramTable.getTableHeader().setReorderingAllowed(false);
-		scramTable.setShowGrid(false);
-		scramTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		scramTable.setDefaultRenderer(PuzzleType.class, puzzlesCellEditor);
-		scramTable.setDefaultEditor(PuzzleType.class, puzzlesCellEditor);
-		scramTable.setDefaultEditor(String.class, puzzlesCellEditor);
-		scramTable.setModel(puzzleTypeListModel);
-
-		JScrollPane jsp = new JScrollPane(scramTable);
+		JScrollPane jsp = new JScrollPane(new ScrambleSettingsTable());
 		jsp.setPreferredSize(new Dimension(300, 0));
 		panel.add(jsp, BorderLayout.CENTER);
 		
@@ -943,4 +933,18 @@ public class ConfigurationDialog extends JDialog {
 		configuration.saveConfiguration(cubeTimerModel.getSelectedProfile());
 	}
 
+	private class ScrambleSettingsTable extends DraggableJTable {
+
+		public ScrambleSettingsTable() {
+			super(ConfigurationDialog.this.configuration, true, false);
+			refreshStrings(StringAccessor.getString("ConfigurationDialog.addpuzzle"));
+			getTableHeader().setReorderingAllowed(false);
+			setShowGrid(false);
+			setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+			setDefaultRenderer(PuzzleType.class, puzzlesCellEditor);
+			setDefaultEditor(PuzzleType.class, puzzlesCellEditor);
+			setDefaultEditor(String.class, puzzlesCellEditor);
+			setModel(puzzleTypeListModel);
+		}
+	}
 }

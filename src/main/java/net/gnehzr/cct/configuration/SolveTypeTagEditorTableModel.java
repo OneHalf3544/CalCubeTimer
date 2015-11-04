@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -197,11 +196,6 @@ public class SolveTypeTagEditorTableModel extends DraggableJTableModel {
 				JComponent component = (JComponent) getComponent();
 				component.setBorder(new LineBorder(Color.RED));
 				component.setToolTipText(error);
-				Action toolTipAction = component.getActionMap().get("postTip");
-				if (toolTipAction != null) {
-					ActionEvent postTip = new ActionEvent(component, ActionEvent.ACTION_PERFORMED, "");
-					toolTipAction.actionPerformed(postTip);
-				}
 				return false;
 			}
 			return super.stopCellEditing();

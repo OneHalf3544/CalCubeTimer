@@ -14,10 +14,7 @@ import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.keyboardTiming.KeyboardHandler;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
-import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.SessionsListTable;
-import net.gnehzr.cct.misc.customJTable.SolveTimeEditor;
-import net.gnehzr.cct.misc.customJTable.SolveTimeRenderer;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicCheckBox;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
@@ -39,6 +36,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import javax.inject.Singleton;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.xml.parsers.ParserConfigurationException;
@@ -69,7 +67,9 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private final ProfileDao profileDao;
 
 	private JLabel onLabel = null;
-	DraggableJTable timesTable = null;
+	@Inject
+	private CurrentSessionSolutionsTable currentSessionSolutionsTable = null;
+
 	private JScrollPane timesScroller = null;
 	private SessionsListTable sessionsListTable;
 	ScrambleHyperlinkArea scrambleHyperlinkArea = null;
@@ -195,19 +195,17 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
                         this);
 	}
 
-	private ChangeListener scrambleLengthListener = e -> {
-		model.getScramblesList().asGenerating().setScrambleLength((Integer) getScrambleLengthSpinner().getValue());
-		updateScramble();
+	private ChangeListener scrambleLengthListener = new ChangeListener() {
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			PuzzleType puzzleType = model.getScramblesList().getPuzzleType();
+			scramblePluginManager.getScrambleVariation(puzzleType).setLength((Integer) getScrambleLengthSpinner().getValue());
+			updateScramble();
+		}
 	};
 
 	@Inject
-	private SolveTimeEditor solveTimeEditor;
-
-	@Inject
 	private FullscreenFrame fullscreenFrame;
-
-	@Inject
-	CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
 
 	@Inject
 	private KeyboardHandler keyHandler;
@@ -241,8 +239,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		this.sessionsListTable = sessionsListTable;
-		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
-		currentSessionSolutionsTableModel.addTableModelListener(this::newSolutionAdded);
 
 		puzzleTypeComboBox = new PuzzleTypeComboBox(scramblePluginManager, configuration);
 		puzzleTypeComboBox.addItemListener(scrambleChooserListener);
@@ -266,25 +262,13 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			}
 		};
 
-		timesTable = new DraggableJTable(configuration, false, true);
-		timesTable.setName("timesTable");
-		timesTable.setDefaultEditor(SolveTime.class, solveTimeEditor);
-		timesTable.setDefaultRenderer(SolveTime.class, new SolveTimeRenderer(sessionsList, configuration));
-		timesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		timesTable.setModel(currentSessionSolutionsTableModel);
-		//TODO - this wastes space, probably not easy to fix...
-		timesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		timesScroller = new JScrollPane(timesTable);
-
-		sessionsListTable.setName("sessionsTable");
-		//TODO - this wastes space, probably not easy to fix...
-		sessionsListTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		timesScroller = new JScrollPane(currentSessionSolutionsTable);
 		JScrollPane sessionsListScrollPane = new JScrollPane(sessionsListTable);
 
 		scrambleHyperlinkArea = new ScrambleHyperlinkArea(scramblePopup, configuration, scramblePluginManager);
 		scrambleHyperlinkArea.setAlignmentX(.5f);
 
-		getTimeLabel().setKeyboardHandler(keyHandler);
+		timeLabel.setKeyboardHandler(keyHandler);
 		bigTimersDisplay.setKeyboardHandler(keyHandler);
 
 		customGUIMenu = new JMenu();
@@ -298,7 +282,13 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		languages.addItemListener(languagesComboboxListener);
 		languages.setRenderer(new LocaleRenderer(configuration));
 
-		persistentComponents = new ComponentsMap();
+		persistentComponents = componentsMap(sessionsListScrollPane);
+
+		stackmatInterpreter.execute();
+	}
+
+	private ComponentsMap componentsMap(JScrollPane sessionsListScrollPane) {
+		ComponentsMap persistentComponents = new ComponentsMap();
 		persistentComponents.put("scramblechooser", puzzleTypeComboBox);
 		persistentComponents.put("scramblenumber", scrambleNumberSpinner);
 		persistentComponents.put("scramblelength", scrambleLengthSpinner);
@@ -312,8 +302,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		persistentComponents.put("languagecombobox", languages);
 		persistentComponents.put("profilecombobox", profilesComboBox);
 		persistentComponents.put("sessionslist", sessionsListScrollPane);
-
-		stackmatInterpreter.execute();
+		return persistentComponents;
 	}
 
 	@Override
@@ -332,14 +321,15 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		return this;
 	}
 
-	private void newSolutionAdded(TableModelEvent event) {
+	@Override
+	public void newSolutionAdded(TableModelEvent event) {
 		final Solution latestSolution = sessionsList.getCurrentSession().getLastSolution();
 
 		if (event.getType() == TableModelEvent.INSERT) {
 			//make the new time visible
-			timesTable.invalidate(); //the table needs to be invalidated to force the new time to "show up"!!!
-			Rectangle newTimeRect = timesTable.getCellRect(sessionsList.getCurrentSession().getAttemptsCount(), 0, true);
-			timesTable.scrollRectToVisible(newTimeRect);
+			currentSessionSolutionsTable.invalidate(); //the table needs to be invalidated to force the new time to "show up"!!!
+			Rectangle newTimeRect = currentSessionSolutionsTable.getCellRect(sessionsList.getCurrentSession().getAttemptsCount(), 0, true);
+			currentSessionSolutionsTable.scrollRectToVisible(newTimeRect);
 
 			numberSpeaker.speakTime(latestSolution.getTime());
 		}
@@ -391,14 +381,14 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		sessionsList.fireStringUpdates(); //this is necessary to update the undo-redo actions
 
 		customGUIMenu.setText(StringAccessor.getString("CALCubeTimer.loadcustomgui"));
-		timesTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
+		currentSessionSolutionsTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
 		scramblePopup.setTitle(StringAccessor.getString("CALCubeTimer.scrambleview"));
 		scrambleNumberSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblenumber"));
 		scrambleLengthSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblelength"));
 		scrambleHyperlinkArea.updateStrings();
 
 		model.getTimingListener().stackmatChanged(); //force the stackmat label to refresh
-		timesTable.refreshColumnNames();
+		currentSessionSolutionsTable.refreshColumnNames();
 		sessionsListTable.refreshColumnNames();
 
 		// setLookAndFeel();
@@ -467,7 +457,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			LOG.info("unexpected exception", pce);
 		}
 
-		timesTable.loadFromConfiguration();
+		currentSessionSolutionsTable.loadFromConfiguration();
 		sessionsListTable.loadFromConfiguration();
 
 		for(JSplitPane pane : splitPanes) {
@@ -709,7 +699,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
             configurationDialog = new ConfigurationDialog(
 					this, true, configuration, profileDao, scramblePluginManager,
 					calCubeTimerModel.getNumberSpeaker(), calCubeTimerModel, stackmatInterpreter, model.getMetronome(),
-					timesTable);
+					currentSessionSolutionsTable);
         }
         SwingUtilities.invokeLater(() -> {
             configurationDialog.syncGUIwithConfig(false);
@@ -739,7 +729,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		for (JTabbedPane jtp : tabbedPanes) {
 			configuration.setLong(VariableKey.JCOMPONENT_VALUE(jtp.getName(), true, configuration.getXMLGUILayout()), jtp.getSelectedIndex());
 		}
-		timesTable.saveToConfiguration();
+		currentSessionSolutionsTable.saveToConfiguration();
 		sessionsListTable.saveToConfiguration();
 	}
 
