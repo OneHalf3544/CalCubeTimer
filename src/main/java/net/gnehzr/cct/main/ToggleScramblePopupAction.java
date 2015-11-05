@@ -23,7 +23,7 @@ class ToggleScramblePopupAction extends AbstractAction {
     private Configuration configuration;
 
     @Inject
-    private ScramblePopupFrame scramblePopupFrame;
+    private ScramblePopupPanel scramblePopupFrame;
 
     @Override
     public void actionPerformed(ActionEvent e) {

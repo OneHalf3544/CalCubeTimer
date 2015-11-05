@@ -136,7 +136,6 @@ public class VariableKey<H> {
 	public static final VariableKey<Dimension> STATS_DIALOG_DIMENSION = new VariableKey<>("GUI_StatsDialog_dimension");
 	public static final VariableKey<Dimension> MAIN_FRAME_DIMENSION = new VariableKey<>("GUI_MainFrame_dimension");
 
-	public static final VariableKey<Point> SCRAMBLE_VIEW_LOCATION = new VariableKey<>("GUI_ScrambleView_location");
 	public static final VariableKey<Point> MAIN_FRAME_LOCATION = new VariableKey<>("GUI_MainFrame_location");
 
 	public static final VariableKey<Color> TIMER_BG = new VariableKey<>("GUI_Timer_Color_background");

@@ -16,10 +16,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 @Singleton
-public class ScramblePopupFrame extends JDialog {
+public class ScramblePopupPanel extends JPanel {
 
 	private final Configuration configuration;
-	private JPanel pane;
 	private JTextArea scrambleInfoTextArea;
 	private JScrollPane scrambleInfoScroller;
 	private ScrambleViewComponent incrementalScrambleView;
@@ -29,32 +28,23 @@ public class ScramblePopupFrame extends JDialog {
 	private ToggleScramblePopupAction visibilityAction;
 
 	@Inject
-	public ScramblePopupFrame(CALCubeTimerFrame parent,
-							  Configuration configuration, ScramblePluginManager scramblePluginManager) {
-		super(parent);
+	public ScramblePopupPanel(Configuration configuration, ScramblePluginManager scramblePluginManager) {
+		super(new GridLayout(1, 0));
 		this.configuration = configuration;
 		incrementalScrambleView = new ScrambleViewComponent(configuration, scramblePluginManager);
 		scrambleFinalView       = new ScrambleViewComponent(configuration, scramblePluginManager);
-		pane = new JPanel(new GridLayout(1, 0));
-		pane.add(incrementalScrambleView);
+
+		// TODO add toggle view checkboxes
+		add(incrementalScrambleView);
 		scrambleInfoTextArea = new JTextArea();
 		scrambleInfoScroller = new JScrollPane(scrambleInfoTextArea);
-		this.setContentPane(pane);
+
 		this.configuration.addConfigurationChangeListener(this::configurationChanged);
 		addMouseListener(createMouseListener());
-// todo		setFinalViewVisible(this.configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE));
-	}
-
-	@Inject
-	void initialize() {
-		this.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-		this.setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
-		this.setFocusableWindowState(false);
-
 	}
 
 	public void refreshPopup() {
-		pack();
+		validate();
 		setVisible(incrementalScrambleView.scrambleHasImage() && configuration.getBoolean(VariableKey.SCRAMBLE_POPUP));
 	}
 
@@ -76,10 +66,10 @@ public class ScramblePopupFrame extends JDialog {
 		setFinalViewVisible(configuration.getBoolean(VariableKey.SIDE_BY_SIDE_SCRAMBLE));
 		incrementalScrambleView.syncColorScheme(false);
 		refreshPopup();
-		Point location = configuration.getPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, false);
-		if (location != null) {
-			setLocation(location);
-		}
+	}
+
+	public boolean isScrambleVisible() {
+		return incrementalScrambleView.scrambleHasImage() && configuration.getBoolean(VariableKey.SCRAMBLE_POPUP);
 	}
 
 	public void setScramble(ScrambleString incrementalScramble, ScrambleString fullScramble) {
@@ -87,12 +77,12 @@ public class ScramblePopupFrame extends JDialog {
 		scrambleFinalView.setScramble(fullScramble);
 		String info = incrementalScramble.getTextComments();
 		if(info == null) {
-			pane.remove(scrambleInfoScroller);
+			remove(scrambleInfoScroller);
 		} else {
 			scrambleInfoTextArea.setText(incrementalScramble.getTextComments());
 			scrambleInfoScroller.setPreferredSize(incrementalScrambleView.getPreferredSize()); //force scrollbars if necessary
 			scrambleInfoTextArea.setCaretPosition(0); //force scroll to the top
-			pane.add(scrambleInfoScroller);
+			add(scrambleInfoScroller);
 		}
 		refreshPopup();
 	}
@@ -123,14 +113,14 @@ public class ScramblePopupFrame extends JDialog {
 
 					JPopupMenu popup = new JPopupMenu();
 					popup.add(showFinal);
-					popup.show(ScramblePopupFrame.this, mouseEvent.getX(), mouseEvent.getY());
+					popup.show(ScramblePopupPanel.this, mouseEvent.getX(), mouseEvent.getY());
 				}
 			}
 		};
 	}
 	
 	private boolean isFinalViewVisible() {
-		return scrambleFinalView.getParent() == pane;
+		return scrambleFinalView.getParent() == this;
 	}
 
 	public void setFinalViewVisible(boolean visible) {
@@ -139,11 +129,11 @@ public class ScramblePopupFrame extends JDialog {
 			return;
 		}
 		if(visible) {
-			pane.add(scrambleFinalView, 1);
+			add(scrambleFinalView, 1);
 		}
 		else {
-			pane.remove(scrambleFinalView);
+			remove(scrambleFinalView);
 		}
-		pack();
+		validate();
 	}
 }

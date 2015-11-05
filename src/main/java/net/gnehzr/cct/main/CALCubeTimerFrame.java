@@ -94,7 +94,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	ComponentsMap persistentComponents;
 
 	@Inject
-	ScramblePopupFrame scramblePopup;
+	ScramblePopupPanel scramblePopup;
 
 	ConfigurationDialog configurationDialog;
 	private final DynamicBorderSetter dynamicBorderSetter;
@@ -184,6 +184,9 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		model.getScramblesList().asImported().setScrambleNumber((Integer) getScrambleNumberSpinner().getValue());
 		updateScramble();
 	};
+
+	@Inject
+	private ScramblePopupPanel scramblePopupPanel;
 
 	@NotNull
 	private ImportedScrambleList convertCurrentSessionToImportedList(ScrambleList oldScramblesList) {
@@ -302,6 +305,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		persistentComponents.put("languagecombobox", languages);
 		persistentComponents.put("profilecombobox", profilesComboBox);
 		persistentComponents.put("sessionslist", sessionsListScrollPane);
+		persistentComponents.put("scrambleviewpanel", scramblePopupPanel);
 		return persistentComponents;
 	}
 
@@ -382,7 +386,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 		customGUIMenu.setText(StringAccessor.getString("CALCubeTimer.loadcustomgui"));
 		currentSessionSolutionsTable.refreshStrings(StringAccessor.getString("CALCubeTimer.addtime"));
-		scramblePopup.setTitle(StringAccessor.getString("CALCubeTimer.scrambleview"));
 		scrambleNumberSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblenumber"));
 		scrambleLengthSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblelength"));
 		scrambleHyperlinkArea.updateStrings();
@@ -396,7 +399,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		configurationDialog = null; //this will force the config dialog to reload when necessary
 
 		SwingUtilities.updateComponentTreeUI(this);
-		SwingUtilities.updateComponentTreeUI(scramblePopup);
 	}
 
 	@Override
@@ -719,7 +721,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		for (ScramblePlugin plugin : scramblePluginManager.getScramblePlugins()) {
 			configuration.setStringArray(VariableKey.PUZZLE_ATTRIBUTES(plugin), plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
 		}
-		configuration.setPoint(VariableKey.SCRAMBLE_VIEW_LOCATION, scramblePopup.getLocation());
 		configuration.setDimension(VariableKey.MAIN_FRAME_DIMENSION, getSize());
 		configuration.setPoint(VariableKey.MAIN_FRAME_LOCATION, getLocation());
 

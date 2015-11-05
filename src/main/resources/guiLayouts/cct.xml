@@ -57,10 +57,17 @@
 				</south>
 			</panel>
 			<panel nominsize="false" layout="border">
-				<tabbedpane>
-					<component name="i18n[times] (stats[session.puzzleType])" type="timesList"/>
-					<component name="i18n[sessions]" type="sessionsList"/>
-				</tabbedpane>
+				<splitpane drawcontinuous="true" resizeweight="1" split="vertical">
+					<panel layout="border">
+						<tabbedpane>
+							<component name="i18n[times] (stats[session.puzzleType])" type="timesList"/>
+							<component name="i18n[sessions]" type="sessionsList"/>
+						</tabbedpane>
+					</panel>
+					<panel nominsize="false" layout="border">
+						<component type="scrambleViewPanel"/>
+					</panel>
+				</splitpane>
 			</panel>
 		</splitpane>
 	</panel>

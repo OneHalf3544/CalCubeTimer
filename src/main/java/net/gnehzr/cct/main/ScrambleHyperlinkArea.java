@@ -31,7 +31,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 	private static final Logger LOG = LogManager.getLogger(ScrambleHyperlinkArea.class);
 	private static final Pattern NULL_SCRAMBLE_REGEX = Pattern.compile("^(.+)()$");
 
-	private ScramblePopupFrame scramblePopup;
+	private ScramblePopupPanel scramblePopup;
 	private JEditorPane scramblePane = null;
 	private JPopupMenu success;
 	private JLabel successMsg;
@@ -47,7 +47,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 	private String backgroundColor;
 
 	@Inject
-	public ScrambleHyperlinkArea(ScramblePopupFrame scramblePopup, Configuration configuration, ScramblePluginManager scramblePluginManager) {
+	public ScrambleHyperlinkArea(ScramblePopupPanel scramblePopup, Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		super(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		this.scramblePopup = scramblePopup;
 		this.configuration = configuration;
