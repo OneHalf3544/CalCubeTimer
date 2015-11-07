@@ -62,8 +62,8 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 		addTableModelListener(calCubeTimerGui::newSolutionAdded);
 		columnNames = Stream.of(
                 "i18n[StatisticsTableModel.times]",
-                "i18n[StatisticsTableModel.ra] (stats[ra(1).size])",
                 "i18n[StatisticsTableModel.ra] (stats[ra(0).size])",
+                "i18n[StatisticsTableModel.ra] (stats[ra(1).size])",
                 "i18n[StatisticsTableModel.comment]",
                 "i18n[StatisticsTableModel.tags]",
                 "i18n[StatisticsTableModel.scramble]")

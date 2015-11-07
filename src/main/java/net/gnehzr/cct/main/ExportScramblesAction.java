@@ -39,6 +39,6 @@ class ExportScramblesAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		scrambleImporter.exportScramblesAction(cubeTimerModel.getSelectedProfile(), cubeTimerModel.getScramblesList());
+		scrambleImporter.exportScramblesAction(cubeTimerModel.getScramblesList());
 	}
 }

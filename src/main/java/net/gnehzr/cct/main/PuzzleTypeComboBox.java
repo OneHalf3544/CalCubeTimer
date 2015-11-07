@@ -28,8 +28,13 @@ public final class PuzzleTypeComboBox extends JComboBox<PuzzleType> {
 
 		});
 		configuration.addConfigurationChangeListener(p -> {
-			this.setModel(new DefaultComboBoxModel<>(toArray(scramblePluginManager.getPuzzleTypes(), PuzzleType.class)));
-			this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
+			initialize(scramblePluginManager, configuration);
 		});
+		initialize(scramblePluginManager, configuration);
+	}
+
+	private void initialize(ScramblePluginManager scramblePluginManager, Configuration configuration) {
+		this.setModel(new DefaultComboBoxModel<>(toArray(scramblePluginManager.getPuzzleTypes(), PuzzleType.class)));
+		this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 	}
 }

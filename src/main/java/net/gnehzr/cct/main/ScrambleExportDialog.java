@@ -54,12 +54,12 @@ public class ScrambleExportDialog extends JDialog {
 		scrambleChooser = new PuzzleTypeComboBox(this.scramblePluginManager, this.configuration);
 		scrambleChooser.setSelectedItem(selectedPuzzleType);
 		scrambleChooser.addActionListener(e -> {
-            //if(scrambleLengthJSpinner != null) {
-                PuzzleType puzzleType = (PuzzleType) scrambleChooser.getSelectedItem();
-                scrambleLengthJSpinner.setValue(scramblePluginManager.getScrambleVariation(puzzleType).getLength());
-                numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType).getRASize(RollingAverageOf.OF_5));
-            //}
-        });
+			//if(scrambleLengthJSpinner != null) {
+			PuzzleType puzzleType = (PuzzleType) scrambleChooser.getSelectedItem();
+			scrambleLengthJSpinner.setValue(scramblePluginManager.getScrambleVariation(puzzleType).getLength());
+			numberOfScramblesJSpinner.setValue(scramblePluginManager.getPuzzleTypeByVariation(puzzleType).getRASize(RollingAverageOf.OF_5));
+			//}
+		});
 
 		JPanel subPanel = new JPanel();
 		subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
@@ -99,15 +99,14 @@ public class ScrambleExportDialog extends JDialog {
 		});
 		JButton htmlExportButton = new JButton(StringAccessor.getString("ScrambleExportDialog.htmlexport"));
 		htmlExportButton.addActionListener(e -> {
-			URL file;
 			try {
-				file = new URI(urlField.getText()).toURL();
+				URL file = new URI(urlField.getText()).toURL();
+				if (exportScramblesToHTML(file, getNumberOfScramblesJSpinner(), selectedPuzzleType)) {
+					setVisible(false);
+				}
 			} catch (Exception e1) {
 				Utils.showErrorDialog(ScrambleExportDialog.this, e1, StringAccessor.getString("ScrambleExportDialog.badfilename"));
-				return;
 			}
-			if (exportScramblesToHTML(file, getNumberOfScramblesJSpinner(), selectedPuzzleType))
-				setVisible(false);
 		});
 		JButton cancelButton = new JButton(StringAccessor.getString("ScrambleExportDialog.cancel"));
 		cancelButton.addActionListener(e -> setVisible(false));
@@ -121,7 +120,6 @@ public class ScrambleExportDialog extends JDialog {
 		
 		pack();
 		setLocationRelativeTo(owner);
-		setVisible(true);
 	}
 
 	private int getNumberOfScramblesJSpinner() {

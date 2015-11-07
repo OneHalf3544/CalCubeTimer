@@ -4,8 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.scrambles.*;
-import net.gnehzr.cct.statistics.Profile;
-import net.gnehzr.cct.dao.ProfileDao;
 
 import java.util.List;
 
@@ -13,18 +11,15 @@ import java.util.List;
 public class ScrambleImporter {
 
     private final CalCubeTimerGui calCubeTimerFrame;
-    private final ProfileDao profileDao;
     private final Configuration configuration;
     private final ScramblePluginManager scramblePluginManager;
     private final CalCubeTimerModel model;
 
     @Inject
     public ScrambleImporter(CalCubeTimerGui calCubeTimerGui, CalCubeTimerModel model,
-                            ProfileDao profileDao,
                             Configuration configuration,
                             ScramblePluginManager scramblePluginManager) {
         this.calCubeTimerFrame = calCubeTimerGui;
-        this.profileDao = profileDao;
         this.configuration = configuration;
         this.scramblePluginManager = scramblePluginManager;
         this.model = model;
@@ -36,9 +31,13 @@ public class ScrambleImporter {
         calCubeTimer.updateScramble();
     }
 
-    public void exportScramblesAction(Profile selectedProfile, ScrambleList scramblesList) {
-        new ScrambleExportDialog(calCubeTimerFrame.getMainFrame(), scramblesList.getPuzzleType(),
-                scramblePluginManager, configuration);
+    public void exportScramblesAction(ScrambleList scramblesList) {
+        new ScrambleExportDialog(
+                calCubeTimerFrame.getMainFrame(),
+                scramblesList.getPuzzleType(),
+                scramblePluginManager,
+                configuration)
+                .setVisible(true);
     }
 
 }
