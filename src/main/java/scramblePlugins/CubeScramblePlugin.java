@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.scrambles.*;
+import net.gnehzr.cct.scrambles.crosssolver.CrossSolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     public static final String WIDE_NOTATION_ATTRIBUTE = "i18n[widenotation]";
 
     private static final boolean shortNotation = true;
+    public static final CrossSolver CROSS_SOLVER = new CrossSolver();
 
     private boolean multislice;
     private boolean wideNotation;
@@ -243,7 +245,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     }
 
     private List<String> getCrossSolutions(String scramble, char solveCrossFace, char solveCrossSide) {
-        return CrossSolver.solveCross(solveCrossFace, solveCrossSide, scramble);
+        return CROSS_SOLVER.solveCross(solveCrossFace, solveCrossSide, scramble);
     }
 
     private String generateScramble(int length, int cubeSize, String[][][] image, boolean multiSlice) {

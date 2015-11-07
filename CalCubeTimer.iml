@@ -64,7 +64,6 @@
     <orderEntry type="library" exported="" name="Gradle: com.github.insubstantial:trident:7.3:swing" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.github.insubstantial:laf-plugin:7.3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.github.insubstantial:laf-widget:7.3" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: com.google.code.findbugs:jsr305:3.0.1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.apache.logging.log4j:log4j-api:2.4.1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.apache.logging.log4j:log4j-core:2.4.1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.hibernate:hibernate-core:4.3.8.Final" level="project" />
