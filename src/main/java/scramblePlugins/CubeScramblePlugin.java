@@ -1,6 +1,5 @@
 package scramblePlugins;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.gnehzr.cct.misc.Utils;
@@ -8,14 +7,9 @@ import net.gnehzr.cct.scrambles.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jooq.lambda.tuple.Tuple;
-import org.jooq.lambda.tuple.Tuple2;
-import org.kociemba.twophase.Search;
-import org.kociemba.twophase.Tools;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -42,25 +36,17 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
     private static final String[] FACES_ORDER = {"L", "D", "B", "R", "U", "F"};
 
-    private static final char DEFAULT_SOLVE_FACE = 'U';
-    private static final char DEFAULT_SOLVE_SIDE = 'D';
-
     private static final String REGEXP_345 = "^(?:[LDBRUF]w?|[ldbruf])[2']?$";
     private static final String REGEXP = "^(\\d+)?([LDBRUF])(?:\\((\\d+)\\))?[2']?$";
     private static final Pattern SHORT_PATTERN = Pattern.compile(REGEXP);
 
     public static final String MULTISLICE_ATTRIBUTE = "i18n[multislice]";
-    public static final String OPTIMAL_CROSS_ATTRIBUTE = "i18n[optimalcross]";
     public static final String WIDE_NOTATION_ATTRIBUTE = "i18n[widenotation]";
 
     private static final boolean shortNotation = true;
 
-    private boolean multislice;
-    private boolean wideNotation;
-    private boolean optimalCross;
-
-    //solve the U face on D
-    public final String defaultGenerators = DEFAULT_SOLVE_FACE + " " + DEFAULT_SOLVE_SIDE;
+    protected boolean multislice;
+    protected boolean wideNotation;
 
     @SuppressWarnings("UnusedDeclaration")
     public CubeScramblePlugin() {
@@ -73,17 +59,10 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
         wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
-        optimalCross = attributes.contains(OPTIMAL_CROSS_ATTRIBUTE);
 
         String[][][] image = initializeImage(cubeSize);
-        String scramble;
-        if (cubeSize == 3 && variation.getLength() > 0)
-            scramble = Search.solution(Tools.randomCube(), 21, 10, false);
-        else {
-            scramble = generateScramble(variation.getLength(), cubeSize, image, multislice);
-
-        }
-        return new ScrambleString(puzzleType, scramble, false, variation, this, getTextComments(scramble, cubeSize, variation.getGeneratorGroup()));
+        String scramble = generateScramble(variation.getLength(), cubeSize, image, multislice);
+        return new ScrambleString(puzzleType, scramble, false, variation, this, null);
     }
 
     @Override
@@ -92,7 +71,6 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
         multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
         wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
-        optimalCross = attributes.contains(OPTIMAL_CROSS_ATTRIBUTE);
 
         int cubeSize = getSizeFromVariation(puzzleType.getVariationName());
         String[][][] image = initializeImage(cubeSize);
@@ -101,6 +79,10 @@ public class CubeScramblePlugin extends ScramblePlugin {
         }
         String text = getTextComments(scramble, getSizeFromVariation(puzzleType.getVariationName()), variation.getGeneratorGroup());
         return new ScrambleString(puzzleType, scramble, true, variation.withLength(parseSize(scramble)), this, text);
+    }
+
+    protected String getTextComments(String scramble, int sizeFromVariation, String generatorGroup) {
+        return null;
     }
 
 
@@ -113,29 +95,27 @@ public class CubeScramblePlugin extends ScramblePlugin {
     @Override
     @NotNull
     public ImmutableList<String> getVariations() {
-        return ImmutableList.of("3x3x3", "4x4x4", "5x5x5", "6x6x6", "7x7x7", "8x8x8", "9x9x9", "10x10x10", "11x11x11");
+        return ImmutableList.of(
+                "4x4x4",
+                "5x5x5",
+                "6x6x6",
+                "7x7x7",
+                "8x8x8",
+                "9x9x9",
+                "10x10x10",
+                "11x11x11");
     }
 
     @NotNull
     @Override
     public Map<String, String> getDefaultGenerators() {
-        return ImmutableMap.<String, String>builder()
-                .put("3x3x3", defaultGenerators)
-                .put("4x4x4", defaultGenerators)
-                .put("5x5x5", defaultGenerators)
-                .put("6x6x6", defaultGenerators)
-                .put("7x7x7", defaultGenerators)
-                .put("8x8x8", defaultGenerators)
-                .put("9x9x9", defaultGenerators)
-                .put("10x10x10", defaultGenerators)
-                .put("11x11x11", defaultGenerators)
-                .build();
+        return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
     }
 
     @NotNull
     @Override
     public int[] getDefaultLengths() {
-        return new int[]{25, 40, 60, 80, 100, 120, 140, 160, 180};
+        return new int[]{40, 60, 80, 100, 120, 140, 160, 180};
     }
 
     @NotNull
@@ -143,8 +123,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     public List<String> getAttributes() {
         return ImmutableList.of(
                 MULTISLICE_ATTRIBUTE,
-                WIDE_NOTATION_ATTRIBUTE,
-                OPTIMAL_CROSS_ATTRIBUTE);
+                WIDE_NOTATION_ATTRIBUTE);
     }
 
     @NotNull
@@ -162,19 +141,6 @@ public class CubeScramblePlugin extends ScramblePlugin {
     public final Pattern getTokenRegex() {
         return Pattern.compile("^((?:\\d+)?[LDBRUFldbruf](?:\\(\\d+\\))?w?[2']?)(.*)$");
     }
-
-    protected String getTextComments(String scramble, int cubeSize, String generatorGroup) {
-        if (!optimalCross || cubeSize != 3) {
-            return null;
-        }
-
-        Tuple2<Character, Character> generator = parseGeneratorGroupFor3x3(generatorGroup);
-        List<String> solutions = getCrossSolutions(scramble, generator.v1, generator.v2);
-        Collections.sort(solutions);
-
-        return  Joiner.on("\n").join(solutions);
-    }
-
 
     @Override
     public String htmlify(String formatMe) {
@@ -229,21 +195,6 @@ public class CubeScramblePlugin extends ScramblePlugin {
     protected int getSizeFromVariation(String variation) {
         checkArgument(getVariations().contains(variation));
         return variation.isEmpty() ? 3 : Integer.parseInt(variation.split("x")[0]);
-    }
-
-    public Tuple2<Character, Character> parseGeneratorGroupFor3x3(String generatorGroup) {
-        if (generatorGroup == null) {
-            return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
-        }
-        String[] faces = generatorGroup.split(" ");
-        if (faces.length == 2) {
-            Tuple.tuple(faces[0].charAt(0), faces[1].charAt(0));
-        }
-        return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
-    }
-
-    private List<String> getCrossSolutions(String scramble, char solveCrossFace, char solveCrossSide) {
-        return CrossSolver.solveCross(solveCrossFace, solveCrossSide, scramble);
     }
 
     private String generateScramble(int length, int cubeSize, String[][][] image, boolean multiSlice) {

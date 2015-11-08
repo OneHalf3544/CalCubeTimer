@@ -2,10 +2,9 @@ package net.gnehzr.cct.misc.dynamicGUI;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.MessageAccessor;
-import net.gnehzr.cct.statistics.RollingAverageOf;
 import net.gnehzr.cct.statistics.SessionsList;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.Objects;
 
 /**
@@ -25,7 +24,7 @@ class DStringPart {
         CONFIGURATION_TEXT,
     }
 
-    DStringPart(@Nonnull String string, @Nonnull Type type) {
+    DStringPart(@NotNull String string, @NotNull Type type) {
         this.string = Objects.requireNonNull(string);
         this.type = type;
     }
