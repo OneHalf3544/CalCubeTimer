@@ -1,4 +1,4 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +35,11 @@ public class CrossSolution {
     }
 
 
-    public String toString(Rotate setup_rotations, Rotate r) {
+    public String toString(Rotate setup_rotations) {
         Rotate unsetup = setup_rotations.invert();
-        Rotate rotation = r.invert();
 
-        return rotation.getDesc() + getTurnList().stream()
-                .map(turn -> unsetup.getOGTurn(rotation.getOGTurn(turn)).toString())
+        return unsetup.getDescWithSpace() + getTurnList().stream()
+                .map(turn -> unsetup.getOGTurn(unsetup.getOGTurn(turn)).toString())
                 .collect(joining(" "));
     }
 }

@@ -1,4 +1,4 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

@@ -1,4 +1,5 @@
 scramblePlugins.Cube2x2ScramblePlugin
+scramblePlugins.Cube3x3ScramblePlugin
 scramblePlugins.CubeScramblePlugin
 scramblePlugins.ClockScramblePlugin
 scramblePlugins.MegaminxScramblePlugin

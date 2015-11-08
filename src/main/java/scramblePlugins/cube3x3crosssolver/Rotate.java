@@ -1,4 +1,4 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -123,6 +123,14 @@ public class Rotate {
             default:
                 throw new IllegalStateException();
         }
+    }
+
+    public String getDescWithSpace() {
+        String result = getDesc();
+        if (result.isEmpty()) {
+            return result;
+        }
+        return result + " ";
     }
 
 }

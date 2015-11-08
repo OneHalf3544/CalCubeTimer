@@ -1,4 +1,4 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 /**
  * <p>

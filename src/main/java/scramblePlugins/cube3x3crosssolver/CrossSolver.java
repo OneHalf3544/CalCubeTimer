@@ -1,11 +1,14 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -105,17 +108,14 @@ public class CrossSolver {
         throw new IllegalStateException("cannot solve cross in " + MAX_TURNS + " attempt");
     }
 
-    public List<String> solveCross(char solveColor, char solveSideName, String scramble) {
-        Face solveCrossColor = FACES.inverse().getOrDefault(solveColor, Face.UP);
-        Face solveSide = FACES.inverse().getOrDefault(solveSideName, Face.UP);
+    public List<String> solveCross(Face solveColorSide, Face solveSide, String scramble) {
 
-        Rotate rotateUpToCrossSide = rotateCrossToSolveSide(solveCrossColor, Face.UP);
-        Rotate rotateCrossToSolveSide = rotateCrossToSolveSide(Face.UP, solveSide);
+        Rotate rotate = rotateCrossToSolveSide(solveColorSide, solveSide);
 
-        Cube scrambledCube = SolvedCube.getSolvedState(Face.UP).applyTurns(rotateUpToCrossSide, scramble);
+        Cube scrambledCube = SolvedCube.getSolvedState(solveSide).applyTurns(rotate, scramble);
 
-        return solveCross(scrambledCube, Face.UP).stream()
-                .map(sol -> sol.toString(rotateCrossToSolveSide, rotateUpToCrossSide))
+        return solveCross(scrambledCube, solveSide).stream()
+                .map(sol -> sol.toString(rotate))
                 .collect(Collectors.toList());
     }
 

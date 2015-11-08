@@ -1,6 +1,9 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 import org.testng.annotations.Test;
+import scramblePlugins.cube3x3crosssolver.Face;
+import scramblePlugins.cube3x3crosssolver.Rotate;
+import scramblePlugins.cube3x3crosssolver.Turn;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;

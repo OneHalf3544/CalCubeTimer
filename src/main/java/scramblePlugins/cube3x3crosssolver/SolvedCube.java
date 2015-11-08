@@ -1,4 +1,4 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 import java.util.*;
 
@@ -35,6 +35,7 @@ public class SolvedCube extends Cube {
 
     public int[][] transitions_eo;
     public int[][] transitions_ep;
+    //
     byte[] prune_ep;
 
     public SolvedCube(Face crossSide,

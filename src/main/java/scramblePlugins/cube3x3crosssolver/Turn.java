@@ -1,4 +1,4 @@
-package net.gnehzr.cct.scrambles.crosssolver;
+package scramblePlugins.cube3x3crosssolver;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +12,7 @@ import java.util.Objects;
  *
  * @author OneHalf
  */
-class Turn {
+public class Turn {
 
     public final Face face;
     public final Integer direction;
