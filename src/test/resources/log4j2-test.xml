@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="error" name="RoutingTest" packages="org.apache.logging.log4j.test">
+
+    <Properties>
+        <Property name="format">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %m%n</Property>
+    </Properties>
+    <ThresholdFilter level="DEBUG"/>
+
+    <Appenders>
+        <Console name="STDOUT">
+            <PatternLayout pattern="${format}"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <logger name="net.gnehzr" level="TRACE"/>
+        <logger name="org.kociemba" level="ERROR"/>
+        <logger name="scramblePlugins" level="DEBUG"/>
+        <Root level="ERROR">
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

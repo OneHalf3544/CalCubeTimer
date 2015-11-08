@@ -44,17 +44,17 @@ public class ClockScramblePlugin extends ScramblePlugin {
 
 	@Override
 	public Dimension getImageSize(int gap, int minxRad, String variation) {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getImageSize(gap, minxRad, variation);
+		return NULL_SCRAMBLE_PLUGIN.getImageSize(gap, minxRad, variation);
 	}
 
 	@Override
 	public int getNewUnitSize(int width, int height, int gap, String variation) {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getNewUnitSize(width, height, gap, variation);
+		return NULL_SCRAMBLE_PLUGIN.getNewUnitSize(width, height, gap, variation);
 	}
 
 	@Override
 	public Map<String, Shape> getFaces(int gap, int pieceSize, String variation) {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getFaces(gap, pieceSize, variation);
+		return NULL_SCRAMBLE_PLUGIN.getFaces(gap, pieceSize, variation);
 	}
 
 	@Override
@@ -65,12 +65,12 @@ public class ClockScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public Map<String, Color> getFaceNamesColors() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getFaceNamesColors();
+		return NULL_SCRAMBLE_PLUGIN.getFaceNamesColors();
 	}
 
 	@Override
 	public int getDefaultUnitSize() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultUnitSize();
+		return NULL_SCRAMBLE_PLUGIN.getDefaultUnitSize();
 	}
 
 	@NotNull
@@ -94,7 +94,7 @@ public class ClockScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public List<String> getDefaultAttributes() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
+		return NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
 	}
 
 	@Override
@@ -105,7 +105,7 @@ public class ClockScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public Map<String, String> getDefaultGenerators() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
+		return NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
 	}
 
 	private String generateScramble(){

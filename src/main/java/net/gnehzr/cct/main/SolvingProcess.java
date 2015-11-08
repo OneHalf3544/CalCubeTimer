@@ -1,10 +1,13 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.stackmatInterpreter.InspectionState;
+import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.SolveTime;
+import net.gnehzr.cct.statistics.SolveType;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -16,29 +19,62 @@ import java.util.List;
  */
 public interface SolvingProcess {
 
-    boolean isTiming();
+    /**
+     * Reset time labels and cleanup internal state for new solve
+     */
+    void resetProcess();
 
-    void setTiming(boolean timing);
+    boolean canStartProcess();
+
+    boolean isRunning();
+
+    void startProcess();
+
+    /**
+     * start inspection countdown
+     */
+    void startInspection();
+
+    /**
+     *
+     * @return true, if inspection run
+     */
+    boolean isInspecting();
+
+    /**
+     * @return amount of inspection remaining (in seconds)
+     */
+    Optional<InspectionState> getInspectionState();
+
+    void setInspectionPenalty(SolveType penalty);
+
+    /**
+     * run timer
+     */
+    void startSolving();
+
+    /**
+     *
+     * @return true, if timer is running
+     */
+    boolean isSolving();
+
+    /**
+     * Add solving time of a puzzle part
+     * @param state partial solving time
+     */
+    void addSplit(TimerState state);
+
+    List<SolveTime> getSplits();
+    /**
+     * Add solution after solving finish
+     * @param newTime result of solve
+     */
+    void solvingFinished(TimerState newTime);
+
+    Duration getElapsedTime();
 
     TimingListener getTimingListener();
 
-    long getLastSplit();
-
-    void setLastSplit(long lastSplit);
-
-    //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
-    InspectionState getInspectionValue();
-
-    boolean isInspecting();
-
-    List<SolveTime> getSplits();
-
-    void stopInspection();
-
-    void startMetronome();
-
-    void stopMetronome();
-
-    void setInspectionStart(Instant now);
-
+    TimerState getTimerState();
 }

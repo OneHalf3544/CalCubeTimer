@@ -121,7 +121,7 @@ public class SquareOneScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public List<String> getDefaultAttributes() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
+		return NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
 	}
 
 	@Override

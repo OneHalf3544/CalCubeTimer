@@ -103,13 +103,13 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public List<String> getAttributes() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getAttributes();
+		return NULL_SCRAMBLE_PLUGIN.getAttributes();
 	}
 
 	@NotNull
 	@Override
 	public List<String> getDefaultAttributes() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
+		return NULL_SCRAMBLE_PLUGIN.getDefaultAttributes();
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public class MegaminxScramblePlugin extends ScramblePlugin {
 	@NotNull
 	@Override
 	public Map<String, String> getDefaultGenerators() {
-		return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
+		return NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
 	}
 
 	private int[][] initializeImage() {

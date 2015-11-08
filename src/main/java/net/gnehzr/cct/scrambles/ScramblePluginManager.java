@@ -23,9 +23,6 @@ public class ScramblePluginManager {
 
 	private static final Logger LOG = LogManager.getLogger(ScramblePluginManager.class);
 
-	public static final ScramblePlugin NULL_SCRAMBLE_PLUGIN = new NullScramblePlugin();
-	public static final String NULL_SCRAMBLE_VARIATION_NAME = "NullScrambleVariation";
-
 	private Map<PuzzleType, ScrambleSettings> scrambleVariations;
 
 	private final Configuration configuration;

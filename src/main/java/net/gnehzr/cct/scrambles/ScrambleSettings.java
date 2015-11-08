@@ -52,9 +52,6 @@ public class ScrambleSettings {
 	}
 
 	public static int getScrambleLength(ScramblePlugin scramblePlugin, String variationName, Configuration configuration, boolean defaultValue) {
-		if (scramblePlugin == ScramblePluginManager.NULL_SCRAMBLE_PLUGIN) {
-			return 0;
-		}
 		Integer length = configuration.getInt(VariableKey.scrambleLength(variationName), defaultValue);
 		int i = scramblePlugin.getVariations().indexOf(variationName);
 		if (i == -1) {

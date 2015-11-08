@@ -1,5 +1,7 @@
 package net.gnehzr.cct.main;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,8 +28,8 @@ class ComponentsMap implements Iterable<JComponentAndBorder> {
         return componentMap.get(name.toLowerCase()).c;
     }
 
-    public void put(String name, JComponent c) {
-        componentMap.put(name.toLowerCase(), new JComponentAndBorder(c));
+    public void put(@NotNull String name, @NotNull JComponent component) {
+        componentMap.put(name.toLowerCase(), new JComponentAndBorder(component));
     }
 
     @Override

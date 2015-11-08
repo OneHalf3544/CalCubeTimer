@@ -64,7 +64,7 @@ public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
     @NotNull
     @Override
     public final Map<String, String> getDefaultGenerators() {
-        return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
+        return NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
     }
 
     @NotNull
@@ -76,7 +76,7 @@ public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
     @NotNull
     @Override
     public final List<String> getAttributes() {
-        return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getAttributes();
+        return NULL_SCRAMBLE_PLUGIN.getAttributes();
     }
 
     private String generateScrambleFor2x2() {

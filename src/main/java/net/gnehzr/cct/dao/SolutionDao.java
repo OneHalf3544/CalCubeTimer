@@ -34,6 +34,8 @@ public class SolutionDao extends HibernateDaoSupport {
 
     @Inject
     private CurrentProfileHolder currentProfileHolder;
+    @Inject
+    private ScramblePluginManager scramblePluginManager;
 
     @Inject
     public SolutionDao(SessionFactory sessionFactory) {
@@ -58,7 +60,7 @@ public class SolutionDao extends HibernateDaoSupport {
         ));
     }
 
-    public List<Session> loadSessions(@NotNull Profile profile, ScramblePluginManager scramblePluginManager) {
+    public List<Session> loadSessions(@NotNull Profile profile) {
         List<SessionEntity> sessionEntities = queryList("from SessionEntity where profile.profileId = :profileId",
                 Collections.singletonMap("profileId", profile.getId()));
 

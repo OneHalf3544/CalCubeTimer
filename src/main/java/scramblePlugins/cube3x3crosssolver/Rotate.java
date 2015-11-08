@@ -16,7 +16,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  *
  * @author OneHalf
  */
-public class Rotate {
+public class Rotate implements SolveStep {
 
     public static final Rotate identity = new Rotate("", null) {
         @Override
@@ -25,62 +25,100 @@ public class Rotate {
         }
 
         @Override
+        public String toString() {
+            return "identity";
+        }
+
+        @Override
+        public Rotate plus(Rotate anotherRotate) {
+            return anotherRotate;
+        }
+
+        @Override
         public Rotate doubleRotate() {
             return this;
         }
     };
-    public static final Rotate x = new Rotate("x", 1, Face.FRONT, Face.UP, Face.BACK, Face.DOWN);
-    public static final Rotate y = new Rotate("y", 1, Face.FRONT, Face.LEFT, Face.BACK, Face.RIGHT);
-    public static final Rotate z = new Rotate("z", 1, Face.UP, Face.RIGHT, Face.DOWN, Face.LEFT);
-    private final Integer direction;
+    public static final Rotate x = new Rotate("x", Direction.CLOCKWISE, Face.FRONT, Face.UP, Face.BACK, Face.DOWN);
+    public static final Rotate y = new Rotate("y", Direction.CLOCKWISE, Face.FRONT, Face.LEFT, Face.BACK, Face.RIGHT);
+    public static final Rotate z = new Rotate("z", Direction.CLOCKWISE, Face.UP, Face.RIGHT, Face.DOWN, Face.LEFT);
 
-    private Map<Face, Face> new_og = new HashMap<>();
+    private final Direction direction;
 
-    private final String desc;
+    /**
+     * Colors of the cube sides after rotation from default scramble position:
+     */
+    private Map<Face, RubicsColor> rotatedFaceToFixedCubeFace = new HashMap<>();
 
-    private Rotate(@NotNull String desc, Integer direction) {
-        this.desc = desc;
+    private final String rotateNotation;
+
+    private Rotate(@NotNull String desc, Direction direction) {
+        this.rotateNotation = desc;
         this.direction = direction;
-        for (Face f : Face.values()) {
-            new_og.put(f, f);
+        for (RubicsColor color : RubicsColor.values()) {
+            rotatedFaceToFixedCubeFace.put(color.getFace(), color);
         }
     }
 
-    private Rotate(String desc, Integer direction, Face a, Face b, Face c, Face d) {
+    private Rotate(String desc, Direction direction, Face a, Face b, Face c, Face d) {
         this(desc, direction);
-        new_og.put(b, a);
-        new_og.put(c, b);
-        new_og.put(d, c);
-        new_og.put(a, d);
+        rotatedFaceToFixedCubeFace.put(b, RubicsColor.defaultByFace(a));
+        rotatedFaceToFixedCubeFace.put(c, RubicsColor.defaultByFace(b));
+        rotatedFaceToFixedCubeFace.put(d, RubicsColor.defaultByFace(c));
+        rotatedFaceToFixedCubeFace.put(a, RubicsColor.defaultByFace(d));
     }
 
     public Rotate invert() {
-        Rotate newRotate = new Rotate(desc, (4 - direction) % 4);
-        for (Face newFace : new_og.keySet()) {
-            newRotate.new_og.put(getOGFace(newFace), newFace);
+        Objects.requireNonNull(direction, "cannot inverse rotation when rotate direction is not defined");
+        if (direction == Direction.HALF_TURN) {
+            return this;
+        }
+        Rotate newRotate = new Rotate(rotateNotation, direction.invert());
+        for (Face face : rotatedFaceToFixedCubeFace.keySet()) {
+            newRotate.rotatedFaceToFixedCubeFace.put(
+                    mapTurnFaceToUnrotatedCubeFace(face).getFace(), RubicsColor.defaultByFace(face));
         }
         return newRotate;
     }
 
     public Rotate doubleRotate() {
-        checkArgument(direction == 1);
-        Rotate newRotate = new Rotate(this.desc, (direction + 1) % 4);
-        for (Face newFace : this.new_og.keySet()) {
-            newRotate.new_og.put(newFace, getOGFace(getOGFace(newFace)));
+        checkArgument(direction == Direction.CLOCKWISE);
+        return plus(this, this.getNotation());
+    }
+
+    public Rotate plus(Rotate anotherRotate) {
+        return plus(anotherRotate, this.getNotation() + " " + anotherRotate.getNotation());
+    }
+
+    private Rotate plus(Rotate anotherRotate, String desc) {
+        Direction complexDirection = (this == anotherRotate && this.direction == Direction.CLOCKWISE) ? Direction.HALF_TURN : null;
+        Rotate newRotate = new Rotate(desc, complexDirection);
+        for (Face newFace : this.rotatedFaceToFixedCubeFace.keySet()) {
+            newRotate.rotatedFaceToFixedCubeFace.put(newFace, this.mapTurnFaceToUnrotatedCubeFace(anotherRotate.mapTurnFaceToUnrotatedCubeFace(newFace).getFace()));
         }
         return newRotate;
     }
 
-    public Face getOGFace(Face newFace) {
-        return new_og.get(newFace);
+    /**
+     * transform current face of random oriented cube to face,
+     * @param newFace
+     * @return
+     */
+    public RubicsColor mapTurnFaceToUnrotatedCubeFace(Face newFace) {
+        return rotatedFaceToFixedCubeFace.get(newFace);
     }
 
     public Turn getOGTurn(@NotNull Turn turn) {
-        return new Turn(new_og.get(turn.face), turn.direction);
+        return new Turn(mapTurnFaceToUnrotatedCubeFace(turn.face).getFace(), turn.direction);
     }
 
     public String toString() {
-        return String.format("%s: %s", getDesc(), new_og.toString());
+        return String.format("%s: %s", getDesc(), rotatedFaceToFixedCubeFace.toString());
+    }
+
+    @Override
+    public String getNotation() {
+        return rotateNotation + (direction == null ? "" : direction.getStringCode());
     }
 
     @Override
@@ -88,12 +126,12 @@ public class Rotate {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Rotate rotate = (Rotate) o;
-        return Objects.equals(new_og, rotate.new_og);
+        return Objects.equals(rotatedFaceToFixedCubeFace, rotate.rotatedFaceToFixedCubeFace);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(new_og);
+        return Objects.hash(rotatedFaceToFixedCubeFace);
     }
 
     public Rotate withDirection(Direction direction) {
@@ -114,12 +152,12 @@ public class Rotate {
             return "";
         }
         switch (direction) {
-            case 1:
-                return desc;
-            case 2:
-                return desc + "2";
-            case 3:
-                return desc + "'";
+            case CLOCKWISE:
+                return rotateNotation;
+            case HALF_TURN:
+                return rotateNotation + "2";
+            case COUNTER_CLOCKWISE:
+                return rotateNotation + "'";
             default:
                 throw new IllegalStateException();
         }
@@ -132,5 +170,4 @@ public class Rotate {
         }
         return result + " ";
     }
-
 }

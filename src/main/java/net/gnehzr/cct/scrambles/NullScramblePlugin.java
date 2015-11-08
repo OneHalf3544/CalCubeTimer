@@ -23,7 +23,7 @@ class NullScramblePlugin extends ScramblePlugin {
 
     private static final Logger LOG = LogManager.getLogger(NullScramblePlugin.class);
 
-    public NullScramblePlugin() {
+    NullScramblePlugin() {
         super("NullScramblePlugin", false);
     }
 

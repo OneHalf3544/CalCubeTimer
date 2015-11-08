@@ -4,7 +4,6 @@ import com.google.common.base.Throwables;
 import net.gnehzr.cct.main.CalCubeTimerGui;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.RollingAverageOf;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,9 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 public class VariableKey<H> {
 
@@ -40,7 +36,6 @@ public class VariableKey<H> {
 		return new VariableKey<>("Scramble_Popup_unitSize_" + variation.getVariationName());
 	}
 	public static VariableKey<Integer> scrambleLength(String variationName) {
-		checkArgument(!Objects.equals(variationName, ScramblePluginManager.NULL_SCRAMBLE_VARIATION_NAME));
 		return new VariableKey<>("Puzzle_ScrambleLength_" + variationName);
 	}
 

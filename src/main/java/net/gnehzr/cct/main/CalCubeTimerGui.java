@@ -1,7 +1,6 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.i18n.LocaleAndIcon;
-import net.gnehzr.cct.stackmatInterpreter.TimerState;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -19,11 +18,11 @@ public interface CalCubeTimerGui {
     String CCT_VERSION = CALCubeTimerFrame.class.getPackage().getImplementationVersion();
     ImageIcon CUBE_ICON = new ImageIcon(CALCubeTimerFrame.class.getResource("cube.png"));
 
+    String SCRAMBLE_ATTRIBUTE_CHANGED = "Scramble Attribute Changed";
+
     void updateScramble();
 
     CALCubeTimerFrame getMainFrame();
-
-    void updateInspection();
 
     PuzzleTypeComboBox getPuzzleTypeComboBox();
 
@@ -46,11 +45,6 @@ public interface CalCubeTimerGui {
     JComboBox<LocaleAndIcon> getLanguages();
 
     void saveToConfiguration();
-
-    @Deprecated // todo move to TimerState
-    void addSplit(TimerState newSplit);
-
-    void setFullScreen(boolean b);
 
     JLabel getOnLabel();
 

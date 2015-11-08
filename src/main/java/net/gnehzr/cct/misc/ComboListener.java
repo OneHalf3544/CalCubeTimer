@@ -1,7 +1,7 @@
 package net.gnehzr.cct.misc;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JComboBox;
 
 public class ComboListener implements ActionListener{
 	private JComboBox combo;
@@ -13,6 +13,7 @@ public class ComboListener implements ActionListener{
 		currentItem = combo.getSelectedItem();
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e){
 		ComboItem tempItem = (ComboItem)combo.getSelectedItem();
 		if (tempItem.isEnabled())
