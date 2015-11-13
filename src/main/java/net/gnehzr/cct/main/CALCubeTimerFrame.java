@@ -646,9 +646,9 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 
 	private void setTextToTimeLabels(String time) {
-		getTimeLabel().setText(time);
+		getTimeLabel().setInspectionText(time);
 		if (isFullscreen()) {
-			bigTimersDisplay.setText(time);
+			bigTimersDisplay.setInspectionText(time);
 		}
 	}
 

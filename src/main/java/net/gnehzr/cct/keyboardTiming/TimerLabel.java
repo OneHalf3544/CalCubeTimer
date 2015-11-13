@@ -39,8 +39,9 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	private static final BufferedImage RED_STATUS_IMAGE = loadImage("red-button.png");
 	private static final BufferedImage GREEN_STATUS_IMAGE = loadImage("green-button.png");;
+    private Color solvingForegroundColor;
 
-	private static BufferedImage loadImage(String imageName) {
+    private static BufferedImage loadImage(String imageName) {
 		try {
 			//can't use TimerLabel.class because the class hasn't been loaded yet
 			return ImageIO.read(CalCubeTimerGui.class.getResourceAsStream(imageName));
@@ -112,6 +113,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 	}
 
 	public void setTime(TimerState time) {
+        setForeground(solvingForegroundColor);
 		this.time = time;
 		super.setText(time.toString(configuration));
 		componentResized(null);
@@ -119,14 +121,15 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 
 	@Override
 	public void configurationChanged(Profile profile) {
-		setForeground(configuration.getColor(VariableKey.TIMER_FG, false));
+        solvingForegroundColor = configuration.getColor(VariableKey.TIMER_FG, false);
+        setForeground(solvingForegroundColor);
 		setBackground(configuration.getColorNullIfInvalid(VariableKey.TIMER_BG, false));
 
 		setFont(configuration.getFont(VariableKey.TIMER_FONT, false));
 		if(time != null) //this will deal with any internationalization issues, if appropriate
 			setTime(time);
 		else
-			setText(getText());
+			setInspectionText(getText());
 		refreshTimer();
 	}
 
@@ -204,8 +207,7 @@ public class TimerLabel extends JColorComponent implements ComponentListener, Co
 		refreshTimer();
 	}
 
-	@Override
-	public void setText(String s) {
+	public void setInspectionText(String s) {
 		setForeground(Color.RED);
 		time = null;
 		super.setText(s);
