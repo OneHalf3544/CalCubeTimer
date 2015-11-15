@@ -36,12 +36,8 @@ public class CrossSolver {
     @NotNull
     private List<CrossSolution> iddfs(@NotNull Cube scrambledCube,
                                       @NotNull SolvedCube solvedCube,
-                                      byte[] pruneEO,
                                       @Nullable Turn lastTurn,
                                       int depth) {
-        int hashEO = scrambledCube.hashEdgesOrientations();
-        int hashEP = scrambledCube.hashEdgesPositions();
-
         if (depth == 0) {
             // last turn. check current state
             if (scrambledCube.isCrossSolvedOn(solvedCube.getSolvingSide())) {
@@ -53,8 +49,7 @@ public class CrossSolver {
             return Collections.emptyList();
         }
 
-        if ((pruneEO != null && pruneEO[hashEO] > depth)
-                || solvedCube.prune_ep[hashEP] > depth) {
+        if (!scrambledCube.canBeSolvedInNTurns(depth)) {
             return Collections.emptyList();
         }
 
@@ -70,7 +65,6 @@ public class CrossSolver {
                 List<CrossSolution> newSolutions = iddfs(
                         scrambledCube.applyTurn(newTurn),
                         solvedCube,
-                        pruneEO,
                         newTurn,
                         depth - 1);
 
@@ -97,7 +91,6 @@ public class CrossSolver {
             List<CrossSolution> solutions = iddfs(
                     scrambledCube,
                     solvedState,
-                    null,
                     null,
                     maxDepth);
             if (!solutions.isEmpty()) {

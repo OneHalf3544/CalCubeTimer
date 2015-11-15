@@ -16,6 +16,44 @@ import static org.testng.Assert.*;
 public class CubeTest {
 
     @Test
+    public void testEqualsHashIfCrossUnmodified() {
+        Cube cubeState1;
+        Cube cubeState2;
+
+        cubeState1 = SolvedCube.getSolvedState(Face.UP)
+                .applyTurns(Rotate.z.doubleRotate(), "R2 D2 R'");
+        cubeState2 = SolvedCube.getSolvedState(Face.UP)
+                .applyTurns(Rotate.z.doubleRotate(), "R2 D2 R' U2");
+
+        assertEquals(cubeState1.hashEdgesOrientations(), cubeState2.hashEdgesOrientations());
+        assertEquals(cubeState1.hashEdgesPositions(), cubeState2.hashEdgesPositions());
+
+        cubeState1 = SolvedCube.getSolvedState(Face.UP).applyTurn(new Turn(Face.DOWN, 2));
+        cubeState2 = SolvedCube.getSolvedState(Face.UP);
+
+        assertEquals(cubeState1.hashEdgesOrientations(), cubeState2.hashEdgesOrientations());
+        assertEquals(cubeState1.hashEdgesPositions(), cubeState2.hashEdgesPositions());
+
+        cubeState1 = SolvedCube.getSolvedState(Face.UP).applyTurn(new Turn(Face.FRONT, 2));
+        cubeState2 = SolvedCube.getSolvedState(Face.UP);
+
+        assertNotEquals(cubeState1.hashEdgesOrientations(), cubeState2.hashEdgesOrientations());
+        assertNotEquals(cubeState1.hashEdgesPositions(), cubeState2.hashEdgesPositions());
+
+        cubeState1 = SolvedCube.getSolvedState(Face.UP);
+        cubeState2 = SolvedCube.getSolvedState(Face.UP);
+
+        assertEquals(cubeState1.hashEdgesOrientations(), cubeState2.hashEdgesOrientations());
+        assertEquals(cubeState1.hashEdgesPositions(), cubeState2.hashEdgesPositions());
+
+        cubeState1 = SolvedCube.getSolvedState(Face.UP).applyTurn(new Turn(Face.UP, 1));
+        cubeState2 = SolvedCube.getSolvedState(Face.UP);
+
+        assertNotEquals(cubeState1.hashEdgesPositions(), cubeState2.hashEdgesPositions());
+        assertEquals(cubeState1.hashEdgesOrientations(), cubeState2.hashEdgesOrientations());
+    }
+
+    @Test
     public void testIsCrossSolvedOn() throws Exception {
         SolvedCube solvedState = SolvedCube.getSolvedState(Face.BACK);
         Cube scrambledCube = solvedState.applyTurn(new Turn(Face.FRONT, 2));

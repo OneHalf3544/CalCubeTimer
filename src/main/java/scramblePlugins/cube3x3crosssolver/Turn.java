@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * <p>
  * <p>
@@ -18,6 +20,7 @@ public class Turn {
     public final Integer direction;
 
     public Turn(@NotNull Face face, @NotNull Integer direction) {
+        checkArgument(CrossSolver.DIRECTIONS.containsValue(direction));
         this.face = face;
         this.direction = direction;
     }

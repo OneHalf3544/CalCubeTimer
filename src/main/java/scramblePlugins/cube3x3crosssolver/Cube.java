@@ -25,13 +25,18 @@ class Cube {
             .put(Face.DOWN, new int[]{11, 10, 9, 8})
             .build();
 
+    public static final int HASH_EDGES_ORIENTATION_COUNT = 9 * 9 * 9 * 9 * 2 * 2 * 2 * 2 + 2 * 2 * 2 * 2;
+    public static final int HASH_EDGES_POSITION_COUNT = 12 * 11 * 10 * 9; // (12! / 8!)
+
+    protected final Face solvingSide;
     protected final List<Boolean> edgesOrientations;
     protected final List<Integer> edgesPosition;
 
     private int eo_solved_hash = 0;
     private int ep_solved_hash = 0;
 
-    Cube(List<Boolean> edgesOrientations, List<Integer> edgesPosition) {
+    Cube(Face solvingSide, List<Boolean> edgesOrientations, List<Integer> edgesPosition) {
+        this.solvingSide = solvingSide;
         checkArgument(edgesOrientations.size() == 12,
                 "wrong edgesOrientations size: %s", edgesOrientations.size());
         checkArgument(edgesPosition.size() == 12,
@@ -74,7 +79,7 @@ class Cube {
             cycle(edgesPosition, indices);
         }
 
-        return new Cube(edgesOrientations, edgesPosition);
+        return new Cube(solvingSide, edgesOrientations, edgesPosition);
     }
 
     private <H> void cycle(List<H> arr, int[] indices) {
@@ -91,10 +96,6 @@ class Cube {
 
     public String toString() {
         return edgesOrientations + " " + edgesPosition;
-    }
-
-    public int hash_eo_count() {
-        return 9 * 9 * 9 * 9 * 2 * 2 * 2 * 2 + 2 * 2 * 2 * 2;
     }
 
     public int hashEdgesOrientations() {
@@ -124,33 +125,6 @@ class Cube {
         return eo_solved_hash;
     }
 
-    public List<Boolean> unhash_eo(int eo_hash) {
-        Boolean[] ordinal_orientations = new Boolean[4];
-        int ordinal_o = eo_hash & 0xF;
-        ordinal_orientations[0] = ((ordinal_o & 0x8) != 0);
-        ordinal_orientations[1] = ((ordinal_o & 0x4) != 0);
-        ordinal_orientations[2] = ((ordinal_o & 0x2) != 0);
-        ordinal_orientations[3] = ((ordinal_o & 0x1) != 0);
-        int edges = eo_hash >> 4;
-        int i0 = edges % 9;
-        edges = edges / 9;
-        int i1 = edges % (9 - i0);
-        edges = edges / (9 - i0);
-        int i2 = edges % (9 - i0 - i1);
-        edges = edges / (9 - i0 - i1);
-        int i3 = edges % (9 - i0 - i1 - i2);
-        Boolean[] eo = new Boolean[12];
-        eo[i0] = ordinal_orientations[0];
-        eo[1 + i0 + i1] = ordinal_orientations[1];
-        eo[2 + i0 + i1 + i2] = ordinal_orientations[2];
-        eo[3 + i0 + i1 + i2 + i3] = ordinal_orientations[3];
-        return Arrays.asList(eo);
-    }
-
-    public int hash_ep_count() {
-        return 12 * 11 * 10 * 9;// (12! / 8!)
-    }
-
     public int hashEdgesPositions() {
         if (ep_solved_hash != 0) {
             return ep_solved_hash;
@@ -176,9 +150,24 @@ class Cube {
         return obj instanceof Cube && this.equals((Cube) obj);
     }
 
+    @Override
+    public int hashCode() {
+        return hashEdgesOrientations() + HASH_EDGES_ORIENTATION_COUNT * hashEdgesPositions();
+    }
+
     public boolean isCrossSolvedOn(Face face) {
         SolvedCube solvedState = SolvedCube.getSolvedState(face);
         return solvedState.hashEdgesOrientations() == this.hashEdgesOrientations()
                 && solvedState.hashEdgesPositions() == this.hashEdgesPositions();
     }
+
+    public Face getSolvingSide() {
+        return solvingSide;
+    }
+
+    public boolean canBeSolvedInNTurns(int turnsToSolve) {
+        return SolvedCube.getSolvedState(this.solvingSide)
+                .prune_ep[this.hashEdgesPositions()] <= turnsToSolve;
+    }
+
 }
