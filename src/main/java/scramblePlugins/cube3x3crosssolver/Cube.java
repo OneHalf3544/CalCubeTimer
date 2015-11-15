@@ -47,24 +47,28 @@ class Cube {
     }
 
 
-    public Cube applyTurns(Rotate r, String turns) {
-        Cube c = this;
+    public Cube applyTurns(String turns) {
+        Cube cube = this;
         for (String turn : turns.split(" ")) {
             if (turn.isEmpty()) {
                 continue;
             }
-            Character face = turn.charAt(0);
-            String dir = turn.substring(1);
-            c = c.applyTurn(new Turn(r.getOGFace(CrossSolver.FACES.inverse().get(face)), CrossSolver.DIRECTIONS.get(dir)));
+            Face face = CrossSolver.FACES.inverse().get(turn.charAt(0));
+            Direction direction = Direction.byStringCode(turn.substring(1));
+            cube = cube.applyTurn(new Turn(face, direction));
         }
-        return c;
+        return cube;
+    }
+
+    Cube applyTurn(Face face, Direction direction) {
+        return applyTurn(new Turn(face, direction));
     }
 
     Cube applyTurn(Turn turn) {
-        int direction = turn.direction;
         List<Boolean> edgesOrientations = new ArrayList<>(this.edgesOrientations);
         List<Integer> edgesPosition = new ArrayList<>(this.edgesPosition);
-        for (int i = 1; i <= direction; i++) {
+
+        for (int i = 1; i <= turn.direction.getClockwiseTurnCount(); i++) {
             int[] indices = FACE_INDICES.get(turn.face);
             if (turn.face == Face.FRONT || turn.face == Face.BACK) {
                 for (int index : indices) {

@@ -96,13 +96,13 @@ public class Rotate {
         return Objects.hash(new_og);
     }
 
-    public Rotate withDirection(Integer direction) {
+    public Rotate withDirection(Direction direction) {
         switch (direction) {
-            case 1:
+            case CLOCKWISE:
                 return this;
-            case 2:
+            case HALF_TURN:
                 return this.doubleRotate();
-            case 3:
+            case COUNTER_CLOCKWISE:
                 return this.invert();
             default:
                 throw new IllegalArgumentException();

@@ -2,6 +2,8 @@ package scramblePlugins.cube3x3crosssolver;
 
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * <p>
  * <p>
@@ -16,8 +18,8 @@ public class SolvedCube extends Cube {
 
     byte[] prune_ep;
 
-    public static SolvedCube getSolvedState(Face face) {
-        return SOLVED_SATES_CACHE.computeIfAbsent(face, SolvedCube::createSolvedState);
+    public static SolvedCube getSolvedState(Face crossColorFace) {
+        return SOLVED_SATES_CACHE.computeIfAbsent(crossColorFace, SolvedCube::createSolvedState);
     }
 
     private static SolvedCube createSolvedState(Face crossFace) {
@@ -53,18 +55,20 @@ public class SolvedCube extends Cube {
         Cube solved = createSolvedCube(crossFace);
 
         prune_ep = new byte[HASH_EDGES_POSITION_COUNT];
+
         Queue<Cube> fringe = new LinkedList<>();
         fringe.add(solved);
         while (!fringe.isEmpty()) {
             Cube position = fringe.poll();
             for (Face f : Face.values()) {
-                for (int dir : CrossSolver.DIRECTIONS.values()) {
+                for (Direction dir : Direction.values()) {
                     Cube newPos = position.applyTurn(new Turn(f, dir));
 
                     byte currentSolveTurns = prune_ep[newPos.hashEdgesPositions()];
                     byte newSolveTurns = (byte) (prune_ep[position.hashEdgesPositions()] + 1);
 
-                    if (currentSolveTurns == 0 || currentSolveTurns > newSolveTurns) {
+                    if (currentSolveTurns == 0) {
+                        checkArgument(currentSolveTurns <= newSolveTurns);
                         prune_ep[newPos.hashEdgesPositions()] = newSolveTurns;
                         fringe.add(newPos);
                     }
