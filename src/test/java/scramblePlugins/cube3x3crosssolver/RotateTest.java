@@ -1,12 +1,10 @@
 package scramblePlugins.cube3x3crosssolver;
 
 import org.testng.annotations.Test;
-import scramblePlugins.cube3x3crosssolver.Face;
-import scramblePlugins.cube3x3crosssolver.Rotate;
-import scramblePlugins.cube3x3crosssolver.Turn;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
+import static scramblePlugins.cube3x3crosssolver.Direction.*;
 
 /**
  * <p>
@@ -39,15 +37,15 @@ public class RotateTest {
 
     @Test
     public void testGetOGTurn() throws Exception {
-        assertEquals(Rotate.x.getOGTurn(new Turn(Face.RIGHT, 3)), new Turn(Face.RIGHT, 3));
-        assertEquals(Rotate.y.getOGTurn(new Turn(Face.RIGHT, 3)), new Turn(Face.BACK, 3));
+        assertEquals(Rotate.x.getOGTurn(new Turn(Face.RIGHT, COUNTER_CLOCKWISE)), new Turn(Face.RIGHT, COUNTER_CLOCKWISE));
+        assertEquals(Rotate.y.getOGTurn(new Turn(Face.RIGHT, COUNTER_CLOCKWISE)), new Turn(Face.BACK, COUNTER_CLOCKWISE));
     }
 
     @Test
     public void testWithDirection() throws Exception {
-        assertEquals(Rotate.identity.withDirection(2).getDesc(), "");
-        assertEquals(Rotate.x.withDirection(1).getDesc(), "x");
-        assertEquals(Rotate.x.withDirection(2).getDesc(), "x2");
-        assertEquals(Rotate.x.withDirection(3).getDesc(), "x'");
+        assertEquals(Rotate.identity.withDirection(HALF_TURN).getDesc(), "");
+        assertEquals(Rotate.x.withDirection(CLOCKWISE).getDesc(), "x");
+        assertEquals(Rotate.x.withDirection(HALF_TURN).getDesc(), "x2");
+        assertEquals(Rotate.x.withDirection(COUNTER_CLOCKWISE).getDesc(), "x'");
     }
 }

@@ -39,7 +39,7 @@ public class CrossSolution {
         Rotate unsetup = setup_rotations.invert();
 
         return unsetup.getDescWithSpace() + getTurnList().stream()
-                .map(turn -> unsetup.getOGTurn(unsetup.getOGTurn(turn)).toString())
+                .map(turn -> unsetup.getOGTurn(turn).toString())
                 .collect(joining(" "));
     }
 }

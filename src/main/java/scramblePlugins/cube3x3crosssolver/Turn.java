@@ -15,16 +15,16 @@ import java.util.Objects;
 public class Turn {
 
     public final Face face;
-    public final Integer direction;
+    public final Direction direction;
 
-    public Turn(@NotNull Face face, @NotNull Integer direction) {
+    public Turn(@NotNull Face face, @NotNull Direction direction) {
         this.face = face;
         this.direction = direction;
     }
 
     @Override
     public String toString() {
-        return face + CrossSolver.DIRECTIONS.inverse().get(direction);
+        return face + direction.getStringCode();
     }
 
     @Override
