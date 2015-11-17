@@ -23,16 +23,16 @@ public class ScrambleViewComponent extends PuzzleViewComponent {
 	public void setScramble(ScrambleString scrambleString) {
 		this.scrambleString = scrambleString;
 
-		if(colorScheme == null) {
-			colorScheme = scramblePluginManager.getColorScheme(getPuzzleType().getScramblePlugin(), false, configuration);
-		}
+		colorScheme.computeIfAbsent(
+                getPuzzleType(),
+                puzzleType -> scramblePluginManager.getColorScheme(getPuzzleType().getScramblePlugin(), false, configuration));
 
 		faceShapes = getPuzzleType().getScramblePlugin().getFaces(
 				GAP,
 				getUnitSize(false, getPuzzleType()),
 				getPuzzleType().getVariationName());
 
-		buffer = scramblePluginManager.getScrambleImage(scrambleString, GAP, getUnitSize(false, getPuzzleType()), colorScheme);
+		buffer = scramblePluginManager.getScrambleImage(scrambleString, GAP, getUnitSize(false, getPuzzleType()), colorScheme.get(getPuzzleType()));
 		repaint();	//this will cause the scramble to be drawn
 		invalidate(); //this forces the component to fit itself to its layout properly
 	}

@@ -36,15 +36,14 @@ public class DefaultPuzzleViewComponent extends PuzzleViewComponent {
 
 
     public void commitColorSchemeToConfiguration() {
-        for(Map.Entry<String, Color> face : colorScheme.entrySet()) {
+        for(Map.Entry<String, Color> face : colorScheme.get(getPuzzleType()).entrySet()) {
             configuration.setColor(VariableKey.PUZZLE_COLOR(puzzleType.getScramblePlugin(), face.getKey()), face.getValue());
         }
     }
 
     public void setDefaultPuzzleView(PuzzleType puzzleType) {
         faceShapes = puzzleType.getScramblePlugin().getFaces(GAP, getUnitSize(false, puzzleType), puzzleType.getVariationName());
-        colorScheme = Objects.requireNonNull(scramblePluginManager.getColorScheme(puzzleType.getScramblePlugin(), false, configuration));
-        buffer = scramblePluginManager.getDefaultStateImage(puzzleType, GAP, getUnitSize(false, puzzleType), colorScheme);
+        buffer = scramblePluginManager.getDefaultStateImage(puzzleType, GAP, getUnitSize(false, puzzleType), colorScheme.get(getPuzzleType()));
 
         repaint();	//this will cause the scramble to be drawn
         invalidate(); //this forces the component to fit itself to its layout properly
@@ -66,9 +65,9 @@ public class DefaultPuzzleViewComponent extends PuzzleViewComponent {
                 if(focusedFaceId != null) {
                     Color color = JColorChooser.showDialog(DefaultPuzzleViewComponent.this,
                             StringAccessor.getString("ScrambleViewComponent.choosecolor") + ": " + focusedFaceId,
-                            Objects.requireNonNull(colorScheme.get(focusedFaceId)));
+                            Objects.requireNonNull(colorScheme.get(getPuzzleType()).get(focusedFaceId)));
                     if(color != null) {
-                        colorScheme.put(focusedFaceId, color);
+                        colorScheme.get(getPuzzleType()).put(focusedFaceId, color);
                         setDefaultPuzzleView(getPuzzleType());
                     }
                     findFocusedFace(getMousePosition());
