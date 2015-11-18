@@ -1,16 +1,9 @@
 package net.gnehzr.cct.configuration;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-
-import javax.swing.JComponent;
-
 import net.gnehzr.cct.misc.Utils;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class JColorComponent extends JComponent {
 	private final static int PAD_HEIGHT = 6;
@@ -65,6 +58,7 @@ public class JColorComponent extends JComponent {
 		setToolTipText(null);
 		repaint();
 	}
+
 	public String getText() {
 		return text;
 	}

@@ -13,18 +13,21 @@ import java.util.Collections;
 
 import static org.mockito.Mockito.mock;
 
-public class CubeScramblePluginTest {
+public class Cube2x2ScramblePluginTest {
 
-    private static final Logger LOG = LogManager.getLogger(CubeScramblePluginTest.class);
+    private static final Logger LOG = LogManager.getLogger(Cube2x2ScramblePluginTest.class);
     private final Configuration configuration = mock(Configuration.class);
     private final ScramblePluginManager scramblePluginManager = mock(ScramblePluginManager.class);
 
-    private CubeScramblePlugin cubeScramblePlugin = new CubeScramblePlugin();
+    private Cube2x2ScramblePlugin cubeScramblePlugin = new Cube2x2ScramblePlugin();
 
     @Test
-    public void testGenerate6x6() {
-        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(createPuzzleType("6x6x6"), createVariation(10, "U D"), Collections.<String>emptyList());
-        LOG.info("cubeScramble (6x6): " + cubeScramble);
+    public void testGenerate2x2() {
+        ScrambleString cubeScramble = cubeScramblePlugin.createScramble(
+                createPuzzleType("2x2x2"),
+                createVariation(10, "U D"),
+                Collections.<String>emptyList());
+        LOG.info("cubeScramble (2x2): " + cubeScramble);
     }
 
     private ScrambleSettings createVariation(int length, String generator) {

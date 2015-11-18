@@ -2,7 +2,7 @@
 <Configuration status="error" name="RoutingTest" packages="org.apache.logging.log4j.test">
 
     <Properties>
-        <Property name="filename">target/cct-0.9.5.log</Property>
+        <Property name="filename">target/cct-0.9.7.log</Property>
         <Property name="format">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %m%n</Property>
     </Properties>
     <ThresholdFilter level="INFO"/>

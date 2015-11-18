@@ -40,7 +40,7 @@ public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
     @Override
     public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
         String scramble = generateScrambleFor2x2();
-        return new ScrambleString(puzzleType, scramble, false, variation, this, getTextComments(scramble, 2, variation.getGeneratorGroup()));
+        return new ScrambleString(puzzleType, scramble, false, variation, this, null);
     }
 
     @Override
@@ -51,8 +51,7 @@ public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
         if (!isValidScramble(scramble, cubeSize, image, false)) {
             throw new InvalidScrambleException(scramble);
         }
-        String text = getTextComments(scramble, getSizeFromVariation(puzzleType.getVariationName()), variation.getGeneratorGroup());
-        return new ScrambleString(puzzleType, scramble, true, variation.withLength(parseSize(scramble)), this, text);
+        return new ScrambleString(puzzleType, scramble, true, variation.withLength(parseSize(scramble)), this, null);
     }
 
 
@@ -78,11 +77,6 @@ public class Cube2x2ScramblePlugin extends CubeScramblePlugin {
     @Override
     public final List<String> getAttributes() {
         return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getAttributes();
-    }
-
-    @Override
-    protected String getTextComments(String scramble, int cubeSize, String generatorGroup) {
-        return null;
     }
 
     private String generateScrambleFor2x2() {

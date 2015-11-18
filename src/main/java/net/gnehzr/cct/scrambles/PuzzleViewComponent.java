@@ -7,6 +7,7 @@ import net.gnehzr.cct.configuration.VariableKey;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,7 +28,7 @@ public abstract class PuzzleViewComponent extends JComponent {
     protected BufferedImage buffer;
 
     // todo move to scramblePluginManager:
-    protected Map<String, Color> colorScheme = null;
+    protected Map<PuzzleType, Map<String, Color>> colorScheme = new HashMap<>();
     protected Map<String, Shape> faceShapes = null;
 
     public PuzzleViewComponent(Configuration configuration, ScramblePluginManager scramblePluginManager) {
@@ -37,7 +38,7 @@ public abstract class PuzzleViewComponent extends JComponent {
     }
 
     public void syncColorScheme(boolean defaults) {
-        colorScheme = scramblePluginManager.getColorScheme(getPuzzleType().getScramblePlugin(), defaults, configuration);
+        colorScheme.clear();
     }
 
     @Override

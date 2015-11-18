@@ -57,10 +57,10 @@ public class SessionTest {
         assertEquals(session.getAttemptsCount(), 6);
         assertEquals(session.getRollingAverageForWholeSession().getBestTime(), new SolveTime("1.23"));
         assertEquals(session.getRollingAverage(OF_5, 5, 0), RollingAverage.NOT_AVAILABLE);
-        assertEquals(session.getRollingAverage(OF_5, 5, 5).getBestTime(), new SolveTime("1.23"));
-        assertEquals(session.getRollingAverage(OF_5, 5, 5).getAverage(), new SolveTime("4.05"));
-        assertEquals(session.getRollingAverage(OF_12, 5, 5).getAverage(), new SolveTime("27.32"));
-        assertEquals(session.getRollingAverage(OF_5, 5, 6).toTerseString(), "(3.21), 3.21, 5.74, (2:03.21), 2:01.29");
+        assertEquals(session.getRollingAverage(OF_5, 5, 4).getBestTime(), new SolveTime("1.23"));
+        assertEquals(session.getRollingAverage(OF_5, 5, 5).getAverage(), new SolveTime("43.413"));
+        assertEquals(session.getRollingAverage(OF_12, 5, 5).getAverage(), new SolveTime("51.332"));
+        assertEquals(session.getRollingAverage(OF_5, 5, 5).toTerseString(), "(3.21), 3.21, 5.74, (2:03.21), 2:01.29");
     }
 
     @Test
@@ -72,7 +72,7 @@ public class SessionTest {
         RollingAverage lastRollingAverage = session.getStatistics().getRA(5, OF_5);
 
         assertEquals(lastRollingAverage, session.getStatistics().getCurrentRollingAverage(OF_5));
-        assertEquals(lastRollingAverage.getAverage(), new SolveTime("4.05"));
+        assertEquals(lastRollingAverage.getAverage(), new SolveTime("43.413"));
     }
 
     private Session createSessionWithSolutions(String... time) {

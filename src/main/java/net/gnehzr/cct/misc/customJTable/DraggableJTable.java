@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
 
-public class DraggableJTable extends JTable implements MouseMotionListener, ActionListener {
+public class DraggableJTable extends JTable {
 
 	private static final Logger LOG = LogManager.getLogger(DraggableJTable.class);
 
@@ -70,7 +70,23 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 		this.addMouseListener(mouselistener);
 		if(draggable) {
 			setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-			this.addMouseMotionListener(this);
+			this.addMouseMotionListener(new MouseMotionAdapter() {
+				@Override
+				public void mouseDragged(MouseEvent e) {
+					if(e.getSource() == this) {
+						int toRow = DraggableJTable.this.getSelectedRow();
+						if (toRow == -1 || fromRow == -1
+								|| toRow == fromRow || fromRow == DraggableJTable.this.getRowCount() - 1
+								|| toRow == DraggableJTable.this.getRowCount() - 1) {
+                            return;
+                        }
+						Object element = model.getValueAt(fromRow, 0);
+						model.removeRows(new int[]{fromRow});
+						model.insertValueAt(element, toRow);
+						fromRow = toRow;
+					}
+				}
+			});
 		}
 		this.addKeyListener(new KeyAdapter() {
 			@Override
@@ -128,7 +144,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 	//this will refresh any draggablejtable specific strings
 	//and the addtext for the editable row at bottom
 	public void refreshStrings(String addText) {
-		LOG.warn("addText not supported. skip value {}", addText);
+		LOG.warn("addText not supported. skip value '{}'", addText);
 	}
 
 	public void promptForNewRow() {
@@ -335,21 +351,6 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
 		selectionListener = sl;
 	}
 
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		if(e.getSource() == this) {
-			int toRow = this.getSelectedRow();
-			if (toRow == -1 || fromRow == -1 || toRow == fromRow || fromRow == this.getRowCount() - 1 || toRow == this.getRowCount() - 1)
-				return;
-			Object element = model.getValueAt(fromRow, 0);
-			model.removeRows(new int[]{fromRow});
-			model.insertValueAt(element, toRow);
-			fromRow = toRow;
-		}
-	}
-	@Override
-	public void mouseMoved(MouseEvent e) {}
-
 	private void maybeShowPopup(MouseEvent e) {
 		if (!e.isPopupTrigger()) {
 			return;
@@ -375,7 +376,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
                 for (int ch = 1; ch < columnCheckBoxes.length; ch++) {
                     JCheckBoxMenuItem check = new JCheckBoxMenuItem(cols.get(ch).col.getHeaderValue().toString(), isColumnVisible(ch));
                     check.setActionCommand(ch + "");
-                    check.addActionListener(this);
+                    check.addActionListener(this::changeColumnVisible);
                     columnCheckBoxes[cols.get(ch).viewIndex] = check;
                 }
                 for (JCheckBoxMenuItem check : columnCheckBoxes) {
@@ -388,8 +389,7 @@ public class DraggableJTable extends JTable implements MouseMotionListener, Acti
         }
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
+	public void changeColumnVisible(ActionEvent e) {
 		JCheckBoxMenuItem check = (JCheckBoxMenuItem) e.getSource();
 		int col = Integer.parseInt(e.getActionCommand());
 		setColumnVisible(col, check.isSelected());
