@@ -45,8 +45,8 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
     private static final boolean shortNotation = true;
 
-    protected boolean multislice;
-    protected boolean wideNotation;
+    private boolean multislice;
+    private boolean wideNotation;
 
     @SuppressWarnings("UnusedDeclaration")
     public CubeScramblePlugin() {
