@@ -1,3 +1,7 @@
+plugins {
+    id 'net.researchgate.release' version '2.4.0'
+}
+
 apply plugin: 'java'
 apply plugin:'application'
 
@@ -29,6 +33,12 @@ compileJava{
 }
 repositories {
     mavenCentral()
+}
+
+release {
+    git {
+        requireBranch = null
+    }
 }
 
 dependencies {

@@ -1,5 +1,8 @@
 .idea/
 /build/
+/target
+/db
+/.gradle
 *.iml
 2phase.Slice_Flip_Prun
 2phase.Slice_Twist_Prun

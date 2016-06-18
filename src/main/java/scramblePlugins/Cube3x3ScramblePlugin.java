@@ -49,8 +49,6 @@ public class Cube3x3ScramblePlugin extends CubeScramblePlugin {
     @Override
     public ScrambleString createScramble(PuzzleType puzzleType, ScrambleSettings variation, List<String> attributes) {
 
-        multislice = attributes.contains(MULTISLICE_ATTRIBUTE);
-        wideNotation = attributes.contains(WIDE_NOTATION_ATTRIBUTE);
         optimalCross = attributes.contains(OPTIMAL_CROSS_ATTRIBUTE);
 
         String scramble = Search.solution(Tools.randomCube(), 21, 10, false);
@@ -91,7 +89,6 @@ public class Cube3x3ScramblePlugin extends CubeScramblePlugin {
     @Override
     public List<String> getAttributes() {
         return ImmutableList.<String>builder()
-                .addAll(super.getAttributes())
                 .add(OPTIMAL_CROSS_ATTRIBUTE)
                 .build();
     }
