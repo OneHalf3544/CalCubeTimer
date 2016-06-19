@@ -12,7 +12,7 @@ import java.util.Objects;
  *
  * @author OneHalf
  */
-public class Turn {
+public class Turn implements SolveStep {
 
     public final Face face;
     public final Direction direction;
@@ -23,8 +23,13 @@ public class Turn {
     }
 
     @Override
-    public String toString() {
+    public String getNotation() {
         return face + direction.getStringCode();
+    }
+
+    @Override
+    public String toString() {
+        return getNotation();
     }
 
     @Override

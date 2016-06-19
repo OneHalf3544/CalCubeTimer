@@ -4,133 +4,212 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.main.SolvingProcess;
+import net.gnehzr.cct.main.SolvingProcessListener;
 import net.gnehzr.cct.main.TimingListener;
-import net.gnehzr.cct.stackmatInterpreter.InspectionState;
-import net.gnehzr.cct.stackmatInterpreter.KeyboardTimerState;
-import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import javax.swing.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.Hashtable;
+import java.util.Map;
 
 @Singleton
 public class KeyboardHandler {
 
 	private static final Logger LOGGER = LogManager.getLogger(KeyboardHandler.class);
 
-	private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
-
-	private static final Duration PERIOD = Duration.ofMillis(45);
-
-	private TimingListener timingListener;
 	private final Configuration configuration;
 
-	private boolean reset;
-	private boolean inspecting;
+	private final SolvingProcess solvingProcess;
 
-	private Instant start;
-	private Instant current;
-	private ScheduledFuture<?> scheduledFuture;
+    boolean keysDown;
+    private boolean stackmatIsOn;
 
-	public boolean isReset() {
-		return reset;
-	}
-	public boolean isInspecting() {
-		return inspecting;
-	}
+    Boolean leftHand;
+    Boolean rightHand;
 
-	@Inject
-	public KeyboardHandler(TimingListener timingListener, Configuration configuration) {
-		this.timingListener = timingListener;
+
+    //What follows is some really nasty code to deal with linux and window's differing behavior for keyrepeats
+    private Map<Integer, Long> timeup = new Hashtable<>(KeyEvent.KEY_LAST);
+
+
+    Map<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
+
+
+    @Inject
+    private TimingListener timingListener;
+
+    @Inject
+    private SolvingProcessListener solvingProcessListener;
+
+    @Inject
+	public KeyboardHandler(SolvingProcess solvingProcess, Configuration configuration) {
+		this.solvingProcess = solvingProcess;
 		this.configuration = configuration;
 	}
 
-	@Inject
-	void initialize() {
-		reset = true;
-		inspecting = false;
-		current = Instant.now();
-	}
-
-	public void reset() {
-		reset = true;
-		inspecting = false;
-		stop();
-	}
-	
-	public boolean canStartTimer() {
-		return Duration.between(current, Instant.now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES);
-	}
-
-	public void startTimer() {
-		if(!canStartTimer()) {
-			return;
-		}
-		boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION);
-		current = Instant.now();
-		start = current;
-
-		if (inspectionEnabled && !inspecting) {
-			inspecting = true;
-			timingListener.inspectionStarted();
-		}
-		else {
-			scheduledFuture = EXECUTOR.scheduleAtFixedRate(
-					this::refreshTime, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
-			inspecting = false;
-			reset = false;
-			timingListener.timerStarted();
-		}
-	}
-
-	protected void refreshTime() {
-		current = Instant.now();
-		timingListener.refreshDisplay(getTimerState());
-	}
-	
-	private TimerState getTimerState() {
-		return new KeyboardTimerState(getElapsedTimeSeconds(), getInspectionState());
-	}
-
-	private Optional<InspectionState> getInspectionState() {
-		return inspecting ? Optional.of(new InspectionState(start, current)) : Optional.<InspectionState>empty();
-	}
-
-	private Duration getElapsedTimeSeconds() {
-		if(reset) {
-			return Duration.ZERO;
-		}
-		return Duration.between(start, current);
-	}
-
 	public void split() {
-		timingListener.timerSplit(getTimerState());
-	}
-
-	public void stop() {
-		current = Instant.now();
-		if (isRunning()) {
-			scheduledFuture.cancel(true);
-			scheduledFuture = null;
-		} else {
-			LOGGER.info("nothing to stop");
-		}
-		timingListener.refreshDisplay(getTimerState());
+		solvingProcessListener.timerSplit(solvingProcess.getTimerState());
 	}
 
 	public void fireStop() {
-		timingListener.timerStopped(getTimerState());
-		reset = true;
-		current = Instant.now();
+		solvingProcessListener.timerStopped(solvingProcess.getTimerState());
 	}
 
-	public boolean isRunning() {
-		return scheduledFuture != null && !scheduledFuture.isCancelled();
+	KeyAdapter createKeyListener(final Configuration configuration, TimerLabel timerLabel) {
+		return new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED)) {
+					return;
+				}
+				int code = e.getKeyCode();
+				if (e.getWhen() - getTime(code) < 10) {
+					timeup.put(code, (long) 0);
+				} else if(!isKeyDown(code)){
+					keyDown.put(code, true);
+					keyReallyPressed(e);
+				}
+				timerLabel.refreshTimer();
+			}
+
+			@Override
+			public void keyReleased(final KeyEvent e) {
+				if(configuration.getBoolean(VariableKey.STACKMAT_ENABLED)) {
+					return;
+				}
+				int keyCode = e.getKeyCode();
+				timeup.put(keyCode, e.getWhen());
+
+				new Timer(10, evt -> {
+					if(isKeyDown(keyCode) && getTime(keyCode) != 0) {
+						keyDown.put(keyCode, false);
+						keyReallyReleased(e);
+					}
+					((Timer) evt.getSource()).stop();
+				}).start();
+			}
+		};
 	}
+
+    boolean toggleStartKeysPressed(boolean stackmatEmulation, boolean spacebarOnly) {
+        return stackmatEmulation && stackmatKeysDown() && atMostKeysDown(2) || //checking if the right keys are down for starting a "stackmat"
+                !stackmatEmulation && atMostKeysDown(1) && (spacebarOnly && isKeyDown(KeyEvent.VK_SPACE) || !spacebarOnly);
+    }
+
+    boolean isKeyDown(int keycode) {
+        Boolean temp = keyDown.get(keycode);
+        return (temp == null) ? false : temp;
+    }
+
+    private boolean atMostKeysDown(int count){
+        for (Boolean down : keyDown.values()) {
+            if (down && --count < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private int stackmatKeysDownCount(){
+        return (isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1)) ? 1 : 0) +
+                (isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2)) ? 1 : 0);
+    }
+
+    private boolean stackmatKeysDown(){
+        return isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1)) &&
+                isKeyDown(configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2));
+    }
+
+    //called when a key is physically pressed
+    private void keyReallyPressed(KeyEvent e) {
+        int key = e.getKeyCode();
+
+        if (key != 0) {
+            boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION);
+            //ignore unrecognized keys, such as media buttons
+            if(solvingProcess.isSolving()) {
+                if(configuration.getBoolean(VariableKey.TIMING_SPLITS)
+                        && key == configuration.getInt(VariableKey.SPLIT_KEY)) {
+                    split();
+                } else if(!stackmatEmulation || stackmatKeysDown()){
+                    solvingProcess.solvingFinished(solvingProcess.getTimerState());
+                    keysDown = true;
+                }
+            } else if(key == KeyEvent.VK_ESCAPE) {
+                releaseAllKeys();
+            } else if(!stackmatEmulation) {
+                keysDown = true;
+            }
+        }
+    }
+
+    //this will release all keys that we think are down
+    void releaseAllKeys() {
+        keyDown.clear();
+        timeup.clear();
+        keysDown = false;
+    }
+
+    //called when a key is physically released
+    void keyReallyReleased(KeyEvent e) {
+        boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION);
+        int sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1);
+        int sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2);
+
+        if(stackmatEmulation && stackmatKeysDownCount() == 1 && (e.getKeyCode() == sekey1 || e.getKeyCode() == sekey2) || !stackmatEmulation && atMostKeysDown(0)){
+            keysDown = false;
+            if (!solvingProcess.isRunning() || solvingProcess.isInspecting()) {
+                if(solvingProcess.isRunning()) {
+                    fireStop();
+                } else if(!ignoreKey(e, configuration.getBoolean(VariableKey.SPACEBAR_ONLY), stackmatEmulation, sekey1, sekey2)) {
+                    solvingProcess.startSolving();
+                }
+            }
+        }
+        timingListener. refreshTimer();
+    }
+
+    public void setHands(Boolean leftHand, Boolean rightHand) {
+        this.leftHand = leftHand;
+        this.rightHand = rightHand;
+    }
+
+    public static boolean ignoreKey(KeyEvent e, boolean spaceBarOnly, boolean stackmatEmulation, int sekey1, int sekey2) {
+        int key = e.getKeyCode();
+        if(stackmatEmulation){
+            return key != sekey1 && key != sekey2;
+        }
+        if(spaceBarOnly) {
+            return key != KeyEvent.VK_SPACE;
+        }
+        return key != KeyEvent.VK_ENTER && (key > 123 || key < 23 || e.isAltDown() || e.isControlDown() || key == KeyEvent.VK_ESCAPE);
+    }
+
+    public void setStackmatOn(boolean on) {
+        this.stackmatIsOn = on;
+        if(!stackmatIsOn) {
+            setHands(false, false);
+            timingListener.changeGreenLight(false);
+        }
+        timingListener.refreshTimer();
+    }
+
+    boolean stackmatEnabled() {
+        return configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
+    }
+
+    long getTime(int keycode) {
+        Long temp = timeup.get(keycode);
+        return (temp == null) ? 0 : temp;
+    }
+
+    public boolean isStackmatOn() {
+        return stackmatIsOn;
+    }
+
+
 }

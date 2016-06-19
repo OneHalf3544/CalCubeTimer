@@ -74,7 +74,7 @@ public class ActionMap {
         LOG.debug("register action {}", actionName);
         switch (actionName) {
             case KEYBOARDTIMING_ACTION: {
-                return new KeyboardTimingAction(calCubeTimerFrame);
+                return new KeyboardTimingAction(calCubeTimerFrame, configuration);
             }
             case RESET_ACTION: {
                 return new ResetAction(calCubeTimerFrame, sessionsList);
@@ -102,7 +102,7 @@ public class ActionMap {
                 return new ExitAction(calCubeTimerFrame);
             }
             case TOGGLE_STATUS_LIGHT_ACTOIN: {
-                return new StatusLightAction(calCubeTimerFrame);
+                return new ToggleStatusLightAction(calCubeTimerFrame, configuration);
             }
             case TOGGLE_HIDE_SCRAMBLES: {
                 return new HideScramblesAction(calCubeTimerFrame, configuration, this);
@@ -151,7 +151,7 @@ public class ActionMap {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            calCubeTimerFrame.setFullScreen(!calCubeTimerFrame.isFullscreen());
+            calCubeTimerFrame.setFullscreen(!calCubeTimerFrame.isFullscreen());
         }
 
         @Inject

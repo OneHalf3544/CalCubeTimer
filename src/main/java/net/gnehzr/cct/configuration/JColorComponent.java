@@ -14,8 +14,10 @@ public class JColorComponent extends JComponent {
 		setText(text);
 		setToolTipText(text);
 	}
-	
+
 	private Rectangle bounds = null;
+
+	@Override
 	public void paintComponent(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -26,9 +28,9 @@ public class JColorComponent extends JComponent {
 
 		FontMetrics fm = getFontMetrics(getFont());
 		double width = fm.getStringBounds(text, g).getWidth();
-		
+
 		g2d.setColor(getForeground());
-		
+
 		int baseline = (int) (getHeight() / 2.0 + fm.getHeight() / 2.0) - fm.getDescent();
 		g2d.drawString(text, (int) (getWidth() / 2.0 - width / 2.0), baseline);
 
@@ -37,22 +39,27 @@ public class JColorComponent extends JComponent {
 	}
 
 	private Color bg;
-	public void setBackground(Color bg) {
+
+	@Override
+    public void setBackground(Color bg) {
 		this.bg = bg;
 		setOpaque(bg != null);
 		super.setBackground(bg);
 		super.setForeground(Utils.invertColor(bg));
 	}
-	//we keep track of the bg ourselves to be able to return null
-	public Color getBackground() {
+
+    //we keep track of the bg ourselves to be able to return null
+	@Override
+    public Color getBackground() {
 		return bg;
 	}
 
-	public Dimension getPreferredSize() {
+	@Override
+    public Dimension getPreferredSize() {
 		bounds = getFontMetrics(getFont()).getStringBounds(text, null).getBounds();
 		return new Dimension(bounds.width + PAD_WIDTH, bounds.height + PAD_HEIGHT);
 	}
-	
+
 	protected void setText(String text) {
 		this.text = text;
 		setToolTipText(null);

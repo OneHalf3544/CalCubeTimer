@@ -41,7 +41,7 @@ public enum Face {
             case DOWN:
                 return UP;
             default:
-                return null;
+                throw new IllegalArgumentException("unknown side: " + this);
         }
     }
 }

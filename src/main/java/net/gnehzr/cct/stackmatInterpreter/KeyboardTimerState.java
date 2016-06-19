@@ -27,7 +27,6 @@ public class KeyboardTimerState extends TimerState {
         return inspectionState.isPresent();
     }
 
-    //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
     public Optional<InspectionState> getInspectionState() {
         return inspectionState;
     }

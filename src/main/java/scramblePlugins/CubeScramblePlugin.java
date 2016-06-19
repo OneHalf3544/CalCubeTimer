@@ -21,9 +21,9 @@ public class CubeScramblePlugin extends ScramblePlugin {
 
     private static final Logger LOG = LogManager.getLogger(CubeScramblePlugin.class);
 
-    public static final String PUZZLE_NAME = "Cube";
+    private static final String PUZZLE_NAME = "Cube";
 
-    protected static final Map<String, Color> FACE_NAMES_COLORS = ImmutableMap.<String, Color>builder()
+    private static final Map<String, Color> FACE_NAMES_COLORS = ImmutableMap.<String, Color>builder()
             .put("L", Utils.stringToColor("ff8000"))
             .put("D", Utils.stringToColor("ffff00"))
             .put("B", Utils.stringToColor("0000ff"))
@@ -32,7 +32,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
             .put("F", Utils.stringToColor("00ff00"))
             .build();
 
-    public static final String FACES = "LDBRUFldbruf";
+    private static final String FACES = "LDBRUFldbruf";
 
     private static final String[] FACES_ORDER = {"L", "D", "B", "R", "U", "F"};
 
@@ -40,8 +40,8 @@ public class CubeScramblePlugin extends ScramblePlugin {
     private static final String REGEXP = "^(\\d+)?([LDBRUF])(?:\\((\\d+)\\))?[2']?$";
     private static final Pattern SHORT_PATTERN = Pattern.compile(REGEXP);
 
-    public static final String MULTISLICE_ATTRIBUTE = "i18n[multislice]";
-    public static final String WIDE_NOTATION_ATTRIBUTE = "i18n[widenotation]";
+    private static final String MULTISLICE_ATTRIBUTE = "i18n[multislice]";
+    private static final String WIDE_NOTATION_ATTRIBUTE = "i18n[widenotation]";
 
     private static final boolean shortNotation = true;
 
@@ -109,7 +109,7 @@ public class CubeScramblePlugin extends ScramblePlugin {
     @NotNull
     @Override
     public Map<String, String> getDefaultGenerators() {
-        return ScramblePluginManager.NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
+        return NULL_SCRAMBLE_PLUGIN.getDefaultGenerators();
     }
 
     @NotNull

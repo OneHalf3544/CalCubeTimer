@@ -13,6 +13,7 @@ import org.kociemba.twophase.Search;
 import org.kociemba.twophase.Tools;
 import scramblePlugins.cube3x3crosssolver.CrossSolver;
 import scramblePlugins.cube3x3crosssolver.Face;
+import scramblePlugins.cube3x3crosssolver.RubicsColor;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.Map;
  */
 public class Cube3x3ScramblePlugin extends CubeScramblePlugin {
 
-    private static final Face DEFAULT_SOLVE_FACE = Face.UP;
+    private static final RubicsColor DEFAULT_SOLVE_FACE = RubicsColor.WHITE;
     private static final Face DEFAULT_SOLVE_SIDE = Face.DOWN;
 
     public static final String OPTIMAL_CROSS_ATTRIBUTE = "i18n[optimalcross]";
@@ -93,20 +94,20 @@ public class Cube3x3ScramblePlugin extends CubeScramblePlugin {
                 .build();
     }
 
-    public Tuple2<Face, Face> parseGeneratorGroupFor3x3(String generatorGroup) {
+    public Tuple2<RubicsColor, Face> parseGeneratorGroupFor3x3(String generatorGroup) {
         if (generatorGroup == null) {
             return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
         }
         String[] faces = generatorGroup.split(" ");
         if (faces.length == 2) {
             return Tuple.tuple(
-                    CrossSolver.FACES.inverse().get(faces[0].charAt(0)),
+                    RubicsColor.defaultByFace(CrossSolver.FACES.inverse().get(faces[0].charAt(0))),
                     CrossSolver.FACES.inverse().get(faces[1].charAt(0)));
         }
         return Tuple.tuple(DEFAULT_SOLVE_FACE, DEFAULT_SOLVE_SIDE);
     }
 
-    private List<String> getCrossSolutions(String scramble, Face solveCrossFace, Face solveCrossSide) {
+    private List<String> getCrossSolutions(String scramble, RubicsColor solveCrossFace, Face solveCrossSide) {
         return CROSS_SOLVER.solveCross(solveCrossFace, solveCrossSide, scramble);
     }
 
@@ -115,7 +116,7 @@ public class Cube3x3ScramblePlugin extends CubeScramblePlugin {
             return null;
         }
 
-        Tuple2<Face, Face> generator = parseGeneratorGroupFor3x3(generatorGroup);
+        Tuple2<RubicsColor, Face> generator = parseGeneratorGroupFor3x3(generatorGroup);
         List<String> solutions = getCrossSolutions(scramble, generator.v1, generator.v2);
         Collections.sort(solutions);
 

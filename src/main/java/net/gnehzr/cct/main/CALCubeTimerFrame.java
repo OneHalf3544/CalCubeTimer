@@ -1,7 +1,6 @@
 package net.gnehzr.cct.main;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import net.gnehzr.cct.configuration.Configuration;
@@ -12,7 +11,6 @@ import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.i18n.LocaleRenderer;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
-import net.gnehzr.cct.keyboardTiming.KeyboardHandler;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
 import net.gnehzr.cct.misc.customJTable.SessionsListTable;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicBorderSetter;
@@ -21,9 +19,7 @@ import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicStringSettableManger;
 import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
-import net.gnehzr.cct.stackmatInterpreter.InspectionState;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
-import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import net.gnehzr.cct.statistics.*;
 import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
 import org.apache.logging.log4j.LogManager;
@@ -67,21 +63,28 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private final ProfileDao profileDao;
 
 	private JLabel onLabel = null;
-	@Inject
+
+    @Inject
 	private CurrentSessionSolutionsTable currentSessionSolutionsTable = null;
 
 	private JScrollPane timesScroller = null;
+
+    @Inject
 	private SessionsListTable sessionsListTable;
-	ScrambleHyperlinkArea scrambleHyperlinkArea = null;
+
+    ScrambleHyperlinkArea scrambleHyperlinkArea = null;
 	private PuzzleTypeComboBox puzzleTypeComboBox;
 	private JPanel scrambleAttributesPanel = null;
-	@Inject
+
+    @Inject
 	private JTextField generatorTextField;
-	JSpinner scrambleNumberSpinner;
+
+    JSpinner scrambleNumberSpinner;
 	private JSpinner scrambleLengthSpinner = null;
 	JComboBox<Profile> profilesComboBox = null;
 	JComboBox<LocaleAndIcon> languages = null;
-	@Inject @Named("timeLabel")
+
+    @Inject @Named("timeLabel")
 	private TimerLabel timeLabel;
 	@Inject @Named("bigTimersDisplay")
 	TimerLabel bigTimersDisplay;
@@ -187,8 +190,10 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Inject
 	private ScramblePopupPanel scramblePopupPanel;
+	@Inject
+	private Metronome metromone;
 
-	@NotNull
+    @NotNull
 	private ImportedScrambleList convertCurrentSessionToImportedList(ScrambleList oldScramblesList) {
 		return new ImportedScrambleList(
                 oldScramblesList.getPuzzleType(),
@@ -209,9 +214,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Inject
 	private FullscreenFrame fullscreenFrame;
-
-	@Inject
-	private KeyboardHandler keyHandler;
 
 	@Inject
 	public CALCubeTimerFrame(CalCubeTimerModel calCubeTimerModel, StackmatInterpreter stackmatInterpreter,
@@ -236,12 +238,10 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 
 	@Inject
-	private void initializeGUIComponents(SessionsListTable sessionsListTable) {
+    void initializeGUIComponents() {
 		setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
 		setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
-		this.sessionsListTable = sessionsListTable;
 
 		puzzleTypeComboBox = new PuzzleTypeComboBox(scramblePluginManager, configuration);
 		puzzleTypeComboBox.addItemListener(scrambleChooserListener);
@@ -271,9 +271,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		scrambleHyperlinkArea = new ScrambleHyperlinkArea(scramblePopup, configuration, scramblePluginManager);
 		scrambleHyperlinkArea.setAlignmentX(.5f);
 
-		timeLabel.setKeyboardHandler(keyHandler);
-		bigTimersDisplay.setKeyboardHandler(keyHandler);
-
 		customGUIMenu = new JMenu();
 
 		profilesComboBox = new JComboBox<>();
@@ -299,7 +296,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		persistentComponents.put("scramblegenerator", generatorTextField);
 		persistentComponents.put("stackmatstatuslabel", onLabel);
 		persistentComponents.put("scramblearea", scrambleHyperlinkArea);
-		persistentComponents.put("timerdisplay", getTimeLabel());
+        persistentComponents.put("timerdisplay", timeLabel);
 		persistentComponents.put("timeslist", timesScroller);
 		persistentComponents.put("customguimenu", customGUIMenu);
 		persistentComponents.put("languagecombobox", languages);
@@ -314,13 +311,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		return fullscreen;
 	}
 
-	@Override
-	public void setFullscreen(boolean fullscreen) {
-		LOG.trace("toggle fullscreen. was {}, new: {}", this.fullscreen, fullscreen);
-		this.fullscreen = fullscreen;
-	}
-
-	@Override
+    @Override
 	public CALCubeTimerFrame getMainFrame() {
 		return this;
 	}
@@ -390,11 +381,10 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		scrambleLengthSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblelength"));
 		scrambleHyperlinkArea.updateStrings();
 
-		model.getTimingListener().stackmatChanged(); //force the stackmat label to refresh
+		model.getSolvingProcess().getTimingListener().stackmatChanged(); //force the stackmat label to refresh
 		currentSessionSolutionsTable.refreshColumnNames();
 		sessionsListTable.refreshColumnNames();
 
-		// setLookAndFeel();
 		createScrambleAttributesPanel();
 		configurationDialog = null; //this will force the config dialog to reload when necessary
 
@@ -433,8 +423,8 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		timesScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		scrambleHyperlinkArea.resetPreferredSize();
 		getTimeLabel().setAlignmentX(.5f);
-		getTimeLabel().configurationChanged(model.getSelectedProfile());
-		bigTimersDisplay.configurationChanged(model.getSelectedProfile());
+		getTimeLabel().configurationChanged();
+		bigTimersDisplay.configurationChanged();
 
 		xmlGuiMessages.reloadResources();
 
@@ -542,13 +532,14 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	}
 
 	@Override
-	public void setFullScreen(boolean value) {
+	public void setFullscreen(boolean value) {
 		if(value == isFullscreen()) {
-			setFullscreen(fullscreenFrame.isVisible());
-			return;
+            this.fullscreen = fullscreenFrame.isVisible();
+            return;
 		}
-		setFullscreen(value);
-		SwingUtilities.invokeLater(() -> {
+        LOG.trace("toggle fullscreen. was {}, new: {}", this.fullscreen, value);
+        this.fullscreen = value;
+        SwingUtilities.invokeLater(() -> {
 			if (isFullscreen()) {
 				fullscreenFrame.resizeFrame();
 				bigTimersDisplay.requestFocusInWindow();
@@ -585,71 +576,13 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				focusedComponent.requestFocusInWindow();
 			else
 				scrambleHyperlinkArea.requestFocusInWindow();
-			getTimeLabel().componentResized(null);
+			getTimeLabel().getComponentResizeListener().componentResized(null);
 
-			setFullScreen(isFullscreen());
+			setFullscreen(isFullscreen());
 
 			repaintTimes();
 			actionMap.refreshActions();
 		});
-	}
-
-	public void keyboardTimingAction() {
-		boolean selected = (Boolean)actionMap.getAction(KeyboardTimingAction.KEYBOARD_TIMING_ACTION, this).getValue(Action.SELECTED_KEY);
-		configuration.setBoolean(VariableKey.STACKMAT_ENABLED, !selected);
-		getTimeLabel().configurationChanged(model.getSelectedProfile());
-		bigTimersDisplay.configurationChanged(model.getSelectedProfile());
-		model.getStackmatInterpreter().enableStackmat(!selected);
-		model.stopInspection();
-		getTimeLabel().reset();
-		bigTimersDisplay.reset();
-		model.getTimingListener().stackmatChanged();
-		if(selected) {
-			getTimeLabel().requestFocusInWindow();
-		}
-		else {
-			model.getTimingListener().timerAccidentlyReset(null); //when the keyboard timer is disabled, we reset the timer
-		}
-	}
-
-	public void statusLightAction(){
-		configuration.setBoolean(VariableKey.LESS_ANNOYING_DISPLAY, (Boolean) actionMap.getAction("togglestatuslight", this).getValue(Action.SELECTED_KEY));
-		getTimeLabel().repaint();
-	}
-
-	// End actions section }}}
-
-	@Override
-	public void addSplit(TimerState state) {
-		long currentTime = System.currentTimeMillis();
-		if((currentTime - model.getLastSplit()) / 1000. > configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, false)) {
-			model.getSplits().add(state.toSolution(model.getScramblesList().getCurrentScramble(), ImmutableList.of()).getTime());
-			model.setLastSplit(currentTime);
-		}
-	}
-
-	@Override
-	public void updateInspection() {
-		InspectionState inspection = model.getInspectionValue();
-		String time;
-		if(inspection.isDisqualification()) {
-			model.setPenalty(SolveType.DNF);
-			time = StringAccessor.getString("CALCubeTimer.disqualification");
-		} else if(inspection.isPenalty()) {
-			model.setPenalty(SolveType.PLUS_TWO);
-			time = StringAccessor.getString("CALCubeTimer.+2penalty");
-		} else {
-			time = String.valueOf(inspection.getElapsedTime().getSeconds());
-		}
-
-		setTextToTimeLabels(time);
-	}
-
-	private void setTextToTimeLabels(String time) {
-		getTimeLabel().setInspectionText(time);
-		if (isFullscreen()) {
-			bigTimersDisplay.setInspectionText(time);
-		}
 	}
 
 	public TimerLabel getTimeLabel() {
@@ -700,7 +633,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
         if(configurationDialog == null) {
             configurationDialog = new ConfigurationDialog(
 					this, true, configuration, profileDao, scramblePluginManager,
-					calCubeTimerModel.getNumberSpeaker(), calCubeTimerModel, stackmatInterpreter, model.getMetronome(),
+					numberSpeaker, calCubeTimerModel, stackmatInterpreter, metromone,
 					currentSessionSolutionsTable);
         }
         SwingUtilities.invokeLater(() -> {
@@ -748,7 +681,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 			setSelected(selected);
 			setFocusable(configuration.getBoolean(VariableKey.FOCUSABLE_BUTTONS));
-			setActionCommand(CalCubeTimerModel.SCRAMBLE_ATTRIBUTE_CHANGED);
+			setActionCommand(SCRAMBLE_ATTRIBUTE_CHANGED);
 			addActionListener(e -> {
 				scramblePluginManager.setEnabledPuzzleAttributes(attributeCheckBoxes.stream()
 						.filter(AbstractButton::isSelected)

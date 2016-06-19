@@ -23,6 +23,8 @@ public abstract class ScramblePlugin {
 
 	private static final Logger LOG = LogManager.getLogger(ScramblePlugin.class);
 
+	protected static final ScramblePlugin NULL_SCRAMBLE_PLUGIN = new NullScramblePlugin();
+
 	private static final Random r = new Random();
 
 	private final String puzzleName;

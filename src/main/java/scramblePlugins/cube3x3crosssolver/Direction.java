@@ -14,9 +14,24 @@ import java.util.Map;
  */
 public enum Direction {
 
-    CLOCKWISE("", 1),
-    COUNTER_CLOCKWISE("'", 3),
-    HALF_TURN("2", 2);
+    CLOCKWISE("", 1) {
+        @Override
+        public Direction invert() {
+            return COUNTER_CLOCKWISE;
+        }
+    },
+    COUNTER_CLOCKWISE("'", 3) {
+        @Override
+        public Direction invert() {
+            return CLOCKWISE;
+        }
+    },
+    HALF_TURN("2", 2) {
+        @Override
+        public Direction invert() {
+            return HALF_TURN;
+        }
+    };
 
     private final String stringCode;
     private final int clockwiseTurnCount;
@@ -49,4 +64,6 @@ public enum Direction {
     public static Direction byStringCode(String stringCode) {
         return DIRECTIONS.get(stringCode);
     }
+
+    public abstract Direction invert();
 }

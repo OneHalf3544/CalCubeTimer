@@ -11,14 +11,14 @@ import java.awt.event.MouseEvent;
 
 public class TickerSlider extends JPanel {
 
-	final Metronome tickTock;
+	final Metronome metronome;
 
 	JSlider slider;
 
 	private JSpinner spinner;
 
 	public TickerSlider(Metronome ticker) {
-		this.tickTock = ticker;
+		this.metronome = ticker;
 
         slider = new JSlider(SwingConstants.HORIZONTAL);
 		spinner = new JSpinner();
@@ -29,12 +29,12 @@ public class TickerSlider extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if(slider.isEnabled()) {
-					tickTock.startMetronome();
+					metronome.startMetronome(slider.getValue());
 				}
 			}
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				tickTock.stopMetronome();
+				metronome.stopMetronome();
 			}
 		});
 	}
@@ -74,7 +74,7 @@ public class TickerSlider extends JPanel {
         else {
 			spinner.setValue(slider.getValue());
 		}
-		tickTock.setDelay(slider.getValue());
+		metronome.setDelay(slider.getValue());
 		stateChanging = false;
 	}
 }

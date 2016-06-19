@@ -58,7 +58,8 @@ public class Metronome {
         }
     }
 
-    public void startMetronome() {
+    public void startMetronome(Integer metronomeDelay) {
+        setDelay(metronomeDelay);
         if (enabled) {
             log.debug("start metronome");
             timer.start();

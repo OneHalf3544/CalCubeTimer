@@ -16,6 +16,7 @@ import static org.mockito.Mockito.mock;
 public class CubeScramblePluginTest {
 
     private static final Logger LOG = LogManager.getLogger(CubeScramblePluginTest.class);
+
     private final Configuration configuration = mock(Configuration.class);
     private final ScramblePluginManager scramblePluginManager = mock(ScramblePluginManager.class);
 

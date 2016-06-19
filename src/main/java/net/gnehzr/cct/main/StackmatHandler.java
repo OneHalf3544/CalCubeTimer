@@ -13,15 +13,21 @@ import java.time.Instant;
 @Singleton
 public class StackmatHandler {
 
+	private final SolvingProcessListener solvingProcessListener;
 	private final TimingListener timingListener;
 
 	private final Configuration configuration;
+    private final SolvingProcess solvingProcess;
 
-	@Inject
-	public StackmatHandler(TimingListener timingListener, StackmatInterpreter stackmatInterpreter, Configuration configuration) {
+    @Inject
+	public StackmatHandler(TimingListener timingListener, StackmatInterpreter stackmatInterpreter,
+                           SolvingProcessListener solvingProcessListener,
+                           Configuration configuration, SolvingProcess solvingProcess) {
 		this.timingListener = timingListener;
-		this.configuration = configuration;
-		stackmatInterpreter.addPropertyChangeListener(this::stackmatStateChanged);
+        this.solvingProcessListener = solvingProcessListener;
+        this.configuration = configuration;
+        this.solvingProcess = solvingProcess;
+        stackmatInterpreter.addPropertyChangeListener(this::stackmatStateChanged);
 		reset();
 	}
 
@@ -45,15 +51,17 @@ public class StackmatHandler {
 
 		if(evt.getNewValue() instanceof StackmatState) {
 			StackmatState current = (StackmatState) evt.getNewValue();
-			if(event.equals("Reset")) {
+			if (event.equals("Reset")) {
 				if (current.oneHand()) {
 					processOneHandState(current);
 					return;
 				}
 				if (current.noHands()) {
-					if(!stackmatInspecting && (itsTimeToStartAfterInspection(leftHandStart) || itsTimeToStartAfterInspection(rightHandStart))) {
+					if(!stackmatInspecting
+                            && (itsTimeToStartAfterInspection(leftHandStart)
+                            || itsTimeToStartAfterInspection(rightHandStart))) {
                         stackmatInspecting = true;
-                        timingListener.inspectionStarted();
+                        solvingProcessListener.inspectionStarted();
                     }
 				}
 				timingListener.refreshDisplay(current);
@@ -62,18 +70,18 @@ public class StackmatHandler {
 				stackmatInspecting = false;
 				switch (event) {
 					case "TimeChange":
-						timingListener.timerStarted();
+						solvingProcessListener.timerStarted();
 						break;
 					case "Split":
-						timingListener.timerSplit(current);
+						solvingProcessListener.timerSplit(current);
 						break;
 					case "New Time":
-						timingListener.timerStopped(current);
+                        solvingProcessListener.timerStopped(current);
 						break;
 					case "Current Display":
 						break;
 					case "Accident Reset":
-						timingListener.timerAccidentlyReset((StackmatState) evt.getOldValue());
+                        solvingProcessListener.timerAccidentlyReset((StackmatState) evt.getOldValue());
 						break;
 				}
 			}

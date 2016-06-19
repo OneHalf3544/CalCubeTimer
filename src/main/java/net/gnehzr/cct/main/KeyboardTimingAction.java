@@ -1,5 +1,7 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
 
 import javax.swing.*;
@@ -16,18 +18,32 @@ import java.awt.event.KeyEvent;
  */
 class KeyboardTimingAction extends AbstractAction {
 
-	public static final String KEYBOARD_TIMING_ACTION = "keyboardtiming";
+	private final CALCubeTimerFrame cct;
+	private final Configuration configuration;
 
-	private CALCubeTimerFrame cct;
-
-	public KeyboardTimingAction(CALCubeTimerFrame cct){
+	public KeyboardTimingAction(CALCubeTimerFrame cct, Configuration configuration){
 		this.cct = cct;
+		this.configuration = configuration;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_K);
 		this.putValue(Action.SHORT_DESCRIPTION, StringAccessor.getString("CALCubeTimer.stackmatnote"));
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.keyboardTimingAction();
+		boolean selected = (Boolean) getValue(SELECTED_KEY);
+		configuration.setBoolean(VariableKey.STACKMAT_ENABLED, !selected);
+		cct.getTimeLabel().configurationChanged();
+		cct.bigTimersDisplay.configurationChanged();
+		cct.model.getStackmatInterpreter().enableStackmat(!selected);
+
+		SolvingProcess solvingProcess = cct.model.getSolvingProcess();
+		solvingProcess.resetProcess();
+		solvingProcess.getTimingListener().stackmatChanged();
+		if(selected) {
+			cct.getTimeLabel().requestFocusInWindow();
+		}
+		else {
+			solvingProcess.resetProcess(); //when the keyboard timer is disabled, we reset the timer
+		}
 	}
 }

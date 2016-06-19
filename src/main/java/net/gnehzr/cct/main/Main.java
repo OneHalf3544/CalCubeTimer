@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.pushingpixels.lafwidget.LafWidget;
 
 import javax.swing.*;
+import java.time.Duration;
 import java.util.Collection;
 
 /**
@@ -62,15 +63,20 @@ public class Main implements Module {
         binder.bind(NewSessionAction.class).asEagerSingleton();
         binder.bind(ToggleScramblePopupAction.class).asEagerSingleton();
 
-        binder.bind(TimingListener.class).to(TimingListenerImpl.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("timeLabel")).to(TimerLabel.class).asEagerSingleton();
         binder.bind(TimerLabel.class).annotatedWith(Names.named("bigTimersDisplay")).to(TimerLabel.class).asEagerSingleton();
+
+        binder.bind(Metronome.class).toProvider(() -> Metronome.createTickTockTimer(Duration.ofSeconds(1))).asEagerSingleton();
+        binder.bind(TimingListener.class).to(TimingListenerImpl.class).asEagerSingleton();
+        binder.bind(SolvingProcessListener.class).to(TimingListenerImpl.class).asEagerSingleton();
+        binder.bind(SolvingProcess.class).to(SolvingProcessImpl.class).asEagerSingleton();
 
         binder.bind(SessionsList.class).asEagerSingleton();
         binder.bind(DynamicStringSettableManger.class).asEagerSingleton();
         binder.bind(ScramblePluginManager.class).asEagerSingleton();
 
         binder.bind(SessionFactory.class).toInstance(sessionFactory);
+
     }
 
     public static void main(String[] args) {
