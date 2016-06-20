@@ -19,9 +19,7 @@ import java.util.Map;
 @Singleton
 public class KeyboardHandler {
 
-	private static final Logger LOGGER = LogManager.getLogger(KeyboardHandler.class);
-
-	private final Configuration configuration;
+    private final Configuration configuration;
 
 	private final SolvingProcess solvingProcess;
 
@@ -36,7 +34,7 @@ public class KeyboardHandler {
     private Map<Integer, Long> timeup = new Hashtable<>(KeyEvent.KEY_LAST);
 
 
-    Map<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
+    private Map<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
 
 
     @Inject
@@ -155,7 +153,7 @@ public class KeyboardHandler {
     }
 
     //called when a key is physically released
-    void keyReallyReleased(KeyEvent e) {
+    private void keyReallyReleased(KeyEvent e) {
         boolean stackmatEmulation = configuration.getBoolean(VariableKey.STACKMAT_EMULATION);
         int sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1);
         int sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2);
