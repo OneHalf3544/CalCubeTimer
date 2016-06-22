@@ -1,13 +1,12 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.dao.ProfileEntity;
 import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.main.CalCubeTimerModel;
+import net.gnehzr.cct.main.CurrentProfileHolder;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
@@ -15,6 +14,8 @@ import net.gnehzr.cct.scrambles.ScrambleString;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -29,7 +30,7 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * @author OneHalf
  */
-@Singleton
+@Service
 public class SessionsList implements Iterable<Session> {
 
 	private static final Logger LOG = LogManager.getLogger(SessionsList.class);
@@ -37,26 +38,26 @@ public class SessionsList implements Iterable<Session> {
 	protected final Configuration configuration;
 	private final SolutionDao solutionDao;
 	private final ScramblePluginManager scramblePluginManager;
-	protected final CalCubeTimerModel cubeTimerModel;
+	protected final CurrentProfileHolder currentProfileHolder;
 
 	private List<StatisticsUpdateListener> statisticsUpdateListeners = new ArrayList<>();
 
 	private List<Session> sessions = new ArrayList<>();
 
-	protected List<SessionListener> listener = new ArrayList<>();
+	private List<SessionListener> listener = new ArrayList<>();
 	private Map<PuzzleType, GlobalPuzzleStatistics> statisticsByType = new HashMap<>();
 
 	private Session currentSession;
 
-	@Inject
-	public SessionsList(Configuration configuration, CalCubeTimerModel cubeTimerModel,
+	@Autowired
+	public SessionsList(Configuration configuration, CurrentProfileHolder currentProfileHolder,
 						SolutionDao solutionDao, ScramblePluginManager scramblePluginManager) {
 		this.configuration = configuration;
-		this.cubeTimerModel = cubeTimerModel;
+		this.currentProfileHolder = currentProfileHolder;
 		this.solutionDao = solutionDao;
 		this.scramblePluginManager = scramblePluginManager;
 		this.currentSession =  new Session(
-				LocalDateTime.now(), scramblePluginManager.getDefaultPuzzleType(), solutionDao, cubeTimerModel);
+				LocalDateTime.now(), scramblePluginManager.getDefaultPuzzleType(), solutionDao, currentProfileHolder);
 		sessions.add(currentSession);
 	}
 
@@ -89,7 +90,7 @@ public class SessionsList implements Iterable<Session> {
 				.map(Session::getPuzzleType)
 				.forEach(this::getGlobalPuzzleStatisticsForType);
 
-		Optional<Session> lastSession = findSessionById(sessions, cubeTimerModel.getSelectedProfile().getLastSessionId());
+		Optional<Session> lastSession = findSessionById(sessions, currentProfileHolder.getSelectedProfile().getLastSessionId());
 
 		if (lastSession.isPresent()) {
 			setCurrentSession(lastSession.get());
@@ -127,7 +128,7 @@ public class SessionsList implements Iterable<Session> {
 	public void addSession(Session session) {
 		LOG.info("addSession {}", session);
 		sessions.add(session);
-		solutionDao.saveSession(cubeTimerModel.getSelectedProfile(), session);
+		solutionDao.saveSession(currentProfileHolder.getSelectedProfile(), session);
 		configuration.addConfigurationChangeListener(profile -> session.getStatistics().refresh(this::fireStringUpdates));
 		getGlobalPuzzleStatisticsForType(session.getPuzzleType()).refreshStats();
 		statisticsUpdateListeners.add(() -> listener.forEach(sl -> sl.sessionStatisticsChanged(session)));
@@ -137,7 +138,7 @@ public class SessionsList implements Iterable<Session> {
 
 	public void removeSession(Session removedSession) {
 		sessions.remove(removedSession);
-		solutionDao.deleteSession(removedSession, cubeTimerModel.getSelectedProfile().toEntity());
+		solutionDao.deleteSession(removedSession, currentProfileHolder.getSelectedProfile().toEntity());
 		getGlobalPuzzleStatisticsForType(removedSession.getPuzzleType()).refreshStats();
 
 		if (currentSession == removedSession) {
@@ -188,7 +189,7 @@ public class SessionsList implements Iterable<Session> {
 	}
 
 	public void createSession(PuzzleType puzzleType) {
-		setCurrentSession(new Session(LocalDateTime.now(), puzzleType, solutionDao, cubeTimerModel));
+		setCurrentSession(new Session(LocalDateTime.now(), puzzleType, solutionDao, currentProfileHolder));
 	}
 
 	public void addStatisticsUpdateListener(StatisticsUpdateListener listener) {

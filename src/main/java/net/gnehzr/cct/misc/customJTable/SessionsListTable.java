@@ -1,7 +1,8 @@
 package net.gnehzr.cct.misc.customJTable;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SessionsList;
@@ -10,12 +11,12 @@ import net.gnehzr.cct.statistics.SessionsListTableModel;
 import javax.swing.*;
 import java.awt.*;
 
-@Singleton
+@Service
 public class SessionsListTable extends DraggableJTable {
 
 	private final SessionsListTableModel sessionsListTableModel;
 
-	@Inject
+	@Autowired
 	public SessionsListTable(Configuration configuration, SessionsList sessionsList,
 							 SessionsListTableModel sessionsListTableModel) {
 		super(configuration, false, true);
@@ -39,7 +40,7 @@ public class SessionsListTable extends DraggableJTable {
 		setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 	}
 
-	@Inject
+	@Autowired
 	public void refreshModel() {
 		super.setModel(sessionsListTableModel);
 		super.sortByColumn(new RowSorter.SortKey(0, SortOrder.DESCENDING));

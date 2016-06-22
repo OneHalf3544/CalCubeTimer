@@ -1,33 +1,107 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.scrambles.ScrambleListHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
-import net.gnehzr.cct.scrambles.ScrambleList;
+import net.gnehzr.cct.misc.customJTable.SessionListener;
+import net.gnehzr.cct.scrambles.GeneratedScrambleList;
+import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
-import net.gnehzr.cct.statistics.Profile;
+import net.gnehzr.cct.statistics.Session;
+import net.gnehzr.cct.statistics.SessionsList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.annotation.PostConstruct;
 
 /**
  * <p>
  * <p>
- * Created: 19.01.2015 10:08
+ * Created: 17.01.2015 12:48
  * <p>
  *
  * @author OneHalf
  */
-public interface CalCubeTimerModel extends CurrentProfileHolder {
+@Service
+public class CalCubeTimerModel {
 
-    SolvingProcess getSolvingProcess();
+    private static final Logger LOG = LogManager.getLogger(CalCubeTimerModel.class);
 
-    StackmatInterpreter getStackmatInterpreter();
+    @Autowired
+    private CalCubeTimerGui calCubeTimerGui;
 
-    LocaleAndIcon getLoadedLocale();
+    @Autowired
+    private Configuration configuration;
 
-    void setLoadedLocale(LocaleAndIcon newLocale);
+    @Autowired
+    CurrentProfileHolder currentProfileHolder;
 
-    void saveProfileConfiguration();
+    @Autowired
+    private StackmatInterpreter stackmatInterpreter;
 
-    void setSelectedProfile(Profile currentProfile);
+    @Autowired
+    private SolutionDao solutionDao;
 
-    ScrambleList getScramblesList();
+    @Autowired
+    private ProfileDao profileDao;
 
-    void setScramblesList(ScrambleList scrambleList);
+    private LocaleAndIcon loadedLocale;
+
+    @Autowired
+    private SolvingProcess solvingProcess;
+
+    @Autowired
+    private SessionsList sessionsList;
+
+    @Autowired
+    private ScrambleListHolder scramblesListHolder;
+
+    private SessionListener sessionListener = new SessionListener() {
+        @Override
+        public void sessionSelected(Session session) {
+            if (scramblesListHolder.isImported()) {
+                scramblesListHolder.setScrambleList(new GeneratedScrambleList(sessionsList, configuration));
+            }
+            scramblesListHolder.asGenerating().generateScrambleForCurrentSession();
+            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(session.getPuzzleType()); //this will update the scramble
+        }
+
+        @Override
+        public void sessionsDeleted() {
+            PuzzleType currentPuzzleType = sessionsList.getCurrentSession().getPuzzleType();
+            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(currentPuzzleType);
+        }
+    };
+
+    @Autowired
+    public void setCctModelConfigChangeListener(CctModelConfigChangeListener cctModelConfigChangeListener) {
+        configuration.addConfigurationChangeListener(cctModelConfigChangeListener);
+    }
+
+    @PostConstruct
+    void initialize() {
+        scramblesListHolder.setScrambleList(new GeneratedScrambleList(sessionsList, configuration));
+        sessionsList.addSessionListener(sessionListener);
+        LOG.debug("model initialized");
+    }
+
+    public SolvingProcess getSolvingProcess() {
+        return solvingProcess;
+    }
+
+    public StackmatInterpreter getStackmatInterpreter() {
+        return stackmatInterpreter;
+    }
+
+    public LocaleAndIcon getLoadedLocale() {
+        return loadedLocale;
+    }
+
+    public void setLoadedLocale(LocaleAndIcon newLocale) {
+        this.loadedLocale = newLocale;
+    }
 }

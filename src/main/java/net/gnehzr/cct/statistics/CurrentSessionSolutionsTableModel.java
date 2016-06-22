@@ -1,8 +1,9 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-@Singleton
+@Service
 public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	private DynamicString[] columnNames;
@@ -48,7 +49,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	// todo move to DraggableJTableModel
 	private Component prevFocusOwner;
 
-	@Inject
+	@Autowired
 	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList,
 											 CalCubeTimerGui calCubeTimerGui) {
 		this.configuration = configuration;

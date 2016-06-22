@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -10,7 +11,7 @@ import net.gnehzr.cct.stackmatInterpreter.StackmatState;
 import java.beans.PropertyChangeEvent;
 import java.time.Instant;
 
-@Singleton
+@Service
 public class StackmatHandler {
 
 	private final SolvingProcessListener solvingProcessListener;
@@ -19,7 +20,7 @@ public class StackmatHandler {
 	private final Configuration configuration;
     private final SolvingProcess solvingProcess;
 
-    @Inject
+    @Autowired
 	public StackmatHandler(TimingListener timingListener, StackmatInterpreter stackmatInterpreter,
                            SolvingProcessListener solvingProcessListener,
                            Configuration configuration, SolvingProcess solvingProcess) {

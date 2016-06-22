@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
 
 import javax.swing.*;
@@ -19,12 +20,12 @@ import java.awt.event.KeyEvent;
  */
 public class AddTimeAction extends AbstractAction {
 
-	@Inject
+	@Autowired
 	private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
-	@Inject
+	@Autowired
 	private CurrentSessionSolutionsTable currentSessionSolutionsTable;
 
-	@Inject
+	@Autowired
 	public AddTimeAction(CALCubeTimerFrame cct){
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
 		this.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK));
@@ -40,7 +41,7 @@ public class AddTimeAction extends AbstractAction {
 		}
 	}
 
-	@Inject
+	@Autowired
 	public void registerAction(ActionMap actionMap) {
 		actionMap.registerAction(ActionMap.ADD_TIME_ACTION, this);
 	}

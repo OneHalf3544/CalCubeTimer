@@ -1,5 +1,7 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.scrambles.ScrambleListHolder;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -15,15 +17,17 @@ import java.awt.event.KeyEvent;
 class RequestScrambleAction extends AbstractAction {
 
 	private CALCubeTimerFrame cct;
+	private ScrambleListHolder scrambleListHolder;
 
-	public RequestScrambleAction(CALCubeTimerFrame cct){
+	public RequestScrambleAction(CALCubeTimerFrame cct, ScrambleListHolder scrambleListHolder){
+		this.scrambleListHolder = scrambleListHolder;
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
 		this.cct = cct;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.model.getScramblesList().generateNext();
+		scrambleListHolder.generateNext();
 		cct.updateScramble();
 	}
 }

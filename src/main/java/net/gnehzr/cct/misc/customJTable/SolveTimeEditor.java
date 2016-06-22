@@ -1,15 +1,16 @@
 package net.gnehzr.cct.misc.customJTable;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.statistics.SolveTime;
 
 import javax.swing.*;
 
-@Singleton
+@Service
 public class SolveTimeEditor extends SolutionCellEditor {
 
-	@Inject
+	@Autowired
 	public SolveTimeEditor() {
 		super(new JTextField(), "CALCubeTimer.typenewtime");
 	}

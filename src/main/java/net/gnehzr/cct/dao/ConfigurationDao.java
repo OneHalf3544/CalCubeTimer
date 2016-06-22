@@ -3,13 +3,13 @@ package net.gnehzr.cct.dao;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
@@ -23,12 +23,12 @@ import java.util.stream.Collectors;
  *
  * @author OneHalf
  */
-@Singleton
+@Service
 public class ConfigurationDao extends HibernateDaoSupport {
 
     private static final Logger LOGGER = LogManager.getLogger(ConfigurationDao.class);
 
-    @Inject
+    @Autowired
     public ConfigurationDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }

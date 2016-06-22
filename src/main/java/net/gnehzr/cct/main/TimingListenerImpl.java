@@ -1,8 +1,9 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -23,36 +24,36 @@ import org.apache.logging.log4j.Logger;
 *
 * @author OneHalf
 */
-@Singleton
+@Service
 class TimingListenerImpl implements TimingListener, SolvingProcessListener {
 
     private static final Logger LOG = LogManager.getLogger(TimingListenerImpl.class);
 
-    @Inject
+    @Autowired
     private CalCubeTimerModel model;
-    @Inject
+    @Autowired
     private CalCubeTimerGui calCubeTimerFrame;
-    @Inject
+    @Autowired
     private SessionsList sessionsList;
-    @Inject @Named("timeLabel")
+    @Autowired @Qualifier("timeLabel")
     private TimerLabel timeLabel;
-    @Inject @Named("bigTimersDisplay")
+    @Autowired @Qualifier("bigTimersDisplay")
     private TimerLabel bigTimersDisplay;
-    @Inject
+    @Autowired
     private Metronome metronome;
 
     private boolean stackmatEnabled;
     private final Configuration configuration;
     private boolean fullScreenTiming;
-    @Inject
+    @Autowired
     private KeyboardHandler keyHandler;
 
-    @Inject
+    @Autowired
     public TimingListenerImpl(Configuration configuration) {
         this.configuration = configuration;
     }
 
-    @Inject
+    @Autowired
     void init() {
         configuration.addConfigurationChangeListener(p -> configurationChanged());
     }

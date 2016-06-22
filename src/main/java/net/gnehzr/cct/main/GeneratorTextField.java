@@ -1,11 +1,11 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.scrambles.ScrambleList;
 import org.pushingpixels.lafwidget.LafWidget;
 
-import javax.inject.Inject;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,17 +20,17 @@ import java.awt.event.FocusListener;
 *
 * @author OneHalf
 */
-@Singleton
+@Service
 class GeneratorTextField extends JTextField {
 
     private CALCubeTimerFrame calCubeTimerFrame;
 
-    @Inject
+    @Autowired
     private ScrambleList scramblesList;
 
     private String oldText;
 
-    @Inject
+    @Autowired
     public GeneratorTextField(CALCubeTimerFrame calCubeTimerFrame) {
         this.calCubeTimerFrame = calCubeTimerFrame;
         addFocusListener(new MyFocusListener());

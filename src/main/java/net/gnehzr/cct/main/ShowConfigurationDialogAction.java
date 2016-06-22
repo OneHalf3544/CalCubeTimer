@@ -25,6 +25,6 @@ class ShowConfigurationDialogAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.showConfigurationDialog(cct.model);
+		cct.showConfigurationDialog();
 	}
 }

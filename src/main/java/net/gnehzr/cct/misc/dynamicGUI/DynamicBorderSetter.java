@@ -1,7 +1,8 @@
 package net.gnehzr.cct.misc.dynamicGUI;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.XMLGuiMessages;
 import net.gnehzr.cct.misc.Utils;
@@ -12,14 +13,14 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 
-@Singleton
+@Service
 public class DynamicBorderSetter {
 
 	private final Configuration configuration;
 	private final XMLGuiMessages xmlGuiMessages;
 	private final SessionsList sessionsList;
 
-	@Inject
+	@Autowired
 	public DynamicBorderSetter(Configuration configuration, XMLGuiMessages xmlGuiMessages, SessionsList sessionsList) {
 		this.configuration = configuration;
 		this.xmlGuiMessages = xmlGuiMessages;

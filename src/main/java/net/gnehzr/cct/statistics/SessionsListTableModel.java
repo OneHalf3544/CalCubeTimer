@@ -1,8 +1,8 @@
 package net.gnehzr.cct.statistics;
 
 import com.google.common.base.Joiner;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.dao.ProfileEntity;
@@ -17,7 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
-@Singleton
+@Service
 public class SessionsListTableModel extends DraggableJTableModel {
 
 	private static final String SEND_TO_PROFILE = "sendToProfile";
@@ -47,12 +47,12 @@ public class SessionsListTableModel extends DraggableJTableModel {
 
 	private final SessionsList sessionsList;
 
-	@Inject
+	@Autowired
 	private ProfileDao profileDao;
-	@Inject
+	@Autowired
 	private Configuration configuration;
 
-	@Inject
+	@Autowired
 	public SessionsListTableModel(SessionsList sessionsList) {
 		this.sessionsList = sessionsList;
 		sessionsList.addSessionListener(new SessionListener() {
@@ -179,7 +179,7 @@ public class SessionsListTableModel extends DraggableJTableModel {
 		
 		JMenu sendTo = new JMenu(StringAccessor.getString("ProfileDatabase.sendto"));
 		for(ProfileEntity profile : profileDao.getProfileEntitiesExcept(
-				sessionsList.cubeTimerModel.getSelectedProfile().getName())) {
+				sessionsList.currentProfileHolder.getSelectedProfile().getName())) {
 			sendTo.add(createProfileMenuItem(source, profile));
 		}
 		jpopup.add(sendTo);

@@ -1,8 +1,9 @@
 package net.gnehzr.cct.speaking;
 
 import com.google.common.collect.Iterables;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import javazoom.jl.decoder.JavaLayerException;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -21,7 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-@Singleton
+@Service
 public class NumberSpeaker implements Comparable<NumberSpeaker> {
 
 	private static final Logger LOG = LogManager.getLogger(NumberSpeaker.class);
@@ -51,7 +52,7 @@ public class NumberSpeaker implements Comparable<NumberSpeaker> {
 		}
 	}
 
-	@Inject
+	@Autowired
 	public NumberSpeaker(Configuration configuration) {
 		this.configuration = configuration;
 	}

@@ -1,8 +1,6 @@
 package net.gnehzr.cct.scrambles;
 
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.SolutionDao;
@@ -11,6 +9,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Singleton
+@Service
 public class ScramblePluginManager {
 
 	private static final Logger LOG = LogManager.getLogger(ScramblePluginManager.class);
@@ -36,10 +36,10 @@ public class ScramblePluginManager {
 
 	private final List<ScramblePlugin> plugins;
 
-	@Inject
+	@Autowired
 	private SolutionDao solutionDao;
 
-	@Inject
+	@Autowired
 	public ScramblePluginManager(Configuration configuration) throws IllegalArgumentException,
 														       		 IllegalAccessException, InstantiationException {
 		this.configuration = configuration;

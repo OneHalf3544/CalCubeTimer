@@ -1,18 +1,19 @@
 package net.gnehzr.cct.misc.customJTable;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.statistics.SessionsList;
 
 import javax.swing.*;
 
-@Singleton
+@Service
 public class ScrambleStringEditor extends SolutionCellEditor {
 
 	private final SessionsList sessionsList;
 
-	@Inject
+	@Autowired
 	public ScrambleStringEditor(SessionsList sessionsList) {
 		super(new JTextField(), "CALCubeTimer.typenewscramble");
 		this.sessionsList = sessionsList;

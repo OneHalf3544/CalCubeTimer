@@ -1,7 +1,9 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import net.gnehzr.cct.scrambles.ScrambleListHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
@@ -28,7 +30,7 @@ import static net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType.C
 *
 * @author OneHalf
 */
-@Singleton
+@Service
 public class ActionMap {
 
     private static final Logger LOG = LogManager.getLogger(ActionMap.class);
@@ -45,14 +47,16 @@ public class ActionMap {
     public static final String SHOW_ABOUT_ACTION = "showabout";
     public static final String SHOW_CONFIGURATION_ACTION = "showconfiguration";
 
-    private Map<String, AbstractAction> actionMap;
+    private final Map<String, AbstractAction> actionMap;
 
-    @Inject
+    @Autowired
 	private Configuration configuration;
-    @Inject
+    @Autowired
     private SessionsList sessionsList;
+    @Autowired
+    private ScrambleListHolder scrambleListHolder;
 
-    @Inject
+    @Autowired
 	public ActionMap() {
         this.actionMap = new HashMap<>();
     }
@@ -116,7 +120,7 @@ public class ActionMap {
             case SHOW_ABOUT_ACTION:
                 return new AboutAction();
             case "requestscramble": {
-                return new RequestScrambleAction(calCubeTimerFrame);
+                return new RequestScrambleAction(calCubeTimerFrame, scrambleListHolder);
             }
             default:
                 throw new IllegalArgumentException("unknown action: " + actionName);
@@ -136,14 +140,14 @@ public class ActionMap {
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING)));
     }
 
-    @Singleton
+    @Service
     static class ToggleFullscreenTimingAction extends AbstractAction {
 
         public static final String TOGGLE_FULLSCREEN = "togglefullscreen";
 
         private final CalCubeTimerGui calCubeTimerFrame;
 
-        @Inject
+        @Autowired
         public ToggleFullscreenTimingAction(CalCubeTimerGui calCubeTimerFrame) {
             super("+");
             this.calCubeTimerFrame = calCubeTimerFrame;
@@ -154,7 +158,7 @@ public class ActionMap {
             calCubeTimerFrame.setFullscreen(!calCubeTimerFrame.isFullscreen());
         }
 
-        @Inject
+        @Autowired
         public void registerAction(ActionMap actionMap) {
             actionMap.registerAction(ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN, this);
         }

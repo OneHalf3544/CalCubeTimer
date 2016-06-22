@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.keyboardTiming.TimerLabel;
@@ -23,8 +24,9 @@ public class FullscreenFrame extends JFrame {
 
     private final Configuration configuration;
 
-    @Inject
-    public FullscreenFrame(Configuration configuration, @Named("bigTimersDisplay") TimerLabel bigTimersDisplay,
+    @Autowired
+    public FullscreenFrame(Configuration configuration,
+                           @Qualifier("bigTimersDisplay") TimerLabel bigTimersDisplay,
                            ActionMap.ToggleFullscreenTimingAction toggleFullscreenTimingAction) {
         super(getGraphicsConfiguration(configuration));
         this.configuration = configuration;

@@ -1,7 +1,8 @@
 package net.gnehzr.cct.keyboardTiming;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.SolvingProcess;
@@ -16,36 +17,33 @@ import java.awt.event.KeyEvent;
 import java.util.Hashtable;
 import java.util.Map;
 
-@Singleton
+@Service
 public class KeyboardHandler {
 
     private final Configuration configuration;
 
-	private final SolvingProcess solvingProcess;
-
     boolean keysDown;
-    private boolean stackmatIsOn;
 
+    private boolean stackmatIsOn;
     Boolean leftHand;
     Boolean rightHand;
 
-
     //What follows is some really nasty code to deal with linux and window's differing behavior for keyrepeats
-    private Map<Integer, Long> timeup = new Hashtable<>(KeyEvent.KEY_LAST);
+    private final Map<Integer, Long> timeup = new Hashtable<>(KeyEvent.KEY_LAST);
 
+    private final Map<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
 
-    private Map<Integer, Boolean> keyDown = new Hashtable<>(KeyEvent.KEY_LAST);
+    @Autowired
+    private SolvingProcess solvingProcess;
 
-
-    @Inject
+    @Autowired
     private TimingListener timingListener;
 
-    @Inject
+    @Autowired
     private SolvingProcessListener solvingProcessListener;
 
-    @Inject
-	public KeyboardHandler(SolvingProcess solvingProcess, Configuration configuration) {
-		this.solvingProcess = solvingProcess;
+    @Autowired
+	public KeyboardHandler(Configuration configuration) {
 		this.configuration = configuration;
 	}
 
@@ -95,10 +93,10 @@ public class KeyboardHandler {
 
     boolean toggleStartKeysPressed(boolean stackmatEmulation, boolean spacebarOnly) {
         return stackmatEmulation && stackmatKeysDown() && atMostKeysDown(2) || //checking if the right keys are down for starting a "stackmat"
-                !stackmatEmulation && atMostKeysDown(1) && (spacebarOnly && isKeyDown(KeyEvent.VK_SPACE) || !spacebarOnly);
+                !stackmatEmulation && atMostKeysDown(1) && (!spacebarOnly || isKeyDown(KeyEvent.VK_SPACE));
     }
 
-    boolean isKeyDown(int keycode) {
+    private boolean isKeyDown(int keycode) {
         Boolean temp = keyDown.get(keycode);
         return (temp == null) ? false : temp;
     }
@@ -171,7 +169,7 @@ public class KeyboardHandler {
         timingListener. refreshTimer();
     }
 
-    public void setHands(Boolean leftHand, Boolean rightHand) {
+    void setHands(Boolean leftHand, Boolean rightHand) {
         this.leftHand = leftHand;
         this.rightHand = rightHand;
     }

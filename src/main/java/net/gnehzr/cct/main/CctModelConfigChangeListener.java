@@ -1,8 +1,7 @@
 package net.gnehzr.cct.main;
 
 import com.google.common.collect.Iterables;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationChangeListener;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -24,33 +23,34 @@ import javax.swing.*;
 *
 * @author OneHalf
 */
-@Singleton
 class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
     private static final Logger LOG = LogManager.getLogger(CctModelConfigChangeListener.class);
-    @Inject
-    private TimingListener timingListener;
 
+    private final TimingListener timingListener;
     private final CalCubeTimerGui calCubeTimerGui;
-    private CalCubeTimerModel calCubeTimerModel;
+    private final CurrentProfileHolder currentProfileHolder;
     private final ProfileDao profileDao;
     private final Configuration configuration;
     private final ScramblePluginManager scramblePluginManager;
     private final ActionMap actionMap;
     private final SessionsList sessionList;
+    private final StackmatInterpreter stackmatInterpreter;
 
-    @Inject
-    public CctModelConfigChangeListener(CalCubeTimerGui calCubeTimerGui,
-                                        CalCubeTimerModel calCubeTimerModel, ProfileDao profileDao,
+    public CctModelConfigChangeListener(TimingListener timingListener, CalCubeTimerGui calCubeTimerGui,
+                                        CurrentProfileHolder currentProfileHolder, ProfileDao profileDao,
                                         Configuration configuration, ScramblePluginManager scramblePluginManager,
-                                        ActionMap actionMap, SessionsList sessionList) {
+                                        ActionMap actionMap, SessionsList sessionList,
+                                        StackmatInterpreter stackmatInterpreter) {
+        this.timingListener = timingListener;
         this.calCubeTimerGui = calCubeTimerGui;
-        this.calCubeTimerModel = calCubeTimerModel;
+        this.currentProfileHolder = currentProfileHolder;
         this.profileDao = profileDao;
         this.configuration = configuration;
         this.scramblePluginManager = scramblePluginManager;
         this.actionMap = actionMap;
         this.sessionList = sessionList;
+        this.stackmatInterpreter = stackmatInterpreter;
     }
 
     @Override
@@ -64,7 +64,7 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
         calCubeTimerGui.getMainFrame().selectProfileWithoutListenersNotify(
                 calCubeTimerGui.getMainFrame().profilesComboBox,
-                calCubeTimerModel.getSelectedProfile(),
+                currentProfileHolder.getSelectedProfile(),
                 calCubeTimerGui.getMainFrame().profileComboboxListener);
 
         calCubeTimerGui.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
@@ -79,13 +79,13 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
                 configuration.getBoolean(VariableKey.INVERTED_SECONDS),
                 configuration.getBoolean(VariableKey.INVERTED_HUNDREDTHS));
 
-        calCubeTimerModel.getStackmatInterpreter().initialize(
+        stackmatInterpreter.initialize(
                 configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE),
                 configuration.getInt(VariableKey.MIXER_NUMBER),
                 configuration.getBoolean(VariableKey.STACKMAT_ENABLED),
                 configuration.getInt(VariableKey.SWITCH_THRESHOLD));
 
-        configuration.setLong(VariableKey.MIXER_NUMBER, calCubeTimerModel.getStackmatInterpreter().getSelectedMixerIndex());
+        configuration.setLong(VariableKey.MIXER_NUMBER, stackmatInterpreter.getSelectedMixerIndex());
 
         timingListener.stackmatChanged(); //force the stackmat label to refresh
     }

@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
 /**
  * Scramble text field component
  */
-@Singleton
+@Service
 public class ScrambleHyperlinkArea extends JScrollPane {
 
 	private static final Logger LOG = LogManager.getLogger(ScrambleHyperlinkArea.class);
@@ -46,7 +47,7 @@ public class ScrambleHyperlinkArea extends JScrollPane {
 	private int moveNum;
 	private String backgroundColor;
 
-	@Inject
+	@Autowired
 	public ScrambleHyperlinkArea(ScramblePopupPanel scramblePopup, Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		super(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		this.scramblePopup = scramblePopup;

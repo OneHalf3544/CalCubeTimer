@@ -1,6 +1,5 @@
 package scramblePlugins.cube3x3crosssolver;
 
-import com.google.inject.internal.cglib.proxy.$MethodInterceptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jooq.lambda.tuple.Tuple;
@@ -10,7 +9,6 @@ import org.jooq.lambda.tuple.Tuple3;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static scramblePlugins.cube3x3crosssolver.Face.*;
 
 /**

@@ -1,8 +1,7 @@
 package net.gnehzr.cct.main;
 
 import com.google.common.base.Throwables;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationDialog;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -26,11 +25,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.inject.Singleton;
+import javax.annotation.PostConstruct;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -48,58 +49,66 @@ import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 
-@Singleton
+@Service
 class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	private static final Logger LOG = LogManager.getLogger(CALCubeTimerFrame.class);
 
 	private boolean fullscreen = false;
 
-	CalCubeTimerModel model;
 	private final StackmatInterpreter stackmatInterpreter;
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
 	private final ActionMap actionMap;
 	private final ProfileDao profileDao;
 
+    @Autowired
+    private ScrambleListHolder scrambleListHolder;
+
 	private JLabel onLabel = null;
 
-    @Inject
+    @Autowired
 	private CurrentSessionSolutionsTable currentSessionSolutionsTable = null;
 
 	private JScrollPane timesScroller = null;
 
-    @Inject
+    @Autowired
 	private SessionsListTable sessionsListTable;
 
     ScrambleHyperlinkArea scrambleHyperlinkArea = null;
 	private PuzzleTypeComboBox puzzleTypeComboBox;
 	private JPanel scrambleAttributesPanel = null;
 
-    @Inject
+    @Autowired
 	private JTextField generatorTextField;
 
-    JSpinner scrambleNumberSpinner;
+    private JSpinner scrambleNumberSpinner;
 	private JSpinner scrambleLengthSpinner = null;
 	JComboBox<Profile> profilesComboBox = null;
-	JComboBox<LocaleAndIcon> languages = null;
+	private JComboBox<LocaleAndIcon> languages = null;
 
-    @Inject @Named("timeLabel")
+    @Autowired
+	@Qualifier("timeLabel")
 	private TimerLabel timeLabel;
-	@Inject @Named("bigTimersDisplay")
+	@Autowired
+	@Qualifier("bigTimersDisplay")
 	TimerLabel bigTimersDisplay;
 
-	@Inject
+	@Autowired
 	NumberSpeaker numberSpeaker;
 	//all of the above components belong in this HashMap, so we can find them
 	//when they are referenced in the xml gui (type="blah...blah")
 	//we also reset their attributes before parsing the xml gui
 	ComponentsMap persistentComponents;
 
-	@Inject
+	@Autowired
 	ScramblePopupPanel scramblePopup;
 
-	ConfigurationDialog configurationDialog;
+	CalCubeTimerModel model;
+	@Autowired
+	CurrentProfileHolder currentProfileHolder;
+
+	private ConfigurationDialog configurationDialog;
 	private final DynamicBorderSetter dynamicBorderSetter;
 	private final XMLGuiMessages xmlGuiMessages;
 	private static final String GUI_LAYOUT_CHANGED = "GUI Layout Changed";
@@ -115,7 +124,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	List<JSplitPane> splitPanes = new ArrayList<>();
 	DynamicStringSettableManger dynamicStringComponents;
 
-	@Inject
+	@Autowired
 	private SessionsList sessionsList;
 
 	final ItemListener profileComboboxListener = new ItemListener() {
@@ -124,7 +133,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		public void itemStateChanged(ItemEvent e) {
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				Profile affectedProfile = (Profile) e.getItem();
-                model.setSelectedProfile(affectedProfile);
+                currentProfileHolder.setSelectedProfile(affectedProfile);
 
 				//this needs to be here in the event that we loaded times from database
 				repaintTimes();
@@ -147,7 +156,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 				sessionsList.createSession(newPuzzleType);
 			}
 
-			model.getScramblesList().asGenerating().generateScrambleForCurrentSession();
+			scrambleListHolder.asGenerating().generateScrambleForCurrentSession();
 
 			boolean generatorEnabled = scramblePluginManager.isGeneratorEnabled(newPuzzleType);
 			String generator = scramblePluginManager.getScrambleVariation(newPuzzleType).getGeneratorGroup();
@@ -159,7 +168,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	};
 
 
-	final ItemListener languagesComboboxListener = new ItemListener() {
+	private final ItemListener languagesComboboxListener = new ItemListener() {
 		@Override
 		public void itemStateChanged(ItemEvent e) {
 			final LocaleAndIcon newLocale = ((LocaleAndIcon) e.getItem());
@@ -179,19 +188,21 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		}
 	};
 
-	private ChangeListener scrambleNumberSpinnerListener = e -> {
-		if (model.getScramblesList().isGenerating()) {
-			ScrambleList oldScramblesList = model.getScramblesList();
-			model.setScramblesList(convertCurrentSessionToImportedList(oldScramblesList));
+    private ChangeListener scrambleNumberSpinnerListener = e -> {
+		if (scrambleListHolder.isGenerating()) {
+			ScrambleList oldScramblesList = scrambleListHolder.getScramblesList();
+			scrambleListHolder.setScrambleList(convertCurrentSessionToImportedList(oldScramblesList));
 		}
-		model.getScramblesList().asImported().setScrambleNumber((Integer) getScrambleNumberSpinner().getValue());
+		scrambleListHolder.asImported().setScrambleNumber((Integer) getScrambleNumberSpinner().getValue());
 		updateScramble();
 	};
 
-	@Inject
+	@Autowired
 	private ScramblePopupPanel scramblePopupPanel;
-	@Inject
+	@Autowired
 	private Metronome metromone;
+    @Autowired
+    private TimingListener timingListener;
 
     @NotNull
 	private ImportedScrambleList convertCurrentSessionToImportedList(ScrambleList oldScramblesList) {
@@ -206,16 +217,16 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	private ChangeListener scrambleLengthListener = new ChangeListener() {
 		@Override
 		public void stateChanged(ChangeEvent e) {
-			PuzzleType puzzleType = model.getScramblesList().getPuzzleType();
+			PuzzleType puzzleType = scrambleListHolder.getPuzzleType();
 			scramblePluginManager.getScrambleVariation(puzzleType).setLength((Integer) getScrambleLengthSpinner().getValue());
 			updateScramble();
 		}
 	};
 
-	@Inject
+	@Autowired
 	private FullscreenFrame fullscreenFrame;
 
-	@Inject
+	@Autowired
 	public CALCubeTimerFrame(CalCubeTimerModel calCubeTimerModel, StackmatInterpreter stackmatInterpreter,
 							 Configuration configuration, ProfileDao profileDao, ScramblePluginManager scramblePluginManager,
 							 DynamicBorderSetter dynamicBorderSetter,
@@ -237,8 +248,13 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		return puzzleTypeComboBox;
 	}
 
-	@Inject
+	@PostConstruct
     void initializeGUIComponents() {
+        configuration.addConfigurationChangeListener(
+                new CctModelConfigChangeListener(timingListener, this,
+                        currentProfileHolder, profileDao, configuration, scramblePluginManager,
+                        actionMap, sessionsList, stackmatInterpreter));
+
 		setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
 		setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -332,7 +348,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		repaintTimes();
 	}
 
-	void refreshCustomGUIMenu() {
+	private void refreshCustomGUIMenu() {
 		customGUIMenu.removeAll();
 		ButtonGroup group = new ButtonGroup();
 		for(File file : configuration.getXMLLayoutsAvailable()) {
@@ -399,7 +415,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 			super.setCursor(cursor);
 	}
 
-	void parseXML_GUI(File xmlGUIfile) {
+	private void parseXML_GUI(File xmlGUIfile) {
 		//this is needed to compute the size of the gui correctly
 		//before reloading the gui, we must discard any old state these components may have had
 
@@ -518,15 +534,15 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void updateScramble() {
-		ScrambleString current = model.getScramblesList().getCurrentScramble();
-		LOG.trace("update scramble view for {}, {}", current, model.getScramblesList().getPuzzleType());
+		ScrambleString current = scrambleListHolder.getCurrentScramble();
+		LOG.trace("update scramble view for {}, {}", current, scrambleListHolder.getPuzzleType());
 		//set the length of the current scramble
 		safeSetValue(scrambleLengthSpinner, current.getVariation().getLength(), scrambleLengthListener);
 		//update new number of scrambles
-		safeSetScrambleNumberMax(model.getScramblesList().scramblesCount());
+		safeSetScrambleNumberMax(scrambleListHolder.scramblesCount());
 		//update new scramble number
-		safeSetValue(scrambleNumberSpinner, model.getScramblesList().getScrambleNumber(), scrambleNumberSpinnerListener);
-		scrambleHyperlinkArea.setScramble(current, model.getScramblesList().getPuzzleType()); //this will update scramblePopup
+		safeSetValue(scrambleNumberSpinner, scrambleListHolder.getScrambleNumber(), scrambleNumberSpinnerListener);
+		scrambleHyperlinkArea.setScramble(current, scrambleListHolder.getPuzzleType()); //this will update scramblePopup
 
 		scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && !current.isImported());
 	}
@@ -599,7 +615,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	@Override
 	public void createScrambleAttributesPanel() {
 		LOG.debug("create scramble attributes panel");
-		PuzzleType puzzleType = model.getScramblesList().getPuzzleType();
+		PuzzleType puzzleType = scrambleListHolder.getPuzzleType();
 		scrambleAttributesPanel.removeAll();
 
 		List<String> attrs = scramblePluginManager.getAvailablePuzzleAttributes(puzzleType.getScramblePlugin().getClass());
@@ -628,12 +644,12 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		return scrambleLengthSpinner;
 	}
 
-	public void showConfigurationDialog(CalCubeTimerModel calCubeTimerModel) {
+	public void showConfigurationDialog() {
         saveToConfiguration();
         if(configurationDialog == null) {
             configurationDialog = new ConfigurationDialog(
 					this, true, configuration, profileDao, scramblePluginManager,
-					numberSpeaker, calCubeTimerModel, stackmatInterpreter, metromone,
+					numberSpeaker, stackmatInterpreter, metromone,
 					currentSessionSolutionsTable);
         }
         SwingUtilities.invokeLater(() -> {
@@ -649,7 +665,7 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
 	@Override
 	public void saveToConfiguration() {
-		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, model.getScramblesList().getPuzzleType().toString());
+		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, scrambleListHolder.getPuzzleType().toString());
 		scramblePluginManager.saveLengthsToConfiguration();
 		for (ScramblePlugin plugin : scramblePluginManager.getScramblePlugins()) {
 			configuration.setStringArray(VariableKey.PUZZLE_ATTRIBUTES(plugin), plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));

@@ -1,10 +1,12 @@
 package net.gnehzr.cct.stackmatInterpreter;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -12,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Singleton
+@Service
 public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 
     private static final Logger LOG = LogManager.getLogger(StackmatInterpreter.class);
@@ -37,7 +39,7 @@ public class StackmatInterpreter extends SwingWorker<Void, StackmatState> {
 
     private static Mixer.Info[] aInfos = AudioSystem.getMixerInfo();
 
-    @Inject
+    @Autowired
 	public StackmatInterpreter(Configuration configuration) {
 		/*int samplingRate = configuration.getInt(VariableKey.STACKMAT_SAMPLING_RATE);
         int mixerNumber = configuration.getInt(VariableKey.MIXER_NUMBER);

@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.misc.customJTable.*;
 import net.gnehzr.cct.scrambles.ScrambleString;
@@ -20,10 +21,10 @@ import javax.swing.*;
  *
  * @author OneHalf
  */
-@Singleton
+@Service
 public class CurrentSessionSolutionsTable extends DraggableJTable {
 
-	@Inject
+	@Autowired
     public CurrentSessionSolutionsTable(Configuration configuration, SessionsList sessionsList,
 										CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel,
 										SolveTimeEditor solveTimeEditor, ScrambleStringEditor scrambleStringEditor) {

@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 
@@ -16,13 +17,13 @@ import java.awt.event.ActionEvent;
 *
 * @author OneHalf
 */
-@Singleton
+@Service
 class ToggleScramblePopupAction extends AbstractAction {
 
-    @Inject
+    @Autowired
     private Configuration configuration;
 
-    @Inject
+    @Autowired
     private ScramblePopupPanel scramblePopupFrame;
 
     @Override
@@ -31,7 +32,7 @@ class ToggleScramblePopupAction extends AbstractAction {
         scramblePopupFrame.refreshPopup();
     }
 
-    @Inject
+    @Autowired
     void registerAction(ActionMap actionMap) {
         actionMap.registerAction(ActionMap.TOGGLE_SCRAMBLE_POPUP_ACTION, this);
     }

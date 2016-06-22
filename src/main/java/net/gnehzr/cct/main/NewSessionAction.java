@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.statistics.SessionsList;
 
 import javax.swing.*;
@@ -15,20 +16,20 @@ import java.awt.event.ActionEvent;
 *
 * @author OneHalf
 */
-@Singleton
+@Service
 public class NewSessionAction extends AbstractAction {
 
     private final CALCubeTimerFrame calCubeTimerFrame;
 
-    @Inject
+    @Autowired
     private SessionsList sessionsList;
 
-    @Inject
+    @Autowired
     public NewSessionAction(CALCubeTimerFrame calCubeTimerFrame) {
         this.calCubeTimerFrame = calCubeTimerFrame;
     }
 
-    @Inject
+    @Autowired
     public void registerAction(ActionMap actionMap) {
         actionMap.registerAction(ActionMap.NEWSESSION_ACTION, this);
     }

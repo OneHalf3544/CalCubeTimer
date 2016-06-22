@@ -1,7 +1,8 @@
 package net.gnehzr.cct.keyboardTiming;
 
 import com.google.common.base.Throwables;
-import com.google.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.JColorComponent;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -16,6 +17,7 @@ import net.gnehzr.cct.statistics.Profile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -56,17 +58,17 @@ public class TimerLabel extends JColorComponent {
 	private TimerState time;
 	private Font font;
 
-	private final KeyboardHandler keyHandler;
-	@Inject
+	@Autowired
+	private KeyboardHandler keyHandler;
+	@Autowired
 	private ScrambleHyperlinkArea scrambleHyperlinkArea;
-	@Inject
+	@Autowired
 	private SolvingProcess solvingProcess;
 	private final Configuration configuration;
 
-	@Inject
-	public TimerLabel(KeyboardHandler keyHandler, Configuration configuration) {
+	@Autowired
+	public TimerLabel(Configuration configuration) {
 		super("");
-        this.keyHandler = keyHandler;
         LOG.debug("TimerLabel created");
 		this.configuration = configuration;
         componentResizeListener = new ComponentAdapter() {
@@ -106,7 +108,7 @@ public class TimerLabel extends JColorComponent {
 		setFocusTraversalKeysEnabled(false);
 	}
 
-	@Inject
+	@PostConstruct
 	public void initializeDisplay() {
 		updateHandsState(TimerState.ZERO);
 		setTime(TimerState.ZERO);

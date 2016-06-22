@@ -1,16 +1,17 @@
 package net.gnehzr.cct.i18n;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.configuration.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@Singleton
+@Service
 public class XMLGuiMessages implements MessageAccessor {
 
 	private static final Logger LOG = LogManager.getLogger(XMLGuiMessages.class);
@@ -20,14 +21,14 @@ public class XMLGuiMessages implements MessageAccessor {
 
 	private final Configuration configuration;
 
-	@Inject
+	@Autowired
 	public XMLGuiMessages(Configuration configuration) {
 		this.configuration = configuration;
 	}
 	
 	private static String bundleFileName;
 
-	@Inject
+	@PostConstruct
 	public void reloadResources() {
 		//we need to load this xml gui's language properties file
 		String fileName = configuration.getXMLGUILayout().getName();

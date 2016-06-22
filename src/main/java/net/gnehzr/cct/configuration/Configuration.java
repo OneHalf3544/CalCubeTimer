@@ -1,8 +1,6 @@
 package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Throwables;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.dao.ConfigurationDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.statistics.Profile;
@@ -13,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 import org.pushingpixels.substance.api.fonts.FontPolicy;
 import org.pushingpixels.substance.api.fonts.FontSet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -33,7 +33,6 @@ import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-@Singleton
 public class Configuration {
 
 	private static final Logger LOG = LogManager.getLogger(Configuration.class);
@@ -55,7 +54,6 @@ public class Configuration {
 	private final File defaultsFile;
 	private final ConfigurationDao configurationDao;
 
-	@Inject
 	public Configuration(ConfigurationDao configurationDao) throws IOException {
 		this(getRootDirectory(), configurationDao);
 	}

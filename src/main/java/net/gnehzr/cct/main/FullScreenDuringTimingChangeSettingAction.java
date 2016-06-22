@@ -1,7 +1,7 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 
@@ -17,23 +17,24 @@ import java.awt.event.KeyEvent;
  *
  * @author OneHalf
  */
-@Singleton
+@Service
 class FullScreenDuringTimingChangeSettingAction extends AbstractAction {
 
 	public static final String TOGGLE_FULLSCREEN_TIMING_ACTION = "togglefullscreentiming";
 
 	private final Configuration configuration;
-	private final CalCubeTimerModel profileDao;
+	private final CurrentProfileHolder currentProfileHolder;
 
-	@Inject
-	public FullScreenDuringTimingChangeSettingAction(Configuration configuration, CalCubeTimerModel profileDao){
+	@Autowired
+	public FullScreenDuringTimingChangeSettingAction(Configuration configuration,
+													 CurrentProfileHolder currentProfileHolder){
 		this.configuration = configuration;
-		this.profileDao = profileDao;
+		this.currentProfileHolder = currentProfileHolder;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);
 	}
 
 
-	@Inject
+	@Autowired
 	public void registerAction(ActionMap actionMap) {
 		actionMap.registerAction(TOGGLE_FULLSCREEN_TIMING_ACTION, this);
 	}
@@ -42,6 +43,6 @@ class FullScreenDuringTimingChangeSettingAction extends AbstractAction {
 	public void actionPerformed(ActionEvent e){
 		configuration.setBoolean(VariableKey.FULLSCREEN_TIMING, ((AbstractButton)e.getSource()).isSelected());
 		// save now, because this setting is changed from main menu, and user have no "save" button
-		configuration.saveConfiguration(profileDao.getSelectedProfile());
+		configuration.saveConfiguration(currentProfileHolder.getSelectedProfile());
 	}
 }

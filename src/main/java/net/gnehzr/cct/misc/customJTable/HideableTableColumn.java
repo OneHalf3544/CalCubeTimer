@@ -15,6 +15,7 @@ class HideableTableColumn {
     boolean isVisible;
     int viewIndex;
     int modelIndex;
+
     public HideableTableColumn(TableColumn col, boolean isVisible, int modelIndex, int viewIndex) {
         this.col = col;
         this.isVisible = isVisible;

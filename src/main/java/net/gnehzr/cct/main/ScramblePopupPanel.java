@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
@@ -15,7 +16,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-@Singleton
+@Service
 public class ScramblePopupPanel extends JPanel {
 
 	private final Configuration configuration;
@@ -24,10 +25,10 @@ public class ScramblePopupPanel extends JPanel {
 	private ScrambleViewComponent incrementalScrambleView;
 	private ScrambleViewComponent scrambleFinalView;
 
-	@Inject
+	@Autowired
 	private ToggleScramblePopupAction visibilityAction;
 
-	@Inject
+	@Autowired
 	public ScramblePopupPanel(Configuration configuration, ScramblePluginManager scramblePluginManager) {
 		super(new GridLayout(1, 0));
 		this.configuration = configuration;

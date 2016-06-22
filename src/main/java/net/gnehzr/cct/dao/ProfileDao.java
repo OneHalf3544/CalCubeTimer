@@ -1,8 +1,6 @@
 package net.gnehzr.cct.dao;
 
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SessionsList;
@@ -10,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,14 +24,13 @@ import static java.util.stream.Collectors.toList;
  *
  * @author OneHalf
  */
-@Singleton
 public class ProfileDao extends HibernateDaoSupport {
 
     private static final Logger LOG = LogManager.getLogger(ProfileDao.class);
 
     public static final String GUEST_NAME = "Guest";
 
-    @Inject
+    @Autowired
     public ProfileDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }

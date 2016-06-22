@@ -1,8 +1,6 @@
 package net.gnehzr.cct.dao;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import net.gnehzr.cct.main.CurrentProfileHolder;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.statistics.Profile;
@@ -12,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,17 +26,16 @@ import static java.util.stream.Collectors.toList;
  *
  * @author OneHalf
  */
-@Singleton
 public class SolutionDao extends HibernateDaoSupport {
 
     private static final Logger LOG = LogManager.getLogger(SolutionDao.class);
 
-    @Inject
+    @Autowired
     private CurrentProfileHolder currentProfileHolder;
-    @Inject
+    @Autowired
     private ScramblePluginManager scramblePluginManager;
 
-    @Inject
+    @Autowired
     public SolutionDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }

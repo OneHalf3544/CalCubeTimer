@@ -6,6 +6,7 @@ import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.keyboardTiming.KeyboardHandler;
 import net.gnehzr.cct.main.CalCubeTimerModel;
+import net.gnehzr.cct.main.CurrentProfileHolder;
 import net.gnehzr.cct.main.Metronome;
 import net.gnehzr.cct.misc.*;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
@@ -19,6 +20,7 @@ import net.gnehzr.cct.statistics.Profile;
 import net.gnehzr.cct.statistics.SolveType;
 import org.jetbrains.annotations.NotNull;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
+import org.springframework.beans.factory.annotation.Autowired;
 import say.swing.JFontChooser;
 
 import javax.swing.*;
@@ -38,7 +40,9 @@ public class ConfigurationDialog extends JDialog {
     private final ProfileDao profileDao;
     private final ScramblePluginManager scramblePluginManager;
     private final NumberSpeaker numberSpeaker;
-    private final CalCubeTimerModel cubeTimerModel;
+
+    @Autowired
+    private CurrentProfileHolder currentProfileHolder;
 
     private List<SyncGUIListener> resetListeners = new ArrayList<>();
     private ComboItem[] items;
@@ -108,14 +112,13 @@ public class ConfigurationDialog extends JDialog {
 
     public ConfigurationDialog(JFrame parent, boolean modal, Configuration configuration, ProfileDao profileDao,
                                ScramblePluginManager scramblePluginManager,
-                               NumberSpeaker numberSpeaker, CalCubeTimerModel cubeTimerModel,
+                               NumberSpeaker numberSpeaker,
                                StackmatInterpreter stackmat, Metronome metronome, JTable timesTable) {
         super(parent, modal);
         this.configuration = configuration;
         this.profileDao = profileDao;
         this.scramblePluginManager = scramblePluginManager;
         this.numberSpeaker = numberSpeaker;
-        this.cubeTimerModel = cubeTimerModel;
         this.stackmat = stackmat;
         this.metronome = metronome;
         this.timesTable = timesTable;
@@ -512,7 +515,7 @@ public class ConfigurationDialog extends JDialog {
         SyncGUIListener sl = defaults -> {
             // profile settings
             scramblePluginManager.reloadLengthsFromConfiguration(defaults);
-            puzzleTypeListModel.setContents(scramblePluginManager.getPuzzleTypes(cubeTimerModel.getSelectedProfile()));
+            puzzleTypeListModel.setContents(scramblePluginManager.getPuzzleTypes(currentProfileHolder.getSelectedProfile()));
             profilesModel.setContents(profileDao.getProfiles());
         };
         resetListeners.add(sl);
@@ -624,7 +627,8 @@ public class ConfigurationDialog extends JDialog {
         Object source = e.getSource();
         if (source == inspectionCountdown) {
             speakInspection.setEnabled(inspectionCountdown.isSelected());
-        } else if (e.getStateChange() == ItemEvent.SELECTED && source == profiles && !profiles.getSelectedItem().equals(cubeTimerModel.getSelectedProfile())) {
+        } else if (e.getStateChange() == ItemEvent.SELECTED && source == profiles
+                && !profiles.getSelectedItem().equals(currentProfileHolder.getSelectedProfile())) {
             int choice = Utils.showYesNoCancelDialog(this, StringAccessor.getString("ConfigurationDialog.saveprofile"));
             switch (choice) {
                 case JOptionPane.YES_OPTION:
@@ -633,13 +637,13 @@ public class ConfigurationDialog extends JDialog {
                 case JOptionPane.NO_OPTION:
                     break;
                 default:
-                    profiles.setSelectedItem(cubeTimerModel.getSelectedProfile());
+                    profiles.setSelectedItem(currentProfileHolder.getSelectedProfile());
                     return;
             }
 
             // TODO load profile correctly
             Profile profile = (Profile) profiles.getSelectedItem();
-            cubeTimerModel.setSelectedProfile(profile);
+            currentProfileHolder.setSelectedProfile(profile);
 
             configuration.loadConfiguration(profile);
             configuration.apply(profile);
@@ -826,9 +830,9 @@ public class ConfigurationDialog extends JDialog {
     }
 
     public void syncGUIwithConfig(boolean defaults) {
-        setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + cubeTimerModel.getSelectedProfile().getName());
+        setTitle(StringAccessor.getString("ConfigurationDialog.cctoptions") + " " + currentProfileHolder.getSelectedProfile().getName());
         profiles.setModel(new DefaultComboBoxModel<>(Iterables.toArray(profileDao.getProfiles(), Profile.class)));
-        profiles.setSelectedItem(cubeTimerModel.getSelectedProfile());
+        profiles.setSelectedItem(currentProfileHolder.getSelectedProfile());
         for (SyncGUIListener sl : resetListeners) {
             sl.syncGUIWithConfig(defaults);
         }
@@ -903,14 +907,14 @@ public class ConfigurationDialog extends JDialog {
 
         tagsModel.apply();
 
-        configuration.apply(cubeTimerModel.getSelectedProfile());
+        configuration.apply(currentProfileHolder.getSelectedProfile());
 
         for (ComboItem item : items) {
             item.setInUse(false);
         }
         items[configuration.getInt(VariableKey.MIXER_NUMBER)].setInUse(true);
 
-        configuration.saveConfiguration(cubeTimerModel.getSelectedProfile());
+        configuration.saveConfiguration(currentProfileHolder.getSelectedProfile());
     }
 
     private class ScrambleSettingsTable extends DraggableJTable {
