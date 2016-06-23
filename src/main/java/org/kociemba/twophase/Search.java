@@ -6,26 +6,26 @@ package org.kociemba.twophase;
  */
 public class Search {
 
-	static int[] ax = new int[31]; // The axis of the move
-	static int[] po = new int[31]; // The power of the move
+	private static int[] ax = new int[31]; // The axis of the move
+	private static int[] po = new int[31]; // The power of the move
 
-	static int[] flip = new int[31]; // phase1 coordinates
-	static int[] twist = new int[31];
-	static int[] slice = new int[31];
+	private static int[] flip = new int[31]; // phase1 coordinates
+	private static int[] twist = new int[31];
+	private static int[] slice = new int[31];
 
-	static int[] parity = new int[31]; // phase2 coordinates
-	static int[] URFtoDLF = new int[31];
-	static int[] FRtoBR = new int[31];
-	static int[] URtoUL = new int[31];
-	static int[] UBtoDF = new int[31];
-	static int[] URtoDF = new int[31];
+	private static int[] parity = new int[31]; // phase2 coordinates
+	private static int[] URFtoDLF = new int[31];
+	private static int[] FRtoBR = new int[31];
+	private static int[] URtoUL = new int[31];
+	private static int[] UBtoDF = new int[31];
+	private static int[] URtoDF = new int[31];
 
-	static int[] minDistPhase1 = new int[31]; // IDA* distance do goal estimations
-	static int[] minDistPhase2 = new int[31];
+	private static int[] minDistPhase1 = new int[31]; // IDA* distance do goal estimations
+	private static int[] minDistPhase2 = new int[31];
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// generate the solution string from the array data
-	static String solutionToString(int length) {
+	private static String solutionToString(int length) {
 		String s = "";
 		for (int i = 0; i < length; i++) {
 			switch (ax[i]) {
@@ -62,11 +62,11 @@ public class Search {
 			}
 		}
 		return s;
-	};
+	}
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// generate the solution string from the array data including a separator between phase1 and phase2 moves
-	static String solutionToString(int length, int depthPhase1) {
+	private static String solutionToString(int length, int depthPhase1) {
 		String s = "";
 		for (int i = 0; i < length; i++) {
 			switch (ax[i]) {
@@ -105,7 +105,7 @@ public class Search {
 				s += ". ";
 		}
 		return s;
-	};
+	}
 
 	/**
 	 * Computes the solver string for a given cube.
@@ -244,7 +244,7 @@ public class Search {
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Apply phase2 of algorithm and return the combined phase1 and phase2 depth. In phase2, only the moves
 	// U,D,R2,F2,L2 and B2 are allowed.
-	static int totalDepth(int depthPhase1, int maxDepth) {
+	private static int totalDepth(int depthPhase1, int maxDepth) {
 		int mv = 0, d1 = 0, d2 = 0;
 		int maxDepthPhase2 = Math.min(10, maxDepth - depthPhase1);// Allow only max 10 moves in phase2
 		for (int i = 0; i < depthPhase1; i++) {

@@ -3,8 +3,9 @@ package org.kociemba.twophase;
 import static org.kociemba.twophase.Corner.*;
 import static org.kociemba.twophase.Edge.*;
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//Cube on the cubie level
+/**
+ * Cube on the cubie level
+ */
 class CubieCube {
 
 	// initialize to Id-Cube
@@ -96,25 +97,10 @@ class CubieCube {
 	}
 
 	CubieCube() {
-
-	};
-
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	CubieCube(Corner[] cp, byte[] co, Edge[] ep, byte[] eo) {
-		this();
-		for (int i = 0; i < 8; i++) {
-			this.cp[i] = cp[i];
-			this.co[i] = co[i];
-		}
-		for (int i = 0; i < 12; i++) {
-			this.ep[i] = ep[i];
-			this.eo[i] = eo[i];
-		}
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// n choose k
-	static int Cnk(int n, int k) {
+	private static int nChooseK(int n, int k) {
 		int i, j, s;
 		if (n < k)
 			return 0;
@@ -127,47 +113,38 @@ class CubieCube {
 		return s;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	static void rotateLeft(Corner[] arr, int l, int r)
+	private static void rotateLeft(Corner[] arr, int l, int r)
 	// Left rotation of all array elements between l and r
 	{
 		Corner temp = arr[l];
-		for (int i = l; i < r; i++)
-			arr[i] = arr[i + 1];
+		System.arraycopy(arr, l + 1, arr, l, r - l);
 		arr[r] = temp;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	static void rotateRight(Corner[] arr, int l, int r)
+	private static void rotateRight(Corner[] arr, int l, int r)
 	// Right rotation of all array elements between l and r
 	{
 		Corner temp = arr[r];
-		for (int i = r; i > l; i--)
-			arr[i] = arr[i - 1];
+		System.arraycopy(arr, l, arr, l + 1, r - l);
 		arr[l] = temp;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	static void rotateLeft(Edge[] arr, int l, int r)
+	private static void rotateLeft(Edge[] arr, int l, int r)
 	// Left rotation of all array elements between l and r
 	{
 		Edge temp = arr[l];
-		for (int i = l; i < r; i++)
-			arr[i] = arr[i + 1];
+		System.arraycopy(arr, l + 1, arr, l, r - l);
 		arr[r] = temp;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	static void rotateRight(Edge[] arr, int l, int r)
+	private static void rotateRight(Edge[] arr, int l, int r)
 	// Right rotation of all array elements between l and r
 	{
 		Edge temp = arr[r];
-		for (int i = r; i > l; i--)
-			arr[i] = arr[i - 1];
+		System.arraycopy(arr, l, arr, l + 1, r - l);
 		arr[l] = temp;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// return cube in facelet representation
 	FaceCube toFaceCube() {
 		FaceCube fcRet = new FaceCube();
@@ -190,7 +167,6 @@ class CubieCube {
 		return fcRet;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Multiply this CubieCube with another cubiecube b, restricted to the corners.<br>
 	// Because we also describe reflections of the whole cube by permutations, we get a complication with the corners. The
 	// orientations of mirrored corners are described by the numbers 3, 4 and 5. The composition of the orientations
@@ -210,7 +186,7 @@ class CubieCube {
 			byte oriA = co[b.cp[corn.ordinal()].ordinal()];
 			byte oriB = b.co[corn.ordinal()];
 			byte ori = 0;
-			;
+
 			if (oriA < 3 && oriB < 3) // if both cubes are regular cubes...
 			{
 				ori = (byte) (oriA + oriB); // just do an addition modulo 3 here
@@ -246,7 +222,6 @@ class CubieCube {
 		}
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Multiply this CubieCube with another cubiecube b, restricted to the edges.
 	void edgeMultiply(CubieCube b) {
 		Edge[] ePerm = new Edge[12];
@@ -261,38 +236,8 @@ class CubieCube {
 		}
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	// Multiply this CubieCube with another CubieCube b.
-	void multiply(CubieCube b) {
-		cornerMultiply(b);
-		// edgeMultiply(b);
-	}
-
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	// Compute the inverse CubieCube
-	void invCubieCube(CubieCube c) {
-		for (Edge edge : Edge.values())
-			c.ep[ep[edge.ordinal()].ordinal()] = edge;
-		for (Edge edge : Edge.values())
-			c.eo[edge.ordinal()] = eo[c.ep[edge.ordinal()].ordinal()];
-		for (Corner corn : Corner.values())
-			c.cp[cp[corn.ordinal()].ordinal()] = corn;
-		for (Corner corn : Corner.values()) {
-			byte ori = co[c.cp[corn.ordinal()].ordinal()];
-			if (ori >= 3)// Just for completeness. We do not invert mirrored
-				// cubes in the program.
-				c.co[corn.ordinal()] = ori;
-			else {// the standard case
-				c.co[corn.ordinal()] = (byte) -ori;
-				if (c.co[corn.ordinal()] < 0)
-					c.co[corn.ordinal()] += 3;
-			}
-		}
-	}
-
 	// ********************************************* Get and set coordinates *********************************************
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// return the twist of the 8 corners. 0 <= twist < 3^7
 	short getTwist() {
 		short ret = 0;
@@ -301,7 +246,6 @@ class CubieCube {
 		return ret;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setTwist(short twist) {
 		int twistParity = 0;
 		for (int i = DRB.ordinal() - 1; i >= URF.ordinal(); i--) {
@@ -311,7 +255,6 @@ class CubieCube {
 		co[DRB.ordinal()] = (byte) ((3 - twistParity % 3) % 3);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// return the flip of the 12 edges. 0<= flip < 2^11
 	short getFlip() {
 		short ret = 0;
@@ -320,7 +263,6 @@ class CubieCube {
 		return ret;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setFlip(short flip) {
 		int flipParity = 0;
 		for (int i = BR.ordinal() - 1; i >= UR.ordinal(); i--) {
@@ -330,7 +272,6 @@ class CubieCube {
 		eo[BR.ordinal()] = (byte) ((2 - flipParity % 2) % 2);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Parity of the corner permutation
 	short cornerParity() {
 		int s = 0;
@@ -341,7 +282,6 @@ class CubieCube {
 		return (short) (s % 2);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Parity of the edges permutation. Parity of corners and edges are the same if the cube is solvable.
 	short edgeParity() {
 		int s = 0;
@@ -352,7 +292,6 @@ class CubieCube {
 		return (short) (s % 2);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// permutation of the UD-slice edges FR,FL,BL and BR
 	short getFRtoBR() {
 		int a = 0, x = 0;
@@ -360,7 +299,7 @@ class CubieCube {
 		// compute the index a < (12 choose 4) and the permutation array perm.
 		for (int j = BR.ordinal(); j >= UR.ordinal(); j--)
 			if (FR.ordinal() <= ep[j].ordinal() && ep[j].ordinal() <= BR.ordinal()) {
-				a += Cnk(11 - j, x + 1);
+				a += nChooseK(11 - j, x + 1);
 				edge4[3 - x++] = ep[j];
 			}
 
@@ -378,7 +317,6 @@ class CubieCube {
 		return (short) (24 * a + b);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setFRtoBR(short idx) {
 		int x;
 		Edge[] sliceEdge = { FR, FL, BL, BR };
@@ -398,9 +336,9 @@ class CubieCube {
 
 		x = 3;// generate combination and set slice edges
 		for (int j = UR.ordinal(); j <= BR.ordinal(); j++)
-			if (a - Cnk(11 - j, x + 1) >= 0) {
+			if (a - nChooseK(11 - j, x + 1) >= 0) {
 				ep[j] = sliceEdge[3 - x];
-				a -= Cnk(11 - j, x-- + 1);
+				a -= nChooseK(11 - j, x-- + 1);
 			}
 		x = 0; // set the remaining edges UR..DB
 		for (int j = UR.ordinal(); j <= BR.ordinal(); j++)
@@ -409,7 +347,6 @@ class CubieCube {
 
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Permutation of all corners except DBL and DRB
 	short getURFtoDLF() {
 		int a = 0, x = 0;
@@ -417,7 +354,7 @@ class CubieCube {
 		// compute the index a < (8 choose 6) and the corner permutation.
 		for (int j = URF.ordinal(); j <= DRB.ordinal(); j++)
 			if (cp[j].ordinal() <= DLF.ordinal()) {
-				a += Cnk(j, x + 1);
+				a += nChooseK(j, x + 1);
 				corner6[x++] = cp[j];
 			}
 
@@ -435,7 +372,6 @@ class CubieCube {
 		return (short) (720 * a + b);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setURFtoDLF(short idx) {
 		int x;
 		Corner[] corner6 = { URF, UFL, ULB, UBR, DFR, DLF };
@@ -454,9 +390,9 @@ class CubieCube {
 		}
 		x = 5;// generate combination and set corners
 		for (int j = DRB.ordinal(); j >= 0; j--)
-			if (a - Cnk(j, x + 1) >= 0) {
+			if (a - nChooseK(j, x + 1) >= 0) {
 				cp[j] = corner6[x];
-				a -= Cnk(j, x-- + 1);
+				a -= nChooseK(j, x-- + 1);
 			}
 		x = 0;
 		for (int j = URF.ordinal(); j <= DRB.ordinal(); j++)
@@ -464,7 +400,6 @@ class CubieCube {
 				cp[j] = otherCorner[x++];
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Permutation of the six edges UR,UF,UL,UB,DR,DF.
 	int getURtoDF() {
 		int a = 0, x = 0;
@@ -472,7 +407,7 @@ class CubieCube {
 		// compute the index a < (12 choose 6) and the edge permutation.
 		for (int j = UR.ordinal(); j <= BR.ordinal(); j++)
 			if (ep[j].ordinal() <= DF.ordinal()) {
-				a += Cnk(j, x + 1);
+				a += nChooseK(j, x + 1);
 				edge6[x++] = ep[j];
 			}
 
@@ -490,7 +425,6 @@ class CubieCube {
 		return 720 * a + b;
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setURtoDF(int idx) {
 		int x;
 		Edge[] edge6 = { UR, UF, UL, UB, DR, DF };
@@ -509,9 +443,9 @@ class CubieCube {
 		}
 		x = 5;// generate combination and set edges
 		for (int j = BR.ordinal(); j >= 0; j--)
-			if (a - Cnk(j, x + 1) >= 0) {
+			if (a - nChooseK(j, x + 1) >= 0) {
 				ep[j] = edge6[x];
-				a -= Cnk(j, x-- + 1);
+				a -= nChooseK(j, x-- + 1);
 			}
 		x = 0; // set the remaining edges DL..BR
 		for (int j = UR.ordinal(); j <= BR.ordinal(); j++)
@@ -519,7 +453,6 @@ class CubieCube {
 				ep[j] = otherEdge[x++];
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Permutation of the six edges UR,UF,UL,UB,DR,DF
 	public static int getURtoDF(short idx1, short idx2) {
 		CubieCube a = new CubieCube();
@@ -536,7 +469,6 @@ class CubieCube {
 		return b.getURtoDF();
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Permutation of the three edges UR,UF,UL
 	short getURtoUL() {
 		int a = 0, x = 0;
@@ -544,7 +476,7 @@ class CubieCube {
 		// compute the index a < (12 choose 3) and the edge permutation.
 		for (int j = UR.ordinal(); j <= BR.ordinal(); j++)
 			if (ep[j].ordinal() <= UL.ordinal()) {
-				a += Cnk(j, x + 1);
+				a += nChooseK(j, x + 1);
 				edge3[x++] = ep[j];
 			}
 
@@ -562,7 +494,6 @@ class CubieCube {
 		return (short) (6 * a + b);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setURtoUL(short idx) {
 		int x;
 		Edge[] edge3 = { UR, UF, UL };
@@ -580,13 +511,12 @@ class CubieCube {
 		}
 		x = 2;// generate combination and set edges
 		for (int j = BR.ordinal(); j >= 0; j--)
-			if (a - Cnk(j, x + 1) >= 0) {
+			if (a - nChooseK(j, x + 1) >= 0) {
 				ep[j] = edge3[x];
-				a -= Cnk(j, x-- + 1);
+				a -= nChooseK(j, x-- + 1);
 			}
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Permutation of the three edges UB,DR,DF
 	short getUBtoDF() {
 		int a = 0, x = 0;
@@ -594,7 +524,7 @@ class CubieCube {
 		// compute the index a < (12 choose 3) and the edge permutation.
 		for (int j = UR.ordinal(); j <= BR.ordinal(); j++)
 			if (UB.ordinal() <= ep[j].ordinal() && ep[j].ordinal() <= DF.ordinal()) {
-				a += Cnk(j, x + 1);
+				a += nChooseK(j, x + 1);
 				edge3[x++] = ep[j];
 			}
 
@@ -612,7 +542,6 @@ class CubieCube {
 		return (short) (6 * a + b);
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setUBtoDF(short idx) {
 		int x;
 		Edge[] edge3 = { UB, DR, DF };
@@ -630,31 +559,12 @@ class CubieCube {
 		}
 		x = 2;// generate combination and set edges
 		for (int j = BR.ordinal(); j >= 0; j--)
-			if (a - Cnk(j, x + 1) >= 0) {
+			if (a - nChooseK(j, x + 1) >= 0) {
 				ep[j] = edge3[x];
-				a -= Cnk(j, x-- + 1);
+				a -= nChooseK(j, x-- + 1);
 			}
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	int getURFtoDLB() {
-		Corner[] perm = new Corner[8];
-		int b = 0;
-		for (int i = 0; i < 8; i++)
-			perm[i] = cp[i];
-		for (int j = 7; j > 0; j--)// compute the index b < 8! for the permutation in perm
-		{
-			int k = 0;
-			while (perm[j].ordinal() != j) {
-				rotateLeft(perm, 0, j);
-				k++;
-			}
-			b = (j + 1) * b + k;
-		}
-		return b;
-	}
-
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setURFtoDLB(int idx) {
 		Corner[] perm = { URF, UFL, ULB, UBR, DFR, DLF, DBL, DRB };
 		int k;
@@ -669,25 +579,6 @@ class CubieCube {
 			cp[j] = perm[x--];
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	int getURtoBR() {
-		Edge[] perm = new Edge[12];
-		int b = 0;
-		for (int i = 0; i < 12; i++)
-			perm[i] = ep[i];
-		for (int j = 11; j > 0; j--)// compute the index b < 12! for the permutation in perm
-		{
-			int k = 0;
-			while (perm[j].ordinal() != j) {
-				rotateLeft(perm, 0, j);
-				k++;
-			}
-			b = (j + 1) * b + k;
-		}
-		return b;
-	}
-
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	void setURtoBR(int idx) {
 		Edge[] perm = { UR, UF, UL, UB, DR, DF, DL, DB, FR, FL, BL, BR };
 		int k;
@@ -702,7 +593,6 @@ class CubieCube {
 			ep[j] = perm[x--];
 	}
 
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Check a cubiecube for solvability. Return the error code.
 	// 0: Cube is solvable
 	// -2: Not all 12 edges exist exactly once

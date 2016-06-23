@@ -17,17 +17,17 @@ class CoordCube {
 	static final short N_FLIP = 2048;// 2^11 possible edge flips
 	static final short N_SLICE1 = 495;// 12 choose 4 possible positions of FR,FL,BL,BR edges
 	static final short N_SLICE2 = 24;// 4! permutations of FR,FL,BL,BR edges in phase2
-	static final short N_PARITY = 2; // 2 possible corner parities
-	static final short N_URFtoDLF = 20160;// 8!/(8-6)! permutation of URF,UFL,ULB,UBR,DFR,DLF corners
-	static final short N_FRtoBR = 11880; // 12!/(12-4)! permutation of FR,FL,BL,BR edges
-	static final short N_URtoUL = 1320; // 12!/(12-3)! permutation of UR,UF,UL edges
-	static final short N_UBtoDF = 1320; // 12!/(12-3)! permutation of UB,DR,DF edges
-	static final short N_URtoDF = 20160; // 8!/(8-6)! permutation of UR,UF,UL,UB,DR,DF edges in phase2
+	private static final short N_PARITY = 2; // 2 possible corner parities
+	private static final short N_URFtoDLF = 20160;// 8!/(8-6)! permutation of URF,UFL,ULB,UBR,DFR,DLF corners
+	private static final short N_FRtoBR = 11880; // 12!/(12-4)! permutation of FR,FL,BL,BR edges
+	private static final short N_URtoUL = 1320; // 12!/(12-3)! permutation of UR,UF,UL edges
+	private static final short N_UBtoDF = 1320; // 12!/(12-3)! permutation of UB,DR,DF edges
+	private static final short N_URtoDF = 20160; // 8!/(8-6)! permutation of UR,UF,UL,UB,DR,DF edges in phase2
 
 	static final int N_URFtoDLB = 40320;// 8! permutations of the corners
 	static final int N_URtoBR = 479001600;// 8! permutations of the corners
 
-	static final short N_MOVE = 18;
+	private static final short N_MOVE = 18;
 
     // All coordinates are 0 for a solved cube except for UBtoDF, which is 114
 	short twist;
@@ -37,7 +37,7 @@ class CoordCube {
 	short URFtoDLF;
 	short URtoUL;
 	short UBtoDF;
-	int URtoDF;
+	private int URtoDF;
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Generate a CoordCube from a CubieCube
