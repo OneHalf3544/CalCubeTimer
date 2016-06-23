@@ -49,6 +49,8 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     private boolean fullScreenTiming;
     @Autowired
     private KeyboardHandler keyHandler;
+    @Autowired
+    private SolvingProcess solvingProcess;
 
     @Autowired
     public TimingListenerImpl(Configuration configuration) {
@@ -58,6 +60,7 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     @Autowired
     void init() {
         configuration.addConfigurationChangeListener(p -> configurationChanged());
+        solvingProcess.setSolvingProcessListener(this);
     }
 
     @Override

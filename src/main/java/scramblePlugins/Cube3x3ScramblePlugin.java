@@ -38,8 +38,8 @@ public class Cube3x3ScramblePlugin extends CubeScramblePlugin {
 
     private boolean optimalCross;
 
-    //solve the U face on D
-    public final String defaultGenerator = DEFAULT_SOLVE_FACE + " " + DEFAULT_SOLVE_SIDE;
+    // solve white cross on D face
+    public final String defaultGenerator = DEFAULT_SOLVE_FACE.getFace().getFaceChar() + " " + DEFAULT_SOLVE_SIDE.getFaceChar();
 
     @NotNull
     @Override

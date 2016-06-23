@@ -44,12 +44,16 @@ import java.util.concurrent.TimeUnit;
 public class SolvingProcess {
 
     private static final Logger LOG = LogManager.getLogger(SolvingProcess.class);
+
     private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
+
     private static final Duration PERIOD = Duration.ofMillis(45);
-    protected final Configuration configuration;
+
+    private final Configuration configuration;
     private final NumberSpeaker numberSpeaker;
-    private final SolvingProcessListener solvingProcessListener;
+    private SolvingProcessListener solvingProcessListener;
     private final CompositeTimingListener timingListeners = new CompositeTimingListener();
+
     private ScrambleListHolder scrambleListHolder;
     private ScheduledFuture<?> scheduledFuture;
     private List<SolveTime> splits = new ArrayList<>();
@@ -62,11 +66,13 @@ public class SolvingProcess {
     private Instant currentTime;
 
     @Autowired
-    public SolvingProcess(NumberSpeaker numberSpeaker, ScrambleListHolder scrambleListHolder,
-                          Configuration configuration, SolvingProcessListener solvingProcessListener) {
+    public SolvingProcess(NumberSpeaker numberSpeaker, ScrambleListHolder scrambleListHolder, Configuration configuration) {
         this.numberSpeaker = numberSpeaker;
         this.scrambleListHolder = scrambleListHolder;
         this.configuration = configuration;
+    }
+
+    public void setSolvingProcessListener(SolvingProcessListener solvingProcessListener) {
         this.solvingProcessListener = solvingProcessListener;
     }
 

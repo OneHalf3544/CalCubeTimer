@@ -80,11 +80,6 @@ public class CalCubeTimerModel {
 
     private PuzzleTypeComboBoxModel puzzleTypeComboBoxModel;
 
-    @Autowired
-    public void setCctModelConfigChangeListener(CctModelConfigChangeListener cctModelConfigChangeListener) {
-        configuration.addConfigurationChangeListener(cctModelConfigChangeListener);
-    }
-
     @PostConstruct
     void initialize() {
         puzzleTypeComboBoxModel = new PuzzleTypeComboBoxModel(scramblePluginManager);

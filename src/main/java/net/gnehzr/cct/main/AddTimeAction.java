@@ -18,6 +18,7 @@ import java.awt.event.KeyEvent;
  *
  * @author OneHalf
  */
+@Service
 public class AddTimeAction extends AbstractAction {
 
 	@Autowired

@@ -23,6 +23,7 @@ import javax.swing.*;
 *
 * @author OneHalf
 */
+
 class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
     private static final Logger LOG = LogManager.getLogger(CctModelConfigChangeListener.class);

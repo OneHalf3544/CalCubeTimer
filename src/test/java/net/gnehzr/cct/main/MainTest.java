@@ -12,6 +12,6 @@ public class MainTest {
     @Test
     public void testCreateInjectionContext() throws Exception {
         System.setProperty("spring.profiles.active", "dev");
-        new AnnotationConfigApplicationContext(TestContext.class);
+        new AnnotationConfigApplicationContext(ContextConfiguration.class);
     }
 }

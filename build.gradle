@@ -11,7 +11,10 @@ targetCompatibility = 1.8
 
 mainClassName = "net.gnehzr.cct.main.Main"
 // todo
-applicationDefaultJvmArgs = ["-DrootDir=" + new File("${buildDir}/resources/main").toURI().toString()]
+applicationDefaultJvmArgs = [
+        "-DrootDir=" + new File("${buildDir}/resources/main").toURI().toString(),
+        "spring.profiles.active=production"
+]
 
 jar {
     manifest {

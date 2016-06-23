@@ -20,6 +20,7 @@ import java.awt.event.ComponentEvent;
  *
  * @author OneHalf
  */
+@Service
 public class FullscreenFrame extends JFrame {
 
     private final Configuration configuration;

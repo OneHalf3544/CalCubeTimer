@@ -1,5 +1,7 @@
 package scramblePlugins.cube3x3crosssolver;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 
 /**
@@ -29,7 +31,7 @@ public enum RubicsColor {
         return face;
     }
 
-    public static RubicsColor defaultByFace(Face face) {
+    public static RubicsColor defaultByFace(@NotNull Face face) {
         return Arrays.stream(values())
                 .filter(rubicsColor -> rubicsColor.getFace() == face)
                 .findAny()
