@@ -10,7 +10,6 @@ import javax.swing.*;
 @Service
 public class SolveTimeEditor extends SolutionCellEditor {
 
-	@Autowired
 	public SolveTimeEditor() {
 		super(new JTextField(), "CALCubeTimer.typenewtime");
 	}

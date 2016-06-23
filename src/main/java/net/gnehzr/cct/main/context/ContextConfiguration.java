@@ -27,7 +27,7 @@ public class ContextConfiguration {
     private static final Logger LOG = LogManager.getLogger();
 
     @Bean
-    public TimerLabel timerLabel(Configuration configuration) {
+    public TimerLabel timeLabel(Configuration configuration) {
         return new TimerLabel(configuration);
     }
 

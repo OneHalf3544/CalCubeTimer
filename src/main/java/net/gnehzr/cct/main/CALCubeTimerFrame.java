@@ -50,11 +50,16 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 @Service
-class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
+public class CALCubeTimerFrame extends JFrame {
 
 	private static final Logger LOG = LogManager.getLogger(CALCubeTimerFrame.class);
 
-	private boolean fullscreen = false;
+    public static final String CCT_VERSION = CALCubeTimerFrame.class.getPackage().getImplementationVersion();
+    public static final ImageIcon CUBE_ICON = new ImageIcon(CALCubeTimerFrame.class.getResource("cube.png"));
+
+    public static final String SCRAMBLE_ATTRIBUTE_CHANGED = "Scramble Attribute Changed";
+
+    private boolean fullscreen = false;
 
 	private final StackmatInterpreter stackmatInterpreter;
 	private final Configuration configuration;
@@ -190,8 +195,8 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 
     private ChangeListener scrambleNumberSpinnerListener = e -> {
 		if (scrambleListHolder.isGenerating()) {
-			ScrambleList oldScramblesList = scrambleListHolder.getScramblesList();
-			scrambleListHolder.setScrambleList(convertCurrentSessionToImportedList(oldScramblesList));
+			PuzzleType oldPuzzleType = scrambleListHolder.getPuzzleType();
+			scrambleListHolder.setScrambleList(convertCurrentSessionToImportedList(oldPuzzleType));
 		}
 		scrambleListHolder.asImported().setScrambleNumber((Integer) getScrambleNumberSpinner().getValue());
 		updateScramble();
@@ -205,9 +210,9 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
     private TimingListener timingListener;
 
     @NotNull
-	private ImportedScrambleList convertCurrentSessionToImportedList(ScrambleList oldScramblesList) {
+	private ImportedScrambleList convertCurrentSessionToImportedList(PuzzleType oldPuzzleType) {
 		return new ImportedScrambleList(
-                oldScramblesList.getPuzzleType(),
+				oldPuzzleType,
                 sessionsList.getCurrentSession().getSolutionList().stream()
                         .map(Solution::getScrambleString)
                         .collect(toList()),
@@ -243,7 +248,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		this.dynamicStringComponents = dynamicStringComponents;
 	}
 
-	@Override
 	public PuzzleTypeComboBox getPuzzleTypeComboBox() {
 		return puzzleTypeComboBox;
 	}
@@ -255,11 +259,13 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
                         currentProfileHolder, profileDao, configuration, scramblePluginManager,
                         actionMap, sessionsList, stackmatInterpreter));
 
+		scrambleListHolder.addListener(this::updateScramble);
+
 		setTitle("CCT " + CALCubeTimerFrame.CCT_VERSION);
 		setIconImage(CALCubeTimerFrame.CUBE_ICON.getImage());
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-		puzzleTypeComboBox = new PuzzleTypeComboBox(scramblePluginManager, configuration);
+		puzzleTypeComboBox = new PuzzleTypeComboBox(configuration, model.getPuzzleTypeComboBoxModel());
 		puzzleTypeComboBox.addItemListener(scrambleChooserListener);
 
 		scrambleNumberSpinner = new JSpinner(new SpinnerNumberModel(1,	1, 1, 1));
@@ -322,17 +328,14 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		return persistentComponents;
 	}
 
-	@Override
 	public boolean isFullscreen() {
 		return fullscreen;
 	}
 
-    @Override
-	public CALCubeTimerFrame getMainFrame() {
+    public CALCubeTimerFrame getMainFrame() {
 		return this;
 	}
 
-	@Override
 	public void newSolutionAdded(TableModelEvent event) {
 		final Solution latestSolution = sessionsList.getCurrentSession().getLastSolution();
 
@@ -374,7 +377,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		}
 	}
 
-	@Override
 	public void loadStringsFromDefaultLocale() {
 		//this loads the strings for the swing components we use (JColorChooser and JFileChooser)
 		UIManager.getDefaults().setDefaultLocale(Locale.getDefault());
@@ -491,7 +493,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 	/**
 	 * Обновыление статистики
 	 */
-	@Override
 	public void repaintTimes() {
 		SessionSolutionsStatistics stats = sessionsList.getCurrentSession().getStatistics();
 
@@ -532,7 +533,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		scrambleNumberSpinner.addChangeListener(scrambleNumberSpinnerListener);
 	}
 
-	@Override
 	public void updateScramble() {
 		ScrambleString current = scrambleListHolder.getCurrentScramble();
 		LOG.trace("update scramble view for {}, {}", current, scrambleListHolder.getPuzzleType());
@@ -547,7 +547,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		scrambleLengthSpinner.setEnabled(current.getVariation().getLength() != 0 && !current.isImported());
 	}
 
-	@Override
 	public void setFullscreen(boolean value) {
 		if(value == isFullscreen()) {
             this.fullscreen = fullscreenFrame.isVisible();
@@ -564,7 +563,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		});
 	}
 
-	@Override
 	public void loadXMLGUI() {
 		SwingUtilities.invokeLater(() -> {
 			refreshCustomGUIMenu();
@@ -605,14 +603,12 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		return timeLabel;
 	}
 
-	@Override
 	public void updateGeneratorField(boolean generatorEnabled, String generator) {
 		//update new scramble generator
 		generatorTextField.setText(generator);
 		generatorTextField.setVisible(generatorEnabled);
 	}
 
-	@Override
 	public void createScrambleAttributesPanel() {
 		LOG.debug("create scramble attributes panel");
 		PuzzleType puzzleType = scrambleListHolder.getPuzzleType();
@@ -634,12 +630,10 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		}
 	}
 
-	@Override
 	public JSpinner getScrambleNumberSpinner() {
 		return scrambleNumberSpinner;
 	}
 
-	@Override
 	public JSpinner getScrambleLengthSpinner() {
 		return scrambleLengthSpinner;
 	}
@@ -658,12 +652,10 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
         });
     }
 
-	@Override
 	public JComboBox<LocaleAndIcon> getLanguages() {
 		return languages;
 	}
 
-	@Override
 	public void saveToConfiguration() {
 		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, scrambleListHolder.getPuzzleType().toString());
 		scramblePluginManager.saveLengthsToConfiguration();
@@ -683,7 +675,6 @@ class CALCubeTimerFrame extends JFrame implements CalCubeTimerGui {
 		sessionsListTable.saveToConfiguration();
 	}
 
-	@Override
 	public JLabel getOnLabel() {
 		return onLabel;
 	}

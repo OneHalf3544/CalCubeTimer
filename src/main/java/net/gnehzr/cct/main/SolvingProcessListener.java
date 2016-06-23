@@ -13,6 +13,8 @@ public interface SolvingProcessListener {
 
 	void timerStopped(TimerState newTime);
 
+	boolean confirmDuplicateTime(TimerState timerState);
+
 	void timerAccepted(Solution newTime);
 
 	void timerAccidentlyReset(TimerState lastTimeRead);

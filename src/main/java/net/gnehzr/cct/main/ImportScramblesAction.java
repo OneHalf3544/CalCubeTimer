@@ -48,7 +48,7 @@ class ImportScramblesAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         new ScrambleImportDialog(calCubeTimerFrame, scrambleImporter,
-                scrambleListHolder.getScramblesList().getPuzzleType(),
+                scrambleListHolder.getPuzzleType(),
                 scramblePluginManager, configuration);
     }
 

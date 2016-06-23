@@ -7,7 +7,7 @@ import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.JColorComponent;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CalCubeTimerGui;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.main.ScrambleHyperlinkArea;
 import net.gnehzr.cct.main.SolvingProcess;
 import net.gnehzr.cct.misc.Utils;
@@ -46,7 +46,7 @@ public class TimerLabel extends JColorComponent {
 	private static BufferedImage loadImage(String imageName) {
 		try {
 			//can't use TimerLabel.class because the class hasn't been loaded yet
-			return ImageIO.read(CalCubeTimerGui.class.getResourceAsStream(imageName));
+			return ImageIO.read(CALCubeTimerFrame.class.getResourceAsStream(imageName));
 		} catch (IOException e) {
 			throw Throwables.propagate(e);
 		}
@@ -71,21 +71,26 @@ public class TimerLabel extends JColorComponent {
 		super("");
         LOG.debug("TimerLabel created");
 		this.configuration = configuration;
-        componentResizeListener = new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                if (font != null) { //this is to avoid an exception before showing the component
-                    String newTime = getText();
-                    Insets border = getInsets();
-                    Rectangle2D bounds = font.getStringBounds(newTime, new FontRenderContext(null, true, true));
-                    double height = (getHeight() - border.top - border.bottom) / bounds.getHeight();
-                    double width = (getWidth() - border.left - border.right) / (bounds.getWidth() + 10);
-                    double ratio = Math.min(width, height);
-                    TimerLabel.super.setFont(font.deriveFont(AffineTransform.getScaleInstance(ratio, ratio)));
-                }
-            }
-        };
-        addComponentListener(componentResizeListener);
+
+		componentResizeListener = new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				if (font != null) { //this is to avoid an exception before showing the component
+					String newTime = getText();
+					Insets border = getInsets();
+					Rectangle2D bounds = font.getStringBounds(newTime, new FontRenderContext(null, true, true));
+					double height = (getHeight() - border.top - border.bottom) / bounds.getHeight();
+					double width = (getWidth() - border.left - border.right) / (bounds.getWidth() + 10);
+					double ratio = Math.min(width, height);
+					TimerLabel.super.setFont(font.deriveFont(AffineTransform.getScaleInstance(ratio, ratio)));
+				}
+			}
+		};
+		addComponentListener(componentResizeListener);
+	}
+
+	@PostConstruct
+	public void initializeDisplay() {
 		setFocusable(true);
 		addFocusListener(new FocusListener() {
 			@Override
@@ -98,7 +103,7 @@ public class TimerLabel extends JColorComponent {
 				refreshTimer();
 			}
 		});
-		addKeyListener(this.keyHandler.createKeyListener(configuration, this));
+		addKeyListener(keyHandler.createKeyListener(configuration, this));
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -106,10 +111,7 @@ public class TimerLabel extends JColorComponent {
 			}
 		});
 		setFocusTraversalKeysEnabled(false);
-	}
 
-	@PostConstruct
-	public void initializeDisplay() {
 		updateHandsState(TimerState.ZERO);
 		setTime(TimerState.ZERO);
 	}

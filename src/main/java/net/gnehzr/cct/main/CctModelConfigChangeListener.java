@@ -28,7 +28,7 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
     private static final Logger LOG = LogManager.getLogger(CctModelConfigChangeListener.class);
 
     private final TimingListener timingListener;
-    private final CalCubeTimerGui calCubeTimerGui;
+    private final CALCubeTimerFrame CALCubeTimerFrame;
     private final CurrentProfileHolder currentProfileHolder;
     private final ProfileDao profileDao;
     private final Configuration configuration;
@@ -37,13 +37,13 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
     private final SessionsList sessionList;
     private final StackmatInterpreter stackmatInterpreter;
 
-    public CctModelConfigChangeListener(TimingListener timingListener, CalCubeTimerGui calCubeTimerGui,
+    public CctModelConfigChangeListener(TimingListener timingListener, CALCubeTimerFrame CALCubeTimerFrame,
                                         CurrentProfileHolder currentProfileHolder, ProfileDao profileDao,
                                         Configuration configuration, ScramblePluginManager scramblePluginManager,
                                         ActionMap actionMap, SessionsList sessionList,
                                         StackmatInterpreter stackmatInterpreter) {
         this.timingListener = timingListener;
-        this.calCubeTimerGui = calCubeTimerGui;
+        this.CALCubeTimerFrame = CALCubeTimerFrame;
         this.currentProfileHolder = currentProfileHolder;
         this.profileDao = profileDao;
         this.configuration = configuration;
@@ -60,17 +60,17 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
         DefaultComboBoxModel<Profile> profileComboBoxModel = new DefaultComboBoxModel<>(
                 Iterables.toArray(profileDao.getProfiles(), Profile.class));
-        calCubeTimerGui.getMainFrame().profilesComboBox.setModel(profileComboBoxModel);
+        CALCubeTimerFrame.getMainFrame().profilesComboBox.setModel(profileComboBoxModel);
 
-        calCubeTimerGui.getMainFrame().selectProfileWithoutListenersNotify(
-                calCubeTimerGui.getMainFrame().profilesComboBox,
+        CALCubeTimerFrame.getMainFrame().selectProfileWithoutListenersNotify(
+                CALCubeTimerFrame.getMainFrame().profilesComboBox,
                 currentProfileHolder.getSelectedProfile(),
-                calCubeTimerGui.getMainFrame().profileComboboxListener);
+                CALCubeTimerFrame.getMainFrame().profileComboboxListener);
 
-        calCubeTimerGui.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
+        CALCubeTimerFrame.getLanguages().setSelectedItem(configuration.getDefaultLocale()); //this will force an update of the xml gui
 
         scramblePluginManager.reloadLengthsFromConfiguration(false);
-        calCubeTimerGui.getMainFrame().getPuzzleTypeComboBox().setSelectedItem(sessionList.getCurrentSession().getPuzzleType());
+        CALCubeTimerFrame.getMainFrame().getPuzzleTypeComboBox().setSelectedItem(sessionList.getCurrentSession().getPuzzleType());
 
         //we need to notify the stackmatinterpreter package because it has been rewritten to
         //avoid configuration entirely (which makes it easier to separate & use as a library)

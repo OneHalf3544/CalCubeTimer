@@ -1,6 +1,7 @@
 package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.scrambles.ScrambleListHolder;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
@@ -32,9 +33,6 @@ public class CalCubeTimerModel {
     private static final Logger LOG = LogManager.getLogger(CalCubeTimerModel.class);
 
     @Autowired
-    private CalCubeTimerGui calCubeTimerGui;
-
-    @Autowired
     private Configuration configuration;
 
     @Autowired
@@ -60,6 +58,9 @@ public class CalCubeTimerModel {
     @Autowired
     private ScrambleListHolder scramblesListHolder;
 
+    @Autowired
+    private ScramblePluginManager scramblePluginManager;
+
     private SessionListener sessionListener = new SessionListener() {
         @Override
         public void sessionSelected(Session session) {
@@ -67,15 +68,17 @@ public class CalCubeTimerModel {
                 scramblesListHolder.setScrambleList(new GeneratedScrambleList(sessionsList, configuration));
             }
             scramblesListHolder.asGenerating().generateScrambleForCurrentSession();
-            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(session.getPuzzleType()); //this will update the scramble
+            puzzleTypeComboBoxModel.setSelectedItem(session.getPuzzleType()); //this will update the scramble
         }
 
         @Override
         public void sessionsDeleted() {
             PuzzleType currentPuzzleType = sessionsList.getCurrentSession().getPuzzleType();
-            calCubeTimerGui.getPuzzleTypeComboBox().setSelectedItem(currentPuzzleType);
+            puzzleTypeComboBoxModel.setSelectedItem(currentPuzzleType);
         }
     };
+
+    private PuzzleTypeComboBoxModel puzzleTypeComboBoxModel;
 
     @Autowired
     public void setCctModelConfigChangeListener(CctModelConfigChangeListener cctModelConfigChangeListener) {
@@ -84,6 +87,7 @@ public class CalCubeTimerModel {
 
     @PostConstruct
     void initialize() {
+        puzzleTypeComboBoxModel = new PuzzleTypeComboBoxModel(scramblePluginManager);
         scramblesListHolder.setScrambleList(new GeneratedScrambleList(sessionsList, configuration));
         sessionsList.addSessionListener(sessionListener);
         LOG.debug("model initialized");
@@ -103,5 +107,9 @@ public class CalCubeTimerModel {
 
     public void setLoadedLocale(LocaleAndIcon newLocale) {
         this.loadedLocale = newLocale;
+    }
+
+    public PuzzleTypeComboBoxModel getPuzzleTypeComboBoxModel() {
+        return puzzleTypeComboBoxModel;
     }
 }

@@ -28,6 +28,5 @@ class RequestScrambleAction extends AbstractAction {
 	@Override
 	public void actionPerformed(ActionEvent e){
 		scrambleListHolder.generateNext();
-		cct.updateScramble();
 	}
 }

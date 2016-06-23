@@ -70,7 +70,7 @@ public class Main {
                 }
 
 
-                CalCubeTimerGui calCubeTimerFrame = context.getBean(CalCubeTimerGui.class);
+                CALCubeTimerFrame calCubeTimerFrame = context.getBean(CALCubeTimerFrame.class);
                 calCubeTimerFrame.loadXMLGUI();
                 calCubeTimerFrame.setVisible(true);
 

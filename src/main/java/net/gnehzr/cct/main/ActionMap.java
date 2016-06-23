@@ -56,7 +56,6 @@ public class ActionMap {
     @Autowired
     private ScrambleListHolder scrambleListHolder;
 
-    @Autowired
 	public ActionMap() {
         this.actionMap = new HashMap<>();
     }
@@ -145,10 +144,10 @@ public class ActionMap {
 
         public static final String TOGGLE_FULLSCREEN = "togglefullscreen";
 
-        private final CalCubeTimerGui calCubeTimerFrame;
+        private final CALCubeTimerFrame calCubeTimerFrame;
 
         @Autowired
-        public ToggleFullscreenTimingAction(CalCubeTimerGui calCubeTimerFrame) {
+        public ToggleFullscreenTimingAction(CALCubeTimerFrame calCubeTimerFrame) {
             super("+");
             this.calCubeTimerFrame = calCubeTimerFrame;
         }

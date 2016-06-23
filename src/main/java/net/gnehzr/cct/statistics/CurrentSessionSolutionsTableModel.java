@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CalCubeTimerGui;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.misc.customJTable.DraggableJTable;
 import net.gnehzr.cct.misc.customJTable.DraggableJTableModel;
@@ -51,7 +51,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 
 	@Autowired
 	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList,
-											 CalCubeTimerGui calCubeTimerGui) {
+											 CALCubeTimerFrame CALCubeTimerFrame) {
 		this.configuration = configuration;
 		this.sessionsList = sessionsList;
 		sessionsList.addStatisticsUpdateListener(() -> {
@@ -60,7 +60,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 			}
 		});
 		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
-		addTableModelListener(calCubeTimerGui::newSolutionAdded);
+		addTableModelListener(CALCubeTimerFrame::newSolutionAdded);
 		columnNames = Stream.of(
                 "i18n[StatisticsTableModel.times]",
                 "i18n[StatisticsTableModel.ra] (stats[ra(0).size])",

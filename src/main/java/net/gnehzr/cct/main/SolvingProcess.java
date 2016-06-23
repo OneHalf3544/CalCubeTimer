@@ -46,7 +46,6 @@ public class SolvingProcess {
     private static final Logger LOG = LogManager.getLogger(SolvingProcess.class);
     private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
     private static final Duration PERIOD = Duration.ofMillis(45);
-    private final CalCubeTimerGui calCubeTimerGui;
     protected final Configuration configuration;
     private final NumberSpeaker numberSpeaker;
     private final SolvingProcessListener solvingProcessListener;
@@ -64,11 +63,9 @@ public class SolvingProcess {
 
     @Autowired
     public SolvingProcess(NumberSpeaker numberSpeaker, ScrambleListHolder scrambleListHolder,
-                          CalCubeTimerGui calCubeTimerGui, Configuration configuration,
-                          SolvingProcessListener solvingProcessListener) {
+                          Configuration configuration, SolvingProcessListener solvingProcessListener) {
         this.numberSpeaker = numberSpeaker;
         this.scrambleListHolder = scrambleListHolder;
-        this.calCubeTimerGui = calCubeTimerGui;
         this.configuration = configuration;
         this.solvingProcessListener = solvingProcessListener;
     }
@@ -217,12 +214,10 @@ public class SolvingProcess {
         }
         penalty = null;
         splits = new ArrayList<>();
+
         boolean sameAsLast = timerState.compareTo(lastAccepted) == 0;
         if(sameAsLast) {
-            int choice = Utils.showYesNoDialog(calCubeTimerGui.getMainFrame(),
-                    timerState.toString() + "\n"
-                            + StringAccessor.getString("CALCubeTimer.confirmduplicate"));
-            if(choice != JOptionPane.YES_OPTION) {
+            if (!solvingProcessListener.confirmDuplicateTime(timerState)) {
                 return;
             }
         }
@@ -231,7 +226,6 @@ public class SolvingProcess {
             solvingProcessListener.timerAccepted(solution);
         }
         scrambleListHolder.generateNext();
-        calCubeTimerGui.updateScramble();
 
         timingListeners.refreshDisplay(getTimerState());
     }

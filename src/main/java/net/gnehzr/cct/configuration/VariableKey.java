@@ -1,7 +1,7 @@
 package net.gnehzr.cct.configuration;
 
 import com.google.common.base.Throwables;
-import net.gnehzr.cct.main.CalCubeTimerGui;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.scrambles.ScramblePlugin;
 import net.gnehzr.cct.statistics.RollingAverageOf;
@@ -90,7 +90,7 @@ public class VariableKey<H> {
 	static {
 		try {
 			Font lcdFont = Font.createFont(Font.TRUETYPE_FONT,
-					CalCubeTimerGui.class.getResourceAsStream("Digiface Regular.ttf"));
+					CALCubeTimerFrame.class.getResourceAsStream("Digiface Regular.ttf"));
 			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(lcdFont);
 		} catch (FontFormatException | IOException e) {
 			throw Throwables.propagate(e);

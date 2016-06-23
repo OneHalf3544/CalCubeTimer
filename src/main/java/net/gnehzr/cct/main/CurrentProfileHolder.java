@@ -8,6 +8,7 @@ import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * <p>
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author OneHalf
  */
+@Service
 public class CurrentProfileHolder {
 
     private static final Logger log = LogManager.getLogger(CurrentProfileHolder.class);
@@ -34,7 +36,7 @@ public class CurrentProfileHolder {
     @Autowired
     private ProfileDao profileDao;
     @Autowired
-    private CALCubeTimerFrame calCubeTimerGui;
+    private CALCubeTimerFrame CALCubeTimerFrame;
 
     public Profile getSelectedProfile() {
         return currentProfile;
@@ -58,7 +60,7 @@ public class CurrentProfileHolder {
         log.info("save profile configuration");
         Profile profile = getSelectedProfile();
         profileDao.saveLastSession(profile, sessionsList);
-        calCubeTimerGui.saveToConfiguration();
+        CALCubeTimerFrame.saveToConfiguration();
         configuration.saveConfiguration(profile);
     }
 }

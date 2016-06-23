@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 public class ScrambleListHolder implements ScrambleList {
 
     private ScrambleList scrambleList;
+    private ScrambleChangeListener scrambleChangeListener;
 
     public void setScrambleList(ScrambleList scrambleList) {
         this.scrambleList = scrambleList;
@@ -34,7 +35,9 @@ public class ScrambleListHolder implements ScrambleList {
 
     @Override
     public ScrambleString generateNext() {
-        return scrambleList.generateNext();
+        ScrambleString scrambleString = scrambleList.generateNext();
+        scrambleChangeListener.scrambleUpdated();
+        return scrambleString;
     }
 
     @Override
@@ -62,7 +65,11 @@ public class ScrambleListHolder implements ScrambleList {
         return scrambleList.getScrambleNumber();
     }
 
-    public ScrambleList getScramblesList() {
-        return scrambleList;
+    public void addListener(ScrambleChangeListener scrambleChangeListener) {
+        this.scrambleChangeListener = scrambleChangeListener;
+    }
+
+    public interface ScrambleChangeListener {
+        void scrambleUpdated();
     }
 }

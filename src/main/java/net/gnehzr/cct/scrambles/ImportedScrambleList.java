@@ -2,7 +2,7 @@ package net.gnehzr.cct.scrambles;
 
 import com.google.common.collect.ImmutableList;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.main.CalCubeTimerGui;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.misc.Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,11 +12,11 @@ public class ImportedScrambleList implements ScrambleList {
 
 	private final List<ScrambleString> scrambles;
 	private final PuzzleType puzzleType;
-	private final CalCubeTimerGui cubeTimerFrame;
+	private final CALCubeTimerFrame cubeTimerFrame;
 
 	private int scrambleNumber = 0;
 
-	public ImportedScrambleList(PuzzleType puzzleType, List<ScrambleString> scrambles, CalCubeTimerGui model) {
+	public ImportedScrambleList(PuzzleType puzzleType, List<ScrambleString> scrambles, CALCubeTimerFrame model) {
 		this.puzzleType = puzzleType;
 		cubeTimerFrame = model;
 		this.scrambles = ImmutableList.copyOf(scrambles);

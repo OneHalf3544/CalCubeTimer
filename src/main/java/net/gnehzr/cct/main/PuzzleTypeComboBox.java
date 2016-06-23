@@ -10,11 +10,13 @@ import javax.swing.*;
 
 import java.awt.*;
 
-import static com.google.common.collect.Iterables.toArray;
-
 public final class PuzzleTypeComboBox extends JComboBox<PuzzleType> {
 
 	public PuzzleTypeComboBox(ScramblePluginManager scramblePluginManager, Configuration configuration) {
+		this(configuration, new PuzzleTypeComboBoxModel(scramblePluginManager));
+	}
+
+	public PuzzleTypeComboBox(Configuration configuration, PuzzleTypeComboBoxModel puzzleTypeComboBoxModel) {
 		this.setRenderer(new SubstanceDefaultListCellRenderer() {
 			@Override
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -28,13 +30,14 @@ public final class PuzzleTypeComboBox extends JComboBox<PuzzleType> {
 
 		});
 		configuration.addConfigurationChangeListener(p -> {
-			initialize(scramblePluginManager, configuration);
+			initialize(configuration, puzzleTypeComboBoxModel);
 		});
-		initialize(scramblePluginManager, configuration);
+		initialize(configuration, puzzleTypeComboBoxModel);
 	}
 
-	private void initialize(ScramblePluginManager scramblePluginManager, Configuration configuration) {
-		this.setModel(new DefaultComboBoxModel<>(toArray(scramblePluginManager.getPuzzleTypes(), PuzzleType.class)));
+	private void initialize(Configuration configuration, PuzzleTypeComboBoxModel puzzleTypeComboBoxModel) {
+		this.setModel(puzzleTypeComboBoxModel);
 		this.setMaximumRowCount(configuration.getInt(VariableKey.SCRAMBLE_COMBOBOX_ROWS));
 	}
+
 }

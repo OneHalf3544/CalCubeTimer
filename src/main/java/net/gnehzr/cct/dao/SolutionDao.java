@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import static java.util.stream.Collectors.toList;
  *
  * @author OneHalf
  */
+@Repository
 public class SolutionDao extends HibernateDaoSupport {
 
     private static final Logger LOG = LogManager.getLogger(SolutionDao.class);

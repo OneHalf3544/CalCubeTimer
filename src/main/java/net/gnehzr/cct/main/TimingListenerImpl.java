@@ -1,8 +1,8 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.misc.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -15,6 +15,8 @@ import net.gnehzr.cct.statistics.Solution;
 import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.swing.*;
 
 /**
 * <p>
@@ -32,7 +34,7 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     @Autowired
     private CalCubeTimerModel model;
     @Autowired
-    private CalCubeTimerGui calCubeTimerFrame;
+    private CALCubeTimerFrame calCubeTimerFrame;
     @Autowired
     private SessionsList sessionsList;
     @Autowired @Qualifier("timeLabel")
@@ -101,7 +103,7 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
 		}
     }
 
-    void configurationChanged() {
+    private void configurationChanged() {
         stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
         fullScreenTiming = configuration.getBoolean(VariableKey.FULLSCREEN_TIMING);
         metronome.setEnabled(configuration.getBoolean(VariableKey.METRONOME_ENABLED));
@@ -116,6 +118,14 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
         if(fullScreenTiming) {
             calCubeTimerFrame.setFullscreen(false);
         }
+    }
+
+    @Override
+    public boolean confirmDuplicateTime(TimerState timerState) {
+        int choice = Utils.showYesNoDialog(calCubeTimerFrame.getMainFrame(),
+                timerState.toString() + "\n"
+                        + StringAccessor.getString("CALCubeTimer.confirmduplicate"));
+        return choice == JOptionPane.YES_OPTION;
     }
 
     @Override
