@@ -16,6 +16,7 @@ import net.gnehzr.cct.statistics.SolveTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.PostConstruct;
 import javax.swing.*;
 
 /**
@@ -57,7 +58,7 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
         this.configuration = configuration;
     }
 
-    @Autowired
+    @PostConstruct
     void init() {
         configuration.addConfigurationChangeListener(p -> configurationChanged());
         solvingProcess.setSolvingProcessListener(this);
@@ -98,7 +99,6 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     @Override
     public void timerStarted() {
         LOG.debug("timer started");
-        model.getSolvingProcess().startSolving();
         metronome.startMetronome(configuration.getInt(VariableKey.METRONOME_DELAY));
 
         if(fullScreenTiming) {

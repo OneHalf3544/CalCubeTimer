@@ -2,14 +2,11 @@ package net.gnehzr.cct.keyboardTiming;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.SolvingProcess;
 import net.gnehzr.cct.main.SolvingProcessListener;
 import net.gnehzr.cct.main.TimingListener;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -51,11 +48,7 @@ public class KeyboardHandler {
 		solvingProcessListener.timerSplit(solvingProcess.getTimerState());
 	}
 
-	public void fireStop() {
-		solvingProcessListener.timerStopped(solvingProcess.getTimerState());
-	}
-
-	KeyAdapter createKeyListener(final Configuration configuration, TimerLabel timerLabel) {
+    KeyAdapter createKeyListener(final Configuration configuration, TimerLabel timerLabel) {
 		return new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -156,14 +149,18 @@ public class KeyboardHandler {
         int sekey1 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY1);
         int sekey2 = configuration.getInt(VariableKey.STACKMAT_EMULATION_KEY2);
 
-        if(stackmatEmulation && stackmatKeysDownCount() == 1 && (e.getKeyCode() == sekey1 || e.getKeyCode() == sekey2) || !stackmatEmulation && atMostKeysDown(0)){
+        if (stackmatEmulation && stackmatKeysDownCount() == 1
+                && (e.getKeyCode() == sekey1 || e.getKeyCode() == sekey2)
+                || !stackmatEmulation && atMostKeysDown(0)){
             keysDown = false;
-            if (!solvingProcess.isRunning() || solvingProcess.isInspecting()) {
-                if(solvingProcess.isRunning()) {
-                    fireStop();
-                } else if(!ignoreKey(e, configuration.getBoolean(VariableKey.SPACEBAR_ONLY), stackmatEmulation, sekey1, sekey2)) {
-                    solvingProcess.startSolving();
-                }
+            if (solvingProcess.isInspecting()) {
+                solvingProcess.startSolving();
+            }
+            else if(solvingProcess.isRunning()) {
+                solvingProcess.stopTimer(solvingProcess.getTimerState());
+            }
+            else if(!ignoreKey(e, configuration.getBoolean(VariableKey.SPACEBAR_ONLY), stackmatEmulation, sekey1, sekey2)) {
+                solvingProcess.startProcess();
             }
         }
         timingListener. refreshTimer();

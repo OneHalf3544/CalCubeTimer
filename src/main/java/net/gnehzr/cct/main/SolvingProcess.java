@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableList;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.i18n.StringAccessor;
-import net.gnehzr.cct.misc.Utils;
-import net.gnehzr.cct.scrambles.ScrambleList;
 import net.gnehzr.cct.scrambles.ScrambleListHolder;
 import net.gnehzr.cct.scrambles.ScrambleString;
 import net.gnehzr.cct.speaking.NumberSpeaker;
@@ -52,7 +50,7 @@ public class SolvingProcess {
     private final Configuration configuration;
     private final NumberSpeaker numberSpeaker;
     private SolvingProcessListener solvingProcessListener;
-    private final CompositeTimingListener timingListeners = new CompositeTimingListener();
+    private TimingListener timingListener;
 
     private ScrambleListHolder scrambleListHolder;
     private ScheduledFuture<?> scheduledFuture;
@@ -74,6 +72,7 @@ public class SolvingProcess {
 
     public void setSolvingProcessListener(SolvingProcessListener solvingProcessListener) {
         this.solvingProcessListener = solvingProcessListener;
+        this.timingListener = ((TimingListener) solvingProcessListener);
     }
 
     private void refreshTime() {
@@ -83,22 +82,20 @@ public class SolvingProcess {
             if (inspection.isDisqualification()) {
                 setInspectionPenalty(SolveType.DNF);
                 setTextToTimeLabels(StringAccessor.getString("CALCubeTimer.disqualification"));
-            }
-            else if (inspection.isPenalty()) {
+            } else if (inspection.isPenalty()) {
                 setInspectionPenalty(SolveType.PLUS_TWO);
                 setTextToTimeLabels(StringAccessor.getString("CALCubeTimer.+2penalty"));
-            }
-            else {
+            } else {
                 setTextToTimeLabels(String.valueOf(inspection.getElapsedTime().getSeconds()));
             }
         }
 
         currentTime = Instant.now();
-        timingListeners.refreshDisplay(getTimerState());
+        timingListener.refreshDisplay(getTimerState());
     }
 
     private void setTextToTimeLabels(String time) {
-        timingListeners.refreshTimer();
+        timingListener.refreshTimer();
     }
 
     public void resetProcess() {
@@ -110,7 +107,7 @@ public class SolvingProcess {
         solvingStartTime = null;
         scheduledFuture = null;
 
-        timingListeners.refreshTimer();
+        timingListener.refreshTimer();
     }
 
     @PostConstruct
@@ -142,18 +139,18 @@ public class SolvingProcess {
                 this::refreshTime, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
 
         if (inspectionEnabled && !isInspecting()) {
-            this.inspectionStartTime = currentTime;
-            solvingProcessListener.inspectionStarted();
-        }
-        else {
+            startInspection();
+        } else {
             startSolving();
         }
     }
 
     public void startInspection() {
         LOG.debug("start inspection");
+        this.inspectionStartTime = currentTime;
         Objects.requireNonNull(currentScramble());
         this.inspectionStartTime = Instant.now();
+        solvingProcessListener.inspectionStarted();
     }
 
     public boolean isInspecting() {
@@ -174,8 +171,7 @@ public class SolvingProcess {
 
         if (inspectionState.getElapsedTime().getSeconds() == InspectionState.FIRST_WARNING.getSeconds()) {
             numberSpeaker.sayInspectionWarning(InspectionState.FIRST_WARNING);
-        }
-        else if (inspectionState.getElapsedTime().getSeconds() == InspectionState.FINAL_WARNING.getSeconds()) {
+        } else if (inspectionState.getElapsedTime().getSeconds() == InspectionState.FINAL_WARNING.getSeconds()) {
             numberSpeaker.sayInspectionWarning(InspectionState.FINAL_WARNING);
         }
         return Optional.of(inspectionState);
@@ -214,15 +210,14 @@ public class SolvingProcess {
         Solution solution = timerState.toSolution(currentScramble(), splits);
         if (penalty == null) {
             solution.getTime().deleteTypes();
-        }
-        else {
+        } else {
             solution.getTime().setTypes(Collections.singletonList(penalty));
         }
         penalty = null;
         splits = new ArrayList<>();
 
         boolean sameAsLast = timerState.compareTo(lastAccepted) == 0;
-        if(sameAsLast) {
+        if (sameAsLast) {
             if (!solvingProcessListener.confirmDuplicateTime(timerState)) {
                 return;
             }
@@ -233,7 +228,7 @@ public class SolvingProcess {
         }
         scrambleListHolder.generateNext();
 
-        timingListeners.refreshDisplay(getTimerState());
+        timingListener.refreshDisplay(getTimerState());
     }
 
     @NotNull
@@ -249,13 +244,13 @@ public class SolvingProcess {
     }
 
     public TimingListener getTimingListener() {
-        return timingListeners;
+        return timingListener;
     }
 
     private boolean promptNewTime(Solution protect, boolean sameAsLast) {
         int choice = JOptionPane.YES_OPTION;
-        if(configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME) && !sameAsLast) {
-            String[] OPTIONS = { StringAccessor.getString("CALCubeTimer.accept"), SolveType.PLUS_TWO.toString(), SolveType.DNF.toString() };
+        if (configuration.getBoolean(VariableKey.PROMPT_FOR_NEW_TIME) && !sameAsLast) {
+            String[] OPTIONS = {StringAccessor.getString("CALCubeTimer.accept"), SolveType.PLUS_TWO.toString(), SolveType.DNF.toString()};
             //This leaves +2 and DNF enabled, even if the user just got a +2 or DNF from inspection.
             //I don't really care however, since I doubt that anyone even uses this feature. --Jeremy
             choice = JOptionPane.showOptionDialog(null,
@@ -288,28 +283,7 @@ public class SolvingProcess {
         return new KeyboardTimerState(getElapsedTime(), getInspectionState());
     }
 
-    private static class CompositeTimingListener implements TimingListener {
-
-        private final List<TimingListener> timingListeners = new ArrayList<>();
-
-        @Override
-        public void refreshDisplay(TimerState currTime) {
-            timingListeners.forEach(tl -> tl.refreshDisplay(currTime));
-        }
-
-        @Override
-        public void stackmatChanged() {
-            timingListeners.forEach(TimingListener::stackmatChanged);
-        }
-
-        @Override
-        public void refreshTimer() {
-            timingListeners.forEach(TimingListener::refreshTimer);
-        }
-
-        @Override
-        public void changeGreenLight(boolean b) {
-            timingListeners.forEach(tl -> tl.changeGreenLight(b));
-        }
+    public void stopTimer(TimerState timerState) {
+        solvingProcessListener.timerStopped(timerState);
     }
 }

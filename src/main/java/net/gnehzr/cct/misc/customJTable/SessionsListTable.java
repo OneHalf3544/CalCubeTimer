@@ -8,6 +8,7 @@ import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SessionsList;
 import net.gnehzr.cct.statistics.SessionsListTableModel;
 
+import javax.annotation.PostConstruct;
 import javax.swing.*;
 import java.awt.*;
 
@@ -40,7 +41,7 @@ public class SessionsListTable extends DraggableJTable {
 		setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 	}
 
-	@Autowired
+	@PostConstruct
 	public void refreshModel() {
 		super.setModel(sessionsListTableModel);
 		super.sortByColumn(new RowSorter.SortKey(0, SortOrder.DESCENDING));
