@@ -1,10 +1,12 @@
 package org.kociemba.twophase;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * Representation of the cube on the coordinate level
@@ -37,7 +39,6 @@ class CoordCube {
 	short URFtoDLF;
 	short URtoUL;
 	short UBtoDF;
-	private int URtoDF;
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Generate a CoordCube from a CubieCube
@@ -49,31 +50,15 @@ class CoordCube {
 		URFtoDLF = c.getURFtoDLF();
 		URtoUL = c.getURtoUL();
 		UBtoDF = c.getUBtoDF();
-		URtoDF = c.getURtoDF();// only needed in phase2
-	}
-
-	// A move on the coordinate level
-	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	void move(int m) {
-		twist = twistMove[twist][m];
-		flip = flipMove[flip][m];
-		parity = parityMove[parity][m];
-		FRtoBR = FRtoBR_Move[FRtoBR][m];
-		URFtoDLF = URFtoDLF_Move[URFtoDLF][m];
-		URtoUL = URtoUL_Move[URtoUL][m];
-		UBtoDF = UBtoDF_Move[UBtoDF][m];
-		if (URtoUL < 336 && UBtoDF < 336)// updated only if UR,UF,UL,UB,DR,DF
-			// are not in UD-slice
-			URtoDF = MergeURtoULandUBtoDF[URtoUL][UBtoDF];
 	}
 
 	private static boolean loadTable(String tableName, byte[] table) {
 		tableName = "2phase." + tableName;
 		LOG.info("Attempting to load " + tableName);
 		try (FileInputStream in = new FileInputStream(tableName)) {
-			in.read(table);
+			IOUtils.readFully(in, table);
 			return true;
-		} catch (Exception e) {
+		} catch (RuntimeException | IOException e) {
 			LOG.error(e);
 			return false;
 		}
@@ -420,7 +405,7 @@ class CoordCube {
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// Set pruning value in table. Two values are stored in one byte.
-	static void setPruning(byte[] table, int index, byte value) {
+	private static void setPruning(byte[] table, int index, byte value) {
 		if ((index & 1) == 0)
 			table[index / 2] &= 0xf0 | value;
 		else
