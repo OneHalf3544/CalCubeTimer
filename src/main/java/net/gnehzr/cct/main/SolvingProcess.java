@@ -230,7 +230,7 @@ public class SolvingProcess {
     }
 
     private void refreshTime() {
-        LOG.info("refreshTime");
+        LOG.trace("refreshTime");
         if (isInspecting()) {
             InspectionState inspection = getInspectionState().get();
 
