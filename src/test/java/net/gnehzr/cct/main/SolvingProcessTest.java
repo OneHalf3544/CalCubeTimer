@@ -146,6 +146,7 @@ public class SolvingProcessTest {
         instance.resetProcess();
 
         assertEquals(((TimerLabelsHolderMock) instance.getTimerLabelsHolder()).lastTimerString, "0.00");
+        assertEquals(instance.getTimerState(), TimerState.ZERO);
     }
 
     private static SolvingProcess createProcess() {
@@ -175,18 +176,17 @@ public class SolvingProcessTest {
         private String lastTimerString;
 
         @Override
-        public void refreshTimer(String s) {
-            super.refreshTimer(s);
+        public void refreshInspectionText(String s) {
             this.lastTimerString = s;
-        }
-
-        public String getLastTimerString() {
-            return lastTimerString;
         }
 
         @Override
         public void refreshDisplay(TimerState newTime) {
             lastTimerString = newTime.toString();
+        }
+
+        public String getLastTimerString() {
+            return lastTimerString;
         }
     }
 }

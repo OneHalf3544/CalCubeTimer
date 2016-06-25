@@ -1,5 +1,6 @@
 package net.gnehzr.cct.keyboardTiming;
 
+import net.gnehzr.cct.stackmatInterpreter.TimerState;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import net.gnehzr.cct.configuration.Configuration;
@@ -183,7 +184,7 @@ public class KeyboardHandler {
             setHands(false, false);
             timerLabelsHolder.changeGreenLight(false);
         }
-        timerLabelsHolder.refreshTimer("0.00");
+        timerLabelsHolder.refreshDisplay(TimerState.ZERO);
     }
 
     boolean stackmatEnabled() {

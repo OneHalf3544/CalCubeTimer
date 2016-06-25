@@ -102,7 +102,13 @@ public class SolvingProcess {
         currentTime = now();
 
         scheduledFuture = EXECUTOR.scheduleAtFixedRate(
-                this::refreshTime, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
+                () -> {
+                    try {
+                        refreshTime();
+                    } catch (RuntimeException e) {
+                        LOG.error("refreshing thread error", e);
+                    }
+                }, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
 
         if (inspectionEnabled && !isInspecting()) {
             startInspection();
@@ -190,7 +196,7 @@ public class SolvingProcess {
         solvingStartTime = null;
         scheduledFuture = null;
 
-        timerLabelsHolder.refreshTimer("0.00");
+        timerLabelsHolder.refreshDisplay(TimerState.ZERO);
     }
 
     public void solvingFinished() {
@@ -230,12 +236,12 @@ public class SolvingProcess {
 
             if (inspection.isDisqualification()) {
                 setInspectionPenalty(SolveType.DNF);
-                timerLabelsHolder.refreshTimer(StringAccessor.getString("CALCubeTimer.disqualification"));
+                timerLabelsHolder.refreshInspectionText(StringAccessor.getString("CALCubeTimer.disqualification"));
             } else if (inspection.isPenalty()) {
                 setInspectionPenalty(SolveType.PLUS_TWO);
-                timerLabelsHolder.refreshTimer(StringAccessor.getString("CALCubeTimer.+2penalty"));
+                timerLabelsHolder.refreshInspectionText(StringAccessor.getString("CALCubeTimer.+2penalty"));
             } else {
-                timerLabelsHolder.refreshTimer(String.valueOf(inspection.getElapsedTime().getSeconds()));
+                timerLabelsHolder.refreshInspectionText(String.valueOf(inspection.getElapsedTime().getSeconds()));
             }
         }
 
@@ -258,6 +264,9 @@ public class SolvingProcess {
     }
 
     public Duration getElapsedTime() {
+        if (inspectionStartTime == null && solvingStartTime == null) {
+            return Duration.ZERO;
+        }
         return Duration.between(solvingStartTime == null ? inspectionStartTime : solvingStartTime, currentTime);
     }
 
