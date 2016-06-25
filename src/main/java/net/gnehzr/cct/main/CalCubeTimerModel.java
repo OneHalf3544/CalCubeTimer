@@ -2,6 +2,7 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.scrambles.ScrambleListHolder;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
@@ -50,9 +51,6 @@ public class CalCubeTimerModel {
     private LocaleAndIcon loadedLocale;
 
     @Autowired
-    private SolvingProcess solvingProcess;
-
-    @Autowired
     private SessionsList sessionsList;
 
     @Autowired
@@ -73,8 +71,7 @@ public class CalCubeTimerModel {
 
         @Override
         public void sessionsDeleted() {
-            PuzzleType currentPuzzleType = sessionsList.getCurrentSession().getPuzzleType();
-            puzzleTypeComboBoxModel.setSelectedItem(currentPuzzleType);
+            puzzleTypeComboBoxModel.setSelectedItem(sessionsList.getCurrentSession().getPuzzleType());
         }
     };
 
@@ -86,10 +83,6 @@ public class CalCubeTimerModel {
         scramblesListHolder.setScrambleList(new GeneratedScrambleList(sessionsList, configuration));
         sessionsList.addSessionListener(sessionListener);
         LOG.debug("model initialized");
-    }
-
-    public SolvingProcess getSolvingProcess() {
-        return solvingProcess;
     }
 
     public StackmatInterpreter getStackmatInterpreter() {
@@ -104,6 +97,7 @@ public class CalCubeTimerModel {
         this.loadedLocale = newLocale;
     }
 
+    @NotNull
     public PuzzleTypeComboBoxModel getPuzzleTypeComboBoxModel() {
         return puzzleTypeComboBoxModel;
     }

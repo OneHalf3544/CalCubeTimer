@@ -20,10 +20,15 @@ class KeyboardTimingAction extends AbstractAction {
 
 	private final CALCubeTimerFrame cct;
 	private final Configuration configuration;
+	private final SolvingProcess solvingProcess;
+	private final TimerLabelsHolder timerLabelsHolder;
 
-	public KeyboardTimingAction(CALCubeTimerFrame cct, Configuration configuration){
+	public KeyboardTimingAction(CALCubeTimerFrame cct, Configuration configuration, SolvingProcess solvingProcess,
+								TimerLabelsHolder timerLabelsHolder){
 		this.cct = cct;
 		this.configuration = configuration;
+		this.solvingProcess = solvingProcess;
+		this.timerLabelsHolder = timerLabelsHolder;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_K);
 		this.putValue(Action.SHORT_DESCRIPTION, StringAccessor.getString("CALCubeTimer.stackmatnote"));
 	}
@@ -36,9 +41,8 @@ class KeyboardTimingAction extends AbstractAction {
 		cct.bigTimersDisplay.configurationChanged();
 		cct.model.getStackmatInterpreter().enableStackmat(!selected);
 
-		SolvingProcess solvingProcess = cct.model.getSolvingProcess();
 		solvingProcess.resetProcess();
-		solvingProcess.getTimingListener().stackmatChanged();
+		timerLabelsHolder.stackmatChanged();
 		if(selected) {
 			cct.getTimeLabel().requestFocusInWindow();
 		}

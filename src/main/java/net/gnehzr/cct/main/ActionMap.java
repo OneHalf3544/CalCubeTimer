@@ -3,7 +3,6 @@ package net.gnehzr.cct.main;
 import net.gnehzr.cct.scrambles.ScrambleListHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
@@ -55,8 +54,12 @@ public class ActionMap {
     private SessionsList sessionsList;
     @Autowired
     private ScrambleListHolder scrambleListHolder;
+    @Autowired
+    private SolvingProcess solvingProcess;
+    @Autowired
+    private TimerLabelsHolder timerLabelsHolder;
 
-	public ActionMap() {
+    public ActionMap() {
         this.actionMap = new HashMap<>();
     }
 
@@ -77,7 +80,7 @@ public class ActionMap {
         LOG.debug("register action {}", actionName);
         switch (actionName) {
             case KEYBOARDTIMING_ACTION: {
-                return new KeyboardTimingAction(calCubeTimerFrame, configuration);
+                return new KeyboardTimingAction(calCubeTimerFrame, configuration, solvingProcess, timerLabelsHolder);
             }
             case RESET_ACTION: {
                 return new ResetAction(calCubeTimerFrame, sessionsList);

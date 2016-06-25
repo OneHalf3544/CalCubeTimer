@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class TimerState implements Comparable<TimerState> {
 
@@ -40,11 +41,11 @@ public abstract class TimerState implements Comparable<TimerState> {
 	}
 
 	public boolean equals(Object obj) {
-		if(obj instanceof TimerState) {
-			TimerState o = (TimerState) obj;
-			return this.getTime() == o.getTime();
+		if (!(obj instanceof TimerState)) {
+			return false;
 		}
-		return false;
+		TimerState o = (TimerState) obj;
+		return Objects.equals(this.getTime(), o.getTime());
 	}
 
 	@Override

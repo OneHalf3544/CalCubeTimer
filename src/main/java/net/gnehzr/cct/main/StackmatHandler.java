@@ -2,7 +2,6 @@ package net.gnehzr.cct.main;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -15,16 +14,16 @@ import java.time.Instant;
 public class StackmatHandler {
 
 	private final SolvingProcessListener solvingProcessListener;
-	private final TimingListener timingListener;
+	private final TimerLabelsHolder timerLabelsHolder;
 
 	private final Configuration configuration;
     private final SolvingProcess solvingProcess;
 
     @Autowired
-	public StackmatHandler(TimingListener timingListener, StackmatInterpreter stackmatInterpreter,
-                           SolvingProcessListener solvingProcessListener,
-                           Configuration configuration, SolvingProcess solvingProcess) {
-		this.timingListener = timingListener;
+	public StackmatHandler(TimerLabelsHolder timerLabelsHolder, StackmatInterpreter stackmatInterpreter,
+						   SolvingProcessListener solvingProcessListener,
+						   Configuration configuration, SolvingProcess solvingProcess) {
+		this.timerLabelsHolder = timerLabelsHolder;
         this.solvingProcessListener = solvingProcessListener;
         this.configuration = configuration;
         this.solvingProcess = solvingProcess;
@@ -46,7 +45,7 @@ public class StackmatHandler {
 	private void stackmatStateChanged(PropertyChangeEvent evt) {
 		String event = evt.getPropertyName();
 		boolean stackmatEnabled = configuration.isPropertiesLoaded() && configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
-		timingListener.stackmatChanged();
+		timerLabelsHolder.stackmatChanged();
 		if(!stackmatEnabled)
 			return;
 
@@ -65,9 +64,9 @@ public class StackmatHandler {
                         solvingProcessListener.inspectionStarted();
                     }
 				}
-				timingListener.refreshDisplay(current);
+				timerLabelsHolder.refreshDisplay(current);
 			} else {
-				timingListener.refreshDisplay(current);
+				timerLabelsHolder.refreshDisplay(current);
 				stackmatInspecting = false;
 				switch (event) {
 					case "TimeChange":
@@ -77,7 +76,7 @@ public class StackmatHandler {
 						solvingProcessListener.timerSplit(current);
 						break;
 					case "New Time":
-                        solvingProcessListener.timerStopped(current);
+                        solvingProcess.solvingFinished();
 						break;
 					case "Current Display":
 						break;
@@ -93,7 +92,7 @@ public class StackmatHandler {
 
 	private void processOneHandState(StackmatState current) {
 		if(stackmatInspecting) {
-            timingListener.refreshDisplay(current);
+            timerLabelsHolder.refreshDisplay(current);
             return;
         }
 		if(current.leftHand()) {
@@ -113,7 +112,7 @@ public class StackmatHandler {
 				current.clearRightHand();
 			}
         }
-		timingListener.refreshDisplay(current);
+		timerLabelsHolder.refreshDisplay(current);
 	}
 
 	private boolean itsTimeToStartAfterInspection(Instant startTime) {

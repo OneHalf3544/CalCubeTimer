@@ -5,8 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.main.SolvingProcess;
-import net.gnehzr.cct.main.SolvingProcessListener;
-import net.gnehzr.cct.main.TimingListener;
+import net.gnehzr.cct.main.TimerLabelsHolder;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -34,10 +33,7 @@ public class KeyboardHandler {
     private SolvingProcess solvingProcess;
 
     @Autowired
-    private TimingListener timingListener;
-
-    @Autowired
-    private SolvingProcessListener solvingProcessListener;
+    private TimerLabelsHolder timerLabelsHolder;
 
     @Autowired
 	public KeyboardHandler(Configuration configuration) {
@@ -45,7 +41,7 @@ public class KeyboardHandler {
 	}
 
 	public void split() {
-		solvingProcessListener.timerSplit(solvingProcess.getTimerState());
+		solvingProcess.timeSplit();
 	}
 
     KeyAdapter createKeyListener(final Configuration configuration, TimerLabel timerLabel) {
@@ -125,7 +121,7 @@ public class KeyboardHandler {
                         && key == configuration.getInt(VariableKey.SPLIT_KEY)) {
                     split();
                 } else if(!stackmatEmulation || stackmatKeysDown()){
-                    solvingProcess.solvingFinished(solvingProcess.getTimerState());
+                    solvingProcess.solvingFinished();
                     keysDown = true;
                 }
             } else if(key == KeyEvent.VK_ESCAPE) {
@@ -157,13 +153,12 @@ public class KeyboardHandler {
                 solvingProcess.startSolving();
             }
             else if(solvingProcess.isRunning()) {
-                solvingProcess.stopTimer(solvingProcess.getTimerState());
+                solvingProcess.solvingFinished();
             }
             else if(!ignoreKey(e, configuration.getBoolean(VariableKey.SPACEBAR_ONLY), stackmatEmulation, sekey1, sekey2)) {
                 solvingProcess.startProcess();
             }
         }
-        timingListener. refreshTimer();
     }
 
     void setHands(Boolean leftHand, Boolean rightHand) {
@@ -186,9 +181,9 @@ public class KeyboardHandler {
         this.stackmatIsOn = on;
         if(!stackmatIsOn) {
             setHands(false, false);
-            timingListener.changeGreenLight(false);
+            timerLabelsHolder.changeGreenLight(false);
         }
-        timingListener.refreshTimer();
+        timerLabelsHolder.refreshTimer("0.00");
     }
 
     boolean stackmatEnabled() {

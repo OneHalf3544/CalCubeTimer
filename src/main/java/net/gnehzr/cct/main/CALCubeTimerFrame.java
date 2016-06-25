@@ -70,7 +70,8 @@ public class CALCubeTimerFrame extends JFrame {
     @Autowired
     private ScrambleListHolder scrambleListHolder;
 
-	private JLabel onLabel = null;
+    @Autowired
+	private StackmatPluggedIndicatorLabel onLabel;
 
     @Autowired
 	private CurrentSessionSolutionsTable currentSessionSolutionsTable = null;
@@ -207,9 +208,11 @@ public class CALCubeTimerFrame extends JFrame {
 	@Autowired
 	private Metronome metromone;
     @Autowired
-    private TimingListener timingListener;
+    private TimerLabelsHolder timerLabelsHolder;
+	@Autowired
+	private SolvingProcess solvingProcess;
 
-    @NotNull
+	@NotNull
 	private ImportedScrambleList convertCurrentSessionToImportedList(PuzzleType oldPuzzleType) {
 		return new ImportedScrambleList(
 				oldPuzzleType,
@@ -255,7 +258,7 @@ public class CALCubeTimerFrame extends JFrame {
 	@PostConstruct
     void initializeGUIComponents() {
         configuration.addConfigurationChangeListener(
-                new CctModelConfigChangeListener(timingListener, this,
+                new CctModelConfigChangeListener(timerLabelsHolder, this,
                         currentProfileHolder, profileDao, configuration, scramblePluginManager,
                         actionMap, sessionsList, stackmatInterpreter));
 
@@ -277,15 +280,6 @@ public class CALCubeTimerFrame extends JFrame {
 		scrambleLengthSpinner.addChangeListener(scrambleLengthListener);
 
 		scrambleAttributesPanel = new JPanel();
-
-		onLabel = new JLabel() {
-			@Override
-			public void updateUI() {
-				Font f = UIManager.getFont("Label.font");
-				setFont(f.deriveFont(f.getSize2D() * 2));
-				super.updateUI();
-			}
-		};
 
 		timesScroller = new JScrollPane(currentSessionSolutionsTable);
 		JScrollPane sessionsListScrollPane = new JScrollPane(sessionsListTable);
@@ -399,7 +393,7 @@ public class CALCubeTimerFrame extends JFrame {
 		scrambleLengthSpinner.setToolTipText(StringAccessor.getString("CALCubeTimer.scramblelength"));
 		scrambleHyperlinkArea.updateStrings();
 
-		model.getSolvingProcess().getTimingListener().stackmatChanged(); //force the stackmat label to refresh
+		timerLabelsHolder.stackmatChanged(); //force the stackmat label to refresh
 		currentSessionSolutionsTable.refreshColumnNames();
 		sessionsListTable.refreshColumnNames();
 
@@ -675,11 +669,7 @@ public class CALCubeTimerFrame extends JFrame {
 		sessionsListTable.saveToConfiguration();
 	}
 
-	public JLabel getOnLabel() {
-		return onLabel;
-	}
-
-	private class PuzzleAttributeCheckBox extends DynamicCheckBox {
+    private class PuzzleAttributeCheckBox extends DynamicCheckBox {
 		public PuzzleAttributeCheckBox(String availableAttributeName, PuzzleType puzzleType, boolean selected) {
 			super(new DynamicString(
 					availableAttributeName,

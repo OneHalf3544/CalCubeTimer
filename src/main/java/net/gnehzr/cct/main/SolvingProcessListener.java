@@ -11,7 +11,7 @@ public interface SolvingProcessListener {
 
 	void timerSplit(TimerState newSplit);
 
-	void timerStopped(TimerState newTime);
+	void timerStopped();
 
 	boolean confirmDuplicateTime(TimerState timerState);
 

@@ -1,5 +1,6 @@
 package net.gnehzr.cct.main;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.swing.*;
 import java.time.Duration;
 import java.time.Instant;
@@ -50,78 +50,44 @@ public class SolvingProcess {
     private final Configuration configuration;
     private final NumberSpeaker numberSpeaker;
     private SolvingProcessListener solvingProcessListener;
-    private TimingListener timingListener;
+    private TimerLabelsHolder timerLabelsHolder;
 
     private ScrambleListHolder scrambleListHolder;
     private ScheduledFuture<?> scheduledFuture;
     private List<SolveTime> splits = new ArrayList<>();
-    private InspectionState previousInspectionState = new InspectionState(Instant.now(), Instant.now());
+    private InspectionState previousInspectionState = new InspectionState(now(), now());
     private SolveType penalty = null;
-    private long lastSplit;
     private StackmatState lastAccepted = new StackmatState(null, Collections.emptyList());
     private Instant inspectionStartTime = null;
     private Instant solvingStartTime;
-    private Instant currentTime;
+    private volatile Instant currentTime;
+    private Instant lastSplit;
 
     @Autowired
     public SolvingProcess(NumberSpeaker numberSpeaker, ScrambleListHolder scrambleListHolder, Configuration configuration) {
         this.numberSpeaker = numberSpeaker;
         this.scrambleListHolder = scrambleListHolder;
         this.configuration = configuration;
+        this.currentTime = now();
+        this.lastSplit = now();
+    }
+
+    @VisibleForTesting
+    Instant now() {
+        return Instant.now();
     }
 
     public void setSolvingProcessListener(SolvingProcessListener solvingProcessListener) {
         this.solvingProcessListener = solvingProcessListener;
-        this.timingListener = ((TimingListener) solvingProcessListener);
     }
 
-    private void refreshTime() {
-        if (isInspecting()) {
-            InspectionState inspection = getInspectionState().get();
-
-            if (inspection.isDisqualification()) {
-                setInspectionPenalty(SolveType.DNF);
-                setTextToTimeLabels(StringAccessor.getString("CALCubeTimer.disqualification"));
-            } else if (inspection.isPenalty()) {
-                setInspectionPenalty(SolveType.PLUS_TWO);
-                setTextToTimeLabels(StringAccessor.getString("CALCubeTimer.+2penalty"));
-            } else {
-                setTextToTimeLabels(String.valueOf(inspection.getElapsedTime().getSeconds()));
-            }
-        }
-
-        currentTime = Instant.now();
-        timingListener.refreshDisplay(getTimerState());
-    }
-
-    private void setTextToTimeLabels(String time) {
-        timingListener.refreshTimer();
-    }
-
-    public void resetProcess() {
-        LOG.debug("reset process");
-        if (isRunning()) {
-            scheduledFuture.cancel(true);
-        }
-        inspectionStartTime = null;
-        solvingStartTime = null;
-        scheduledFuture = null;
-
-        timingListener.refreshTimer();
-    }
-
-    @PostConstruct
-    void initialize() {
-        LOG.debug("initialize solvingProcess");
-        currentTime = Instant.now();
+    @Autowired
+    public void setTimerLabelsHolder(TimerLabelsHolder timerLabelsHolder) {
+        this.timerLabelsHolder = timerLabelsHolder;
     }
 
     public boolean canStartProcess() {
-        return Duration.between(currentTime, Instant.now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES);
-    }
-
-    public boolean isRunning() {
-        return scheduledFuture != null && !scheduledFuture.isCancelled();
+        return Duration.between(currentTime, now()).toMillis() > configuration.getInt(VariableKey.DELAY_BETWEEN_SOLVES);
     }
 
     public void startProcess() {
@@ -133,7 +99,7 @@ public class SolvingProcess {
         Objects.requireNonNull(currentScramble());
 
         boolean inspectionEnabled = configuration.getBoolean(VariableKey.COMPETITION_INSPECTION);
-        currentTime = Instant.now();
+        currentTime = now();
 
         scheduledFuture = EXECUTOR.scheduleAtFixedRate(
                 this::refreshTime, 0, PERIOD.toMillis(), TimeUnit.MILLISECONDS);
@@ -145,11 +111,15 @@ public class SolvingProcess {
         }
     }
 
+    public boolean isRunning() {
+        return scheduledFuture != null && !scheduledFuture.isCancelled();
+    }
+
     public void startInspection() {
         LOG.debug("start inspection");
         this.inspectionStartTime = currentTime;
         Objects.requireNonNull(currentScramble());
-        this.inspectionStartTime = Instant.now();
+        this.inspectionStartTime = now();
         solvingProcessListener.inspectionStarted();
     }
 
@@ -160,7 +130,7 @@ public class SolvingProcess {
     //this returns the amount of inspection remaining (in seconds), and will speak to the user if necessary
     public Optional<InspectionState> getInspectionState() {
         if (!isInspecting()) {
-            return Optional.<InspectionState>empty();
+            return Optional.empty();
         }
         InspectionState inspectionState = new InspectionState(inspectionStartTime, currentTime);
 
@@ -193,20 +163,42 @@ public class SolvingProcess {
     }
 
     public void addSplit(TimerState state) {
-        long currentTime = System.currentTimeMillis();
-        if ((currentTime - lastSplit) / 1000. > configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, false)) {
+        Instant currentTime = now();
+        if (Duration.between(lastSplit, currentTime).toMillis() / 1000.
+                > configuration.getDouble(VariableKey.MIN_SPLIT_DIFFERENCE, false)) {
             LOG.debug("add split {}", currentTime);
             getSplits().add(state.toSolution(currentScramble(), ImmutableList.of()).getTime());
             this.lastSplit = currentTime;
         }
+        solvingProcessListener.timerSplit(state);
+    }
+
+    public void timeSplit() {
+        addSplit(getTimerState());
     }
 
     public List<SolveTime> getSplits() {
         return splits;
     }
 
-    public void solvingFinished(TimerState timerState) {
+    public void resetProcess() {
+        LOG.debug("reset process");
+        if (isRunning()) {
+            scheduledFuture.cancel(true);
+        }
+        inspectionStartTime = null;
+        solvingStartTime = null;
+        scheduledFuture = null;
+
+        timerLabelsHolder.refreshTimer("0.00");
+    }
+
+    public void solvingFinished() {
         LOG.debug("solving finished");
+
+        TimerState timerState = getTimerState();
+        scheduledFuture.cancel(true);
+
         Solution solution = timerState.toSolution(currentScramble(), splits);
         if (penalty == null) {
             solution.getTime().deleteTypes();
@@ -216,11 +208,11 @@ public class SolvingProcess {
         penalty = null;
         splits = new ArrayList<>();
 
+        solvingProcessListener.timerStopped();
+
         boolean sameAsLast = timerState.compareTo(lastAccepted) == 0;
-        if (sameAsLast) {
-            if (!solvingProcessListener.confirmDuplicateTime(timerState)) {
-                return;
-            }
+        if (sameAsLast && !solvingProcessListener.confirmDuplicateTime(timerState)) {
+            return;
         }
 
         if (promptNewTime(solution, sameAsLast)) {
@@ -228,7 +220,27 @@ public class SolvingProcess {
         }
         scrambleListHolder.generateNext();
 
-        timingListener.refreshDisplay(getTimerState());
+        timerLabelsHolder.refreshDisplay(timerState);
+    }
+
+    private void refreshTime() {
+        LOG.info("refreshTime");
+        if (isInspecting()) {
+            InspectionState inspection = getInspectionState().get();
+
+            if (inspection.isDisqualification()) {
+                setInspectionPenalty(SolveType.DNF);
+                timerLabelsHolder.refreshTimer(StringAccessor.getString("CALCubeTimer.disqualification"));
+            } else if (inspection.isPenalty()) {
+                setInspectionPenalty(SolveType.PLUS_TWO);
+                timerLabelsHolder.refreshTimer(StringAccessor.getString("CALCubeTimer.+2penalty"));
+            } else {
+                timerLabelsHolder.refreshTimer(String.valueOf(inspection.getElapsedTime().getSeconds()));
+            }
+        }
+
+        currentTime = now();
+        timerLabelsHolder.refreshDisplay(getTimerState());
     }
 
     @NotNull
@@ -236,15 +248,17 @@ public class SolvingProcess {
         return scrambleListHolder.getCurrentScramble();
     }
 
-    public Duration getElapsedTime() {
-        if (!isRunning()) {
-            return Duration.ZERO;
-        }
-        return Duration.between(solvingStartTime == null ? inspectionStartTime : solvingStartTime, currentTime);
+    @VisibleForTesting
+    TimerLabelsHolder getTimerLabelsHolder() {
+        return timerLabelsHolder;
     }
 
-    public TimingListener getTimingListener() {
-        return timingListener;
+    public TimerState getTimerState() {
+        return new KeyboardTimerState(getElapsedTime(), getInspectionState());
+    }
+
+    public Duration getElapsedTime() {
+        return Duration.between(solvingStartTime == null ? inspectionStartTime : solvingStartTime, currentTime);
     }
 
     private boolean promptNewTime(Solution protect, boolean sameAsLast) {
@@ -277,13 +291,5 @@ public class SolvingProcess {
             default:
                 return false;
         }
-    }
-
-    public TimerState getTimerState() {
-        return new KeyboardTimerState(getElapsedTime(), getInspectionState());
-    }
-
-    public void stopTimer(TimerState timerState) {
-        solvingProcessListener.timerStopped(timerState);
     }
 }

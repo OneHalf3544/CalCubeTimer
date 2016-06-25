@@ -28,9 +28,9 @@ import javax.swing.*;
 * @author OneHalf
 */
 @Service
-class TimingListenerImpl implements TimingListener, SolvingProcessListener {
+class SolvingProcessListenerImpl implements SolvingProcessListener {
 
-    private static final Logger LOG = LogManager.getLogger(TimingListenerImpl.class);
+    private static final Logger LOG = LogManager.getLogger(SolvingProcessListenerImpl.class);
 
     @Autowired
     private CalCubeTimerModel model;
@@ -45,7 +45,6 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     @Autowired
     private Metronome metronome;
 
-    private boolean stackmatEnabled;
     private final Configuration configuration;
     private boolean fullScreenTiming;
     @Autowired
@@ -54,7 +53,7 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     private SolvingProcess solvingProcess;
 
     @Autowired
-    public TimingListenerImpl(Configuration configuration) {
+    public SolvingProcessListenerImpl(Configuration configuration) {
         this.configuration = configuration;
     }
 
@@ -64,36 +63,16 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
         solvingProcess.setSolvingProcessListener(this);
     }
 
-    @Override
-    public void refreshTimer() {
-
-    }
-
-    @Override
-    public void changeGreenLight(boolean greenLight) {
-        timeLabel.greenLight = greenLight;
-        bigTimersDisplay.greenLight = greenLight;
-    }
-
-    @Override
-    public void refreshDisplay(TimerState newTime) {
-        timeLabel.updateHandsState(newTime);
-        if(!model.getSolvingProcess().isInspecting()) {
-            timeLabel.setTime(newTime);
-            bigTimersDisplay.setTime(newTime);
-        }
-    }
-
     //I guess we could add an option to prompt the user to see if they want to keep this time
     @Override
     public void timerAccidentlyReset(TimerState lastTimeRead) {
-        model.getSolvingProcess().setInspectionPenalty(null);
-        //model.getSolvingProcess().setTiming(false);
+        solvingProcess.setInspectionPenalty(null);
+        //solvingProcess.setTiming(false);
     }
 
     @Override
     public void timerSplit(TimerState newSplit) {
-        model.getSolvingProcess().addSplit(newSplit);
+        //
     }
 
     @Override
@@ -107,16 +86,13 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     }
 
     private void configurationChanged() {
-        stackmatEnabled = configuration.getBoolean(VariableKey.STACKMAT_ENABLED);
         fullScreenTiming = configuration.getBoolean(VariableKey.FULLSCREEN_TIMING);
         metronome.setEnabled(configuration.getBoolean(VariableKey.METRONOME_ENABLED));
     }
 
     @Override
-    public void timerStopped(TimerState newTime) {
-        LOG.debug("timer stopped: " + new SolveTime(newTime.getTime()));
+    public void timerStopped() {
         metronome.stopMetronome();
-        model.getSolvingProcess().solvingFinished(newTime);
 
         if(fullScreenTiming) {
             calCubeTimerFrame.setFullscreen(false);
@@ -137,19 +113,7 @@ class TimingListenerImpl implements TimingListener, SolvingProcessListener {
     }
 
     @Override
-    public void stackmatChanged() {
-        if (stackmatEnabled) {
-            boolean on = model.getStackmatInterpreter().isOn();
-            keyHandler.setStackmatOn(on);
-            calCubeTimerFrame.getOnLabel().setText(StringAccessor.getString(on ? "CALCubeTimer.timerON" : "CALCubeTimer.timerOFF"));
-        } else {
-			calCubeTimerFrame.getOnLabel().setText("");
-		}
-    }
-
-    @Override
     public void inspectionStarted() {
         LOG.info("inspection started");
-        model.getSolvingProcess().startInspection();
     }
 }

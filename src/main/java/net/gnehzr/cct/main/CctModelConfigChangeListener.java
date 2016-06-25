@@ -28,7 +28,7 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
     private static final Logger LOG = LogManager.getLogger(CctModelConfigChangeListener.class);
 
-    private final TimingListener timingListener;
+    private final TimerLabelsHolder timerLabelsHolder;
     private final CALCubeTimerFrame CALCubeTimerFrame;
     private final CurrentProfileHolder currentProfileHolder;
     private final ProfileDao profileDao;
@@ -38,12 +38,12 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
     private final SessionsList sessionList;
     private final StackmatInterpreter stackmatInterpreter;
 
-    public CctModelConfigChangeListener(TimingListener timingListener, CALCubeTimerFrame CALCubeTimerFrame,
+    public CctModelConfigChangeListener(TimerLabelsHolder timerLabelsHolder, CALCubeTimerFrame CALCubeTimerFrame,
                                         CurrentProfileHolder currentProfileHolder, ProfileDao profileDao,
                                         Configuration configuration, ScramblePluginManager scramblePluginManager,
                                         ActionMap actionMap, SessionsList sessionList,
                                         StackmatInterpreter stackmatInterpreter) {
-        this.timingListener = timingListener;
+        this.timerLabelsHolder = timerLabelsHolder;
         this.CALCubeTimerFrame = CALCubeTimerFrame;
         this.currentProfileHolder = currentProfileHolder;
         this.profileDao = profileDao;
@@ -88,6 +88,6 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
 
         configuration.setLong(VariableKey.MIXER_NUMBER, stackmatInterpreter.getSelectedMixerIndex());
 
-        timingListener.stackmatChanged(); //force the stackmat label to refresh
+        timerLabelsHolder.stackmatChanged(); //force the stackmat label to refresh
     }
 }
