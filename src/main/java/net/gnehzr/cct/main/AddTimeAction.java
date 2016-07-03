@@ -19,15 +19,17 @@ import java.awt.event.KeyEvent;
  * @author OneHalf
  */
 @Service
-public class AddTimeAction extends AbstractAction {
+public class AddTimeAction extends AbstractNamedAction {
 
 	@Autowired
 	private CurrentSessionSolutionsTableModel currentSessionSolutionsTableModel;
+
 	@Autowired
 	private CurrentSessionSolutionsTable currentSessionSolutionsTable;
 
 	@Autowired
 	public AddTimeAction(CALCubeTimerFrame cct){
+		super("addtime");
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
 		this.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK));
 	}
@@ -41,10 +43,4 @@ public class AddTimeAction extends AbstractAction {
 			currentSessionSolutionsTable.scrollRectToVisible(newTimeRect);
 		}
 	}
-
-	@Autowired
-	public void registerAction(ActionMap actionMap) {
-		actionMap.registerAction(ActionMap.ADD_TIME_ACTION, this);
-	}
-
 }

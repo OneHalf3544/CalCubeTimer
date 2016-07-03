@@ -3,6 +3,8 @@ package net.gnehzr.cct.main;
 import net.gnehzr.cct.i18n.StringAccessor;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.SessionsList;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -16,12 +18,15 @@ import java.awt.event.KeyEvent;
  *
  * @author OneHalf
  */
-class ResetAction extends AbstractAction {
+@Component
+class ResetAction extends AbstractNamedAction {
 
 	private CALCubeTimerFrame cubeTimerFrame;
 	private final SessionsList sessionsList;
 
+	@Autowired
 	public ResetAction(CALCubeTimerFrame cubeTimerFrame, SessionsList sessionsList){
+		super("reset");
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
 		this.cubeTimerFrame = cubeTimerFrame;
 		this.sessionsList = sessionsList;

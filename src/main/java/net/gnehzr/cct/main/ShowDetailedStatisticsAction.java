@@ -8,7 +8,6 @@ import net.gnehzr.cct.statistics.SessionSolutionsStatistics;
 import net.gnehzr.cct.statistics.SessionsList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 /**
@@ -19,7 +18,7 @@ import java.awt.event.ActionEvent;
  *
  * @author OneHalf
  */
-class ShowDetailedStatisticsAction extends AbstractAction {
+public class ShowDetailedStatisticsAction extends AbstractNamedAction {
 
 	private final StatsDialogHandler statsHandler;
 	private final SessionSolutionsStatistics.AverageType type;
@@ -27,9 +26,9 @@ class ShowDetailedStatisticsAction extends AbstractAction {
 	private final Configuration configuration;
 	private final SessionsList sessionsList;
 
-	public ShowDetailedStatisticsAction(CALCubeTimerFrame cct,
-										SessionSolutionsStatistics.AverageType type, RollingAverageOf num,
+	public ShowDetailedStatisticsAction(String actionName, SessionSolutionsStatistics.AverageType type, RollingAverageOf num, CALCubeTimerFrame cct,
 										Configuration configuration, SessionsList sessionsList){
+		super(actionName);
 		this.configuration = configuration;
 		this.sessionsList = sessionsList;
 		statsHandler = new StatsDialogHandler(cct, configuration);

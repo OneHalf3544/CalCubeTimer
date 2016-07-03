@@ -3,7 +3,6 @@ package net.gnehzr.cct.main;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.misc.Utils;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -16,12 +15,13 @@ import java.io.IOException;
  *
  * @author OneHalf
  */
-class DocumentationAction extends AbstractAction {
+class DocumentationAction extends AbstractNamedAction {
 
 	private CALCubeTimerFrame cct;
 	private Configuration configuration;
 
 	public DocumentationAction(CALCubeTimerFrame cct, Configuration configuration){
+		super("showdocumentation");
 		this.cct = cct;
 		this.configuration = configuration;
 	}

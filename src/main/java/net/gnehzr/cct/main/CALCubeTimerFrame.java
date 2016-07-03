@@ -114,7 +114,6 @@ public class CALCubeTimerFrame extends JFrame {
 	@Autowired
 	CurrentProfileHolder currentProfileHolder;
 
-	private ConfigurationDialog configurationDialog;
 	private final DynamicBorderSetter dynamicBorderSetter;
 	private final XMLGuiMessages xmlGuiMessages;
 	private static final String GUI_LAYOUT_CHANGED = "GUI Layout Changed";
@@ -398,7 +397,6 @@ public class CALCubeTimerFrame extends JFrame {
 		sessionsListTable.refreshColumnNames();
 
 		createScrambleAttributesPanel();
-		configurationDialog = null; //this will force the config dialog to reload when necessary
 
 		SwingUtilities.updateComponentTreeUI(this);
 	}
@@ -631,20 +629,6 @@ public class CALCubeTimerFrame extends JFrame {
 	public JSpinner getScrambleLengthSpinner() {
 		return scrambleLengthSpinner;
 	}
-
-	public void showConfigurationDialog() {
-        saveToConfiguration();
-        if(configurationDialog == null) {
-            configurationDialog = new ConfigurationDialog(
-					this, true, configuration, profileDao, scramblePluginManager,
-					numberSpeaker, stackmatInterpreter, metromone,
-					currentSessionSolutionsTable);
-        }
-        SwingUtilities.invokeLater(() -> {
-            configurationDialog.syncGUIwithConfig(false);
-            configurationDialog.setVisible(true);
-        });
-    }
 
 	public JComboBox<LocaleAndIcon> getLanguages() {
 		return languages;

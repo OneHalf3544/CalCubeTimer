@@ -40,9 +40,6 @@ public class CalCubeTimerModel {
     CurrentProfileHolder currentProfileHolder;
 
     @Autowired
-    private StackmatInterpreter stackmatInterpreter;
-
-    @Autowired
     private SolutionDao solutionDao;
 
     @Autowired
@@ -83,10 +80,6 @@ public class CalCubeTimerModel {
         scramblesListHolder.setScrambleList(new GeneratedScrambleList(sessionsList, configuration));
         sessionsList.addSessionListener(sessionListener);
         LOG.debug("model initialized");
-    }
-
-    public StackmatInterpreter getStackmatInterpreter() {
-        return stackmatInterpreter;
     }
 
     public LocaleAndIcon getLoadedLocale() {

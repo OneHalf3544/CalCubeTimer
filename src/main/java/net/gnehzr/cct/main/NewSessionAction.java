@@ -2,10 +2,8 @@ package net.gnehzr.cct.main;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.stereotype.Service;
 import net.gnehzr.cct.statistics.SessionsList;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 /**
@@ -17,7 +15,7 @@ import java.awt.event.ActionEvent;
 * @author OneHalf
 */
 @Service
-public class NewSessionAction extends AbstractAction {
+public class NewSessionAction extends AbstractNamedAction {
 
     private final CALCubeTimerFrame calCubeTimerFrame;
 
@@ -26,12 +24,8 @@ public class NewSessionAction extends AbstractAction {
 
     @Autowired
     public NewSessionAction(CALCubeTimerFrame calCubeTimerFrame) {
+        super("newsession");
         this.calCubeTimerFrame = calCubeTimerFrame;
-    }
-
-    @Autowired
-    public void registerAction(ActionMap actionMap) {
-        actionMap.registerAction(ActionMap.NEWSESSION_ACTION, this);
     }
 
     @Override

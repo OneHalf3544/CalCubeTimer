@@ -187,18 +187,6 @@ public class SolvingProcess {
         return splits;
     }
 
-    public void resetProcess() {
-        LOG.debug("reset process");
-        if (isRunning()) {
-            scheduledFuture.cancel(true);
-        }
-        inspectionStartTime = null;
-        solvingStartTime = null;
-        scheduledFuture = null;
-
-        timerLabelsHolder.refreshDisplay(TimerState.ZERO);
-    }
-
     public void solvingFinished() {
         LOG.debug("solving finished");
 
@@ -227,6 +215,18 @@ public class SolvingProcess {
         scrambleListHolder.generateNext();
 
         timerLabelsHolder.refreshDisplay(timerState);
+    }
+
+    public void resetProcess() {
+        LOG.debug("reset process");
+        if (isRunning()) {
+            scheduledFuture.cancel(true);
+        }
+        inspectionStartTime = null;
+        solvingStartTime = null;
+        scheduledFuture = null;
+
+        timerLabelsHolder.refreshDisplay(TimerState.ZERO);
     }
 
     private void refreshTime() {

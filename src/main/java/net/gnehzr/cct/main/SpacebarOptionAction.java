@@ -2,10 +2,15 @@ package net.gnehzr.cct.main;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+
+import static net.gnehzr.cct.main.ActionMap.TOGGLE_SPACEBAR_STARTS_TIMER_ACTION;
 
 /**
  * <p>
@@ -15,10 +20,14 @@ import java.awt.event.KeyEvent;
  *
  * @author OneHalf
  */
+@Component
 class SpacebarOptionAction extends AbstractAction {
+
 	private final net.gnehzr.cct.configuration.Configuration configuration;
 
+	@Autowired
 	public SpacebarOptionAction(Configuration configuration){
+		super(TOGGLE_SPACEBAR_STARTS_TIMER_ACTION);
 		this.configuration = configuration;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_S);
 	}

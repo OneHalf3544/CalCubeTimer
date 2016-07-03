@@ -255,7 +255,7 @@ class GuiParseSaxHandler extends DefaultHandler {
         if (component instanceof AbstractButton) {
             if (attrs != null) {
                 if ((temp = attrs.getValue("action")) != null) {
-                    AbstractAction a = actionMap.getAction(temp, calCubeTimerFrame);
+                    AbstractAction a = actionMap.getAction(temp);
                     if (a != null) ((AbstractButton) component).setAction(a);
                     else throw new SAXException("parse error in action: " + temp.toLowerCase());
                 }

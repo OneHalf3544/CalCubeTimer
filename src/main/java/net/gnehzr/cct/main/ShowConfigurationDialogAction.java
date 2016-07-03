@@ -1,5 +1,14 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.configuration.ConfigurationDialog;
+import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.speaking.NumberSpeaker;
+import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -13,18 +22,54 @@ import java.awt.event.KeyEvent;
  *
  * @author OneHalf
  */
-class ShowConfigurationDialogAction extends AbstractAction {
+@Component
+class ShowConfigurationDialogAction extends AbstractNamedAction {
+
 	private CALCubeTimerFrame cct;
+
+	private ConfigurationDialog configurationDialog;
+
+	@Autowired
+	private Configuration configuration;
+	@Autowired
+	private ProfileDao profileDao;
+	@Autowired
+	private ScramblePluginManager scramblePluginManager;
+	@Autowired
+	private NumberSpeaker numberSpeaker;
+	@Autowired
+	private StackmatInterpreter stackmatInterpreter;
+	@Autowired
+	private Metronome metromone;
+	@Autowired
+	private JTable currentSessionSolutionsTable;
+
+	@Autowired
 	public ShowConfigurationDialogAction(CALCubeTimerFrame cct){
+		super("showconfiguration");
 		this.cct = cct;
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
 		putValue(Action.ACCELERATOR_KEY,
 				KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK));
-
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.showConfigurationDialog();
+		showConfigurationDialog();
 	}
+
+	private void showConfigurationDialog() {
+		cct.saveToConfiguration();
+		if (configurationDialog == null) {
+			configurationDialog = new ConfigurationDialog(
+					cct, true, configuration, profileDao, scramblePluginManager,
+					numberSpeaker, stackmatInterpreter, metromone,
+					currentSessionSolutionsTable);
+		}
+		SwingUtilities.invokeLater(() -> {
+			configurationDialog.syncGUIwithConfig(false);
+			configurationDialog.setVisible(true);
+		});
+	}
+
 }

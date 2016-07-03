@@ -2,7 +2,6 @@ package net.gnehzr.cct.main;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 
@@ -34,6 +33,6 @@ class ToggleScramblePopupAction extends AbstractAction {
 
     @Autowired
     void registerAction(ActionMap actionMap) {
-        actionMap.registerAction(ActionMap.TOGGLE_SCRAMBLE_POPUP_ACTION, this);
+        actionMap.registerAction("togglescramblepopup", this);
     }
 }

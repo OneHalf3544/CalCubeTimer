@@ -4,8 +4,8 @@ import net.gnehzr.cct.help.AboutScrollFrame;
 import net.gnehzr.cct.i18n.StringAccessor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 /**
@@ -16,13 +16,15 @@ import java.awt.event.ActionEvent;
  *
  * @author OneHalf
  */
-class AboutAction extends AbstractAction {
+@Component
+class AboutAction extends AbstractNamedAction {
 
 	private static final Logger LOG = LogManager.getLogger(AboutAction.class);
 
 	private AboutScrollFrame makeMeVisible;
 
 	public AboutAction() {
+		super("showabout");
 		try {
 			makeMeVisible = new AboutScrollFrame(CALCubeTimerFrame.class.getResource("about.html"), CALCubeTimerFrame.CUBE_ICON.getImage());
 			setEnabled(true);

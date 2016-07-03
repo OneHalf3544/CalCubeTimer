@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static net.gnehzr.cct.main.FullScreenDuringTimingChangeSettingAction.TOGGLE_FULLSCREEN_TIMING_ACTION;
 import static net.gnehzr.cct.statistics.RollingAverageOf.OF_12;
 import static net.gnehzr.cct.statistics.RollingAverageOf.OF_5;
 import static net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType.BEST_ROLLING_AVERAGE;
@@ -34,33 +35,25 @@ public class ActionMap {
 
     private static final Logger LOG = LogManager.getLogger(ActionMap.class);
 
-    public static final String NEWSESSION_ACTION = "newsession";
-    public static final String TOGGLE_SCRAMBLE_POPUP_ACTION = "togglescramblepopup";
     public static final String KEYBOARDTIMING_ACTION = "keyboardtiming";
     public static final String TOGGLE_STATUS_LIGHT_ACTOIN = "togglestatuslight";
     public static final String TOGGLE_HIDE_SCRAMBLES = "togglehidescrambles";
     public static final String TOGGLE_SPACEBAR_STARTS_TIMER_ACTION = "togglespacebarstartstimer";
-    public static final String ADD_TIME_ACTION = "addtime";
-    public static final String RESET_ACTION = "reset";
-    public static final String SHOW_DOCUMENTATION_ACTION = "showdocumentation";
-    public static final String SHOW_ABOUT_ACTION = "showabout";
-    public static final String SHOW_CONFIGURATION_ACTION = "showconfiguration";
 
     private final Map<String, AbstractAction> actionMap;
 
     @Autowired
 	private Configuration configuration;
-    @Autowired
-    private SessionsList sessionsList;
-    @Autowired
-    private ScrambleListHolder scrambleListHolder;
-    @Autowired
-    private SolvingProcess solvingProcess;
-    @Autowired
-    private TimerLabelsHolder timerLabelsHolder;
 
     public ActionMap() {
         this.actionMap = new HashMap<>();
+    }
+
+    @Autowired
+    void setActions(AbstractNamedAction[] abstractActions) {
+        for (AbstractNamedAction abstractNamedAction : abstractActions) {
+            registerAction(abstractNamedAction.getActionCode(), abstractNamedAction);
+        }
     }
 
     void registerAction(String actionName, AbstractAction abstractAction) {
@@ -68,65 +61,12 @@ public class ActionMap {
         actionMap.put(actionName.toLowerCase(), abstractAction);
     }
 
-    public AbstractAction getAction(String s, CALCubeTimerFrame calCubeTimerFrame) {
-        return actionMap.computeIfAbsent(s.toLowerCase(), (k) -> initializeAction(k, calCubeTimerFrame));
+    public AbstractAction getAction(String s) {
+        return actionMap.get(s.toLowerCase());
     }
 
     public Optional<AbstractAction> getActionIfExist(String s){
         return Optional.ofNullable(actionMap.get(s.toLowerCase()));
-    }
-
-    private AbstractAction initializeAction(String actionName, final CALCubeTimerFrame calCubeTimerFrame) {
-        LOG.debug("register action {}", actionName);
-        switch (actionName) {
-            case KEYBOARDTIMING_ACTION: {
-                return new KeyboardTimingAction(calCubeTimerFrame, configuration, solvingProcess, timerLabelsHolder);
-            }
-            case RESET_ACTION: {
-                return new ResetAction(calCubeTimerFrame, sessionsList);
-            }
-            case "currentaverage0":
-                return new ShowDetailedStatisticsAction(
-                        calCubeTimerFrame, CURRENT_ROLLING_AVERAGE, OF_5, configuration, sessionsList);
-            case "bestaverage0":
-                return new ShowDetailedStatisticsAction(
-                        calCubeTimerFrame, BEST_ROLLING_AVERAGE, OF_5, configuration, sessionsList);
-            case "currentaverage1":
-                return new ShowDetailedStatisticsAction(
-                        calCubeTimerFrame, CURRENT_ROLLING_AVERAGE, OF_12, configuration, sessionsList);
-            case "bestaverage1":
-                return new ShowDetailedStatisticsAction(
-                        calCubeTimerFrame, BEST_ROLLING_AVERAGE, OF_12, configuration, sessionsList);
-            case "sessionaverage":
-                return new ShowDetailedStatisticsAction(
-                        calCubeTimerFrame, AverageType.SESSION_AVERAGE, null, configuration, sessionsList);
-
-            case SHOW_CONFIGURATION_ACTION: {
-                return new ShowConfigurationDialogAction(calCubeTimerFrame);
-            }
-            case "exit": {
-                return new ExitAction(calCubeTimerFrame);
-            }
-            case TOGGLE_STATUS_LIGHT_ACTOIN: {
-                return new ToggleStatusLightAction(calCubeTimerFrame, configuration);
-            }
-            case TOGGLE_HIDE_SCRAMBLES: {
-                return new HideScramblesAction(calCubeTimerFrame, configuration, this);
-            }
-            case TOGGLE_SPACEBAR_STARTS_TIMER_ACTION: {
-                return new SpacebarOptionAction(configuration);
-            }
-            case SHOW_DOCUMENTATION_ACTION:
-                return new DocumentationAction(calCubeTimerFrame, configuration);
-
-            case SHOW_ABOUT_ACTION:
-                return new AboutAction();
-            case "requestscramble": {
-                return new RequestScrambleAction(calCubeTimerFrame, scrambleListHolder);
-            }
-            default:
-                throw new IllegalArgumentException("unknown action: " + actionName);
-        }
     }
 
     void refreshActions(){
@@ -138,12 +78,12 @@ public class ActionMap {
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.HIDE_SCRAMBLES)));
         getActionIfExist(TOGGLE_SPACEBAR_STARTS_TIMER_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.SPACEBAR_ONLY)));
-        getActionIfExist(FullScreenDuringTimingChangeSettingAction.TOGGLE_FULLSCREEN_TIMING_ACTION)
+        getActionIfExist(TOGGLE_FULLSCREEN_TIMING_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING)));
     }
 
     @Service
-    static class ToggleFullscreenTimingAction extends AbstractAction {
+    static class ToggleFullscreenTimingAction extends AbstractNamedAction {
 
         public static final String TOGGLE_FULLSCREEN = "togglefullscreen";
 
@@ -151,7 +91,7 @@ public class ActionMap {
 
         @Autowired
         public ToggleFullscreenTimingAction(CALCubeTimerFrame calCubeTimerFrame) {
-            super("+");
+            super(ActionMap.ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN, "+");
             this.calCubeTimerFrame = calCubeTimerFrame;
         }
 
@@ -160,9 +100,5 @@ public class ActionMap {
             calCubeTimerFrame.setFullscreen(!calCubeTimerFrame.isFullscreen());
         }
 
-        @Autowired
-        public void registerAction(ActionMap actionMap) {
-            actionMap.registerAction(ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN, this);
-        }
     }
 }
