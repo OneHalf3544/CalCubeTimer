@@ -1,12 +1,13 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
-import net.gnehzr.cct.scrambles.ScrambleListHolder;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.statistics.RollingAverageOf;
+import net.gnehzr.cct.statistics.SessionSolutionsStatistics;
+import net.gnehzr.cct.statistics.SessionsList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
-import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
-import net.gnehzr.cct.statistics.SessionsList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,12 +16,6 @@ import java.awt.event.ActionEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import static net.gnehzr.cct.main.FullScreenDuringTimingChangeSettingAction.TOGGLE_FULLSCREEN_TIMING_ACTION;
-import static net.gnehzr.cct.statistics.RollingAverageOf.OF_12;
-import static net.gnehzr.cct.statistics.RollingAverageOf.OF_5;
-import static net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType.BEST_ROLLING_AVERAGE;
-import static net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType.CURRENT_ROLLING_AVERAGE;
 
 /**
 * <p>
@@ -44,6 +39,8 @@ public class ActionMap {
 
     @Autowired
 	private Configuration configuration;
+    @Autowired
+    private SessionsList sessionsList;
 
     public ActionMap() {
         this.actionMap = new HashMap<>();
@@ -69,7 +66,26 @@ public class ActionMap {
         return Optional.ofNullable(actionMap.get(s.toLowerCase()));
     }
 
-    void refreshActions(){
+    /**
+     * Обновыление статистики
+     */
+    public void updateStatisticActionsStatuses() {
+        SessionSolutionsStatistics stats = sessionsList.getCurrentSession().getStatistics();
+
+        updateActionStatus(stats, "currentaverage0", SessionSolutionsStatistics.AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+        updateActionStatus(stats, "currentaverage1", SessionSolutionsStatistics.AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_12);
+        updateActionStatus(stats, "bestaverage0", SessionSolutionsStatistics.AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5);
+        updateActionStatus(stats, "bestaverage1", SessionSolutionsStatistics.AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_12);
+        updateActionStatus(stats, "sessionaverage", SessionSolutionsStatistics.AverageType.SESSION_AVERAGE, null);
+    }
+
+    private void updateActionStatus(SessionSolutionsStatistics sessionStatistics, String actionName,
+                                    SessionSolutionsStatistics.AverageType statType, RollingAverageOf i) {
+        getActionIfExist(actionName).ifPresent(action -> action.setEnabled(sessionStatistics.isValid(statType, i)));
+    }
+
+
+    public void refreshActions(){
         getActionIfExist(KEYBOARDTIMING_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, !configuration.getBoolean(VariableKey.STACKMAT_ENABLED)));
         getActionIfExist(TOGGLE_STATUS_LIGHT_ACTOIN)
@@ -78,27 +94,8 @@ public class ActionMap {
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.HIDE_SCRAMBLES)));
         getActionIfExist(TOGGLE_SPACEBAR_STARTS_TIMER_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.SPACEBAR_ONLY)));
-        getActionIfExist(TOGGLE_FULLSCREEN_TIMING_ACTION)
+        getActionIfExist(FullScreenDuringTimingChangeSettingAction.TOGGLE_FULLSCREEN_TIMING_ACTION)
                 .ifPresent(aA -> aA.putValue(Action.SELECTED_KEY, configuration.getBoolean(VariableKey.FULLSCREEN_TIMING)));
     }
 
-    @Service
-    static class ToggleFullscreenTimingAction extends AbstractNamedAction {
-
-        public static final String TOGGLE_FULLSCREEN = "togglefullscreen";
-
-        private final CALCubeTimerFrame calCubeTimerFrame;
-
-        @Autowired
-        public ToggleFullscreenTimingAction(CALCubeTimerFrame calCubeTimerFrame) {
-            super(ActionMap.ToggleFullscreenTimingAction.TOGGLE_FULLSCREEN, "+");
-            this.calCubeTimerFrame = calCubeTimerFrame;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            calCubeTimerFrame.setFullscreen(!calCubeTimerFrame.isFullscreen());
-        }
-
-    }
 }

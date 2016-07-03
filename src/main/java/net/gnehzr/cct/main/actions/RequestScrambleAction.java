@@ -1,10 +1,10 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.scrambles.ScrambleListHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
@@ -25,7 +25,7 @@ class RequestScrambleAction extends AbstractNamedAction {
 	public RequestScrambleAction(CALCubeTimerFrame cct, ScrambleListHolder scrambleListHolder){
 		super("requestscramble");
 		this.scrambleListHolder = scrambleListHolder;
-		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
+		putValue(MNEMONIC_KEY, KeyEvent.VK_N);
 	}
 
 	@Override

@@ -10,30 +10,28 @@ import java.util.List;
 @Service
 public class ScrambleImporter {
 
-    private final CALCubeTimerFrame calCubeTimerFrame;
     private final Configuration configuration;
     private final ScramblePluginManager scramblePluginManager;
     private final ScrambleListHolder scrambleListHolder;
 
     @Autowired
-    public ScrambleImporter(CALCubeTimerFrame CALCubeTimerFrame, ScrambleListHolder scrambleListHolder,
+    public ScrambleImporter(ScrambleListHolder scrambleListHolder,
                             Configuration configuration,
                             ScramblePluginManager scramblePluginManager) {
-        this.calCubeTimerFrame = CALCubeTimerFrame;
         this.configuration = configuration;
         this.scramblePluginManager = scramblePluginManager;
         this.scrambleListHolder = scrambleListHolder;
     }
 
     public void importScrambles(PuzzleType puzzleType, List<ScrambleString> scramblePlugins, CALCubeTimerFrame calCubeTimer) {
-        scrambleListHolder.setScrambleList(new ImportedScrambleList(puzzleType, scramblePlugins, calCubeTimerFrame));
+        scrambleListHolder.setScrambleList(new ImportedScrambleList(puzzleType, scramblePlugins));
         calCubeTimer.getPuzzleTypeComboBox().setSelectedItem(scrambleListHolder.getPuzzleType());
         calCubeTimer.updateScramble();
     }
 
     public void exportScramblesAction(PuzzleType puzzleType) {
         new ScrambleExportDialog(
-                calCubeTimerFrame.getMainFrame(),
+                null,
                 puzzleType,
                 scramblePluginManager,
                 configuration)

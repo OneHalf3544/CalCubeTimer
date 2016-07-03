@@ -1,5 +1,6 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.Main;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,20 +20,15 @@ import java.awt.event.KeyEvent;
 @Service
 class ExitAction extends AbstractNamedAction {
 
-	private final JFrame cct;
-
-	@Autowired
-	public ExitAction(JFrame cct){
+	public ExitAction(){
 		super("exit");
-		this.cct = cct;
-		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_X);
-		this.putValue(Action.ACCELERATOR_KEY,
+		this.putValue(MNEMONIC_KEY, KeyEvent.VK_X);
+		this.putValue(ACCELERATOR_KEY,
 				KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_MASK));
-
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e){
-		cct.dispose();
+		Main.exit(0);
 	}
 }

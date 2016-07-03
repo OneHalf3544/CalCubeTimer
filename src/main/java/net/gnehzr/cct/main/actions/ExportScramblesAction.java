@@ -1,10 +1,12 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.ScrambleImporter;
 import net.gnehzr.cct.scrambles.ScrambleListHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.swing.*;
+import javax.swing.ActionMap;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -18,7 +20,7 @@ import java.awt.event.KeyEvent;
  * @author OneHalf
  */
 @Service
-class ExportScramblesAction extends AbstractAction {
+class ExportScramblesAction extends AbstractNamedAction {
 
 	public static final String ACTION_NAME = "exportscrambles";
 
@@ -27,15 +29,11 @@ class ExportScramblesAction extends AbstractAction {
 
 	@Autowired
 	public ExportScramblesAction(ScrambleImporter scrambleImporter, ScrambleListHolder scrambleListHolder) {
+		super(ACTION_NAME);
 		putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK));
 		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_E);
 		this.scrambleImporter = scrambleImporter;
 		this.scrambleListHolder = scrambleListHolder;
-	}
-
-	@Autowired
-	public void registerAction(ActionMap actionMap) {
-		actionMap.registerAction(ACTION_NAME, this);
 	}
 
 	@Override

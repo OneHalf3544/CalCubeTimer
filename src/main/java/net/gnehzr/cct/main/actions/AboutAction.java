@@ -1,7 +1,8 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.help.AboutScrollFrame;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;

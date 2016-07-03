@@ -34,14 +34,14 @@ class CctModelConfigChangeListener implements ConfigurationChangeListener {
     private final ProfileDao profileDao;
     private final Configuration configuration;
     private final ScramblePluginManager scramblePluginManager;
-    private final ActionMap actionMap;
+    private final net.gnehzr.cct.main.actions.ActionMap actionMap;
     private final SessionsList sessionList;
     private final StackmatInterpreter stackmatInterpreter;
 
     public CctModelConfigChangeListener(TimerLabelsHolder timerLabelsHolder, CALCubeTimerFrame CALCubeTimerFrame,
                                         CurrentProfileHolder currentProfileHolder, ProfileDao profileDao,
                                         Configuration configuration, ScramblePluginManager scramblePluginManager,
-                                        ActionMap actionMap, SessionsList sessionList,
+                                        net.gnehzr.cct.main.actions.ActionMap actionMap, SessionsList sessionList,
                                         StackmatInterpreter stackmatInterpreter) {
         this.timerLabelsHolder = timerLabelsHolder;
         this.CALCubeTimerFrame = CALCubeTimerFrame;

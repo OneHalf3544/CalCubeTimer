@@ -46,12 +46,12 @@ class GuiParseSaxHandler extends DefaultHandler {
     private final Configuration configuration;
     private final DynamicBorderSetter dynamicBorderSetter;
     private final XMLGuiMessages xmlGuiMessages;
-    private final ActionMap actionMap;
+    private final net.gnehzr.cct.main.actions.ActionMap actionMap;
     private final SessionsList sessionList;
 
     public GuiParseSaxHandler(CALCubeTimerFrame calCubeTimerFrame, JFrame frame, Configuration configuration,
                               DynamicBorderSetter dynamicBorderSetter, SessionsList sessionsList,
-                              XMLGuiMessages xmlGuiMessages, ActionMap actionMap) {
+                              XMLGuiMessages xmlGuiMessages, net.gnehzr.cct.main.actions.ActionMap actionMap) {
         this.calCubeTimerFrame = calCubeTimerFrame;
         this.frame = frame;
         this.configuration = configuration;

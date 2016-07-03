@@ -1,7 +1,9 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.main.StatsDialogHandler;
 import net.gnehzr.cct.misc.dynamicGUI.DynamicString;
 import net.gnehzr.cct.statistics.RollingAverageOf;
 import net.gnehzr.cct.statistics.SessionSolutionsStatistics;
@@ -39,7 +41,7 @@ public class ShowDetailedStatisticsAction extends AbstractNamedAction {
 	@Override
 	public void actionPerformed(ActionEvent e){
 		statsHandler.setTitle(StringAccessor.getString("StatsDialogHandler.detailedstats") + " " + type.toString());
-		statsHandler.textArea.setText(getTemplateFor(type).toString(sessionsList));
+		statsHandler.getTextArea().setText(getTemplateFor(type).toString(sessionsList));
 		statsHandler.setVisible(true);
 	}
 

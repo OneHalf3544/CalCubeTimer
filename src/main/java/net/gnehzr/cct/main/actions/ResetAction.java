@@ -1,6 +1,8 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.i18n.StringAccessor;
+import net.gnehzr.cct.keyboardTiming.TimerLabel;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.misc.Utils;
 import net.gnehzr.cct.statistics.SessionsList;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +27,12 @@ class ResetAction extends AbstractNamedAction {
 	private final SessionsList sessionsList;
 
 	@Autowired
+	private TimerLabel bigTimersDisplay;
+
+	@Autowired
 	public ResetAction(CALCubeTimerFrame cubeTimerFrame, SessionsList sessionsList){
 		super("reset");
-		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
+		putValue(MNEMONIC_KEY, KeyEvent.VK_R);
 		this.cubeTimerFrame = cubeTimerFrame;
 		this.sessionsList = sessionsList;
 	}
@@ -42,7 +47,7 @@ class ResetAction extends AbstractNamedAction {
 		if(choice == JOptionPane.YES_OPTION) {
 			sessionsList.createSession(sessionsList.getCurrentSession().getPuzzleType());
 			cubeTimerFrame.getTimeLabel().reset();
-			cubeTimerFrame.bigTimersDisplay.reset();
+			bigTimersDisplay.reset();
 			cubeTimerFrame.updateScramble();
 		}
 	}

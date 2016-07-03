@@ -1,15 +1,15 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-import static net.gnehzr.cct.main.ActionMap.TOGGLE_STATUS_LIGHT_ACTOIN;
+import static net.gnehzr.cct.main.actions.ActionMap.TOGGLE_STATUS_LIGHT_ACTOIN;
 
 /**
  * <p>
@@ -29,7 +29,7 @@ class ToggleStatusLightAction extends AbstractNamedAction {
 		super(TOGGLE_STATUS_LIGHT_ACTOIN);
 		this.cct = cct;
 		this.configuration = configuration;
-		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_L);
+		this.putValue(MNEMONIC_KEY, KeyEvent.VK_L);
 
 	}
 

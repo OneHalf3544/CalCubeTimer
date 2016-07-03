@@ -1,5 +1,6 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.main.actions.ToggleFullscreenTimingAction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class FullscreenFrame extends JFrame {
     @Autowired
     public FullscreenFrame(Configuration configuration,
                            @Qualifier("bigTimersDisplay") TimerLabel bigTimersDisplay,
-                           ActionMap.ToggleFullscreenTimingAction toggleFullscreenTimingAction) {
+                           ToggleFullscreenTimingAction toggleFullscreenTimingAction) {
         super(getGraphicsConfiguration(configuration));
         this.configuration = configuration;
         this.add(createFullscreenPanel(toggleFullscreenTimingAction, bigTimersDisplay));
@@ -49,7 +50,7 @@ public class FullscreenFrame extends JFrame {
         validate();
     }
 
-    private JLayeredPane createFullscreenPanel(ActionMap.ToggleFullscreenTimingAction toggleFullscreenTimingAction,
+    private JLayeredPane createFullscreenPanel(ToggleFullscreenTimingAction toggleFullscreenTimingAction,
                                                TimerLabel bigTimersDisplay) {
         JLayeredPane fullscreenPanel = new JLayeredPane();
 

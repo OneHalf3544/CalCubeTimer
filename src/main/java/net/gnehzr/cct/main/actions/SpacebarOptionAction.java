@@ -1,16 +1,15 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-import static net.gnehzr.cct.main.ActionMap.TOGGLE_SPACEBAR_STARTS_TIMER_ACTION;
+import static net.gnehzr.cct.main.actions.ActionMap.TOGGLE_SPACEBAR_STARTS_TIMER_ACTION;
 
 /**
  * <p>

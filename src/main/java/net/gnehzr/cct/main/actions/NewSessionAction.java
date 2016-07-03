@@ -1,5 +1,6 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.statistics.SessionsList;

@@ -1,7 +1,8 @@
 package net.gnehzr.cct.main;
 
-import net.gnehzr.cct.scrambles.ScrambleListHolder;
-import net.gnehzr.cct.scrambles.ScramblePluginManager;
+import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.misc.customJTable.SessionsListTable;
+import net.gnehzr.cct.scrambles.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,8 +11,6 @@ import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.dao.SolutionDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
 import net.gnehzr.cct.misc.customJTable.SessionListener;
-import net.gnehzr.cct.scrambles.GeneratedScrambleList;
-import net.gnehzr.cct.scrambles.PuzzleType;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.Session;
 import net.gnehzr.cct.statistics.SessionsList;
@@ -19,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.PostConstruct;
+import javax.swing.*;
 
 /**
  * <p>
@@ -53,7 +53,6 @@ public class CalCubeTimerModel {
     @Autowired
     private ScrambleListHolder scramblesListHolder;
 
-    @Autowired
     private ScramblePluginManager scramblePluginManager;
 
     private SessionListener sessionListener = new SessionListener() {
@@ -73,10 +72,13 @@ public class CalCubeTimerModel {
     };
 
     private PuzzleTypeComboBoxModel puzzleTypeComboBoxModel;
+    @Autowired
+    private CurrentSessionSolutionsTable currentSessionSolutionsTable;
+    @Autowired
+    private SessionsListTable sessionsListTable;
 
     @PostConstruct
     void initialize() {
-        puzzleTypeComboBoxModel = new PuzzleTypeComboBoxModel(scramblePluginManager);
         scramblesListHolder.setScrambleList(new GeneratedScrambleList(sessionsList, configuration));
         sessionsList.addSessionListener(sessionListener);
         LOG.debug("model initialized");
@@ -93,5 +95,21 @@ public class CalCubeTimerModel {
     @NotNull
     public PuzzleTypeComboBoxModel getPuzzleTypeComboBoxModel() {
         return puzzleTypeComboBoxModel;
+    }
+
+
+    public void saveToConfiguration() {
+        configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, scramblesListHolder.getPuzzleType().toString());
+        scramblePluginManager.saveLengthsToConfiguration();
+        for (ScramblePlugin plugin : scramblePluginManager.getScramblePlugins()) {
+            configuration.setStringArray(VariableKey.PUZZLE_ATTRIBUTES(plugin), plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
+        }
+        currentSessionSolutionsTable.saveToConfiguration();
+        sessionsListTable.saveToConfiguration();
+    }
+
+    public void setScramblePluginManager(ScramblePluginManager scramblePluginManager) {
+        this.scramblePluginManager = scramblePluginManager;
+        this.puzzleTypeComboBoxModel = new PuzzleTypeComboBoxModel(scramblePluginManager);
     }
 }

@@ -16,6 +16,7 @@ import net.gnehzr.cct.scrambles.ScrambleString;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
@@ -50,8 +51,7 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 	private Component prevFocusOwner;
 
 	@Autowired
-	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList,
-											 CALCubeTimerFrame CALCubeTimerFrame) {
+	public CurrentSessionSolutionsTableModel(Configuration configuration, SessionsList sessionsList) {
 		this.configuration = configuration;
 		this.sessionsList = sessionsList;
 		sessionsList.addStatisticsUpdateListener(() -> {
@@ -59,8 +59,6 @@ public class CurrentSessionSolutionsTableModel extends DraggableJTableModel {
 				fireTableDataChanged();
 			}
 		});
-		//we don't want to know about the loading of the most recent session, or we could possibly hear it all spoken
-		addTableModelListener(CALCubeTimerFrame::newSolutionAdded);
 		columnNames = Stream.of(
                 "i18n[StatisticsTableModel.times]",
                 "i18n[StatisticsTableModel.ra] (stats[ra(0).size])",

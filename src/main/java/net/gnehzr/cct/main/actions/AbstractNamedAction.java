@@ -1,4 +1,4 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import org.springframework.beans.factory.annotation.Autowired;
 

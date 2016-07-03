@@ -1,8 +1,10 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.ConfigurationDialog;
 import net.gnehzr.cct.dao.ProfileDao;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.main.Metronome;
 import net.gnehzr.cct.scrambles.ScramblePluginManager;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
@@ -48,8 +50,8 @@ class ShowConfigurationDialogAction extends AbstractNamedAction {
 	public ShowConfigurationDialogAction(CALCubeTimerFrame cct){
 		super("showconfiguration");
 		this.cct = cct;
-		putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
-		putValue(Action.ACCELERATOR_KEY,
+		putValue(MNEMONIC_KEY, KeyEvent.VK_C);
+		putValue(ACCELERATOR_KEY,
 				KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK));
 	}
 

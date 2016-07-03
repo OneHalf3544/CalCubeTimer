@@ -115,4 +115,8 @@ public class StatsDialogHandler extends JDialog {
         configuration.setLong(VariableKey.STATS_DIALOG_FONT_SIZE, fontSize);
         textArea.setFont(textArea.getFont().deriveFont((float) fontSize));
     }
+
+    public JTextAreaWithHistory getTextArea() {
+        return textArea;
+    }
 }

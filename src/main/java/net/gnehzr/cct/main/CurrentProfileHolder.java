@@ -35,8 +35,6 @@ public class CurrentProfileHolder {
     private SessionsList sessionsList;
     @Autowired
     private ProfileDao profileDao;
-    @Autowired
-    private CALCubeTimerFrame CALCubeTimerFrame;
 
     public Profile getSelectedProfile() {
         return currentProfile;
@@ -60,7 +58,7 @@ public class CurrentProfileHolder {
         log.info("save profile configuration");
         Profile profile = getSelectedProfile();
         profileDao.saveLastSession(profile, sessionsList);
-        CALCubeTimerFrame.saveToConfiguration();
+        calCubeTimerModel.saveToConfiguration();
         configuration.saveConfiguration(profile);
     }
 }

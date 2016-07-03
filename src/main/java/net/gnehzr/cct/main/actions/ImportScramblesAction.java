@@ -1,5 +1,8 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.main.ScrambleImportDialog;
+import net.gnehzr.cct.main.ScrambleImporter;
 import net.gnehzr.cct.scrambles.ScrambleListHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,21 +24,20 @@ import java.awt.event.KeyEvent;
 * @author OneHalf
 */
 @Service
-class ImportScramblesAction extends AbstractAction {
+class ImportScramblesAction extends AbstractNamedAction {
 
-    private final CALCubeTimerFrame calCubeTimerFrame;
     private final ScrambleImporter scrambleImporter;
     private final ScramblePluginManager scramblePluginManager;
     private final Configuration configuration;
     private ScrambleListHolder scrambleListHolder;
 
     @Autowired
-    public ImportScramblesAction(CALCubeTimerFrame calCubeTimerFrame, ProfileDao profileDao,
+    public ImportScramblesAction(ProfileDao profileDao,
                                  ScrambleImporter scrambleImporter,
                                  ScramblePluginManager scramblePluginManager,
                                  Configuration configuration,
                                  ScrambleListHolder scrambleListHolder) {
-        this.calCubeTimerFrame = calCubeTimerFrame;
+        super("importscrambles");
         this.scrambleImporter = scrambleImporter;
         this.scramblePluginManager = scramblePluginManager;
         this.configuration = configuration;
@@ -47,13 +49,8 @@ class ImportScramblesAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new ScrambleImportDialog(calCubeTimerFrame, scrambleImporter,
+        new ScrambleImportDialog(null, scrambleImporter,
                 scrambleListHolder.getPuzzleType(),
                 scramblePluginManager, configuration);
-    }
-
-    @Autowired
-    public void registerAction(ActionMap actionMap) {
-        actionMap.registerAction("importscrambles", this);
     }
 }

@@ -12,13 +12,11 @@ public class ImportedScrambleList implements ScrambleList {
 
 	private final List<ScrambleString> scrambles;
 	private final PuzzleType puzzleType;
-	private final CALCubeTimerFrame cubeTimerFrame;
 
 	private int scrambleNumber = 0;
 
-	public ImportedScrambleList(PuzzleType puzzleType, List<ScrambleString> scrambles, CALCubeTimerFrame model) {
+	public ImportedScrambleList(PuzzleType puzzleType, List<ScrambleString> scrambles) {
 		this.puzzleType = puzzleType;
-		cubeTimerFrame = model;
 		this.scrambles = ImmutableList.copyOf(scrambles);
 	}
 
@@ -48,7 +46,7 @@ public class ImportedScrambleList implements ScrambleList {
 		if (!isLastScrambleInList()) {
 			scrambleNumber++;
 		} else {
-			Utils.showWarningDialog(cubeTimerFrame.getMainFrame(),
+			Utils.showWarningDialog(null,
 					StringAccessor.getString("CALCubeTimer.outofimported") +
 							StringAccessor.getString("CALCubeTimer.generatedscrambles"));
 		}

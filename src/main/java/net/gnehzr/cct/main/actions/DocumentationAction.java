@@ -1,6 +1,7 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.configuration.Configuration;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
 import net.gnehzr.cct.misc.Utils;
 
 import java.awt.*;

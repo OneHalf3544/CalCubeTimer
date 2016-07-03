@@ -1,11 +1,13 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.CurrentProfileHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 
 import javax.swing.*;
+import javax.swing.ActionMap;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
@@ -18,7 +20,7 @@ import java.awt.event.KeyEvent;
  * @author OneHalf
  */
 @Service
-class FullScreenDuringTimingChangeSettingAction extends AbstractAction {
+class FullScreenDuringTimingChangeSettingAction extends AbstractNamedAction {
 
 	public static final String TOGGLE_FULLSCREEN_TIMING_ACTION = "togglefullscreentiming";
 
@@ -28,15 +30,10 @@ class FullScreenDuringTimingChangeSettingAction extends AbstractAction {
 	@Autowired
 	public FullScreenDuringTimingChangeSettingAction(Configuration configuration,
 													 CurrentProfileHolder currentProfileHolder){
+		super(TOGGLE_FULLSCREEN_TIMING_ACTION);
 		this.configuration = configuration;
 		this.currentProfileHolder = currentProfileHolder;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_F);
-	}
-
-
-	@Autowired
-	public void registerAction(ActionMap actionMap) {
-		actionMap.registerAction(TOGGLE_FULLSCREEN_TIMING_ACTION, this);
 	}
 
 	@Override

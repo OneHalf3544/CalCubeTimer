@@ -1,7 +1,9 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.main.ScrambleHyperlinkArea;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +11,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-import static net.gnehzr.cct.main.ActionMap.TOGGLE_HIDE_SCRAMBLES;
+import static net.gnehzr.cct.main.actions.ActionMap.TOGGLE_HIDE_SCRAMBLES;
 
 /**
  * <p>
@@ -22,13 +24,13 @@ import static net.gnehzr.cct.main.ActionMap.TOGGLE_HIDE_SCRAMBLES;
 @Service
 class HideScramblesAction extends AbstractAction {
 
-	private CALCubeTimerFrame cctFrame;
 	private Configuration configuration;
+	@Autowired
+	private ScrambleHyperlinkArea scrambleHyperlinkArea;
 
 	@Autowired
-	public HideScramblesAction(CALCubeTimerFrame cctFrame, Configuration configuration){
+	public HideScramblesAction(Configuration configuration){
 		super(TOGGLE_HIDE_SCRAMBLES);
-		this.cctFrame = cctFrame;
 		this.configuration = configuration;
 		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_H);
 	}
@@ -36,6 +38,6 @@ class HideScramblesAction extends AbstractAction {
 	@Override
 	public void actionPerformed(ActionEvent e){
 		configuration.setBoolean(VariableKey.HIDE_SCRAMBLES, (Boolean) getValue(SELECTED_KEY));
-		cctFrame.scrambleHyperlinkArea.refresh();
+		scrambleHyperlinkArea.refresh();
 	}
 }

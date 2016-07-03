@@ -1,11 +1,13 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.ScramblePopupPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;
 
 import javax.swing.*;
+import javax.swing.ActionMap;
 import java.awt.event.ActionEvent;
 
 /**
@@ -17,7 +19,7 @@ import java.awt.event.ActionEvent;
 * @author OneHalf
 */
 @Service
-class ToggleScramblePopupAction extends AbstractAction {
+public class ToggleScramblePopupAction extends AbstractNamedAction {
 
     @Autowired
     private Configuration configuration;
@@ -25,14 +27,13 @@ class ToggleScramblePopupAction extends AbstractAction {
     @Autowired
     private ScramblePopupPanel scramblePopupFrame;
 
+    public ToggleScramblePopupAction() {
+        super("togglescramblepopup");
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         configuration.setBoolean(VariableKey.SCRAMBLE_POPUP, ((AbstractButton) e.getSource()).isSelected());
         scramblePopupFrame.refreshPopup();
-    }
-
-    @Autowired
-    void registerAction(ActionMap actionMap) {
-        actionMap.registerAction("togglescramblepopup", this);
     }
 }

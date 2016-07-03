@@ -3,7 +3,6 @@ package net.gnehzr.cct.main;
 import com.google.common.base.Throwables;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
-import net.gnehzr.cct.configuration.ConfigurationDialog;
 import net.gnehzr.cct.configuration.VariableKey;
 import net.gnehzr.cct.dao.ProfileDao;
 import net.gnehzr.cct.i18n.LocaleAndIcon;
@@ -20,7 +19,6 @@ import net.gnehzr.cct.scrambles.*;
 import net.gnehzr.cct.speaking.NumberSpeaker;
 import net.gnehzr.cct.stackmatInterpreter.StackmatInterpreter;
 import net.gnehzr.cct.statistics.*;
-import net.gnehzr.cct.statistics.SessionSolutionsStatistics.AverageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +33,6 @@ import javax.annotation.PostConstruct;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TableModelEvent;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -64,7 +61,7 @@ public class CALCubeTimerFrame extends JFrame {
 	private final StackmatInterpreter stackmatInterpreter;
 	private final Configuration configuration;
 	private final ScramblePluginManager scramblePluginManager;
-	private final ActionMap actionMap;
+	private final net.gnehzr.cct.main.actions.ActionMap actionMap;
 	private final ProfileDao profileDao;
 
     @Autowired
@@ -141,7 +138,7 @@ public class CALCubeTimerFrame extends JFrame {
                 currentProfileHolder.setSelectedProfile(affectedProfile);
 
 				//this needs to be here in the event that we loaded times from database
-				repaintTimes();
+				actionMap.updateStatisticActionsStatuses();
             }
 		}
 
@@ -217,8 +214,8 @@ public class CALCubeTimerFrame extends JFrame {
 				oldPuzzleType,
                 sessionsList.getCurrentSession().getSolutionList().stream()
                         .map(Solution::getScrambleString)
-                        .collect(toList()),
-                        this);
+                        .collect(toList())
+        );
 	}
 
 	private ChangeListener scrambleLengthListener = new ChangeListener() {
@@ -237,7 +234,7 @@ public class CALCubeTimerFrame extends JFrame {
 	public CALCubeTimerFrame(CalCubeTimerModel calCubeTimerModel, StackmatInterpreter stackmatInterpreter,
 							 Configuration configuration, ProfileDao profileDao, ScramblePluginManager scramblePluginManager,
 							 DynamicBorderSetter dynamicBorderSetter,
-							 XMLGuiMessages xmlGuiMessages, ActionMap actionMap,
+							 XMLGuiMessages xmlGuiMessages, net.gnehzr.cct.main.actions.ActionMap actionMap,
 							 DynamicStringSettableManger dynamicStringComponents) {
 		this.model = calCubeTimerModel;
 		this.stackmatInterpreter = stackmatInterpreter;
@@ -327,21 +324,6 @@ public class CALCubeTimerFrame extends JFrame {
 
     public CALCubeTimerFrame getMainFrame() {
 		return this;
-	}
-
-	public void newSolutionAdded(TableModelEvent event) {
-		final Solution latestSolution = sessionsList.getCurrentSession().getLastSolution();
-
-		if (event.getType() == TableModelEvent.INSERT) {
-			//make the new time visible
-			currentSessionSolutionsTable.invalidate(); //the table needs to be invalidated to force the new time to "show up"!!!
-			Rectangle newTimeRect = currentSessionSolutionsTable.getCellRect(sessionsList.getCurrentSession().getAttemptsCount(), 0, true);
-			currentSessionSolutionsTable.scrollRectToVisible(newTimeRect);
-
-			numberSpeaker.speakTime(latestSolution.getTime());
-		}
-
-		repaintTimes();
 	}
 
 	private void refreshCustomGUIMenu() {
@@ -482,24 +464,6 @@ public class CALCubeTimerFrame extends JFrame {
 		super.setSize(d);
 	}
 
-	/**
-	 * Обновыление статистики
-	 */
-	public void repaintTimes() {
-		SessionSolutionsStatistics stats = sessionsList.getCurrentSession().getStatistics();
-
-		updateActionStatus(stats, "currentaverage0", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_5);
-		updateActionStatus(stats, "currentaverage1", AverageType.CURRENT_ROLLING_AVERAGE, RollingAverageOf.OF_12);
-		updateActionStatus(stats, "bestaverage0", AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_5);
-		updateActionStatus(stats, "bestaverage1", AverageType.BEST_ROLLING_AVERAGE, RollingAverageOf.OF_12);
-		updateActionStatus(stats, "sessionaverage", AverageType.SESSION_AVERAGE, null);
-	}
-
-	private void updateActionStatus(SessionSolutionsStatistics sessionStatistics, String actionName,
-									AverageType statType, RollingAverageOf i) {
-		actionMap.getActionIfExist(actionName).ifPresent(action -> action.setEnabled(sessionStatistics.isValid(statType, i)));
-	}
-
 	//this happens in windows when alt+f4 is pressed
 	@Override
 	public void dispose() {
@@ -586,7 +550,7 @@ public class CALCubeTimerFrame extends JFrame {
 
 			setFullscreen(isFullscreen());
 
-			repaintTimes();
+			actionMap.updateStatisticActionsStatuses();
 			actionMap.refreshActions();
 		});
 	}
@@ -635,11 +599,6 @@ public class CALCubeTimerFrame extends JFrame {
 	}
 
 	public void saveToConfiguration() {
-		configuration.setString(VariableKey.DEFAULT_SCRAMBLE_CUSTOMIZATION, scrambleListHolder.getPuzzleType().toString());
-		scramblePluginManager.saveLengthsToConfiguration();
-		for (ScramblePlugin plugin : scramblePluginManager.getScramblePlugins()) {
-			configuration.setStringArray(VariableKey.PUZZLE_ATTRIBUTES(plugin), plugin.getEnabledPuzzleAttributes(scramblePluginManager, configuration));
-		}
 		configuration.setDimension(VariableKey.MAIN_FRAME_DIMENSION, getSize());
 		configuration.setPoint(VariableKey.MAIN_FRAME_LOCATION, getLocation());
 
@@ -649,8 +608,7 @@ public class CALCubeTimerFrame extends JFrame {
 		for (JTabbedPane jtp : tabbedPanes) {
 			configuration.setLong(VariableKey.JCOMPONENT_VALUE(jtp.getName(), true, configuration.getXMLGUILayout()), jtp.getSelectedIndex());
 		}
-		currentSessionSolutionsTable.saveToConfiguration();
-		sessionsListTable.saveToConfiguration();
+		model.saveToConfiguration();
 	}
 
     private class PuzzleAttributeCheckBox extends DynamicCheckBox {

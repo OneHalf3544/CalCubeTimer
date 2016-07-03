@@ -1,7 +1,7 @@
 package net.gnehzr.cct.main;
 
+import net.gnehzr.cct.main.actions.ToggleScramblePopupAction;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.stereotype.Service;
 import net.gnehzr.cct.configuration.Configuration;
 import net.gnehzr.cct.configuration.VariableKey;

@@ -1,8 +1,10 @@
-package net.gnehzr.cct.main;
+package net.gnehzr.cct.main.actions;
 
+import net.gnehzr.cct.main.CALCubeTimerFrame;
+import net.gnehzr.cct.main.CurrentSessionSolutionsTable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import net.gnehzr.cct.statistics.CurrentSessionSolutionsTableModel;
+import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +20,7 @@ import java.awt.event.KeyEvent;
  *
  * @author OneHalf
  */
-@Service
+@Component
 public class AddTimeAction extends AbstractNamedAction {
 
 	@Autowired
@@ -27,11 +29,10 @@ public class AddTimeAction extends AbstractNamedAction {
 	@Autowired
 	private CurrentSessionSolutionsTable currentSessionSolutionsTable;
 
-	@Autowired
-	public AddTimeAction(CALCubeTimerFrame cct){
+	public AddTimeAction(){
 		super("addtime");
-		this.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
-		this.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK));
+		this.putValue(MNEMONIC_KEY, KeyEvent.VK_A);
+		this.putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK));
 	}
 
 	@Override
